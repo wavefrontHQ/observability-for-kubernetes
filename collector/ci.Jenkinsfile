@@ -22,9 +22,7 @@ pipeline {
       parallel{
         stage("Test Openshift build") {
           steps {
-            dir("collector") {
-              sh 'docker build -f deploy/docker/Dockerfile-rhel .'
-            }
+            sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
           }
         }
         stage("Publish") {
@@ -39,13 +37,11 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
           }
           steps {
-            dir("collector") {
-              withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
                sh './hack/jenkins/install_docker_buildx.sh'
                sh 'make semver-cli'
                sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
                sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
-              }
             }
           }
         }
