@@ -24,9 +24,11 @@ pipeline {
   stages {
     stage("Test Go Code") {
       steps {
-        sh 'make checkfmt vet test'
-        sh 'make linux-golangci-lint'
-        sh 'make golangci-lint'
+        dir("operator") {
+          sh 'make checkfmt vet test'
+          sh 'make linux-golangci-lint'
+          sh 'make golangci-lint'
+        }
       }
     }
     stage("Setup For Publish") {
@@ -34,18 +36,22 @@ pipeline {
         GCP_CREDS = credentials("GCP_CREDS")
       }
       steps {
-        sh './hack/jenkins/setup-for-integration-test.sh'
-        sh './hack/jenkins/install_docker_buildx.sh'
-        sh 'make semver-cli'
+        dir("operator") {
+          sh './hack/jenkins/setup-for-integration-test.sh'
+          sh './hack/jenkins/install_docker_buildx.sh'
+          sh 'make semver-cli'
+        }
       }
     }
     stage("Publish") {
       environment {
         RELEASE_TYPE = "alpha"
       }
-      steps {
-        sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-        sh 'make docker-xplatform-build'
+      dir("operator") {
+        steps {
+          sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+          sh 'make docker-xplatform-build'
+        }
       }
     }
     stage("Update RC branch") {
@@ -54,9 +60,11 @@ pipeline {
         TOKEN = credentials('GITHUB_TOKEN')
       }
       steps {
-        sh './hack/jenkins/create-rc-ci.sh'
-        script {
-          env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+        dir("operator") {
+          sh './hack/jenkins/create-rc-ci.sh'
+          script {
+            env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+          }
         }
       }
     }
@@ -83,14 +91,16 @@ pipeline {
           stages {
             stage("without customization") {
               steps {
-                sh './hack/jenkins/setup-for-integration-test.sh'
-                sh './hack/jenkins/install_docker_buildx.sh'
-                sh 'make semver-cli'
-                lock("integration-test-gke") {
-                    sh 'make gke-connect-to-cluster'
-                    sh 'make clean-cluster'
-                    sh 'make integration-test'
-                    sh 'make clean-cluster'
+                dir("operator") {
+                  sh './hack/jenkins/setup-for-integration-test.sh'
+                  sh './hack/jenkins/install_docker_buildx.sh'
+                  sh 'make semver-cli'
+                  lock("integration-test-gke") {
+                      sh 'make gke-connect-to-cluster'
+                      sh 'make clean-cluster'
+                      sh 'make integration-test'
+                      sh 'make clean-cluster'
+                  }
                 }
               }
             }
@@ -105,16 +115,18 @@ pipeline {
                 INTEGRATION_TEST_ARGS="-r advanced"
               }
               steps {
-                sh './hack/jenkins/setup-for-integration-test.sh'
-                sh './hack/jenkins/install_docker_buildx.sh'
-                sh 'make semver-cli'
-                lock("integration-test-gke") {
-                  sh 'make gke-connect-to-cluster'
-                  sh 'docker logout $PREFIX'
-                  sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-                  sh 'make docker-copy-images'
-                  sh 'make integration-test'
-                  sh 'make clean-cluster'
+                dir("operator") {
+                  sh './hack/jenkins/setup-for-integration-test.sh'
+                  sh './hack/jenkins/install_docker_buildx.sh'
+                  sh 'make semver-cli'
+                  lock("integration-test-gke") {
+                    sh 'make gke-connect-to-cluster'
+                    sh 'docker logout $PREFIX'
+                    sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+                    sh 'make docker-copy-images'
+                    sh 'make integration-test'
+                    sh 'make clean-cluster'
+                  }
                 }
               }
             }
@@ -134,14 +146,16 @@ pipeline {
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
           }
           steps {
-            sh './hack/jenkins/setup-for-integration-test.sh'
-            sh './hack/jenkins/install_docker_buildx.sh'
-            sh 'make semver-cli'
-            lock("integration-test-eks") {
-                sh 'make target-eks'
-                sh 'make clean-cluster'
-                sh 'make integration-test'
-                sh 'make clean-cluster'
+            dir("operator") {
+              sh './hack/jenkins/setup-for-integration-test.sh'
+              sh './hack/jenkins/install_docker_buildx.sh'
+              sh 'make semver-cli'
+              lock("integration-test-eks") {
+                  sh 'make target-eks'
+                  sh 'make clean-cluster'
+                  sh 'make integration-test'
+                  sh 'make clean-cluster'
+              }
             }
           }
         }
@@ -158,15 +172,17 @@ pipeline {
             AKS_CLUSTER_NAME = "k8po-ci"
           }
           steps {
-            sh './hack/jenkins/setup-for-integration-test.sh'
-            sh './hack/jenkins/install_docker_buildx.sh'
-            sh 'make semver-cli'
-            lock("integration-test-aks") {
-              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                sh 'kubectl config use k8po-ci'
-                sh 'make clean-cluster'
-                sh 'make integration-test'
-                sh 'make clean-cluster'
+            dir("operator") {
+              sh './hack/jenkins/setup-for-integration-test.sh'
+              sh './hack/jenkins/install_docker_buildx.sh'
+              sh 'make semver-cli'
+              lock("integration-test-aks") {
+                withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+                  sh 'kubectl config use k8po-ci'
+                  sh 'make clean-cluster'
+                  sh 'make integration-test'
+                  sh 'make clean-cluster'
+                }
               }
             }
           }
