@@ -12,9 +12,9 @@ pipeline {
         go 'Go 1.18'
       }
       steps {
-        dir("collector") {
           withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-            sh 'make checkfmt vet tests'
+            dir("collector") {
+              sh 'make checkfmt vet tests'
           }
         }
       }
