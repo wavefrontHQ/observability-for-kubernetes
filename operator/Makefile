@@ -27,7 +27,7 @@ LDFLAGS=-X main.version=$(VERSION)
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.23
-REPO_DIR=$(shell git rev-parse --show-toplevel)
+REPO_DIR=$(shell git rev-parse --show-toplevel)/operator
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
