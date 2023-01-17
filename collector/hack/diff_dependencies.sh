@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT=$(git rev-parse --show-toplevel)/collector
 
 function main() {
     cd "$REPO_ROOT"

@@ -1,4 +1,4 @@
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT=$(git rev-parse --show-toplevel)/collector
 
 for f in $REPO_ROOT/hack/code-health-and-support/command/*.sh; do
     echo "sourcing '${f}'"

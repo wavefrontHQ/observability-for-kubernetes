@@ -3,7 +3,7 @@ DOCKER_IMAGE?=kubernetes-collector-snapshot
 ARCH?=amd64
 WAVEFRONT_CLUSTER?=nimba
 
-REPO_DIR=$(shell git rev-parse --show-toplevel)
+REPO_DIR=$(shell git rev-parse --show-toplevel)/collector
 TEST_DIR=$(REPO_DIR)/hack/test
 DEPLOY_DIR=$(REPO_DIR)/hack/test/deploy
 OUT_DIR?=$(REPO_DIR)/_output
@@ -66,6 +66,9 @@ checkfmt: $(GO_IMPORTS_BIN)
 tests:
 	go clean -testcache
 	go test -timeout 30s -race ./...
+
+.PHONY: test
+test: tests
 
 .PHONY: build
 build: clean fmt vet

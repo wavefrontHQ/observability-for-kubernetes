@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT=$(git rev-parse --show-toplevel)/collector
 source "${REPO_ROOT}"/hack/test/deploy/k8s-utils.sh
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
