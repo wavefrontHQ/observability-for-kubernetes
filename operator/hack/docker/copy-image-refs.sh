@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT=$(git rev-parse --show-toplevel)/operator
 source "${REPO_ROOT}/hack/test/k8s-utils.sh"
 cd "${REPO_ROOT}"
 IMGPKG=${IMGPKG:-$REPO_ROOT/bin/imgpkg}
