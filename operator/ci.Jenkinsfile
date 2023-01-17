@@ -72,6 +72,7 @@ pipeline {
     stage("Run Integration Tests") {
       environment {
         OPERATOR_YAML_TYPE="rc"
+        TOKEN = credentials('GITHUB_TOKEN')
       }
 
       parallel {
