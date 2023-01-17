@@ -6,7 +6,7 @@ cd "$(dirname "$-1")"
 operator_yaml="deploy/kubernetes/wavefront-operator.yaml"
 
 VERSION=$(cat ./release/OPERATOR_VERSION)
-GITHUB_REPO=wavefrontHQ/wavefront-operator-for-kubernetes
+GITHUB_REPO=wavefrontHQ/observability-for-kubernetes
 AUTH="Authorization: token ${GITHUB_TOKEN}"
 
 id=$(curl --fail -X POST -H "Content-Type:application/json" \

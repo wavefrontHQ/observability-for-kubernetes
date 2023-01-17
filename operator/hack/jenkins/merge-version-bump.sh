@@ -15,7 +15,7 @@ PR_URL=$(curl \
   -X POST \
   -H "Authorization: token ${GITHUB_TOKEN}" \
   -d "{\"head\":\"${GIT_BUMP_BRANCH_NAME}\",\"base\":\"main\",\"title\":\"Bump version to ${VERSION}\"}" \
-  https://api.github.com/repos/wavefrontHQ/wavefront-operator-for-kubernetes/pulls |
+  https://api.github.com/repos/wavefrontHQ/observability-for-kubernetes/pulls |
   jq -r '.url')
 
 echo "PR URL: ${PR_URL}"

@@ -243,7 +243,7 @@ kubernetes-yaml: manifests kustomize $(OPERATOR_BUILD_DIR)
 
 .PHONY: rc-kubernetes-yaml
 rc-kubernetes-yaml: $(OPERATOR_BUILD_DIR)
-	curl https://raw.githubusercontent.com/wavefrontHQ/wavefront-operator-for-kubernetes/$(OPERATOR_YAML_RC_SHA)/wavefront-operator-$(GIT_BRANCH).yaml \
+	curl https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/$(OPERATOR_YAML_RC_SHA)/wavefront-operator-$(GIT_BRANCH).yaml \
 		-o $(KUBERNETES_YAML)
 
 .PHONY: xplatform-kubernetes-yaml
