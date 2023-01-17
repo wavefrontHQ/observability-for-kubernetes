@@ -1,0 +1,7 @@
+.idea
+_output
+.DS_Store
+osstp_golang.yml
+hack/test/base/kustomization.yaml
+callgrind.out*
+wavefront-collector.test
