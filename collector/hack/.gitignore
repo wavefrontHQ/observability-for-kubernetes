@@ -6,4 +6,6 @@ test/unwanted.jsonl
 test/base/collector.yaml
 test/files/combined-metrics.jsonl
 test/base/deploy/*
+!test/base/deploy/.gitkeep
+!test/base/deploy/collector-deployments/.gitkeep
 test/base/deploy/alternate-deployments/*
