@@ -47,8 +47,8 @@ pipeline {
       environment {
         RELEASE_TYPE = "alpha"
       }
-      dir("operator") {
-        steps {
+      steps {
+        dir("operator") {
           sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
           sh 'make docker-xplatform-build'
         }
