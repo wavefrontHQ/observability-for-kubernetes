@@ -6,8 +6,8 @@ pipeline {
     GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
   }
 
-  dir('collector'){
-    stages {
+  stages {
+    dir('collector'){
       stage("Test with Go 1.18") {
         tools {
           go 'Go 1.18'
