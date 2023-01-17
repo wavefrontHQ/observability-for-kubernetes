@@ -12,10 +12,8 @@ pipeline {
         go 'Go 1.18'
       }
       steps {
-        dir("collector") {
-          withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-            sh 'make checkfmt vet tests'
-          }
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+            sh 'cd collector && make checkfmt vet tests'
         }
       }
     }
@@ -24,9 +22,7 @@ pipeline {
       parallel{
         stage("Test Openshift build") {
           steps {
-            dir("collector") {
-              sh 'docker build -f deploy/docker/Dockerfile-rhel .'
-            }
+            sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
           }
         }
         stage("Publish") {
@@ -41,13 +37,11 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
           }
           steps {
-            dir("collector") {
-              withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-               sh './hack/jenkins/install_docker_buildx.sh'
-               sh 'make semver-cli'
+            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+               sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
+               sh 'cd collector && make semver-cli'
                sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-               sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
-              }
+               sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
             }
           }
         }
@@ -80,15 +74,13 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            dir("collector") {
-              withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-                lock("integration-test-gke") {
-                  sh './hack/jenkins/setup-for-integration-test.sh -k gke'
-                  sh 'make gke-connect-to-cluster'
-                  sh 'make clean-cluster'
-                  sh 'make integration-test'
-                  sh 'make clean-cluster'
-                }
+            withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+              lock("integration-test-gke") {
+                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+                sh 'cd collector && make gke-connect-to-cluster'
+                sh 'cd collector && make clean-cluster'
+                sh 'cd collector && make integration-test'
+                sh 'cd collector && make clean-cluster'
               }
             }
           }
@@ -114,15 +106,13 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            dir("collector") {
-              withEnv(["PATH+GO=${HOME}/go/bin"]) {
-                lock("integration-test-eks") {
-                  sh './hack/jenkins/setup-for-integration-test.sh -k eks'
-                  sh 'make target-eks'
-                  sh 'make clean-cluster'
-                  sh 'make integration-test'
-                  sh 'make clean-cluster'
-                }
+            withEnv(["PATH+GO=${HOME}/go/bin"]) {
+              lock("integration-test-eks") {
+                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+                sh 'cd collector && make target-eks'
+                sh 'cd collector && make clean-cluster'
+                sh 'cd collector && make integration-test'
+                sh 'cd collector && make clean-cluster'
               }
             }
           }
@@ -147,18 +137,16 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            dir("collector") {
-              withEnv(["PATH+GO=${HOME}/go/bin"]) {
-               lock("integration-test-aks") {
-                 withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                   sh './hack/jenkins/setup-for-integration-test.sh -k aks'
-                   sh 'kubectl config use k8po-ci'
-                   sh 'make clean-cluster'
-                   sh 'make integration-test'
-                   sh 'make clean-cluster'
-                 }
+            withEnv(["PATH+GO=${HOME}/go/bin"]) {
+             lock("integration-test-aks") {
+               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+                 sh 'cd collector && kubectl config use k8po-ci'
+                 sh 'cd collector && make clean-cluster'
+                 sh 'cd collector && make integration-test'
+                 sh 'cd collector && make clean-cluster'
                }
-              }
+             }
             }
           }
         }
