@@ -25,6 +25,11 @@ IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 NS?=observability-system
 LDFLAGS=-X main.version=$(VERSION)
 
+OBSERVABILITY_FOR_KUBERNETES_HEADER=
+ifneq ($(TOKEN),)
+OBSERVABILITY_FOR_KUBERNETES_HEADER=-H "Authorization: token $(TOKEN)"
+endif
+
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.23
 REPO_DIR=$(shell git rev-parse --show-toplevel)/operator
@@ -243,7 +248,9 @@ kubernetes-yaml: manifests kustomize $(OPERATOR_BUILD_DIR)
 
 .PHONY: rc-kubernetes-yaml
 rc-kubernetes-yaml: $(OPERATOR_BUILD_DIR)
-	curl https://raw.githubusercontent.com/wavefrontHQ/wavefront-operator-for-kubernetes/$(OPERATOR_YAML_RC_SHA)/wavefront-operator-$(GIT_BRANCH).yaml \
+	curl -v https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/$(OPERATOR_YAML_RC_SHA)/operator/wavefront-operator-$(GIT_BRANCH).yaml \
+		-H "Accept: application/vnd.github.raw" \
+		$(OBSERVABILITY_FOR_KUBERNETES_HEADER) \
 		-o $(KUBERNETES_YAML)
 
 .PHONY: xplatform-kubernetes-yaml

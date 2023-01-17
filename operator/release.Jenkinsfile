@@ -29,7 +29,7 @@ pipeline {
           withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
             sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
             sh 'git config --global user.name "svc.wf-jenkins"'
-            sh 'git remote set-url origin https://${GITHUB_TOKEN}@github.com/wavefronthq/wavefront-operator-for-kubernetes.git'
+            sh 'git remote set-url origin https://${GITHUB_TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git'
             sh './hack/jenkins/bump-version.sh -s "${BUMP_COMPONENT}"'
           }
         }
@@ -102,7 +102,7 @@ pipeline {
       dir("operator") {
         script {
           BUILD_VERSION = readFile('./release/OPERATOR_VERSION').trim()
-          slackSend (channel: '#tobs-k8s-assist', color: '#008000', message: "Success!! `wavefront-operator-for-kubernetes:v${BUILD_VERSION}` released!")
+          slackSend (channel: '#tobs-k8s-assist', color: '#008000', message: "Success!! `observability-for-kubernetes:v${BUILD_VERSION}` released!")
         }
       }
     }

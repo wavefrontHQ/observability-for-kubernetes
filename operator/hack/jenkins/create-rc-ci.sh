@@ -1,9 +1,11 @@
 #!/bin/bash -e
-cd "$(git rev-parse --show-toplevel)"
+
+REPO_ROOT=$(git rev-parse --show-toplevel)/operator
+cd "${REPO_ROOT}"
 
 git config --global user.email "svc.wf-jenkins@vmware.com"
 git config --global user.name "svc.wf-jenkins"
-git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-operator-for-kubernetes.git
+git remote set-url origin https://${TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git
 
 RELEASE_VERSION=$(cat ./release/OPERATOR_VERSION)
 NEW_VERSION=$(semver-cli inc patch "$RELEASE_VERSION")
