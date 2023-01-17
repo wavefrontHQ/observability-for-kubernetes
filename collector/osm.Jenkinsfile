@@ -9,7 +9,9 @@ pipeline {
             go 'Go 1.18'
         }
         steps {
+          dir("collector") {
             sh "./hack/diff_dependencies.sh"
+          }
         }
     }
   }
