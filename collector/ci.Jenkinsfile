@@ -14,7 +14,6 @@ pipeline {
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
             sh 'cd collector && make checkfmt vet tests'
-          }
         }
       }
     }
