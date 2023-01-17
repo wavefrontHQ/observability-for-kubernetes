@@ -1,5 +1,7 @@
 #!/bin/bash -e
-cd "$(git rev-parse --show-toplevel)"
+
+REPO_ROOT=$(git rev-parse --show-toplevel)/operator
+cd "${REPO_ROOT}"
 
 git config --global user.email "svc.wf-jenkins@vmware.com"
 git config --global user.name "svc.wf-jenkins"
