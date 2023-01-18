@@ -81,9 +81,6 @@ pipeline {
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
         stage("GKE Integration Test") {
-          agent {
-            label "gke"
-          }
           options {
             timeout(time: 20, unit: 'MINUTES')
           }
@@ -114,9 +111,6 @@ pipeline {
           }
         }
         stage("EKS Integration Test") {
-          agent {
-            label "eks"
-          }
           options {
             timeout(time: 20, unit: 'MINUTES')
           }
@@ -146,9 +140,6 @@ pipeline {
           }
         }
         stage("AKS Integration Test") {
-          agent {
-            label "aks"
-          }
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -181,37 +172,22 @@ pipeline {
       }
     }
 
-    stage("Setup For Publishing Operator") {
+    stage("Publish Operator") {
       environment {
         GCP_CREDS = credentials("GCP_CREDS")
+        RELEASE_TYPE = "alpha"
+        TOKEN = credentials('GITHUB_TOKEN')
       }
       steps {
         sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
         sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
         sh 'cd operator && make semver-cli'
-      }
-    }
-
-    stage("Publish Operator") {
-      environment {
-        RELEASE_TYPE = "alpha"
-      }
-      steps {
         sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
         sh 'cd operator && make docker-xplatform-build'
-      }
-    }
-
-    stage("Update RC branch") {
-      environment {
-        RELEASE_TYPE = "alpha"
-        TOKEN = credentials('GITHUB_TOKEN')
-      }
-      steps {
-          sh 'operator/hack/jenkins/create-rc-ci.sh'
-          script {
-            env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-          }
+        sh 'operator/hack/jenkins/create-rc-ci.sh'
+        script {
+          env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+        }
       }
     }
 
@@ -223,9 +199,6 @@ pipeline {
 
       parallel {
         stage("GKE") {
-          agent {
-            label "gke"
-          }
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -242,10 +215,10 @@ pipeline {
                 sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
                 sh 'cd operator && make semver-cli'
                 lock("integration-test-gke") {
-                    sh 'cd operator && make gke-connect-to-cluster'
-                    sh 'cd operator && make clean-cluster'
-                    sh 'cd operator && make integration-test'
-                    sh 'cd operator && make clean-cluster'
+                  sh 'cd operator && make gke-connect-to-cluster'
+                  sh 'cd operator && make clean-cluster'
+                  sh 'cd operator && make integration-test'
+                  sh 'cd operator && make clean-cluster'
                 }
               }
             }
@@ -277,9 +250,6 @@ pipeline {
         }
 
         stage("EKS") {
-          agent {
-            label "eks"
-          }
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -302,9 +272,6 @@ pipeline {
         }
 
         stage("AKS") {
-          agent {
-            label "aks"
-          }
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
