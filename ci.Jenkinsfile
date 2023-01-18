@@ -7,8 +7,8 @@ pipeline {
     stage('Trigger collector') {
       steps {
         script {
-          def collectorChangesStatusCode = sh returnStatus: true, script: "[[ \"${$(git show --pretty=\"format:\" --name-only | awk -F\"/\" \"{print $1}\" | sort -u)[*]}\" =~ \"collector\" ]]"
-          if (!collectorChangesStatusCode) {
+          def changedFiles = sh returnStdout: true, script: "git show --pretty=\"format:\" --name-only | awk -F\"/\" \"{print $1}\" | sort -u".split('\n')
+          if (changedFiles.any { it =~ /^collector/ }) {
             build job: 'wavefront-collector-for-kubernetes-ci'
           }
         }
@@ -18,8 +18,8 @@ pipeline {
     stage('Trigger operator') {
       steps {
         script {
-          def operatorChangesStatusCode = sh returnStatus: true, script: "[[ \"${$(git show --pretty=\"format:\" --name-only | awk -F\"/\" \"{print $1}\" | sort -u)[*]}\" =~ \"operator\" ]]"
-          if (!operatorChangesStatusCode) {
+          def changedFiles = sh returnStdout: true, script: "git show --pretty=\"format:\" --name-only | awk -F\"/\" \"{print $1}\" | sort -u".split('\n')
+          if (changedFiles.any { it =~ /^operator/ }) {
             build job: 'wavefront-operator-for-kubernetes-ci'
           }
         }
