@@ -28,7 +28,7 @@ The operator simplifies operational aspects of managing the Wavefront integratio
  - Efficient Kubernetes resource usage supports scaling  out the cluster (leader) node and worker nodes independently.
 
 **Note:** The Collector that is deployed by the Operator still supports configuration via configmap.
-For example, Istio and MySQL metrics, Telegraf configuration, etc. are still supported.
+For example, Istio and MySQL metrics, Telegraf configuration, etc. are still supported. For details on the Collector, see [collector.md](docs/collector.md).
 
 ## Architecture
 
