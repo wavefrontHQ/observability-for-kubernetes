@@ -1,12 +1,12 @@
 # Migration
 This is a migration doc for the Operator from the manual and Helm Collector and proxy installation.
-If you want to test the new Operator in parallel with your existing manual or Helm installation, use the [wavefront-allow-legacy-intall.yaml](../deploy/kubernetes/scenarios/wavefront-allow-legacy-install.yaml) template.
+If you want to test the new Operator in parallel with your existing manual or Helm installation, use the [wavefront-allow-legacy-intall.yaml](../operator/deploy/kubernetes/scenarios/wavefront-allow-legacy-install.yaml) template.
 
 ## Migrate from Helm Installation
 
 ### 1. Install the operator
 
-Follow [the operator installation instructions](../README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator).
+Follow [the operator installation instructions](../Readme/operator-README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator).
 
 In your `wavefront.yaml`,
  * set `spec.allowLegacyInstall` to `true`
@@ -16,7 +16,7 @@ In your `wavefront.yaml`,
 
 Modify your `wavefront.yaml` to match your helm installation based on the information below.
 The following table lists the mapping of configurable parameters of the Wavefront Helm chart to Wavefront Operator Custom Resource.
-See [Custom Resource Scenarios](../deploy/kubernetes/scenarios) for examples or refer to [config/crd/bases/wavefront.com_wavefronts.yaml](../config/crd/bases/wavefront.com_wavefronts.yaml) for information on all Custom Resource fields.
+See [Custom Resource Scenarios](../operator/deploy/kubernetes/scenarios) for examples or refer to [config/crd/bases/wavefront.com_wavefronts.yaml](../operator/config/crd/bases/wavefront.com_wavefronts.yaml) for information on all Custom Resource fields.
 
 | Helm collector parameter           | Wavefront operator Custom Resource `spec`.                                                         | Description                                                                                                                                                    |
 |------------------------------------|----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -148,9 +148,9 @@ Below are the proxy arguments that are specified in `WAVEFRONT_PROXY_ARGS`, whic
 |`--histogramDayListenerPorts`      | `dataExport.wavefrontProxy.histogram.dayPort`                  |
 
 Other supported Custom Resource configuration:
-* `dataExport.wavefrontProxy.args`: Used to set any `WAVEFRONT_PROXY_ARGS` configuration not mentioned in the above table. See [wavefront-proxy-args.yaml](../deploy/kubernetes/scenarios/wavefront-proxy-args.yaml) for an example.
-* `dataExport.wavefrontProxy.resources`: Used to set container resource request or limits for Wavefront Proxy. See [wavefront-pod-resources.yaml](../deploy/kubernetes/scenarios/wavefront-pod-resources.yaml) for an example.
-* `dataExport.externalWavefrontProxy.Url`: Used to set an external Wavefront Proxy. See [wavefront-collector-external-proxy.yaml](../deploy/kubernetes/scenarios/wavefront-collector-external-proxy.yaml) for an example.
+* `dataExport.wavefrontProxy.args`: Used to set any `WAVEFRONT_PROXY_ARGS` configuration not mentioned in the above table. See [wavefront-proxy-args.yaml](../operator/deploy/kubernetes/scenarios/wavefront-proxy-args.yaml) for an example.
+* `dataExport.wavefrontProxy.resources`: Used to set container resource request or limits for Wavefront Proxy. See [wavefront-pod-resources.yaml](../operator/deploy/kubernetes/scenarios/wavefront-pod-resources.yaml) for an example.
+* `dataExport.externalWavefrontProxy.Url`: Used to set an external Wavefront Proxy. See [wavefront-collector-external-proxy.yaml](../operator/deploy/kubernetes/scenarios/wavefront-collector-external-proxy.yaml) for an example.
 
 ### Wavefront Collector Configuration
 
@@ -161,12 +161,12 @@ Wavefront Collector `ConfigMap` changes:
 
 Custom Resource `spec` changes:
 * Update Custom Resource configuration`dataCollection.metrics.customConfig` with the created ConfigMap name.
-See [wavefront-collector-existing-configmap.yaml](../deploy/kubernetes/scenarios/wavefront-collector-existing-configmap.yaml) for an example.
+See [wavefront-collector-existing-configmap.yaml](../operator/deploy/kubernetes/scenarios/wavefront-collector-existing-configmap.yaml) for an example.
 
 Other supported Custom Resource configurations:
 * `dataCollection.metrics.nodeCollector.resources`: Used to set container resource request or limits for Wavefront node collector.
 * `dataCollection.metrics.clusterCollector.resources`: Used to set container resource request or limits for Wavefront cluster collector.
-See [wavefront-pod-resources.yaml](../deploy/kubernetes/scenarios/wavefront-pod-resources.yaml) for an example.
+See [wavefront-pod-resources.yaml](../operator/deploy/kubernetes/scenarios/wavefront-pod-resources.yaml) for an example.
 
 ### Future Support
 
