@@ -32,7 +32,7 @@ Install the Wavefront Operator into `observability-system` namespace.
   ```
   kubectl apply -k observability
   ```
-6. Now follow from step 2 in [Deploy the Wavefront Collector and Proxy with the Operator](../Readme/operator-README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator)
+6. Now follow from step 2 in [Deploy the Wavefront Collector and Proxy with the Operator](../README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator)
 
 # Deploy the Wavefront Operator into a custom namespace
 
@@ -66,5 +66,5 @@ Install the Wavefront Operator into `observability-system` namespace.
   ```
   kubectl apply -k observability
   ```
-5. Now follow from step 2 in [Deploy the Wavefront Collector and Proxy with the Operator](../Readme/operator-README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator),
+5. Now follow from step 2 in [Deploy the Wavefront Collector and Proxy with the Operator](../README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator),
    replacing `observability-system` with `YOUR_NAMESPACE`.

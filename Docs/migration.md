@@ -6,7 +6,7 @@ If you want to test the new Operator in parallel with your existing manual or He
 
 ### 1. Install the operator
 
-Follow [the operator installation instructions](../Readme/operator-README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator).
+Follow [the operator installation instructions](../README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator).
 
 In your `wavefront.yaml`,
  * set `spec.allowLegacyInstall` to `true`
