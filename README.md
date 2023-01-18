@@ -51,7 +51,7 @@ The following tools are required for installing the integration.
    **Note**: If you already have Wavefront installed via helm or manual deploy, *uninstall* before you install the operator.
  
    ```
-   kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/kubernetes/wavefront-operator.yaml
+   kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/deploy/kubernetes/wavefront-operator.yaml
    ```
 
 2. Create a Kubernetes secret with your Wavefront token.
@@ -174,7 +174,7 @@ kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/rel
 To remove the Wavefront Integration from your environment, run the following commands:
 
 ```
-kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/kubernetes/wavefront-operator.yaml
+kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/deploy/kubernetes/wavefront-operator.yaml
 ```
 
 # Contribution
