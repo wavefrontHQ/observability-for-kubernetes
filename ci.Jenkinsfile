@@ -76,7 +76,7 @@ pipeline {
       }
     }
 
-    stage('Run Integration Tests') {
+    stage('Run Collector Integration Tests') {
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
