@@ -115,9 +115,9 @@ The following tools are required for installing the integration.
    NAME        STATUS    PROXY           CLUSTER-COLLECTOR   NODE-COLLECTOR   LOGGING        AGE    MESSAGE
    wavefront   Healthy   Running (1/1)   Running (1/1)       Running (3/3)    Running (3/3)  2m4s   All components are healthy
    ```
-   If `STATUS` is `Unhealthy`, check [troubleshooting](Docs/troubleshooting.md).
+   If `STATUS` is `Unhealthy`, check [troubleshooting](docs/troubleshooting.md).
 
-**Note**: For details on migrating from existing helm chart or manual deploy, see [Migration](Docs/migration.md).
+**Note**: For details on migrating from existing helm chart or manual deploy, see [Migration](docs/migration.md).
 
 # Configuration
 
@@ -157,7 +157,7 @@ Upgrade the Wavefront Operator (both Collector and Proxy) to a new version by ru
 kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/deploy/kubernetes/wavefront-operator.yaml
 ```
 
-Note: This command will not upgrade any existing wavefront/wavefront helm installation. See [migration.md](Docs/migration.md) for migration instructions.
+Note: This command will not upgrade any existing wavefront/wavefront helm installation. See [migration.md](docs/migration.md) for migration instructions.
 
 # Downgrade
 
@@ -179,4 +179,4 @@ kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/observability-fo
 
 # Contribution
 
-See the [Contribution page](Docs/contribution.md)
+See the [Contribution page](docs/contribution.md)
