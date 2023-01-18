@@ -32,7 +32,7 @@ For example, Istio and MySQL metrics, Telegraf configuration, etc. are still sup
 
 ## Architecture
 
-![Wavefront Operator for Kubernetes Architecture](architecture-logging.png)
+![Wavefront Operator for Kubernetes Architecture](../operator/architecture-logging.png)
 
 # Installation
 
@@ -115,9 +115,9 @@ The following tools are required for installing the integration.
    NAME        STATUS    PROXY           CLUSTER-COLLECTOR   NODE-COLLECTOR   LOGGING        AGE    MESSAGE
    wavefront   Healthy   Running (1/1)   Running (1/1)       Running (3/3)    Running (3/3)  2m4s   All components are healthy
    ```
-   If `STATUS` is `Unhealthy`, check [troubleshooting](docs/troubleshooting.md).
+   If `STATUS` is `Unhealthy`, check [troubleshooting](../Docs/troubleshooting.md).
 
-**Note**: For details on migrating from existing helm chart or manual deploy, see [Migration](docs/migration.md).
+**Note**: For details on migrating from existing helm chart or manual deploy, see [Migration](../Docs/migration.md).
 
 # Configuration
 
@@ -135,19 +135,19 @@ See below for configuration options.
 
 We have templates for common scenarios. See the comments in each file for usage instructions.
 
- * [Using an existing collector ConfigMap](./deploy/kubernetes/scenarios/wavefront-collector-existing-configmap.yaml)
- * [With plugin configuration in a secret](./deploy/kubernetes/scenarios/wavefront-collector-with-plugin-secret.yaml)
- * [Filtering metrics upon collection](./deploy/kubernetes/scenarios/wavefront-collector-filtering.yaml)
- * [Defining Kubernetes resource limits](./deploy/kubernetes/scenarios/wavefront-pod-resources.yaml)
- * [Defining data collection pod tolerations](./deploy/kubernetes/scenarios/wavefront-daemonset-pod-tolerations.yaml)
- * [Defining proxy pre-processor rules](./deploy/kubernetes/scenarios/wavefront-proxy-preprocessor-rules.yaml)
- * [Enabling proxy histogram support](./deploy/kubernetes/scenarios/wavefront-proxy-histogram.yaml)
- * [Enabling proxy tracing support](./deploy/kubernetes/scenarios/wavefront-proxy-tracing.yaml)
- * [Using an HTTP Proxy](./deploy/kubernetes/scenarios/wavefront-proxy-with-http-proxy.yaml)
- * [Getting started with logging configuration](./deploy/kubernetes/scenarios/wavefront-logging-getting-started.yaml)
- * [Full logging configuration](./deploy/kubernetes/scenarios/wavefront-logging-full-config.yaml)
+ * [Using an existing collector ConfigMap](../operator/deploy/kubernetes/scenarios/wavefront-collector-existing-configmap.yaml)
+ * [With plugin configuration in a secret](../operator/deploy/kubernetes/scenarios/wavefront-collector-with-plugin-secret.yaml)
+ * [Filtering metrics upon collection](../operator/deploy/kubernetes/scenarios/wavefront-collector-filtering.yaml)
+ * [Defining Kubernetes resource limits](../operator/deploy/kubernetes/scenarios/wavefront-pod-resources.yaml)
+ * [Defining data collection pod tolerations](../operator/deploy/kubernetes/scenarios/wavefront-daemonset-pod-tolerations.yaml)
+ * [Defining proxy pre-processor rules](../operator/deploy/kubernetes/scenarios/wavefront-proxy-preprocessor-rules.yaml)
+ * [Enabling proxy histogram support](../operator/deploy/kubernetes/scenarios/wavefront-proxy-histogram.yaml)
+ * [Enabling proxy tracing support](../operator/deploy/kubernetes/scenarios/wavefront-proxy-tracing.yaml)
+ * [Using an HTTP Proxy](../operator/deploy/kubernetes/scenarios/wavefront-proxy-with-http-proxy.yaml)
+ * [Getting started with logging configuration](../operator/deploy/kubernetes/scenarios/wavefront-logging-getting-started.yaml)
+ * [Full logging configuration](../operator/deploy/kubernetes/scenarios/wavefront-logging-full-config.yaml)
 
-You can see all configuration options in the [wavefront-full-config.yaml](./deploy/kubernetes/scenarios/wavefront-full-config.yaml).
+You can see all configuration options in the [wavefront-full-config.yaml](../operator/deploy/kubernetes/scenarios/wavefront-full-config.yaml).
 
 # Upgrade
 
@@ -157,7 +157,7 @@ Upgrade the Wavefront Operator (both Collector and Proxy) to a new version by ru
 kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-operator-for-kubernetes/main/deploy/kubernetes/wavefront-operator.yaml
 ```
 
-Note: This command will not upgrade any existing wavefront/wavefront helm installation. See [migration.md](./docs/migration.md) for migration instructions.
+Note: This command will not upgrade any existing wavefront/wavefront helm installation. See [migration.md](../Docs/migration.md) for migration instructions.
 
 # Downgrade
 
@@ -179,4 +179,4 @@ kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/wavefront-operat
 
 # Contribution
 
-See the [Contribution page](docs/contribution.md)
+See the [Contribution page](../Docs/contribution.md)
