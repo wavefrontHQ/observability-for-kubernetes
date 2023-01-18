@@ -7,7 +7,7 @@ pipeline {
     stage('Trigger collector') {
       steps {
         def collectorChangesStatusCode = sh returnStatus: true, script: '[[ " ${$(git show --pretty="format:" --name-only | awk -F"/" "{print $1}" | sort -u)[*]} " =~ "collector" ]]'
-        if !collectorChangesStatusCode {
+        if (!collectorChangesStatusCode) {
           build job: 'wavefront-collector-for-kubernetes-ci'
         }
       }
@@ -16,7 +16,7 @@ pipeline {
     stage('Trigger operator') {
       steps {
         def operatorChangesStatusCode = sh returnStatus: true, script: '[[ " ${$(git show --pretty="format:" --name-only | awk -F"/" "{print $1}" | sort -u)[*]} " =~ "operator" ]]'
-        if !operatorChangesStatusCode {
+        if (!operatorChangesStatusCode) {
           build job: 'wavefront-operator-for-kubernetes-ci'
         }
       }
