@@ -11,8 +11,8 @@ import (
 func TestVerifyJsonArrayFormat(t *testing.T) {
 	t.Run("valid when json array is in expected format", func(t *testing.T) {
 		jsonArray := `[{"key1":"value1","key2":"value2"},{"key3":"value3","key4":"value4"}]`
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, nil)
 
 		logVerifier.VerifyJsonArrayFormat([]byte(jsonArray))
 
@@ -21,8 +21,8 @@ func TestVerifyJsonArrayFormat(t *testing.T) {
 	})
 
 	t.Run("invalid when json array is empty brackets", func(t *testing.T) {
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, nil)
 		logVerifier.VerifyJsonArrayFormat([]byte("[]"))
 
 		require.Equal(t, 0, results.HasValidFormat)
@@ -32,8 +32,8 @@ func TestVerifyJsonArrayFormat(t *testing.T) {
 	t.Run("invalid when json array is json lines format", func(t *testing.T) {
 		jsonLines := `{"key1":"value1", "key2":"value2"}
 					{"key3":"value3", "key4":"value4"}`
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, nil)
 
 		logVerifier.VerifyJsonArrayFormat([]byte(jsonLines))
 
@@ -42,8 +42,8 @@ func TestVerifyJsonArrayFormat(t *testing.T) {
 	})
 
 	t.Run("invalid when json array is empty", func(t *testing.T) {
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, nil)
 
 		logVerifier.VerifyJsonArrayFormat([]byte{})
 
@@ -52,8 +52,8 @@ func TestVerifyJsonArrayFormat(t *testing.T) {
 	})
 
 	t.Run("invalid when json array is not a json array", func(t *testing.T) {
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, nil)
 
 		logVerifier.VerifyJsonArrayFormat([]byte("{}"))
 
@@ -67,8 +67,8 @@ func TestVerifyJsonLinesFormat(t *testing.T) {
 		jsonLines := `{"key1":"value1", "key2":"value2"}
 					{"key3":"value3", "key4":"value4"}`
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, nil)
 
 		logVerifier.VerifyJsonLinesFormat([]byte(jsonLines))
 
@@ -79,8 +79,8 @@ func TestVerifyJsonLinesFormat(t *testing.T) {
 	t.Run("invalid when json lines is in invalid json lines format with comma between elements", func(t *testing.T) {
 		jsonArray := `{"key1":"value1","key2":"value2"},
 						{"key3":"value3","key4":"value4"}`
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, nil)
 
 		logVerifier.VerifyJsonLinesFormat([]byte(jsonArray))
 
@@ -91,8 +91,8 @@ func TestVerifyJsonLinesFormat(t *testing.T) {
 	t.Run("invalid when json lines is in json array format", func(t *testing.T) {
 		jsonArray := `[{"key1":"value1","key2":"value2"},
 						{"key3":"value3","key4":"value4"}]`
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, nil)
 
 		logVerifier.VerifyJsonLinesFormat([]byte(jsonArray))
 
@@ -101,8 +101,8 @@ func TestVerifyJsonLinesFormat(t *testing.T) {
 	})
 
 	t.Run("invalid when json lines data is empty", func(t *testing.T) {
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, nil)
 
 		logVerifier.VerifyJsonLinesFormat([]byte{})
 
@@ -111,14 +111,34 @@ func TestVerifyJsonLinesFormat(t *testing.T) {
 	})
 
 	t.Run("invalid when json lines are empty", func(t *testing.T) {
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, nil)
 
 		logVerifier.VerifyJsonLinesFormat([]byte("{}"))
 
 		require.Equal(t, 0, results.HasValidFormat)
 		require.Equal(t, 0, results.ReceivedLogCount)
 	})
+}
+
+func TestValidateOptionalTags(t *testing.T) {
+	t.Run("Optional tags are found in at least 1 log line", func(t *testing.T) {
+		logMap1 := map[string]interface{}{"key1":"value1", "key2":"value2"}
+		logMap2 :=  map[string]interface{}{"key3":"value3", "key4":"value4", "level": "ERROR"}
+		optionalTags := map[string]string{"level": "ERROR"}
+
+		var logLines []interface{}
+		logLines = append(logLines, logMap1)
+		logLines = append(logLines, logMap2)
+
+		results := logs.NewLogResults(optionalTags)
+		logVerifier := logs.NewLogVerifier(results, nil, optionalTags, nil, nil)
+		logVerifier.ValidateOptionalTags(logLines)
+
+		require.Equal(t, 0, len(results.MissingOptionalTagsMap))
+	})
+
+
 }
 
 func TestValidateExpectedTags(t *testing.T) {
@@ -129,8 +149,8 @@ func TestValidateExpectedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, logMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil, nil)
 		logVerifier.ValidateExpectedTags(logLines)
 
 		require.Equal(t, 1, results.HasValidTags)
@@ -147,8 +167,8 @@ func TestValidateExpectedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, logMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil, nil)
 		logVerifier.ValidateExpectedTags(logLines)
 
 		require.Equal(t, 0, results.HasValidTags)
@@ -165,8 +185,8 @@ func TestValidateExpectedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, logMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil, nil)
 		logVerifier.ValidateExpectedTags(logLines)
 
 		require.Equal(t, 0, results.HasValidTags)
@@ -183,8 +203,8 @@ func TestValidateExpectedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, logMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil, nil)
 		logVerifier.ValidateExpectedTags(logLines)
 
 		require.Equal(t, 0, results.HasValidTags)
@@ -201,8 +221,8 @@ func TestValidateExpectedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, logMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, expectedTag, nil, nil, nil)
 		logVerifier.ValidateExpectedTags(logLines)
 
 		require.Equal(t, 1, results.HasValidTags)
@@ -221,8 +241,8 @@ func TestValidateAllowedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagAllowList, nil)
 		logVerifier.ValidateAllowedTags(logLines)
 
 		require.Equal(t, 1, results.HasValidTags)
@@ -237,8 +257,8 @@ func TestValidateAllowedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagAllowList, nil)
 		logVerifier.ValidateAllowedTags(logLines)
 
 		require.Equal(t, 0, results.HasValidTags)
@@ -253,8 +273,8 @@ func TestValidateAllowedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagAllowList, nil)
 		logVerifier.ValidateAllowedTags(logLines)
 
 		require.Equal(t, 0, results.HasValidTags)
@@ -269,8 +289,8 @@ func TestValidateAllowedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagAllowList, nil)
 		logVerifier.ValidateAllowedTags(logLines)
 
 		require.Equal(t, 0, results.HasValidTags)
@@ -290,8 +310,8 @@ func TestValidateAllowedTags(t *testing.T) {
 		logLines = append(logLines, validLog1)
 		logLines = append(logLines, validLog2)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagAllowList, nil)
 		logVerifier.ValidateAllowedTags(logLines)
 
 		require.Equal(t, 1, results.HasValidTags)
@@ -308,8 +328,8 @@ func TestValidateAllowedTags(t *testing.T) {
 		logLines = append(logLines, invalidLog)
 		logLines = append(logLines, validLog)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, tagAllowList, nil)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, tagAllowList, nil)
 		logVerifier.ValidateAllowedTags(logLines)
 
 		require.Equal(t, 0, results.HasValidTags)
@@ -326,8 +346,8 @@ func TestValidateDeniedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, tagDenyList)
 		logVerifier.ValidateDeniedTags(logLines)
 
 		require.Equal(t, 1, results.HasValidTags)
@@ -343,8 +363,8 @@ func TestValidateDeniedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, tagDenyList)
 		logVerifier.ValidateDeniedTags(logLines)
 
 		require.Equal(t, 0, results.HasValidTags)
@@ -359,8 +379,8 @@ func TestValidateDeniedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, tagDenyList)
 		logVerifier.ValidateDeniedTags(logLines)
 
 		require.Equal(t, 1, results.HasValidTags)
@@ -375,8 +395,8 @@ func TestValidateDeniedTags(t *testing.T) {
 		var logLines []interface{}
 		logLines = append(logLines, tagMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, tagDenyList)
 		logVerifier.ValidateDeniedTags(logLines)
 
 		require.Equal(t, 1, results.HasValidTags)
@@ -396,8 +416,8 @@ func TestValidateDeniedTags(t *testing.T) {
 		logLines = append(logLines, validLog1)
 		logLines = append(logLines, validLog2)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, tagDenyList)
 		logVerifier.ValidateDeniedTags(logLines)
 
 		require.Equal(t, 1, results.HasValidTags)
@@ -415,8 +435,8 @@ func TestValidateDeniedTags(t *testing.T) {
 		logLines = append(logLines, invalidTagMap)
 		logLines = append(logLines, validTagMap)
 
-		results := logs.NewLogResults()
-		logVerifier := logs.NewLogVerifier(results, nil, nil, tagDenyList)
+		results := logs.NewLogResults(nil)
+		logVerifier := logs.NewLogVerifier(results, nil, nil, nil, tagDenyList)
 		logVerifier.ValidateDeniedTags(logLines)
 
 		require.Equal(t, 0, results.HasValidTags)

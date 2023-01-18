@@ -12,14 +12,16 @@ import (
 type LogVerifier struct {
 	results               *Results
 	expectedTags          []string
+	optionalTags 		  map[string]string
 	allowListFilteredTags map[string][]string
 	denyListFilteredTags  map[string][]string
 }
 
-func NewLogVerifier(results *Results, expectedTags []string, allowListFilteredTags map[string][]string, denyListFilteredTags map[string][]string) *LogVerifier {
+func NewLogVerifier(results *Results, expectedTags []string, optionalTags map[string]string, allowListFilteredTags map[string][]string, denyListFilteredTags map[string][]string) *LogVerifier {
 	return &LogVerifier{
 		results:               results,
 		expectedTags:          expectedTags,
+		optionalTags:          optionalTags,
 		allowListFilteredTags: allowListFilteredTags,
 		denyListFilteredTags:  denyListFilteredTags,
 	}
@@ -97,6 +99,21 @@ func (l *LogVerifier) VerifyJsonLinesFormat(line []byte) []interface{} {
 
 	return logLines
 }
+
+func (l *LogVerifier) ValidateOptionalTags(logLines []interface{}) {
+	for _, logLine := range logLines {
+		logTags := logLine.(map[string]interface{})
+		//fmt.Printf("%s"+ logTags)
+		for tagKey, tagValue := range l.optionalTags {
+			if val, ok := logTags[tagKey]; ok {
+				if val == tagValue {
+					l.results.RemoveOptionalTag(tagKey)
+				}
+			}
+		}
+	}
+}
+
 
 func (l *LogVerifier) ValidateExpectedTags(logLines []interface{}) {
 	valid := true

@@ -36,6 +36,11 @@ var (
 		"integration",
 	}
 	// Needs to match what is set up in log sender
+	optionalTags = map[string]string{
+		"level": "ERROR",
+	}
+
+	// Needs to match what is set up in log sender
 	allowListFilteredTags = map[string][]string{
 		"namespace_name": {"kube-system", "observability-system"},
 	}
@@ -64,7 +69,8 @@ func main() {
 	}
 
 	metricStore := metrics.NewMetricStore()
-	logStore := logs.NewLogResults()
+
+	logStore := logs.NewLogResults(copyStringMap(optionalTags))
 
 	if logFilePath != "" {
 		// Set log output to file to prevent our logging component from picking up stdout/stderr logs
@@ -112,7 +118,7 @@ func serveMetrics(store *metrics.MetricStore) {
 }
 
 func serveLogs(store *logs.Results) {
-	logVerifier := logs.NewLogVerifier(store, expectedTags, allowListFilteredTags, denyListFilteredTags)
+	logVerifier := logs.NewLogVerifier(store, expectedTags, nil, allowListFilteredTags, denyListFilteredTags)
 
 	logsServeMux := http.NewServeMux()
 	logsServeMux.HandleFunc("/logs/json_array", handlers.LogJsonArrayHandler(logVerifier))
@@ -140,4 +146,12 @@ func serveControl(metricStore *metrics.MetricStore, logStore *logs.Results) {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
+}
+
+func copyStringMap(input map[string]string) map[string]string {
+	copy := make(map[string]string)
+	for k, v := range input {
+		copy[k] = v
+	}
+	return copy
 }

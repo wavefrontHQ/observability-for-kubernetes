@@ -9,6 +9,9 @@ type Results struct {
 	HasValidFormat int `json:"hasValidFormat"`
 	HasValidTags   int `json:"hasValidTags"`
 
+	MissingOptionalTagsMap   map[string]string      `json:"missingOptionalTags"`
+	MissingOptionalTagsCount int                    `json:"missingOptionalTagsCount"`
+
 	MissingExpectedTagsMap   map[string]interface{} `json:"-"`
 	MissingExpectedTags      []string               `json:"missingExpectedTags"`
 	MissingExpectedTagsCount int                    `json:"missingExpectedTagsCount"`
@@ -16,6 +19,7 @@ type Results struct {
 	EmptyExpectedTagsMap   map[string]interface{} `json:"-"`
 	EmptyExpectedTags      []string               `json:"emptyExpectedTags"`
 	EmptyExpectedTagsCount int                    `json:"emptyExpectedTagsCount"`
+
 
 	UnexpectedAllowedLogs      []interface{} `json:"unexpectedAllowedLogs"`
 	UnexpectedAllowedLogsCount int           `json:"unexpectedAllowedLogsCount"`
@@ -32,10 +36,11 @@ type Results struct {
 //
 // They need to be exposed for converting to JSON and we use
 // the fact that they are exposed for ease of testing.
-func NewLogResults() *Results {
+func NewLogResults(optionalTags map[string]string) *Results {
 	return &Results{
 		HasValidFormat:          -1,
 		HasValidTags:            -1,
+		MissingOptionalTagsMap:  optionalTags,
 		MissingExpectedTagsMap:  make(map[string]interface{}),
 		EmptyExpectedTagsMap:    make(map[string]interface{}),
 		UnexpectedDeniedTagsMap: make(map[string]interface{}),
@@ -149,4 +154,11 @@ func mapKeysToSlice(m map[string]interface{}) []string {
 	}
 
 	return output
+}
+
+func (l *Results) RemoveOptionalTag(tag string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	delete(l.MissingOptionalTagsMap, tag)
 }
