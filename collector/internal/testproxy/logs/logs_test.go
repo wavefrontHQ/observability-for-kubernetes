@@ -121,8 +121,8 @@ func TestVerifyJsonLinesFormat(t *testing.T) {
 	})
 }
 
-func TestValidateOptionalTags(t *testing.T) {
-	t.Run("Optional tags are found in at least 1 log line", func(t *testing.T) {
+func TestValidateExpectedOptionalTags(t *testing.T) {
+	t.Run("Expected optional tags are found in at least 1 log line", func(t *testing.T) {
 		logMap1 := map[string]interface{}{"key1": "value1", "key2": "value2"}
 		logMap2 := map[string]interface{}{"key3": "value3", "key4": "value4", "level": "ERROR"}
 		optionalTags := map[string]string{"level": "ERROR"}
@@ -134,8 +134,49 @@ func TestValidateOptionalTags(t *testing.T) {
 		results := logs.NewLogResults(optionalTags)
 		logVerifier := logs.NewLogVerifier(results, nil, optionalTags, nil, nil)
 		logVerifier.ValidateExpectedOptionalTags(logLines)
+		results.SetHasValidTags(true)
+		results.ToJSON()
 
 		require.Equal(t, 0, len(results.MissingExpectedOptionalTagsMap))
+		require.Equal(t, 1, results.HasValidTags)
+	})
+
+	t.Run("Expected optional tags are not found in at least 1 log line", func(t *testing.T) {
+		logMap1 := map[string]interface{}{"key1": "value1", "key2": "value2"}
+		logMap2 := map[string]interface{}{"key3": "value3", "key4": "value4"}
+		optionalTags := map[string]string{"level": "ERROR"}
+
+		var logLines []interface{}
+		logLines = append(logLines, logMap1)
+		logLines = append(logLines, logMap2)
+
+		results := logs.NewLogResults(optionalTags)
+		logVerifier := logs.NewLogVerifier(results, nil, optionalTags, nil, nil)
+		logVerifier.ValidateExpectedOptionalTags(logLines)
+		results.SetHasValidTags(true)
+		results.ToJSON()
+
+		require.Equal(t, 1, len(results.MissingExpectedOptionalTagsMap))
+		require.Equal(t, 0, results.HasValidTags)
+	})
+
+	t.Run("Expected optional tag value is not found in at least 1 log line", func(t *testing.T) {
+		logMap1 := map[string]interface{}{"key1": "value1", "key2": "value2"}
+		logMap2 := map[string]interface{}{"key3": "value3", "key4": "value4", "level": "foo"}
+		optionalTags := map[string]string{"level": "ERROR"}
+
+		var logLines []interface{}
+		logLines = append(logLines, logMap1)
+		logLines = append(logLines, logMap2)
+
+		results := logs.NewLogResults(optionalTags)
+		logVerifier := logs.NewLogVerifier(results, nil, optionalTags, nil, nil)
+		logVerifier.ValidateExpectedOptionalTags(logLines)
+		results.SetHasValidTags(true)
+		results.ToJSON()
+
+		require.Equal(t, 1, len(results.MissingExpectedOptionalTagsMap))
+		require.Equal(t, 0, results.HasValidTags)
 	})
 
 }
