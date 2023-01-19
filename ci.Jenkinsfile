@@ -234,44 +234,26 @@ pipeline {
             GCP_ZONE="a"
             GCP_CREDS = credentials("GCP_CREDS")
             GCP_PROJECT = "wavefront-gcp-dev"
+            CUSTOM_PREFIX="projects.registry.vmware.com/tanzu_observability_keights_saas"
+            HARBOR_CUSTOM_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
           }
-          stages {
-            stage("without customization") {
-              steps {
-                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-                sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-                sh 'cd operator && make semver-cli'
-                lock("integration-test-gke") {
-                  sh 'cd operator && make gke-connect-to-cluster'
-                  sh 'cd operator && make clean-cluster'
-                  sh 'cd operator && make integration-test'
-                  sh 'cd operator && make clean-cluster'
-                }
-              }
-            }
 
-            stage("with customization") {
-              environment {
-                KUSTOMIZATION_TYPE="custom"
-                NS="custom-namespace"
-                SOURCE_PREFIX="projects.registry.vmware.com/tanzu_observability"
-                PREFIX="projects.registry.vmware.com/tanzu_observability_keights_saas"
-                HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
-                INTEGRATION_TEST_ARGS="-r advanced"
-              }
-              steps {
-                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-                sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-                sh 'cd operator && make semver-cli'
-                lock("integration-test-gke") {
-                  sh 'cd operator && make gke-connect-to-cluster'
-                  sh 'cd operator && docker logout $PREFIX'
-                  sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-                  sh 'cd operator && make docker-copy-images'
-                  sh 'cd operator && make integration-test'
-                  sh 'cd operator && make clean-cluster'
-                }
-              }
+          steps {
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+            sh 'cd operator && make semver-cli'
+            lock("integration-test-gke") {
+              //without customization
+              sh 'cd operator && make gke-connect-to-cluster'
+              sh 'cd operator && make clean-cluster'
+              sh 'cd operator && make integration-test'
+              sh 'cd operator && make clean-cluster'
+              // with customization
+              sh 'cd operator && docker logout $PREFIX'
+              sh 'cd operator && echo $HARBOR_CUSTOM_CREDS_PSW | docker login $CUSTOM_PREFIX -u $HARBOR_CUSTOM_CREDS_USR --password-stdin'
+              sh 'cd operator && SOURCE_PREFIX=$PREFIX PREFIX=$CUSTOM_PREFIX make docker-copy-images'
+              sh 'cd operator && PREFIX=$CUSTOM_PREFIX KUSTOMIZATION_TYPE=custom NS=custom-namespace INTEGRATION_TEST_ARGS="-r advanced" make integration-test'
+              sh 'cd operator && make clean-cluster'
             }
           }
         }
