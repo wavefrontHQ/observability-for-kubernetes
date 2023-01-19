@@ -258,6 +258,8 @@ function run_logging_integration_checks() {
   missingExpectedTags="$(jq .missingExpectedTags "${RES}")"
   missingExpectedTagsCount="$(jq .missingExpectedTagsCount "${RES}")"
 
+  missingExpectedOptionalTags="$(jq .missingExpectedOptionalTagsMap "${RES}")"
+
   emptyExpectedTags="$(jq .emptyExpectedTags "${RES}")"
   emptyExpectedTagsCount="$(jq .emptyExpectedTagsCount "${RES}")"
 
@@ -271,6 +273,13 @@ function run_logging_integration_checks() {
 
   if [[ ${hasValidTags} -ne 1 ]]; then
     red "Invalid tags were found:"
+
+    if [[ ${missingExpectedOptionalTags} != "null" ]]; then
+      echo ""
+      red "* Test proxy did not receive expected optional tags:"
+      red "${missingExpectedOptionalTags}"
+    fi
+
     if [[ ${missingExpectedTags} != "null" ]]; then
       echo ""
       red "* Test proxy received logs (${missingExpectedTagsCount}/${receivedLogCount} logs) that were missing expected tags:"

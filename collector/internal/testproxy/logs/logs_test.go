@@ -123,8 +123,8 @@ func TestVerifyJsonLinesFormat(t *testing.T) {
 
 func TestValidateOptionalTags(t *testing.T) {
 	t.Run("Optional tags are found in at least 1 log line", func(t *testing.T) {
-		logMap1 := map[string]interface{}{"key1":"value1", "key2":"value2"}
-		logMap2 :=  map[string]interface{}{"key3":"value3", "key4":"value4", "level": "ERROR"}
+		logMap1 := map[string]interface{}{"key1": "value1", "key2": "value2"}
+		logMap2 := map[string]interface{}{"key3": "value3", "key4": "value4", "level": "ERROR"}
 		optionalTags := map[string]string{"level": "ERROR"}
 
 		var logLines []interface{}
@@ -133,11 +133,10 @@ func TestValidateOptionalTags(t *testing.T) {
 
 		results := logs.NewLogResults(optionalTags)
 		logVerifier := logs.NewLogVerifier(results, nil, optionalTags, nil, nil)
-		logVerifier.ValidateOptionalTags(logLines)
+		logVerifier.ValidateExpectedOptionalTags(logLines)
 
-		require.Equal(t, 0, len(results.MissingOptionalTagsMap))
+		require.Equal(t, 0, len(results.MissingExpectedOptionalTagsMap))
 	})
-
 
 }
 
