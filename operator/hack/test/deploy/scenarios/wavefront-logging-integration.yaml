@@ -28,7 +28,7 @@ spec:
                       - amd64
       containers:
         - name: test-proxy
-          image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:logging-2.1.1
+          image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:logging-2.2.0
           imagePullPolicy: Always
           command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info", "-mode", "logs", "-logFilePath" , "/logs/test-proxy.log"]
           ports:
@@ -88,3 +88,33 @@ spec:
   dataExport:
     externalWavefrontProxy:
       url: test-proxy:2878
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: observability-system
+  name: output-to-stderr
+  labels:
+    service: output-to-stderr
+    application: output-to-stderr
+spec:
+  containers:
+  - name: count
+    image: busybox
+    args: [/bin/sh, -c,
+           'while true; do echo "My application error line one $(date)\n" 1>&2; echo "error line two" 1>&2; sleep 1; done']
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: counter
+  namespace: observability-system
+  labels:
+    service: counter-test-service
+    application: counter-test-application
+spec:
+  containers:
+  - name: count
+    image: busybox
+    args: [/bin/sh, -c,
+           'i=0; while true; do echo "$i: $(date)\n"; echo "nextline"; i=$((i+1)); sleep 1; done']
