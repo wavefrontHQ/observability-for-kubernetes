@@ -39,21 +39,17 @@ function main() {
     esac
   done
 
-  echo $REGISTRY_NAME
-  echo $IMAGE_NAME
-  echo $VERSION_POSTFIX
+  check_required_argument "$REGISTRY_NAME" "-r <REGISTRY_NAME> is required"
+  check_required_argument "$IMAGE_NAME" "-n <IMAGE_NAME> is required"
+  check_required_argument "$VERSION_POSTFIX" "-v <VERSION_POSTFIX> is required"
 
-  check_required_argument "REGISTRY_NAME" "-r <REGISTRY_NAME> is required"
-  check_required_argument "IMAGE_NAME" "-n <IMAGE_NAME> is required"
-  check_required_argument "VERSION_POSTFIX" "-v <VERSION_POSTFIX> is required"
-
-  current_version="$(cat collector/release/VERSION)"
-  bumped_version=$(./scripts/get-bumped-version.sh -v "${current_version}" -s patch)
-  image_version="${bumped_version}${VERSION_POSTFIX}"
-  image="${REGISTRY_NAME}/${IMAGE_NAME}:${image_version}"
-
+  local current_version="$(cat collector/release/VERSION)"
+  local bumped_version=$(./scripts/get-bumped-version.sh -v "${current_version}" -s patch)
+  local image_version="${bumped_version}${VERSION_POSTFIX}"
+  local image="${REGISTRY_NAME}/${IMAGE_NAME}:${image_version}"
 
 	sed -i .bak "s%image:.*kubernetes-collector:.*$%image: ${image}%" operator/deploy/internal/collector/3-wavefront-collector-deployment.yaml
+	rm operator/deploy/internal/collector/3-wavefront-collector-deployment.yaml.bak || true
 }
 
 main "$@"
