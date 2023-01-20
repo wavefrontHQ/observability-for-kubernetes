@@ -26,7 +26,7 @@ pipeline {
       parallel{
         stage("Collector Go Tests") {
           agent {
-            label "nimbus-cloud"
+            label "worker-1"
           }
           tools {
             go 'Go 1.18'
@@ -40,7 +40,7 @@ pipeline {
 
         stage("Operator Go Tests") {
           agent {
-            label "nimbus-cloud-2"
+            label "worker-2"
           }
           steps {
             sh 'cd operator && make checkfmt vet test'
@@ -54,12 +54,18 @@ pipeline {
     stage("Build and publish Collector") {
       parallel{
         stage("Test Openshift build") {
+          agent {
+            label "worker-1"
+          }
           steps {
             sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
           }
         }
 
         stage("Publish") {
+          agent {
+            label "worker-2"
+          }
           tools {
             go 'Go 1.18'
           }
@@ -87,6 +93,9 @@ pipeline {
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
         stage("GKE Integration Test") {
+          agent {
+            label "worker-1"
+          }
           options {
             timeout(time: 20, unit: 'MINUTES')
           }
@@ -117,6 +126,9 @@ pipeline {
           }
         }
         stage("EKS Integration Test") {
+          agent {
+            label "worker-2"
+          }
           options {
             timeout(time: 20, unit: 'MINUTES')
           }
@@ -146,6 +158,9 @@ pipeline {
           }
         }
         stage("AKS Integration Test") {
+          agent {
+            label "worker-3"
+          }
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -179,6 +194,9 @@ pipeline {
     }
 
     stage("Publish Operator") {
+      agent {
+        label "worker-1"
+      }
       environment {
         GCP_CREDS = credentials("GCP_CREDS")
         RELEASE_TYPE = "alpha"
@@ -205,6 +223,9 @@ pipeline {
 
       parallel {
         stage("GKE") {
+          agent {
+            label "worker-1"
+          }
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -256,6 +277,9 @@ pipeline {
         }
 
         stage("EKS") {
+          agent {
+            label "worker-2"
+          }
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -278,6 +302,9 @@ pipeline {
         }
 
         stage("AKS") {
+          agent {
+            label "worker-3"
+          }
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
