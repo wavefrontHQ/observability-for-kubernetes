@@ -97,7 +97,7 @@ pipeline {
             label "worker-1"
           }
           options {
-            timeout(time: 20, unit: 'MINUTES')
+            timeout(time: 30, unit: 'MINUTES')
           }
           tools {
             go 'Go 1.18'
@@ -130,7 +130,7 @@ pipeline {
             label "worker-2"
           }
           options {
-            timeout(time: 20, unit: 'MINUTES')
+            timeout(time: 30, unit: 'MINUTES')
           }
           tools {
             go 'Go 1.18'
