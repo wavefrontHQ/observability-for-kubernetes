@@ -25,6 +25,9 @@ pipeline {
     stage("Run Go tests") {
       parallel{
         stage("Collector Go Tests") {
+          agent {
+            label "nimbus-cloud"
+          }
           tools {
             go 'Go 1.18'
           }
@@ -36,6 +39,9 @@ pipeline {
         }
 
         stage("Operator Go Tests") {
+          agent {
+            label "nimbus-cloud-2"
+          }
           steps {
             sh 'cd operator && make checkfmt vet test'
             sh 'cd operator && make linux-golangci-lint'
