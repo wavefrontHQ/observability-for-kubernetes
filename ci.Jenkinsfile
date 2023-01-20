@@ -22,34 +22,34 @@ pipeline {
   }
 
   stages {
-//     stage("Run Go tests") {
-//       parallel{
-//         stage("Collector Go Tests") {
-//           agent {
-//             label "worker-1"
-//           }
-//           tools {
-//             go 'Go 1.18'
-//           }
-//           steps {
-//             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-//               sh 'cd collector && make checkfmt vet tests'
-//             }
-//           }
-//         }
-//
-//         stage("Operator Go Tests") {
-//           agent {
-//             label "worker-2"
-//           }
-//           steps {
-//             sh 'cd operator && make checkfmt vet test'
-//             sh 'cd operator && make linux-golangci-lint'
-//             sh 'cd operator && make golangci-lint'
-//           }
-//         }
-//       }
-//     }
+    stage("Run Go tests") {
+      parallel{
+        stage("Collector Go Tests") {
+          agent {
+            label "worker-1"
+          }
+          tools {
+            go 'Go 1.18'
+          }
+          steps {
+            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+              sh 'cd collector && make checkfmt vet tests'
+            }
+          }
+        }
+
+        stage("Operator Go Tests") {
+          agent {
+            label "worker-2"
+          }
+          steps {
+            sh 'cd operator && make checkfmt vet test'
+            sh 'cd operator && make linux-golangci-lint'
+            sh 'cd operator && make golangci-lint'
+          }
+        }
+      }
+    }
 
     stage("Build Collector and Publish Collector/Operator") {
       parallel{
@@ -108,104 +108,104 @@ pipeline {
       }
     }
 
-//     stage('Run Collector Integration Tests') {
-//       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
-//       // But we want to make sure that the combined and default integration tests are run on both
-//       parallel {
-//         stage("GKE Integration Test") {
-//           agent {
-//             label "worker-1"
-//           }
-//           options {
-//             timeout(time: 30, unit: 'MINUTES')
-//           }
-//           tools {
-//             go 'Go 1.18'
-//           }
-//           environment {
-//             GCP_CREDS = credentials("GCP_CREDS")
-//             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
-//             GCP_ZONE="a"
-//             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-//             DOCKER_IMAGE = "kubernetes-collector-snapshot"
-//             INTEGRATION_TEST_ARGS="all"
-//             INTEGRATION_TEST_BUILD="ci"
-//           }
-//           steps {
-//             withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-//               lock("integration-test-gke") {
-//                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-//                 sh 'cd collector && make gke-connect-to-cluster'
-//                 sh 'cd collector && make clean-cluster'
-//                 sh 'cd collector && make integration-test'
-//                 sh 'cd collector && make clean-cluster'
-//               }
-//             }
-//           }
-//         }
-//         stage("EKS Integration Test") {
-//           agent {
-//             label "worker-2"
-//           }
-//           options {
-//             timeout(time: 30, unit: 'MINUTES')
-//           }
-//           tools {
-//             go 'Go 1.18'
-//           }
-//           environment {
-//             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-//             DOCKER_IMAGE = "kubernetes-collector-snapshot"
-//             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
-//             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-//             INTEGRATION_TEST_ARGS="all"
-//             INTEGRATION_TEST_BUILD="ci"
-//           }
-//           steps {
-//             withEnv(["PATH+GO=${HOME}/go/bin"]) {
-//               lock("integration-test-eks") {
-//                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-//                 sh 'cd collector && make target-eks'
-//                 sh 'cd collector && make clean-cluster'
-//                 sh 'cd collector && make integration-test'
-//                 sh 'cd collector && make clean-cluster'
-//               }
-//             }
-//           }
-//         }
-//         stage("AKS Integration Test") {
-//           agent {
-//             label "worker-3"
-//           }
-//           options {
-//             timeout(time: 30, unit: 'MINUTES')
-//           }
-//           tools {
-//             go 'Go 1.18'
-//           }
-//           environment {
-//             AKS_CLUSTER_NAME = "k8po-ci"
-//             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-//             DOCKER_IMAGE = "kubernetes-collector-snapshot"
-//             INTEGRATION_TEST_ARGS="real-proxy-metrics"
-//             INTEGRATION_TEST_BUILD="ci"
-//           }
-//           steps {
-//             withEnv(["PATH+GO=${HOME}/go/bin"]) {
-//              lock("integration-test-aks") {
-//                withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-//                  sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-//                  sh 'cd collector && kubectl config use k8po-ci'
-//                  sh 'cd collector && make clean-cluster'
-//                  sh 'cd collector && make integration-test'
-//                  sh 'cd collector && make clean-cluster'
-//                }
-//              }
-//             }
-//           }
-//         }
-//       }
-//     }
+    stage('Run Collector Integration Tests') {
+      // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
+      // But we want to make sure that the combined and default integration tests are run on both
+      parallel {
+        stage("GKE Integration Test") {
+          agent {
+            label "worker-1"
+          }
+          options {
+            timeout(time: 30, unit: 'MINUTES')
+          }
+          tools {
+            go 'Go 1.18'
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
+            GCP_ZONE="a"
+            PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+            DOCKER_IMAGE = "kubernetes-collector-snapshot"
+            INTEGRATION_TEST_ARGS="all"
+            INTEGRATION_TEST_BUILD="ci"
+          }
+          steps {
+            withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+              lock("integration-test-gke") {
+                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+                sh 'cd collector && make gke-connect-to-cluster'
+                sh 'cd collector && make clean-cluster'
+                sh 'cd collector && make integration-test'
+                sh 'cd collector && make clean-cluster'
+              }
+            }
+          }
+        }
+        stage("EKS Integration Test") {
+          agent {
+            label "worker-2"
+          }
+          options {
+            timeout(time: 30, unit: 'MINUTES')
+          }
+          tools {
+            go 'Go 1.18'
+          }
+          environment {
+            PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+            DOCKER_IMAGE = "kubernetes-collector-snapshot"
+            AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
+            AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+            INTEGRATION_TEST_ARGS="all"
+            INTEGRATION_TEST_BUILD="ci"
+          }
+          steps {
+            withEnv(["PATH+GO=${HOME}/go/bin"]) {
+              lock("integration-test-eks") {
+                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+                sh 'cd collector && make target-eks'
+                sh 'cd collector && make clean-cluster'
+                sh 'cd collector && make integration-test'
+                sh 'cd collector && make clean-cluster'
+              }
+            }
+          }
+        }
+        stage("AKS Integration Test") {
+          agent {
+            label "worker-3"
+          }
+          options {
+            timeout(time: 30, unit: 'MINUTES')
+          }
+          tools {
+            go 'Go 1.18'
+          }
+          environment {
+            AKS_CLUSTER_NAME = "k8po-ci"
+            PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+            DOCKER_IMAGE = "kubernetes-collector-snapshot"
+            INTEGRATION_TEST_ARGS="real-proxy-metrics"
+            INTEGRATION_TEST_BUILD="ci"
+          }
+          steps {
+            withEnv(["PATH+GO=${HOME}/go/bin"]) {
+             lock("integration-test-aks") {
+               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+                 sh 'cd collector && kubectl config use k8po-ci'
+                 sh 'cd collector && make clean-cluster'
+                 sh 'cd collector && make integration-test'
+                 sh 'cd collector && make clean-cluster'
+               }
+             }
+            }
+          }
+        }
+      }
+    }
 
     stage("Run Operator Integration Tests") {
       environment {
@@ -268,55 +268,55 @@ pipeline {
           }
         }
 
-//         stage("EKS") {
-//           agent {
-//             label "worker-2"
-//           }
-//           options {
-//             timeout(time: 30, unit: 'MINUTES')
-//           }
-//           environment {
-//             GCP_CREDS = credentials("GCP_CREDS")
-//             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
-//             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-//           }
-//           steps {
-//             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-//             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-//             sh 'cd operator && make semver-cli'
-//             lock("integration-test-eks") {
-//               sh 'cd operator && make target-eks'
-//               sh 'cd operator && make clean-cluster'
-//               sh 'cd operator && make integration-test'
-//               sh 'cd operator && make clean-cluster'
-//             }
-//           }
-//         }
+        stage("EKS") {
+          agent {
+            label "worker-2"
+          }
+          options {
+            timeout(time: 30, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
+            AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+          }
+          steps {
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+            sh 'cd operator && make semver-cli'
+            lock("integration-test-eks") {
+              sh 'cd operator && make target-eks'
+              sh 'cd operator && make clean-cluster'
+              sh 'cd operator && make integration-test'
+              sh 'cd operator && make clean-cluster'
+            }
+          }
+        }
 
-//         stage("AKS") {
-//           agent {
-//             label "worker-3"
-//           }
-//           options {
-//             timeout(time: 30, unit: 'MINUTES')
-//           }
-//           environment {
-//             GCP_CREDS = credentials("GCP_CREDS")
-//             AKS_CLUSTER_NAME = "k8po-ci"
-//           }
-//           steps {
-//             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-//             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-//             sh 'cd operator && make semver-cli'
-//             lock("integration-test-aks") {
-//               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-//                 sh 'cd operator && kubectl config use k8po-ci'
-//                 sh 'cd operator && make clean-cluster'
-//                 sh 'cd operator && make integration-test'
-//                 sh 'cd operator && make clean-cluster'
-//               }
-//             }
-//           }
+        stage("AKS") {
+          agent {
+            label "worker-3"
+          }
+          options {
+            timeout(time: 30, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            AKS_CLUSTER_NAME = "k8po-ci"
+          }
+          steps {
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+            sh 'cd operator && make semver-cli'
+            lock("integration-test-aks") {
+              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+                sh 'cd operator && kubectl config use k8po-ci'
+                sh 'cd operator && make clean-cluster'
+                sh 'cd operator && make integration-test'
+                sh 'cd operator && make clean-cluster'
+              }
+            }
+          }
         }
       }
     }
