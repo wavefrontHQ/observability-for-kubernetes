@@ -48,8 +48,10 @@ function main() {
   local image_version="${bumped_version}${VERSION_POSTFIX}"
   local image="${REGISTRY_NAME}/${IMAGE_NAME}:${image_version}"
 
-	sed -i .bak "s%image:.*kubernetes-collector:.*$%image: ${image}%" operator/deploy/internal/collector/3-wavefront-collector-deployment.yaml
-	sed -i .bak "s%image:.*kubernetes-collector:.*$%image: ${image}%" operator/deploy/internal/collector/2-wavefront-collector-daemonset.yaml
+  cp operator/deploy/internal/collector/3-wavefront-collector-deployment.yaml operator/deploy/internal/collector/3-wavefront-collector-deployment.yaml.bak
+  cp operator/deploy/internal/collector/2-wavefront-collector-daemonset.yaml operator/deploy/internal/collector/2-wavefront-collector-daemonset.yaml.bak
+	sed -i "s%image:.*kubernetes-collector:.*$%image: ${image}%" operator/deploy/internal/collector/3-wavefront-collector-deployment.yaml
+	sed -i "s%image:.*kubernetes-collector:.*$%image: ${image}%" operator/deploy/internal/collector/2-wavefront-collector-daemonset.yaml
 }
 
 main "$@"
