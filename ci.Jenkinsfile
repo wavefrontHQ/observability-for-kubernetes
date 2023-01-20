@@ -292,7 +292,7 @@ pipeline {
 //             }
 //           }
 //         }
-//
+
 //         stage("AKS") {
 //           agent {
 //             label "worker-3"
@@ -317,7 +317,7 @@ pipeline {
 //               }
 //             }
 //           }
-//         }
+        }
       }
     }
   }
