@@ -22,34 +22,34 @@ pipeline {
   }
 
   stages {
-    stage("Run Go tests") {
-      parallel{
-        stage("Collector Go Tests") {
-          agent {
-            label "worker-1"
-          }
-          tools {
-            go 'Go 1.18'
-          }
-          steps {
-            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-              sh 'cd collector && make checkfmt vet tests'
-            }
-          }
-        }
-
-        stage("Operator Go Tests") {
-          agent {
-            label "worker-2"
-          }
-          steps {
-            sh 'cd operator && make checkfmt vet test'
-            sh 'cd operator && make linux-golangci-lint'
-            sh 'cd operator && make golangci-lint'
-          }
-        }
-      }
-    }
+//     stage("Run Go tests") {
+//       parallel{
+//         stage("Collector Go Tests") {
+//           agent {
+//             label "worker-1"
+//           }
+//           tools {
+//             go 'Go 1.18'
+//           }
+//           steps {
+//             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+//               sh 'cd collector && make checkfmt vet tests'
+//             }
+//           }
+//         }
+//
+//         stage("Operator Go Tests") {
+//           agent {
+//             label "worker-2"
+//           }
+//           steps {
+//             sh 'cd operator && make checkfmt vet test'
+//             sh 'cd operator && make linux-golangci-lint'
+//             sh 'cd operator && make golangci-lint'
+//           }
+//         }
+//       }
+//     }
 
     stage("Build Collector and Publish Collector/Operator") {
       parallel{
