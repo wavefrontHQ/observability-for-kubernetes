@@ -230,7 +230,7 @@ pipeline {
           stages {
             stage("without customization") {
               steps {
-                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+                sh './scripts/setup-for-integration-test.sh'
                 sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
                 sh 'cd operator && make semver-cli'
                 lock("integration-test-gke") {
@@ -252,7 +252,7 @@ pipeline {
                 INTEGRATION_TEST_ARGS="-r advanced"
               }
               steps {
-                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+                sh './scripts/setup-for-integration-test.sh'
                 sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
                 sh 'cd operator && make semver-cli'
                 lock("integration-test-gke") {
@@ -281,7 +281,7 @@ pipeline {
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
           }
           steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh './scripts/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             sh 'cd operator && make semver-cli'
             lock("integration-test-eks") {
@@ -305,7 +305,7 @@ pipeline {
             AKS_CLUSTER_NAME = "k8po-ci"
           }
           steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh './scripts/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             sh 'cd operator && make semver-cli'
             lock("integration-test-aks") {
