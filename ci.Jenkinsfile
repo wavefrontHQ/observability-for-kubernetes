@@ -21,7 +21,7 @@ pipeline {
       string(name: 'OPERATOR_YAML_RC_SHA', defaultValue: '')
   }
 
-//   stages {
+  stages {
 //     stage("Run Go tests") {
 //       parallel{
 //         stage("Collector Go Tests") {
