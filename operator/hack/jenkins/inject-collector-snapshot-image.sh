@@ -49,7 +49,7 @@ function main() {
   local image="${REGISTRY_NAME}/${IMAGE_NAME}:${image_version}"
 
 	sed -i .bak "s%image:.*kubernetes-collector:.*$%image: ${image}%" operator/deploy/internal/collector/3-wavefront-collector-deployment.yaml
-	rm operator/deploy/internal/collector/3-wavefront-collector-deployment.yaml.bak || true
+	sed -i .bak "s%image:.*kubernetes-collector:.*$%image: ${image}%" operator/deploy/internal/collector/2-wavefront-collector-daemonset.yaml
 }
 
 main "$@"
