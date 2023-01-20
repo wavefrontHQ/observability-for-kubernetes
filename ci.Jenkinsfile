@@ -1,6 +1,6 @@
 pipeline {
   agent {
-    label 'nimbus-cloud'
+    label 'worker-4'
   }
 
   tools {
