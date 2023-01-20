@@ -92,7 +92,7 @@ pipeline {
             TOKEN = credentials('GITHUB_TOKEN')
           }
           steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh './scripts/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             sh 'make semver-cli'
             sh 'cd operator && ./hack/jenkins/inject-collector-snapshot-image.sh -r $PREFIX -n $DOCKER_IMAGE -v $VERSION_POSTFIX'
