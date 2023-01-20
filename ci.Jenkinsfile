@@ -89,10 +89,11 @@ pipeline {
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
             RELEASE_TYPE = "alpha"
+            PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             TOKEN = credentials('GITHUB_TOKEN')
           }
           steps {
-            sh './scripts/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             sh 'make semver-cli'
             sh 'cd operator && ./hack/jenkins/inject-collector-snapshot-image.sh -r $PREFIX -n $DOCKER_IMAGE -v $VERSION_POSTFIX'
@@ -230,7 +231,7 @@ pipeline {
           stages {
             stage("without customization") {
               steps {
-                sh './scripts/setup-for-integration-test.sh'
+                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
                 sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
                 sh 'cd operator && make semver-cli'
                 lock("integration-test-gke") {
@@ -252,7 +253,7 @@ pipeline {
                 INTEGRATION_TEST_ARGS="-r advanced"
               }
               steps {
-                sh './scripts/setup-for-integration-test.sh'
+                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
                 sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
                 sh 'cd operator && make semver-cli'
                 lock("integration-test-gke") {
@@ -281,7 +282,7 @@ pipeline {
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
           }
           steps {
-            sh './scripts/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             sh 'cd operator && make semver-cli'
             lock("integration-test-eks") {
@@ -305,7 +306,7 @@ pipeline {
             AKS_CLUSTER_NAME = "k8po-ci"
           }
           steps {
-            sh './scripts/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             sh 'cd operator && make semver-cli'
             lock("integration-test-aks") {
