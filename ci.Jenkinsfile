@@ -91,12 +91,13 @@ pipeline {
             RELEASE_TYPE = "alpha"
             COLLECTOR_PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             TOKEN = credentials('GITHUB_TOKEN')
+            COLLECTOR_IMAGE = "kubernetes-collector-snapshot"
           }
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             sh 'make semver-cli'
-            sh 'cd operator && ./hack/jenkins/inject-collector-snapshot-image.sh -r $COLLECTOR_PREFIX -n $DOCKER_IMAGE -v $VERSION_POSTFIX'
+            sh 'cd operator && ./hack/jenkins/inject-collector-snapshot-image.sh -r $COLLECTOR_PREFIX -n $COLLECTOR_IMAGE -v $VERSION_POSTFIX'
             sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
             sh 'cd operator && make docker-xplatform-build'
             sh 'cd operator && ./hack/jenkins/restore-collector-images.sh'
