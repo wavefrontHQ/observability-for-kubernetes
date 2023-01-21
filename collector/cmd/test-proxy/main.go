@@ -118,7 +118,7 @@ func serveMetrics(store *metrics.MetricStore) {
 }
 
 func serveLogs(store *logs.Results) {
-	logVerifier := logs.NewLogVerifier(store, expectedTags, nil, allowListFilteredTags, denyListFilteredTags)
+	logVerifier := logs.NewLogVerifier(store, expectedTags, copyStringMap(optionalTags), allowListFilteredTags, denyListFilteredTags)
 
 	logsServeMux := http.NewServeMux()
 	logsServeMux.HandleFunc("/logs/json_array", handlers.LogJsonArrayHandler(logVerifier))

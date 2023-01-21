@@ -39,6 +39,9 @@ func LogJsonArrayHandler(logVerifier *logs.LogVerifier) http.HandlerFunc {
 		// Validate filtering denied tags
 		logVerifier.ValidateDeniedTags(logLines)
 
+		// Validate expected optional tags
+		logVerifier.ValidateExpectedOptionalTags(logLines)
+
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -67,6 +70,9 @@ func LogJsonLinesHandler(logVerifier *logs.LogVerifier) http.HandlerFunc {
 
 		// Validate filtering denied tags
 		logVerifier.ValidateDeniedTags(logLines)
+
+		// Validate expected optional tags
+		logVerifier.ValidateExpectedOptionalTags(logLines)
 
 		w.WriteHeader(http.StatusOK)
 	}
