@@ -51,7 +51,7 @@ pipeline {
       }
     }
 
-    stage("Build and publish Collector") {
+    stage("Build Collector and Publish Collector/Operator") {
       parallel{
         stage("Test Openshift build") {
           agent {
@@ -62,7 +62,7 @@ pipeline {
           }
         }
 
-        stage("Publish") {
+        stage("Publish Collector") {
           agent {
             label "worker-2"
           }
@@ -71,7 +71,6 @@ pipeline {
           }
           environment {
             RELEASE_TYPE = "alpha"
-            VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
             HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
@@ -79,9 +78,32 @@ pipeline {
           steps {
             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
                sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
-               sh 'cd collector && make semver-cli'
+               sh 'make semver-cli'
                sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
                sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+            }
+          }
+        }
+
+        stage("Publish Operator") {
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            RELEASE_TYPE = "alpha"
+            COLLECTOR_PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+            TOKEN = credentials('GITHUB_TOKEN')
+            COLLECTOR_IMAGE = "kubernetes-collector-snapshot"
+          }
+          steps {
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+            sh 'make semver-cli'
+            sh 'cd operator && ./hack/jenkins/inject-collector-snapshot-image.sh -r $COLLECTOR_PREFIX -n $COLLECTOR_IMAGE -v $VERSION_POSTFIX'
+            sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+            sh 'cd operator && make docker-xplatform-build'
+            sh 'cd operator && ./hack/jenkins/restore-collector-images.sh'
+            sh 'cd operator && ./hack/jenkins/create-rc-ci.sh'
+            script {
+              env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
             }
           }
         }
@@ -106,10 +128,8 @@ pipeline {
             GCP_CREDS = credentials("GCP_CREDS")
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
             GCP_ZONE="a"
-            VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
-            WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
             INTEGRATION_TEST_ARGS="all"
             INTEGRATION_TEST_BUILD="ci"
           }
@@ -136,12 +156,10 @@ pipeline {
             go 'Go 1.18'
           }
           environment {
-            VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-            WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
             INTEGRATION_TEST_ARGS="all"
             INTEGRATION_TEST_BUILD="ci"
           }
@@ -169,10 +187,8 @@ pipeline {
           }
           environment {
             AKS_CLUSTER_NAME = "k8po-ci"
-            VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
-            WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
             INTEGRATION_TEST_ARGS="real-proxy-metrics"
             INTEGRATION_TEST_BUILD="ci"
           }
@@ -189,28 +205,6 @@ pipeline {
              }
             }
           }
-        }
-      }
-    }
-
-    stage("Publish Operator") {
-      agent {
-        label "worker-1"
-      }
-      environment {
-        GCP_CREDS = credentials("GCP_CREDS")
-        RELEASE_TYPE = "alpha"
-        TOKEN = credentials('GITHUB_TOKEN')
-      }
-      steps {
-        sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-        sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-        sh 'cd operator && make semver-cli'
-        sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-        sh 'cd operator && make docker-xplatform-build'
-        sh 'operator/hack/jenkins/create-rc-ci.sh'
-        script {
-          env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
         }
       }
     }
@@ -287,6 +281,7 @@ pipeline {
             GCP_CREDS = credentials("GCP_CREDS")
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+            INTEGRATION_TEST_ARGS="-r advanced"
           }
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
