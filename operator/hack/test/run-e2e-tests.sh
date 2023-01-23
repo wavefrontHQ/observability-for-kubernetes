@@ -3,6 +3,7 @@
 REPO_ROOT=$(git rev-parse --show-toplevel)/operator
 source ${REPO_ROOT}/hack/test/k8s-utils.sh
 NS=observability-system
+NO_CLEANUP=false
 
 function setup_test() {
   local type=$1
@@ -83,9 +84,9 @@ function run_unhealthy_checks() {
 
 function clean_up_test() {
   local type=$1
-  echo "Cleaning Up ..."
+  echo "Cleaning Up Test '$type' ..."
 
-  kubectl delete -f hack/test/_v1alpha1_wavefront_test.yaml --timeout=10s
+  kubectl delete -f hack/test/_v1alpha1_wavefront_test.yaml
 
   wait_for_proxy_termination "$NS"
 }
@@ -258,6 +259,8 @@ function run_logging_integration_checks() {
   missingExpectedTags="$(jq .missingExpectedTags "${RES}")"
   missingExpectedTagsCount="$(jq .missingExpectedTagsCount "${RES}")"
 
+  missingExpectedOptionalTags="$(jq .missingExpectedOptionalTagsMap "${RES}")"
+
   emptyExpectedTags="$(jq .emptyExpectedTags "${RES}")"
   emptyExpectedTagsCount="$(jq .emptyExpectedTagsCount "${RES}")"
 
@@ -271,6 +274,13 @@ function run_logging_integration_checks() {
 
   if [[ ${hasValidTags} -ne 1 ]]; then
     red "Invalid tags were found:"
+
+    if [[ ${missingExpectedOptionalTags} != "null" ]]; then
+      echo ""
+      red "* Test proxy did not receive expected optional tags:"
+      red "${missingExpectedOptionalTags}"
+    fi
+
     if [[ ${missingExpectedTags} != "null" ]]; then
       echo ""
       red "* Test proxy received logs (${missingExpectedTagsCount}/${receivedLogCount} logs) that were missing expected tags:"
@@ -362,7 +372,6 @@ function main() {
   local K8S_ENV=$(cd ${REPO_ROOT}/hack/test && ./get-k8s-cluster-env.sh)
   local CONFIG_CLUSTER_NAME=$(create_cluster_name)
   local tests_to_run=()
-	NO_CLEANUP=false
 
   while getopts ":t:c:v:n:r:d:e" opt; do
     case $opt in
