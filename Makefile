@@ -10,3 +10,23 @@ semver-cli: $(SEMVER_CLI_BIN)
 
 $(SEMVER_CLI_BIN):
 	@(CGO_ENABLED=0 go install github.com/davidrjonas/semver-cli@latest)
+
+# create a new branch from main
+# usage: make branch JIRA=XXXX OR make branch NAME=YYYY
+.PHONY: branch
+branch:
+	$(eval NAME := $(if $(JIRA),K8SSAAS-$(JIRA),$(NAME)))
+	@if [ -z "$(NAME)" ]; then \
+		echo "usage: make branch JIRA=XXXX OR make branch NAME=YYYY"; \
+		exit 1; \
+	fi
+	git stash
+	git checkout main
+	git pull
+	git checkout -b $(NAME)
+
+.PHONY: rebase
+rebase:
+	git fetch origin
+	git rebase origin/main
+	git log --oneline -n 10
