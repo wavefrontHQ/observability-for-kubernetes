@@ -1,7 +1,8 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/operator
-source ${REPO_ROOT}/hack/test/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT_OPERATOR=${REPO_ROOT}/operator
+source ${REPO_ROOT_OPERATOR}/hack/test/k8s-utils.sh
 NS=observability-system
 
 function setup_test() {
@@ -13,7 +14,7 @@ function setup_test() {
 
   wait_for_cluster_ready "$NS"
 
-  sed "s/YOUR_CLUSTER_NAME/$cluster_name/g" ${REPO_ROOT}/hack/test/deploy/scenarios/wavefront-$type.yaml |
+  sed "s/YOUR_CLUSTER_NAME/$cluster_name/g" ${REPO_ROOT_OPERATOR}/hack/test/deploy/scenarios/wavefront-$type.yaml |
     sed "s/YOUR_WAVEFRONT_URL/$wf_url/g" |
     sed "s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" |
     sed "s/YOUR_NAMESPACE/${NS}/g" >hack/test/_v1alpha1_wavefront_test.yaml
@@ -28,7 +29,7 @@ function run_test_wavefront_metrics() {
   local cluster_name=${CONFIG_CLUSTER_NAME}-$type
   echo "Running test wavefront metrics, cluster_name $cluster_name ..."
 
-  ${REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t ${WAVEFRONT_TOKEN} -n $cluster_name -e "$type-test.sh" -o ${VERSION}
+  ${REPO_ROOT_OPERATOR}/hack/test/test-wavefront-metrics.sh -t ${WAVEFRONT_TOKEN} -n $cluster_name -e "$type-test.sh" -o ${VERSION}
 }
 
 function run_health_checks() {
@@ -118,7 +119,7 @@ function run_static_analysis() {
 
   local kube_lint_results_file=$(mktemp)
   local kube_lint_check_errors=$(mktemp)
-  ${REPO_ROOT}/bin/kube-linter lint "$resources_yaml_file" --format json 1>"$kube_lint_results_file" 2>/dev/null || true
+  ${REPO_ROOT_OPERATOR}/bin/kube-linter lint "$resources_yaml_file" --format json 1>"$kube_lint_results_file" 2>/dev/null || true
 
   local current_lint_errors="$(jq '.Reports | length' "$kube_lint_results_file")"
   yellow "Kube linter error count: ${current_lint_errors}"
@@ -143,7 +144,7 @@ function run_static_analysis() {
   echo "Running static analysis: kube-score"
   local kube_score_results_file=$(mktemp)
   local kube_score_critical_errors=$(mktemp)
-  ${REPO_ROOT}/bin/kube-score score "$resources_yaml_file" --ignore-test pod-networkpolicy --output-format ci >"$kube_score_results_file" || true
+  ${REPO_ROOT_OPERATOR}/bin/kube-score score "$resources_yaml_file" --ignore-test pod-networkpolicy --output-format ci >"$kube_score_results_file" || true
 
   grep '\[CRITICAL\]' "$kube_score_results_file" >"$kube_score_critical_errors"
   local current_score_errors=$(cat "$kube_score_critical_errors" | wc -l)
@@ -301,6 +302,24 @@ function run_logging_integration_checks() {
   echo "Integration test complete. ${receivedLogCount} logs were checked."
 }
 
+function run_metrics_integration_checks() {
+  printf "Running metrics checks with test-proxy ..."
+
+  ."${REPO_ROOT}"/collector/hack/test/deploy/deploy-targets.sh
+  wait_for_cluster_ready "collector-targets"
+
+  # send request to the fake proxy control endpoint and check status code for success
+  kill $(jobs -p) &>/dev/null || true
+  sleep 3
+  kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &
+  trap 'kill $(jobs -p) &>/dev/null || true' EXIT
+  sleep 3
+
+  RES=$(mktemp)
+
+  echo "Metrics integration test complete."
+}
+
 function run_test() {
   local type=$1
   shift
@@ -332,6 +351,10 @@ function run_test() {
     run_logging_integration_checks
   fi
 
+  if [[ " ${checks[*]} " =~ " metrics-integration-checks " ]]; then
+    run_metrics_integration_checks
+  fi
+
 	if ! $NO_CLEANUP; then
 		clean_up_test $type
 	fi
@@ -358,8 +381,8 @@ function main() {
 
   local WAVEFRONT_URL="https:\/\/nimba.wavefront.com"
   local WF_CLUSTER=nimba
-  local VERSION=$(cat ${REPO_ROOT}/release/OPERATOR_VERSION)
-  local K8S_ENV=$(cd ${REPO_ROOT}/hack/test && ./get-k8s-cluster-env.sh)
+  local VERSION=$(cat ${REPO_ROOT_OPERATOR}/release/OPERATOR_VERSION)
+  local K8S_ENV=$(cd ${REPO_ROOT_OPERATOR}/hack/test && ./get-k8s-cluster-env.sh)
   local CONFIG_CLUSTER_NAME=$(create_cluster_name)
   local tests_to_run=()
 	NO_CLEANUP=false
@@ -412,7 +435,7 @@ function main() {
     CONFIG_CLUSTER_NAME=$(create_cluster_name)
   fi
 
-  cd "$REPO_ROOT"
+  cd "$REPO_ROOT_OPERATOR"
 
   if [[ " ${tests_to_run[*]} " =~ " validation-errors " ]]; then
     run_test "validation-errors" "unhealthy"
@@ -422,6 +445,10 @@ function main() {
   fi
   if [[ " ${tests_to_run[*]} " =~ " logging-integration " ]]; then
     run_test "logging-integration" "logging-integration-checks"
+  fi
+  if [[ "${tests_to_run[*]}" =~ "default" ]]; then
+    run_fake_proxy_test "all-metrics" "${REPO_ROOT_OPERATOR}/deploy/kubernetes/5-collector-daemonset.yaml"
+    ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ " ${tests_to_run[*]} " =~ " allow-legacy-install " ]]; then
     run_test "allow-legacy-install" "healthy"
