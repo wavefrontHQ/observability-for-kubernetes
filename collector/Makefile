@@ -27,7 +27,7 @@ SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semve
 
 VERSION_POSTFIX?=-dev-$(shell whoami)-$(shell git rev-parse --short HEAD)
 RELEASE_VERSION?=$(shell cat ./release/VERSION)
-VERSION?=$(shell semver-cli inc patch $(RELEASE_VERSION))$(VERSION_POSTFIX)
+VERSION?=$(shell ../scripts/get-bumped-version.sh -s patch -v $(RELEASE_VERSION))$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
@@ -155,7 +155,7 @@ $(GO_IMPORTS_BIN):
 semver-cli: $(SEMVER_CLI_BIN)
 
 $(SEMVER_CLI_BIN):
-	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go install github.com/davidrjonas/semver-cli@latest)
+	@(cd ../ && make semver-cli)
 
 %.peg.go: %.peg
 	peg -switch -inline $<
