@@ -5,6 +5,7 @@
 *.dll
 *.so
 *.dylib
+deploy/internal/collector/*.bak
 bin
 /build
 testbin/*

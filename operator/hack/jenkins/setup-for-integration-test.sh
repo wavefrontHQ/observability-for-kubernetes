@@ -50,7 +50,6 @@ if ! [ -x "$(command -v jq)" ]; then
   chmod +x ./jq
   sudo mv ./jq /usr/local/bin
 fi
-
 #
 # yq
 #
