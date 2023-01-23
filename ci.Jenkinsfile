@@ -281,6 +281,7 @@ pipeline {
             GCP_CREDS = credentials("GCP_CREDS")
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+            INTEGRATION_TEST_ARGS="-r advanced"
           }
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
