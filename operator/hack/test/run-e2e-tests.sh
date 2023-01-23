@@ -305,18 +305,69 @@ function run_logging_integration_checks() {
 function run_metrics_integration_checks() {
   printf "Running metrics checks with test-proxy ..."
 
-  ."${REPO_ROOT}"/collector/hack/test/deploy/deploy-targets.sh
+  local COLLECTOR_TEST_DIR="${REPO_ROOT}"/collector/hack/test
+  local METRICS_FILE_NAME="all-metrics"
+
+  "${COLLECTOR_TEST_DIR}"/deploy/deploy-targets.sh
   wait_for_cluster_ready "collector-targets"
+
+  kubectl config set-context --current --namespace="$NS"
+  kubectl apply -f "${COLLECTOR_TEST_DIR}"/deploy/mysql-config.yaml
+  kubectl apply -f "${COLLECTOR_TEST_DIR}"/deploy/memcached-config.yaml
+  kubectl config set-context --current --namespace=default
 
   # send request to the fake proxy control endpoint and check status code for success
   kill $(jobs -p) &>/dev/null || true
   sleep 3
   kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &
   trap 'kill $(jobs -p) &>/dev/null || true' EXIT
-  sleep 3
+  sleep 70
 
   RES=$(mktemp)
+  if [ -f "${COLLECTOR_TEST_DIR}/overlays/test-$K8S_ENV/metrics/${METRICS_FILE_NAME}.jsonl" ]; then
+    cat "${COLLECTOR_TEST_DIR}/files/${METRICS_FILE_NAME}.jsonl" "${COLLECTOR_TEST_DIR}/overlays/test-$K8S_ENV/metrics/${METRICS_FILE_NAME}.jsonl" >"${COLLECTOR_TEST_DIR}/files/combined-metrics.jsonl"
+  else
+    cat "${COLLECTOR_TEST_DIR}/files/${METRICS_FILE_NAME}.jsonl" >"${COLLECTOR_TEST_DIR}/files/combined-metrics.jsonl"
+  fi
+  while true; do # wait until we get a good connection
+    RES_CODE=$(curl -v --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$COLLECTOR_TEST_DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
+    [[ $RES_CODE -lt 200 ]] || break
+  done
 
+  if [[ $RES_CODE -gt 399 ]]; then
+    red "INVALID METRICS"
+    jq -r '.[]' "${RES}"
+    exit 1
+  fi
+
+  DIFF_COUNT=$(jq "(.Missing | length) + (.Unwanted | length)" "$RES")
+  EXIT_CODE=0
+
+  jq -c '.Missing[]' "$RES" | sort >${COLLECTOR_TEST_DIR}/missing.jsonl
+  jq -c '.Extra[]' "$RES" | sort >${COLLECTOR_TEST_DIR}/extra.jsonl
+  jq -c '.Unwanted[]' "$RES" | sort >${COLLECTOR_TEST_DIR}/unwanted.jsonl
+
+  echo "$RES"
+  if [[ $DIFF_COUNT -gt 0 ]]; then
+    red "Missing: $(jq "(.Missing | length)" "$RES")"
+    if [[ $(jq "(.Missing | length)" "$RES") -le 10 ]]; then
+      cat ${COLLECTOR_TEST_DIR}/missing.jsonl
+    fi
+    red "Unwanted: $(jq "(.Unwanted | length)" "$RES")"
+    if [[ $(jq "(.Unwanted | length)" "$RES") -le 10 ]]; then
+      cat ${COLLECTOR_TEST_DIR}/unwanted.jsonl
+    fi
+    red "Extra: $(jq "(.Extra | length)" "$RES")"
+    red "FAILED: METRICS OUTPUT DID NOT MATCH"
+    if which pbcopy >/dev/null; then
+      echo "$RES" | pbcopy
+    fi
+    exit 1
+  else
+    green "SUCCEEDED"
+  fi
+
+  kill $(jobs -p) &>/dev/null || true
   echo "Metrics integration test complete."
 }
 
@@ -424,6 +475,7 @@ function main() {
       "basic"
       "advanced"
       "logging-integration"
+      "metrics-integration"
     )
   fi
 
@@ -446,9 +498,8 @@ function main() {
   if [[ " ${tests_to_run[*]} " =~ " logging-integration " ]]; then
     run_test "logging-integration" "logging-integration-checks"
   fi
-  if [[ "${tests_to_run[*]}" =~ "default" ]]; then
-    run_fake_proxy_test "all-metrics" "${REPO_ROOT_OPERATOR}/deploy/kubernetes/5-collector-daemonset.yaml"
-    ${SCRIPT_DIR}/clean-deploy.sh
+  if [[ " ${tests_to_run[*]} " =~ " metrics-integration " ]]; then
+    run_test "metrics-integration" "metrics-integration-checks"
   fi
   if [[ " ${tests_to_run[*]} " =~ " allow-legacy-install " ]]; then
     run_test "allow-legacy-install" "healthy"
