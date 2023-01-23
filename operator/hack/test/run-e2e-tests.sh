@@ -3,6 +3,7 @@
 REPO_ROOT=$(git rev-parse --show-toplevel)/operator
 source ${REPO_ROOT}/hack/test/k8s-utils.sh
 NS=observability-system
+NO_CLEANUP=false
 
 function setup_test() {
   local type=$1
@@ -85,7 +86,7 @@ function clean_up_test() {
   local type=$1
   echo "Cleaning Up ..."
 
-  kubectl delete -f hack/test/_v1alpha1_wavefront_test.yaml --timeout=10s
+  kubectl delete -f hack/test/_v1alpha1_wavefront_test.yaml
 
   wait_for_proxy_termination "$NS"
 }
@@ -371,7 +372,6 @@ function main() {
   local K8S_ENV=$(cd ${REPO_ROOT}/hack/test && ./get-k8s-cluster-env.sh)
   local CONFIG_CLUSTER_NAME=$(create_cluster_name)
   local tests_to_run=()
-	NO_CLEANUP=false
 
   while getopts ":t:c:v:n:r:d:e" opt; do
     case $opt in
