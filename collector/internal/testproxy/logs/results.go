@@ -9,6 +9,8 @@ type Results struct {
 	HasValidFormat int `json:"hasValidFormat"`
 	HasValidTags   int `json:"hasValidTags"`
 
+	MissingExpectedOptionalTagsMap map[string]string `json:"missingExpectedOptionalTagsMap"`
+
 	MissingExpectedTagsMap   map[string]interface{} `json:"-"`
 	MissingExpectedTags      []string               `json:"missingExpectedTags"`
 	MissingExpectedTagsCount int                    `json:"missingExpectedTagsCount"`
@@ -32,14 +34,15 @@ type Results struct {
 //
 // They need to be exposed for converting to JSON and we use
 // the fact that they are exposed for ease of testing.
-func NewLogResults() *Results {
+func NewLogResults(optionalTags map[string]string) *Results {
 	return &Results{
-		HasValidFormat:          -1,
-		HasValidTags:            -1,
-		MissingExpectedTagsMap:  make(map[string]interface{}),
-		EmptyExpectedTagsMap:    make(map[string]interface{}),
-		UnexpectedDeniedTagsMap: make(map[string]interface{}),
-		mu:                      &sync.Mutex{},
+		HasValidFormat:                 -1,
+		HasValidTags:                   -1,
+		MissingExpectedOptionalTagsMap: optionalTags,
+		MissingExpectedTagsMap:         make(map[string]interface{}),
+		EmptyExpectedTagsMap:           make(map[string]interface{}),
+		UnexpectedDeniedTagsMap:        make(map[string]interface{}),
+		mu:                             &sync.Mutex{},
 	}
 }
 
@@ -135,6 +138,9 @@ func (l *Results) AddReceivedCount(count int) {
 }
 
 func (l *Results) ToJSON() (output []byte, err error) {
+	if len(l.MissingExpectedOptionalTagsMap) > 0 {
+		l.SetHasValidTags(false)
+	}
 	l.MissingExpectedTags = mapKeysToSlice(l.MissingExpectedTagsMap)
 	l.EmptyExpectedTags = mapKeysToSlice(l.EmptyExpectedTagsMap)
 	l.UnexpectedDeniedTags = mapKeysToSlice(l.UnexpectedDeniedTagsMap)
@@ -149,4 +155,11 @@ func mapKeysToSlice(m map[string]interface{}) []string {
 	}
 
 	return output
+}
+
+func (l *Results) RemoveExpectedOptionalTag(tag string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	delete(l.MissingExpectedOptionalTagsMap, tag)
 }
