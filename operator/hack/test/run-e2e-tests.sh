@@ -84,7 +84,7 @@ function run_unhealthy_checks() {
 
 function clean_up_test() {
   local type=$1
-  echo "Cleaning Up ..."
+  echo "Cleaning Up Test '$type' ..."
 
   kubectl delete -f hack/test/_v1alpha1_wavefront_test.yaml
 
