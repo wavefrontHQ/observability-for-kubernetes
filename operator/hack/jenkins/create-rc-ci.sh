@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/operator
-cd "${REPO_ROOT}"
-
 git config --global user.email "svc.wf-jenkins@vmware.com"
 git config --global user.name "svc.wf-jenkins"
 git remote set-url origin https://${TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git
