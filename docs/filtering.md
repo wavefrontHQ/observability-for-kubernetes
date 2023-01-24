@@ -18,6 +18,7 @@ The Wavefront Collector for Kubernetes supports filtering metrics before they ar
   * **metricTagDenyList**: Map of tag names to list of glob patterns. Metrics containing these tag keys and values will be dropped.
   * **tagInclude**: List of glob patterns. Tags with matching keys will be included. All other tags will be excluded.
   * **tagExclude**: List of glob patterns. Tags with matching keys will be excluded.
+  * **tagGuaranteeList**: List of glob patterns. Tags that are guaranteed to not be removed as part of limiting the point tags to the 20 tag limit. Supersedes the `tagInclude` and `tagExclude` lists.
 
 Filtering can be enabled on the sink or sources. Where it is applied controls the scope of metrics towards which the filtering applies.
 
@@ -34,7 +35,7 @@ sinks:
     - 'kube.dns.go.*'
     - 'kube.apiserver.go.*'
 
-    # Allow metrics that have an environment tag of production or staging
+    # Allow metrics that have an environment tag of production or staging.
     metricTagAllowList:
       env:
       - 'prod*'
@@ -44,6 +45,10 @@ sinks:
     metricTagDenyList:
       env:
       - 'test*'
+
+    # Guarantees that metrics that have an environment tag of production will not be removed.
+    tagGuaranteeList:
+    - 'prod*'
 ```
 
 Filtering applied on a source applies only to metrics collected by that source:

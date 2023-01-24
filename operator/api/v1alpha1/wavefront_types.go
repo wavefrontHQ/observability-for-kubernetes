@@ -320,6 +320,11 @@ type Filters struct {
 
 	// List of metric patterns to allow
 	AllowList []string `json:"allowList,omitempty"`
+
+	// List of tags that are guaranteed to not be removed
+	TagGuaranteeList []string `json:"tagGuaranteeList,omitempty"`
+
+	// TODO: metricTagAllowList, metricTagDenyList, tagInclude, and tagExclude
 }
 
 type LogFilters struct {
