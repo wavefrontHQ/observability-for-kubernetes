@@ -1,3 +1,5 @@
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
 function green() {
   echo -e $'\e[32m'"${1}"$'\e[0m'
 }
@@ -46,10 +48,10 @@ function wait_for_proxy_termination() {
 }
 
 function create_cluster_name() {
-  local K8S_ENV=$(cd ${REPO_ROOT}/hack/test && ./get-k8s-cluster-env.sh)
+  local K8S_ENV=$(cd ${REPO_ROOT}/operator/hack/test && ./get-k8s-cluster-env.sh)
   echo $(whoami)-${K8S_ENV}-operator-$(date +"%y%m%d")
 }
 
 function k8s_env() {
-  echo $(cd ${REPO_ROOT}/hack/test && ./get-k8s-cluster-env.sh)
+  echo $(cd ${REPO_ROOT}/operator/hack/test && ./get-k8s-cluster-env.sh)
 }
