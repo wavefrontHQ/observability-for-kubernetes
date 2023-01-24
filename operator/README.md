@@ -157,9 +157,9 @@ You can see all configuration options in the [wavefront-full-config.yaml](./depl
 The operator deploys a data export component (wavefront-proxy) which can recieve log data and relay it to wavefront.
 You will need to configure your logs shipper to send logs to the data export component (wavefront-proxy) deployed by the operator.
 
-Here is an Wavefront Custom Resource [example config](./deploy/kubernetes/scenarios/wavefront-bring-your-own-logs-shipper.yaml) for this scenario.
+Here is a Wavefront Custom Resource [example config](./deploy/kubernetes/scenarios/wavefront-bring-your-own-logs-shipper.yaml) for this scenario.
 
-Inorder to make the best use of your logging solution on kubernetes, we recommend having the below kubernetes log attributes
+In order to make the best use of your logging solution on kubernetes, we recommend having the below kubernetes log attributes
 
 | Log attribute key   | Description                  |
 |---------------------|------------------------------|
