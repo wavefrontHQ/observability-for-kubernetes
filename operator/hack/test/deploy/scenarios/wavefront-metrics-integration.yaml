@@ -114,7 +114,28 @@ data:
 
       kubernetes_control_plane_source:
         collection:
-          interval: 120s
+          interval: 20s
+
+      kubernetes_cadvisor_source:
+        prefix: 'kubernetes.cadvisor.'
+        filters:
+          metricAllowList:
+          - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
+          - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
+    
+      telegraf_sources:
+      # enable all telegraf plugins
+      - plugins: [ ]
+      - plugins:  [ mysql ]
+        conf: |
+            servers = ["root:password123@tcp(mysql-release.collector-targets.svc.cluster.local:3306)/?tls=false"]
+            table_schema_databases                    = []
+            gather_table_io_waits                     = true
+            gather_table_lock_waits                   = true
+            gather_index_io_waits                     = true
+        filters:
+          tagExclude:
+          - server
 
     discovery:
       enable_runtime_plugins: true
@@ -180,6 +201,6 @@ spec:
       enable: true
       customConfig: wavefront-collector-config
   dataExport:
-    externalWavefrontProxy:
-      url: test-proxy:2878
+    wavefrontProxy:
+      enable: true
 
