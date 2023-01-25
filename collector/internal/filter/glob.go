@@ -91,6 +91,7 @@ func (gf *globFilter) MatchMetric(name string, tags map[string]string) bool {
 
 func (gf *globFilter) MatchTag(tagName string) bool {
 	matches := true
+	//TODO: if tagName is part of tagGuaranteeList, return true;
 	if gf.tagInclude != nil {
 		matches = matches && gf.tagInclude.Match(tagName)
 	}
