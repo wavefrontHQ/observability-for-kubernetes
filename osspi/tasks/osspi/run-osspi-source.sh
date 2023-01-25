@@ -10,6 +10,12 @@ if [ "${GITHUB_KEY+defined}" = defined ] && [ -n "$GITHUB_KEY" ]; then
   source "$here/add-key.sh"
 fi
 
+if [ "${SCAN_PATH+defined}" = defined ] && [ -n "$SCAN_PATH" ]; then
+  echo "SCAN_PATH defined"
+else
+  SCAN_PATH=""
+fi
+
 echo "Running OSSPI"
 
 INTERACTION_TYPE='Distributed - Calling Existing Classes'
@@ -59,7 +65,7 @@ fi
 echo "Repo commit (and package group version): $repo_commit"
 osm_package_group_version="$repo_commit"
 
-pushd "$REPO"
+pushd "$REPO/$SCAN_PATH"
   echo "$USERNAME" "$API_KEY" > apiKeyFile
 
   if [ "${PREPARE+defined}" = defined ] && [ -n "$PREPARE" ]; then

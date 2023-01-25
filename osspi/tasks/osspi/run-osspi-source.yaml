@@ -9,6 +9,7 @@ inputs:
   - name: ci_repo
   - name: project_repo
 params:
+  SCAN_PATH:
   REPO:
   API_KEY:
   OSM_ENVIRONMENT: production

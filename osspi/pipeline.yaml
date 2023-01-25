@@ -11,6 +11,8 @@ resources:
     source:
       uri: git@github.com:wavefrontHQ/observability-for-kubernetes.git
       private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+      branch: K8SSAAS-1393-osspi-pipeline-setup
+
 jobs:
   - name: update-self
     plan:
@@ -30,8 +32,9 @@ jobs:
           file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
           input_mapping:
             ci_repo: observability-for-kubernetes
-            project_repo: observability-for-kubernetes/collector
+            project_repo: observability-for-kubernetes
           params:
+            SCAN_PATH: collector
             REPO: project_repo
             API_KEY: ((osspi.osm-prod-api-key))
             USERNAME: ((osspi.osm-prod-username))
@@ -66,8 +69,9 @@ jobs:
           file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
           input_mapping:
             ci_repo: observability-for-kubernetes
-            project_repo: observability-for-kubernetes/operator
+            project_repo: observability-for-kubernetes
           params:
+            SCAN_PATH: operator
             REPO: project_repo
             API_KEY: ((osspi.osm-prod-api-key))
             USERNAME: ((osspi.osm-prod-username))
