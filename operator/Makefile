@@ -20,7 +20,7 @@ VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
 
 RELEASE_VERSION?=$(shell cat ./release/OPERATOR_VERSION)
-VERSION?=$(shell semver-cli inc patch $(RELEASE_VERSION))$(VERSION_POSTFIX)
+VERSION?=$(shell ../scripts/get-bumped-version.sh -s patch -v $(RELEASE_VERSION))$(VERSION_POSTFIX)
 IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 NS?=observability-system
 LDFLAGS=-X main.version=$(VERSION)
@@ -79,7 +79,7 @@ $(GO_IMPORTS_BIN):
 semver-cli: $(SEMVER_CLI_BIN)
 
 $(SEMVER_CLI_BIN):
-	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go install github.com/davidrjonas/semver-cli@latest)
+	@(cd ../ && make semver-cli)
 
 .PHONY: manifests
 manifests: controller-gen config/crd/bases/wavefront.com_wavefronts.yaml
@@ -334,7 +334,7 @@ target-eks: docker-login-eks
 # create a new branch from main
 # usage: make branch JIRA=XXXX OR make branch NAME=YYYY
 branch:
-	$(eval NAME := $(if $(JIRA),K8SAAS-$(JIRA),$(NAME)))
+	$(eval NAME := $(if $(JIRA),K8SSAAS-$(JIRA),$(NAME)))
 	@if [ -z "$(NAME)" ]; then \
 		echo "usage: make branch JIRA=XXXX OR make branch NAME=YYYY"; \
 		exit 1; \

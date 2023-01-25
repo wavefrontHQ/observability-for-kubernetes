@@ -28,7 +28,7 @@ spec:
                       - amd64
       containers:
         - name: test-proxy
-          image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:logging-2.1.1
+          image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:latest
           imagePullPolicy: Always
           command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info", "-mode", "logs", "-logFilePath" , "/logs/test-proxy.log"]
           ports:
@@ -88,3 +88,18 @@ spec:
   dataExport:
     externalWavefrontProxy:
       url: test-proxy:2878
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: observability-system
+  name: output-to-stdout-and-stderr
+  labels:
+    service: output-to-stdout-and-stderr
+    application: output-to-stdout-and-stderr
+spec:
+  containers:
+  - name: count
+    image: busybox
+    args: [/bin/sh, -c,
+           'i=0; while true; do echo "stdout line $i: $(date)\n"; i=$((i+1)); echo "stderr line $i: $(date)\n" 1>&2; sleep 1; done']
