@@ -2,6 +2,8 @@
 
 REPO_ROOT=$(git rev-parse --show-toplevel)/operator
 source ${REPO_ROOT}/hack/test/k8s-utils.sh
+source ${REPO_ROOT}/hack/test/egress-http-proxy/egress-proxy-setup.sh
+
 NS=observability-system
 NO_CLEANUP=false
 
@@ -18,6 +20,11 @@ function setup_test() {
     sed "s/YOUR_WAVEFRONT_URL/$wf_url/g" |
     sed "s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" |
     sed "s/YOUR_NAMESPACE/${NS}/g" >hack/test/_v1alpha1_wavefront_test.yaml
+
+  if [[ "$type" == "with-http-proxy" ]]; then
+    echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
+    yq eval '.stringData.tls-root-ca-bundle = "'"$(< ${REPO_ROOT}/hack/test/egress-http-proxy/mitmproxy-ca-cert.pem)"'"' ${REPO_ROOT}/hack/test/egress-http-proxy/https-proxy-secret.yaml >> hack/test/_v1alpha1_wavefront_test.yaml
+  fi
 
   kubectl apply -f hack/test/_v1alpha1_wavefront_test.yaml
 
@@ -410,6 +417,7 @@ function main() {
       "basic"
       "advanced"
       "logging-integration"
+      "with-http-proxy"
     )
   fi
 
@@ -440,6 +448,11 @@ function main() {
   fi
   if [[ " ${tests_to_run[*]} " =~ " advanced " ]]; then
     run_test "advanced" "health" "test_wavefront_metrics" "logging"
+  fi
+  if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
+    deploy_egress_proxy
+    run_test "with-http-proxy" "health" "test_wavefront_metrics"
+    delete_egress_proxy
   fi
 }
 
