@@ -11,7 +11,6 @@ resources:
     source:
       uri: git@github.com:wavefrontHQ/observability-for-kubernetes.git
       private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
-      branch: K8SSAAS-1393-osspi-pipeline-setup
 
 jobs:
   - name: update-self
