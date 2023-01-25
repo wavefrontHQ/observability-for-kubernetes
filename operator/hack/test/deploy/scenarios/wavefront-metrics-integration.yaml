@@ -59,9 +59,6 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  labels:
-    app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: collector
   name: wavefront-collector-config
   namespace: YOUR_NAMESPACE
 data:
@@ -90,13 +87,21 @@ data:
         filters:
           metricDenyList:
           - 'kubernetes.sys_container.*'
-          - 'kubernetes.node.ephemeral_storage.*'
+          tagExclude:
+          - 'label.kubernetes.io/arch'
 
       internal_stats_source:
         prefix: kubernetes.
+        filters:
+          tagExclude:
+          - 'url'
+    
       kubernetes_state_source:
         prefix: kubernetes.
-
+        filters:
+          tagExclude:
+          - 'label.kubernetes.io/arch'
+    
       kubernetes_control_plane_source:
         collection:
           interval: 20s
@@ -124,30 +129,10 @@ data:
 
     discovery:
       enable_runtime_plugins: true
-
+      annotation_excludes:
+      - labels:
+          please-exclude-from-discovery: ['true']
       plugins:
-      # auto-discover kube DNS
-      - name: kube-dns-discovery
-        type: prometheus
-        selectors:
-          images:
-          - '*kube-dns/sidecar*'
-          labels:
-            k8s-app:
-            - kube-dns
-        port: 10054
-        path: /metrics
-        scheme: http
-        prefix: kube.dns.
-        filters:
-          metricAllowList:
-          - 'kube.dns.http.request.duration.microseconds'
-          - 'kube.dns.http.request.size.bytes'
-          - 'kube.dns.http.requests.total.counter'
-          - 'kube.dns.http.response.size.bytes'
-          - 'kube.dns.kubedns.dnsmasq.*'
-          - 'kube.dns.process.*'
-
       # auto-discover coredns
       - name: coredns-discovery
         type: prometheus
