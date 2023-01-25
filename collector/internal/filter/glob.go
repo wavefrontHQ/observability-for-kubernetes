@@ -21,6 +21,7 @@ type globFilter struct {
 	metricTagDenyList  map[string]glob.Glob
 	tagInclude         glob.Glob
 	tagExclude         glob.Glob
+	tagGuaranteeList   glob.Glob
 }
 
 func NewGlobFilter(cfg Config) Filter {
@@ -31,6 +32,7 @@ func NewGlobFilter(cfg Config) Filter {
 		metricTagDenyList:  MultiCompile(cfg.MetricTagDenyList),
 		tagInclude:         Compile(cfg.TagInclude),
 		tagExclude:         Compile(cfg.TagExclude),
+		tagGuaranteeList:   Compile(cfg.TagGuaranteeList),
 	}
 }
 
@@ -91,7 +93,9 @@ func (gf *globFilter) MatchMetric(name string, tags map[string]string) bool {
 
 func (gf *globFilter) MatchTag(tagName string) bool {
 	matches := true
-	//TODO: if tagName is part of tagGuaranteeList, return true;
+	if gf.tagGuaranteeList != nil && gf.tagGuaranteeList.Match(tagName) {
+		return true
+	}
 	if gf.tagInclude != nil {
 		matches = matches && gf.tagInclude.Match(tagName)
 	}

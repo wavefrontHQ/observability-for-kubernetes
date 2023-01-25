@@ -243,7 +243,7 @@ func TestCleanTags(t *testing.T) {
 			assert.Equal(t, expected, actual)
 		})
 
-		t.Run("GKE example to keep Tags specified in the tagInclude list", func(t *testing.T) {
+		t.Run("GKE example to keep Tags specified in the tagGuaranteeList", func(t *testing.T) {
 			actual := map[string]string{
 				"cluster":                                "mamichael-gke--helm-21114",
 				"nodename":                               "gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
@@ -274,19 +274,18 @@ func TestCleanTags(t *testing.T) {
 				"label.topology.kubernetes.io/region":            "us-central1",
 				"label.topology.kubernetes.io/zone":              "us-central1-c"}
 
-			tagInclude := []string{"label.failure-domain.beta.kubernetes.io/zone"}
+			tagGuaranteeList := []string{"label.failure-domain.beta.kubernetes.io/zone"}
 			expectedCleanedTags := map[string]string{
-				"cluster":         "mamichael-gke--helm-21114",
-				"nodename":        "gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
-				"node_role":       "worker",
-				"os_image":        "Container-Optimized OS from Google",
-				"kubelet_version": "v1.23.8-gke.1900",
-				"pod_cidr":        "10.96.2.0/24",
-				"internal_ip":     "10.40.56.17",
-				"kernel_version":  "5.10.127+",
-				"provider_id":     "gce://wavefront-gcp-dev/us-central1-c/gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
-				"label.cloud.google.com/gke-max-pods-per-node": "110",
-				"label.cloud.google.com/gke-nodepool":          "default-pool",
+				"cluster":                             "mamichael-gke--helm-21114",
+				"nodename":                            "gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
+				"node_role":                           "worker",
+				"os_image":                            "Container-Optimized OS from Google",
+				"kubelet_version":                     "v1.23.8-gke.1900",
+				"pod_cidr":                            "10.96.2.0/24",
+				"internal_ip":                         "10.40.56.17",
+				"kernel_version":                      "5.10.127+",
+				"provider_id":                         "gce://wavefront-gcp-dev/us-central1-c/gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
+				"label.cloud.google.com/gke-nodepool": "default-pool",
 				"label.cloud.google.com/gke-os-distribution":   "cos",
 				"label.cloud.google.com/machine-family":        "e2",
 				"label.kubernetes.io/arch":                     "amd64",
@@ -296,7 +295,7 @@ func TestCleanTags(t *testing.T) {
 				"label.topology.gke.io/zone":                   "us-central1-c",
 				"label.topology.kubernetes.io/region":          "us-central1",
 				"label.failure-domain.beta.kubernetes.io/zone": "us-central1-c"}
-			cleanTags(actual, tagInclude, maxWavefrontTags)
+			cleanTags(actual, tagGuaranteeList, maxWavefrontTags)
 			assert.Equal(t, maxWavefrontTags, len(actual))
 			assert.Equal(t, expectedCleanedTags, actual)
 		})

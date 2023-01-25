@@ -10,6 +10,7 @@ const (
 	MetricTagBlacklist = "metricTagBlacklist"
 	TagInclude         = "tagInclude"
 	TagExclude         = "tagExclude"
+	TagGuaranteeList   = "tagGuaranteeList"
 )
 
 // Configuration for filtering metrics.

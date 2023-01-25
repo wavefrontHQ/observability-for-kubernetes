@@ -23,33 +23,35 @@ var iaasNameRegex = regexp.MustCompile("^label.*gke|azure*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
 // that lists removed tag names by their reason for removal
-func cleanTags(tags map[string]string, tagInclude []string, maxCapacity int) map[string][]string {
+func cleanTags(tags map[string]string, tagGuaranteeList []string, maxCapacity int) map[string][]string {
 	removedReasons := map[string][]string{}
 	removedReasons[emptyReason] = removeEmptyTags(tags)
 	removedReasons[excludeListReason] = excludeTags(tags)
 
 	// Split include tags and adjust maxCapacity
-	tagsToInclude, tagToIncludeSize := splitIncludedTags(tags, tagInclude)
-	if len(tags) > maxCapacity-tagToIncludeSize {
+	tagsToGuarantee, tagsToGuaranteeSize := splitGuaranteedTags(tags, tagGuaranteeList)
+	if len(tags) > maxCapacity-tagsToGuaranteeSize {
 		removedReasons[dedupeReason] = dedupeTagValues(tags, []string{})
 	}
 
 	// remove IaaS label tags is over max capacity
-	if len(tags) > maxCapacity {
-		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-maxCapacity)
-		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity)
+	if len(tags) > maxCapacity-tagsToGuaranteeSize {
+		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-maxCapacity+tagsToGuaranteeSize)
+		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity+tagsToGuaranteeSize)
 	}
-	combineTags(tagsToInclude, tags)
+	combineTags(tagsToGuarantee, tags)
 	return removedReasons
 }
 
 func combineTags(include map[string]string, tags map[string]string) {
-	//TODO
+	for includedTagKey, includedTagVal := range include {
+		tags[includedTagKey] = includedTagVal
+	}
 }
 
-func splitIncludedTags(tags map[string]string, tagInclude []string) (map[string]string, int) {
-	var included map[string]string
-	for _, tagKey := range tagInclude {
+func splitGuaranteedTags(tags map[string]string, tagGuaranteeList []string) (map[string]string, int) {
+	var included = make(map[string]string)
+	for _, tagKey := range tagGuaranteeList {
 		included[tagKey] = tags[tagKey]
 		delete(tags, tagKey)
 	}
