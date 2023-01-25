@@ -10,9 +10,7 @@ if [ "${GITHUB_KEY+defined}" = defined ] && [ -n "$GITHUB_KEY" ]; then
   source "$here/add-key.sh"
 fi
 
-if [ "${SCAN_PATH+defined}" = defined ] && [ -n "$SCAN_PATH" ]; then
-  echo "SCAN_PATH defined"
-else
+if ! { [ "${SCAN_PATH+defined}" = defined ] && [ -n "$SCAN_PATH" ]; }; then
   SCAN_PATH=""
 fi
 

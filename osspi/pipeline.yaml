@@ -39,7 +39,7 @@ jobs:
             API_KEY: ((osspi.osm-prod-api-key))
             USERNAME: ((osspi.osm-prod-username))
             PRODUCT: WavefrontKubernetesCollector
-            VERSION: Test
+            VERSION: Latest
             PREPARE: |
               go mod vendor
             OSSPI_SCANNING_PARAMS: |
@@ -76,7 +76,7 @@ jobs:
             API_KEY: ((osspi.osm-prod-api-key))
             USERNAME: ((osspi.osm-prod-username))
             PRODUCT: Wavefront_K8_Operator
-            VERSION: Test
+            VERSION: Latest
             PREPARE: |
               go mod vendor
             OSSPI_SCANNING_PARAMS: |
@@ -103,6 +103,6 @@ jobs:
             API_KEY: ((osspi.osm-prod-api-key))
             USERNAME: ((osspi.osm-prod-username))
             PRODUCT: Wavefront_K8_Operator
-            VERSION: Test
+            VERSION: Latest
             APPEND: true
 
