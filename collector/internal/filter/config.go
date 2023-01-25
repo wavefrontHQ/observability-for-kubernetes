@@ -33,6 +33,9 @@ type Config struct {
 	// List of glob pattern strings. Tags with matching keys will be excluded.
 	TagExclude []string `yaml:"tagExclude"`
 
+	// List of tag keys. Tags with matching keys will be protected against filtering.
+	TagGuaranteeList []string `yaml:"tagGuaranteeList"`
+
 	// Deprecated: use MetricAllowList instead
 	MetricWhitelist []string `yaml:"metricWhitelist"`
 
