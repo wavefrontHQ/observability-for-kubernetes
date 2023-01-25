@@ -2,7 +2,7 @@
 
 REPO_ROOT=$(git rev-parse --show-toplevel)/operator
 source ${REPO_ROOT}/hack/test/k8s-utils.sh
-source ${REPO_ROOT}/hack/test/egress-http-proxy/egress-proxy-setup.sh
+source ${REPO_ROOT}/hack/test/egress-http-proxy/egress-proxy-setup-functions.sh
 
 NS=observability-system
 NO_CLEANUP=false
@@ -54,6 +54,8 @@ function run_health_checks() {
     sleep 2
   done
 
+  echo " done."
+
   if [[ "$health_status" != "Healthy" ]]; then
     red "Health status for $type: expected = true, actual = $health_status"
     exit 1
@@ -64,8 +66,6 @@ function run_health_checks() {
     red "Expected proxy log error count of 0, but got $proxyLogErrorCount"
     exit 1
   fi
-
-  echo " done."
 }
 
 function run_unhealthy_checks() {
@@ -451,6 +451,7 @@ function main() {
   fi
   if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
     deploy_egress_proxy
+    create_mitmproxy-ca-cert_pem_file
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
     delete_egress_proxy
   fi
