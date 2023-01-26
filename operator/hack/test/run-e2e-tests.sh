@@ -22,6 +22,8 @@ function setup_test() {
     sed "s/YOUR_NAMESPACE/${NS}/g" >hack/test/_v1alpha1_wavefront_test.yaml
 
   if [[ "$type" == "with-http-proxy" ]]; then
+    deploy_egress_proxy
+    create_mitmproxy-ca-cert_pem_file
     echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
     yq eval '.stringData.tls-root-ca-bundle = "'"$(< ${REPO_ROOT}/hack/test/egress-http-proxy/mitmproxy-ca-cert.pem)"'"' ${REPO_ROOT}/hack/test/egress-http-proxy/https-proxy-secret.yaml >> hack/test/_v1alpha1_wavefront_test.yaml
   fi
@@ -94,6 +96,10 @@ function clean_up_test() {
   echo "Cleaning Up Test '$type' ..."
 
   kubectl delete -f hack/test/_v1alpha1_wavefront_test.yaml
+
+  if [[ "$type" == "with-http-proxy" ]]; then
+    delete_egress_proxy
+  fi
 
   wait_for_proxy_termination "$NS"
 }
@@ -450,10 +456,7 @@ function main() {
     run_test "advanced" "health" "test_wavefront_metrics" "logging"
   fi
   if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
-    deploy_egress_proxy
-    create_mitmproxy-ca-cert_pem_file
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
-    delete_egress_proxy
   fi
 }
 
