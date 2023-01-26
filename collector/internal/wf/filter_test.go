@@ -81,7 +81,7 @@ func TestFilter(t *testing.T) {
 		filters := filter.NewGlobFilter(filter.Config{
 			MetricDenyList:   []string{"other*"},
 			TagExclude:       []string{"foo*"},
-			TagGuaranteeList: []string{"foo*"},
+			TagGuaranteeList: []string{"foo"},
 		})
 
 		actualPoint := Filter(filters, &incrementer, expectedPoint)
