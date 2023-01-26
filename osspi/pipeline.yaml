@@ -103,29 +103,16 @@ jobs:
     serial: true
     plan:
     - in_parallel:
-      - get: wavefront-collector
+      - get: observability-for-kubernetes
         params: { submodules: all }
       - get: wavefront-kubernetes-adapter
         trigger: true
         params: { submodules: all }
     - in_parallel:
-      #      TODO: Figure out how to pass the below task
-      #      - task: osspi-scan-docker
-      #        file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
-      #        input_mapping:
-      #          ci_repo: wavefront-collector
-      #        params:
-      #          IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-hpa-adapter
-      #          TAG: passed
-      #          API_KEY: ((osspi.osm-prod-api-key))
-      #          USERNAME: ((osspi.osm-prod-username))
-      #          PRODUCT: WavefrontKubernetesAdapter
-      #          VERSION: Latest
-      #          APPEND: true
       - task: osspi-scan-packages
-        file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
+        file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
         input_mapping:
-          ci_repo: wavefront-collector
+          ci_repo: observability-for-kubernetes
           project_repo: wavefront-kubernetes-adapter
         params:
           REPO: project_repo
@@ -152,29 +139,16 @@ jobs:
     serial: true
     plan:
     - in_parallel:
-      - get: wavefront-collector
+      - get: observability-for-kubernetes
         params: { submodules: all }
       - get: prometheus-storage-adapter
         trigger: true
         params: { submodules: all }
     - in_parallel:
-      #      TODO: Figure out how to pass the below task
-      #      - task: osspi-scan-docker
-      #        file: wavefront-collector/osspi/tasks/osspi/run-osspi-docker.yaml
-      #        input_mapping:
-      #          ci_repo: wavefront-collector
-      #        params:
-      #          IMAGE: projects.registry.vmware.com/tanzu_observability/prometheus-storage-adapter
-      #          TAG: passed
-      #          API_KEY: ((osspi.osm-prod-api-key))
-      #          USERNAME: ((osspi.osm-prod-username))
-      #          PRODUCT: PrometheusStorageAdapter
-      #          VERSION: Latest
-      #          APPEND: true
       - task: osspi-scan-packages
-        file: wavefront-collector/osspi/tasks/osspi/run-osspi-source.yaml
+        file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
         input_mapping:
-          ci_repo: wavefront-collector
+          ci_repo: observability-for-kubernetes
           project_repo: prometheus-storage-adapter
         params:
           REPO: project_repo
