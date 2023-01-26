@@ -182,8 +182,6 @@ data:
         - label?controller?revision*
         - label?pod?template*
         - annotation_kubectl_kubernetes_io_last_applied_configuration
-        tagGuaranteeList:
-        - label?controller?revision*
 
     sources:
       kubernetes_source:
@@ -197,11 +195,7 @@ data:
           metricDenyList:
           - 'kubernetes.sys_container.*'
           - 'kubernetes.node.ephemeral_storage.*'
-          tagExclude:
-          - label?controller?revision*
-          tagGuaranteeList:
-          - label?controller?revision*
-    
+
       internal_stats_source:
         prefix: kubernetes.
       kubernetes_state_source:
@@ -236,10 +230,6 @@ data:
           - 'kube.dns.http.response.size.bytes'
           - 'kube.dns.kubedns.dnsmasq.*'
           - 'kube.dns.process.*'
-          tagExclude:
-          - label?controller?revision*
-          tagGuaranteeList:
-          - label?controller?revision*
 
       # auto-discover coredns
       - name: coredns-discovery
@@ -264,10 +254,6 @@ data:
           - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
           - 'kube.coredns.coredns.dns.response.size.bytes'
           - 'kube.coredns.process.*'
-          tagExclude:
-          - label?controller?revision*
-          tagGuaranteeList:
-          - label?controller?revision*
 ---
 apiVersion: v1
 kind: ConfigMap
