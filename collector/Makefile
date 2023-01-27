@@ -71,7 +71,6 @@ test: tests
 
 .PHONY: build
 build: fmt vet
-	echo $(GOARCH)
 	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -a -o $(OUT_DIR)/$(GOOS)/$(GOARCH)/$(BINARY_NAME) cmd/wavefront-collector/main.go
 	cp open_source_licenses.txt $(OUT_DIR)
 
@@ -84,11 +83,9 @@ containers: container test-proxy-container
 
 .PHONY: container
 container: $(SEMVER_CLI_BIN)
-	# Run build in a container in order to have reproducible builds
-	docker build \
-	-f $(REPO_DIR)/Dockerfile.non-cross-platform \
-	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
+	make build -o fmt -o vet
+	docker build -f Dockerfile \
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OUT_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
