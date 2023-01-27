@@ -42,7 +42,7 @@ pipeline {
                sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
                sh 'make semver-cli'
                sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-               sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+               sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean publish'
             }
           }
         }
@@ -64,7 +64,7 @@ pipeline {
             sh 'make semver-cli'
             sh 'cd operator && ./hack/jenkins/inject-collector-snapshot-image.sh -r $COLLECTOR_PREFIX -n $COLLECTOR_IMAGE -v $VERSION_POSTFIX'
             sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-            sh 'cd operator && make docker-xplatform-build'
+            sh 'cd operator && make clean docker-xplatform-build'
             sh 'cd operator && ./hack/jenkins/restore-collector-images.sh'
             sh 'cd operator && ./hack/jenkins/create-rc-ci.sh'
             script {

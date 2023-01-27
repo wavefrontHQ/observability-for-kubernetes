@@ -1,3 +1,5 @@
+include ../Makefile
+
 export # Used to let all sub-make use the initialized value of variables whose names consist solely of alphanumerics and underscores
 
 # Image URL to use all building/pushing image targets
@@ -5,7 +7,6 @@ PREFIX?=projects.registry.vmware.com/tanzu_observability
 DOCKER_IMAGE?=kubernetes-operator-snapshot
 
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
-SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
 OS := $(shell uname -s | tr A-Z a-z)
 
@@ -33,16 +34,6 @@ endif
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.23
 REPO_DIR=$(shell git rev-parse --show-toplevel)/operator
-
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
-
-GOOS?=$(shell go env GOOS)
-GOARCH?=$(shell go env GOARCH)
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
@@ -74,12 +65,6 @@ help: ## Display this help.
 ##@ Development
 $(GO_IMPORTS_BIN):
 	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest)
-
-.PHONY: semver-cli
-semver-cli: $(SEMVER_CLI_BIN)
-
-$(SEMVER_CLI_BIN):
-	@(cd ../ && make semver-cli)
 
 .PHONY: manifests
 manifests: controller-gen config/crd/bases/wavefront.com_wavefronts.yaml
