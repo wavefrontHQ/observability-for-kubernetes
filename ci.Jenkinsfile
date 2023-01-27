@@ -26,7 +26,7 @@ pipeline {
       parallel{
         stage("Publish Collector") {
           agent {
-            label "new-worker-1"
+            label "worker-1"
           }
           tools {
             go 'Go 1.18'
@@ -49,7 +49,7 @@ pipeline {
 
         stage("Publish Operator") {
           agent {
-            label "new-worker-2"
+            label "worker-2"
           }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
