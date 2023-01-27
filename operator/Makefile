@@ -1,3 +1,5 @@
+include ../Makefile
+
 export # Used to let all sub-make use the initialized value of variables whose names consist solely of alphanumerics and underscores
 
 # Image URL to use all building/pushing image targets
@@ -5,7 +7,6 @@ PREFIX?=projects.registry.vmware.com/tanzu_observability
 DOCKER_IMAGE?=kubernetes-operator-snapshot
 
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
-SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
 OS := $(shell uname -s | tr A-Z a-z)
 
@@ -30,22 +31,10 @@ ifneq ($(TOKEN),)
 OBSERVABILITY_FOR_KUBERNETES_HEADER=-H "Authorization: token $(TOKEN)"
 endif
 
-# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.23
 REPO_DIR=$(shell git rev-parse --show-toplevel)/operator
-
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
-
-GOOS?=$(shell go env GOOS)
-GOARCH?=$(shell go env GOARCH)
+GOBIN=$(REPO_DIR)/bin
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
-# This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
@@ -74,12 +63,6 @@ help: ## Display this help.
 ##@ Development
 $(GO_IMPORTS_BIN):
 	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest)
-
-.PHONY: semver-cli
-semver-cli: $(SEMVER_CLI_BIN)
-
-$(SEMVER_CLI_BIN):
-	@(cd ../ && make semver-cli)
 
 .PHONY: manifests
 manifests: controller-gen config/crd/bases/wavefront.com_wavefronts.yaml
@@ -126,8 +109,8 @@ $(LINUX_GOLANGCI_LINT_BIN):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v1.50.1
 
 .PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+test: manifests generate fmt vet ## Run tests.
+	go test ./... -coverprofile cover.out
 
 ##@ Build
 
@@ -139,8 +122,11 @@ build: generate fmt vet ## Build manager binary.
 	cp open_source_licenses.txt build/
 
 .PHONY: clean
-clean:
+clean: clean-build
 	rm -rf bin
+
+.PHONY: clean-build
+clean-build:
 	rm -rf build
 
 .PHONY: docker-build
@@ -177,13 +163,12 @@ endif
 copy-base-patches:
 	cp config/manager/patches-base.yaml config/manager/patches.yaml
 
-CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
-
+CONTROLLER_GEN = $(REPO_DIR)/bin/controller-gen
 .PHONY: controller-gen
 controller-gen:
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0)
 
-KUSTOMIZE = $(shell pwd)/bin/kustomize
+KUSTOMIZE = $(REPO_DIR)/bin/kustomize
 .PHONY: kustomize
 kustomize: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.7)
@@ -196,28 +181,22 @@ $(IMGPKG):
 .PHONY: imgpkg
 imgpkg: $(IMGPKG)
 
-KUBE_LINTER = $(shell pwd)/bin/kube-linter
+KUBE_LINTER = $(REPO_DIR)/bin/kube-linter
 .PHONY: install-kube-linter
 install-kube-linter: ## Download kube-linter locally if necessary.
 	$(call go-get-tool,$(KUBE_LINTER),golang.stackrox.io/kube-linter/cmd/kube-linter@v0.4.0)
 
-KUBE_SCORE = $(shell pwd)/bin/kube-score
+KUBE_SCORE = $(REPO_DIR)/bin/kube-score
 .PHONY: install-kube-score
 install-kube-score: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUBE_SCORE),github.com/zegl/kube-score/cmd/kube-score@v1.14.0)
 
-ENVTEST = $(shell pwd)/bin/setup-envtest
-.PHONY: envtest
-envtest: ## Download envtest-setup locally if necessary.
-	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
-
 # go-get-tool will 'go get' any package $2 and install it to $1.
-PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 define go-get-tool
 @[ -f $(1) ] || { \
 set -e ;\
 echo "Downloading $(2)" ;\
-GOOS= GOARCH= GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
+GOOS= GOARCH= go install $(2) ;\
 }
 endef
 
@@ -305,6 +284,19 @@ gke-connect-to-cluster: gke-cluster-name-check
 
 gke-cluster-name-check:
 	@if [ -z ${GKE_CLUSTER_NAME} ]; then echo "Need to set GKE_CLUSTER_NAME" && exit 1; fi
+
+delete-gke-cluster: gke-cluster-name-check connect-to-gke
+	echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
+	gcloud container clusters delete $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --quiet
+
+create-gke-cluster: gke-cluster-name-check connect-to-gke
+	echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
+	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=e2-standard-2 --zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 --num-nodes=$(NUMBER_OF_NODES)
+	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
+	kubectl create clusterrolebinding --clusterrole cluster-admin \
+		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
+		clusterrolebinding
+
 
 #----- AKS -----#
 aks-subscription-id-check:
