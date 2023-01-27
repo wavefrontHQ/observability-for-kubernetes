@@ -22,7 +22,7 @@ pipeline {
   }
 
   stages {
-    stage("Run Go tests") {
+    stage("Go tests and Publish Collector/Operator") {
       parallel{
         stage("Collector Go Tests") {
           agent {
@@ -33,58 +33,23 @@ pipeline {
           }
           steps {
             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-              sh 'cd collector && make checkfmt tests'
+              sh 'cd collector && make checkfmt vet tests'
             }
           }
         }
-        stage("Collector Go vet") {
+        stage("Operator Go Tests") {
           agent {
             label "worker-2"
           }
-          tools {
-            go 'Go 1.18'
-          }
-          steps {
-            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-              sh 'cd collector && make vet'
-            }
-          }
-        }
-
-        stage("Operator Go Tests") {
-          agent {
-            label "worker-3"
-          }
           steps {
             sh 'cd operator && make checkfmt vet test'
-          }
-        }
-        stage("Operator Go golangci lint") {
-          agent {
-            label "worker-4"
-          }
-          steps {
             sh 'cd operator && make linux-golangci-lint'
             sh 'cd operator && make golangci-lint'
           }
         }
-      }
-    }
-
-    stage("Build Collector and Publish Collector/Operator") {
-      parallel{
-        stage("Test Openshift build") {
-          agent {
-            label "worker-1"
-          }
-          steps {
-            sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
-          }
-        }
-
         stage("Publish Collector") {
           agent {
-            label "worker-2"
+            label "worker-3"
           }
           tools {
             go 'Go 1.18'
@@ -106,6 +71,9 @@ pipeline {
         }
 
         stage("Publish Operator") {
+          agent {
+            label "worker-4"
+          }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
             RELEASE_TYPE = "alpha"
@@ -125,6 +93,15 @@ pipeline {
             script {
               env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
             }
+          }
+        }
+
+        stage("Test Openshift build") {
+          agent {
+            label "worker-5"
+          }
+          steps {
+            sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
           }
         }
       }
