@@ -124,8 +124,11 @@ build: generate fmt vet ## Build manager binary.
 	cp open_source_licenses.txt build/
 
 .PHONY: clean
-clean:
+clean: clean-build
 	rm -rf bin
+
+.PHONY: clean-build
+clean-build:
 	rm -rf build
 
 .PHONY: docker-build
