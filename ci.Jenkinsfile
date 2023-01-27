@@ -285,7 +285,7 @@ pipeline {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             sh 'cd operator && make semver-cli'
-            lock("integration-test-gke") {
+            lock("integration-test-gke-2") {
               sh 'cd operator && make gke-connect-to-cluster'
               sh 'cd operator && docker logout $PREFIX'
               sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
