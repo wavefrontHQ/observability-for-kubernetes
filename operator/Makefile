@@ -31,12 +31,10 @@ ifneq ($(TOKEN),)
 OBSERVABILITY_FOR_KUBERNETES_HEADER=-H "Authorization: token $(TOKEN)"
 endif
 
-# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.23
 REPO_DIR=$(shell git rev-parse --show-toplevel)/operator
+GOBIN=$(REPO_DIR)/bin
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
-# This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
@@ -111,8 +109,8 @@ $(LINUX_GOLANGCI_LINT_BIN):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v1.50.1
 
 .PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+test: manifests generate fmt vet ## Run tests.
+	go test ./... -coverprofile cover.out
 
 ##@ Build
 
@@ -165,13 +163,12 @@ endif
 copy-base-patches:
 	cp config/manager/patches-base.yaml config/manager/patches.yaml
 
-CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
-
+CONTROLLER_GEN = $(REPO_DIR)/bin/controller-gen
 .PHONY: controller-gen
 controller-gen:
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0)
 
-KUSTOMIZE = $(shell pwd)/bin/kustomize
+KUSTOMIZE = $(REPO_DIR)/bin/kustomize
 .PHONY: kustomize
 kustomize: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.7)
@@ -184,28 +181,22 @@ $(IMGPKG):
 .PHONY: imgpkg
 imgpkg: $(IMGPKG)
 
-KUBE_LINTER = $(shell pwd)/bin/kube-linter
+KUBE_LINTER = $(REPO_DIR)/bin/kube-linter
 .PHONY: install-kube-linter
 install-kube-linter: ## Download kube-linter locally if necessary.
 	$(call go-get-tool,$(KUBE_LINTER),golang.stackrox.io/kube-linter/cmd/kube-linter@v0.4.0)
 
-KUBE_SCORE = $(shell pwd)/bin/kube-score
+KUBE_SCORE = $(REPO_DIR)/bin/kube-score
 .PHONY: install-kube-score
 install-kube-score: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUBE_SCORE),github.com/zegl/kube-score/cmd/kube-score@v1.14.0)
 
-ENVTEST = $(shell pwd)/bin/setup-envtest
-.PHONY: envtest
-envtest: ## Download envtest-setup locally if necessary.
-	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
-
 # go-get-tool will 'go get' any package $2 and install it to $1.
-PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 define go-get-tool
 @[ -f $(1) ] || { \
 set -e ;\
 echo "Downloading $(2)" ;\
-GOOS= GOARCH= GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
+GOOS= GOARCH= go install $(2) ;\
 }
 endef
 
