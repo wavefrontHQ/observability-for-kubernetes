@@ -24,32 +24,9 @@ pipeline {
   stages {
     stage("Go tests and Publish Collector/Operator") {
       parallel{
-        stage("Collector Go Tests") {
-          agent {
-            label "worker-1"
-          }
-          tools {
-            go 'Go 1.18'
-          }
-          steps {
-            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-              sh 'cd collector && make checkfmt vet tests'
-            }
-          }
-        }
-        stage("Operator Go Tests") {
-          agent {
-            label "worker-2"
-          }
-          steps {
-            sh 'cd operator && make checkfmt vet test'
-            sh 'cd operator && make linux-golangci-lint'
-            sh 'cd operator && make golangci-lint'
-          }
-        }
         stage("Publish Collector") {
           agent {
-            label "worker-3"
+            label "worker-1"
           }
           tools {
             go 'Go 1.18'
@@ -72,7 +49,7 @@ pipeline {
 
         stage("Publish Operator") {
           agent {
-            label "worker-4"
+            label "worker-2"
           }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
@@ -93,6 +70,30 @@ pipeline {
             script {
               env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
             }
+          }
+        }
+
+        stage("Collector Go Tests") {
+          agent {
+            label "worker-3"
+          }
+          tools {
+            go 'Go 1.18'
+          }
+          steps {
+            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+              sh 'cd collector && make checkfmt vet tests'
+            }
+          }
+        }
+        stage("Operator Go Tests") {
+          agent {
+            label "worker-4"
+          }
+          steps {
+            sh 'cd operator && make checkfmt vet test'
+            sh 'cd operator && make linux-golangci-lint'
+            sh 'cd operator && make golangci-lint'
           }
         }
 
