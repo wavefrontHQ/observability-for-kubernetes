@@ -29,15 +29,18 @@ func cleanTags(tags map[string]string, tagGuaranteeList []string, maxCapacity in
 
 	// Split include tags and adjust maxCapacity
 	tagsToGuarantee, tagsToGuaranteeSize := splitGuaranteedTags(tags, tagGuaranteeList)
-	if len(tags) > maxCapacity-tagsToGuaranteeSize {
+	adjustedMaxCapacity := maxCapacity-tagsToGuaranteeSize
+	if len(tags) > adjustedMaxCapacity {
 		removedReasons[dedupeReason] = dedupeTagValues(tags, []string{})
 	}
 
+	// Exclude tags irrespective of annotation count as long as they are not in the guarantee list.
 	removedReasons[excludeListReason] = excludeTags(tags)
+
 	// remove IaaS label tags is over max capacity
-	if len(tags) > maxCapacity-tagsToGuaranteeSize {
-		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-maxCapacity+tagsToGuaranteeSize)
-		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity+tagsToGuaranteeSize)
+	if len(tags) > adjustedMaxCapacity {
+		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-adjustedMaxCapacity)
+		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-adjustedMaxCapacity)
 	}
 	combineTags(tagsToGuarantee, tags)
 
