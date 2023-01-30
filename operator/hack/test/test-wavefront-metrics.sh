@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)/operator
-source ${REPO_ROOT}/hack/test/k8s-utils.sh
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
+OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)
 
 function curl_query_to_wf_dashboard() {
   local query=$1
@@ -138,8 +140,8 @@ function main() {
   local WAVEFRONT_TOKEN=
   local CONFIG_CLUSTER_NAME=
 
-  local EXPECTED_COLLECTOR_VERSION=$(cat ${REPO_ROOT}/release/COLLECTOR_VERSION)
-  local EXPECTED_OPERATOR_VERSION=$(cat ${REPO_ROOT}/release/OPERATOR_VERSION)
+  local EXPECTED_COLLECTOR_VERSION=$(cat ${OPERATOR_REPO_ROOT}/release/COLLECTOR_VERSION)
+  local EXPECTED_OPERATOR_VERSION=$(cat ${OPERATOR_REPO_ROOT}/release/OPERATOR_VERSION)
   local WF_CLUSTER=nimba
   local EXTRA_TESTS=
   local LOGGING_TEST_PROXY_NAME=

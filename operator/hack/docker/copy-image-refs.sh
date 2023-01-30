@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/operator
-source "${REPO_ROOT}/hack/test/k8s-utils.sh"
-cd "${REPO_ROOT}"
-IMGPKG=${IMGPKG:-$REPO_ROOT/bin/imgpkg}
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
+OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)/operator
+cd "${OPERATOR_REPO_ROOT}"
+IMGPKG=${IMGPKG:-$OPERATOR_REPO_ROOT/bin/imgpkg}
 
 function print_usage_and_exit() {
   echo "Failure: $1"

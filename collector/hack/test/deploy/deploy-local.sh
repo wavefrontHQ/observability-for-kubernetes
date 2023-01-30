@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")" # cd to deploy-local.sh is in
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-source ${REPO_ROOT}/scripts/k8s-utils.sh
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 if [[ -z ${WAVEFRONT_TOKEN} ]] ; then
 	print_msg_and_exit "WAVEFRONT_TOKEN required"

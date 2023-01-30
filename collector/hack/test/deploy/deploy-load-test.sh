@@ -1,7 +1,8 @@
 #!/bin/bash -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-source ${REPO_ROOT}/scripts/k8s-utils.sh
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
 COLLECTOR_REPO_ROOT=$(git rev-parse --show-toplevel)/collector
 
 function print_usage_and_exit() {

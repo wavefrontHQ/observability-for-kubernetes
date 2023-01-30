@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")" # cd to deploy-local-alpha.sh is in
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-source ${REPO_ROOT}/scripts/k8s-utils.sh
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 if [[ -z ${CURRENT_COLLECTOR_VERSION} ]] ; then
     print_msg_and_exit "Need to specify alpha version image tag by setting CURRENT_COLLECTOR_VERSION"

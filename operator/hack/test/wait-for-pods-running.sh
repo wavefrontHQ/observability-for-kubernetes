@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/operator
-source ${REPO_ROOT}/hack/test/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 function main() {
   wait_for_cluster_ready
