@@ -91,9 +91,11 @@ pipeline {
             label "worker-4"
           }
           steps {
-            sh 'cd operator && make checkfmt vet test'
-            sh 'cd operator && make linux-golangci-lint'
-            sh 'cd operator && make golangci-lint'
+            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+              sh 'cd operator && make checkfmt vet test'
+              sh 'cd operator && make linux-golangci-lint'
+              sh 'cd operator && make golangci-lint'
+            }
           }
         }
 
