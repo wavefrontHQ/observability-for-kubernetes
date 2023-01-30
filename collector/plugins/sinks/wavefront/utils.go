@@ -54,12 +54,12 @@ func combineTags(include map[string]string, tags map[string]string) {
 }
 
 func splitGuaranteedTags(tags map[string]string, tagGuaranteeList []string) (map[string]string, int) {
-	var included = make(map[string]string)
+	var tagsToGuarantee = make(map[string]string)
 	for _, tagKey := range tagGuaranteeList {
-		included[tagKey] = tags[tagKey]
+		tagsToGuarantee[tagKey] = tags[tagKey]
 		delete(tags, tagKey)
 	}
-	return included, len(included)
+	return tagsToGuarantee, len(tagsToGuarantee)
 }
 
 func logTagCleaningReasons(metricName string, reasons map[string][]string) {
