@@ -32,7 +32,7 @@ OBSERVABILITY_FOR_KUBERNETES_HEADER=-H "Authorization: token $(TOKEN)"
 endif
 
 REPO_DIR=$(shell git rev-parse --show-toplevel)/operator
-#GOBIN=$(REPO_DIR)/bingit
+#GOBIN=$(REPO_DIR)/bin
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
