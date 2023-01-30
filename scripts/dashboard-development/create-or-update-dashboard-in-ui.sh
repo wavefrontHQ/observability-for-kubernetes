@@ -53,7 +53,7 @@ function main() {
     print_usage_and_exit "-n new dashboard url to create (required)"
   fi
 
-  ../scripts/get-dashboard.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_TO_CLONE} -o ${DASHBOARD_TO_CLONE}.json
+  "${REPO_ROOT}/scripts/dashboard-development/get-dashboard.sh" -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_TO_CLONE} -o ${DASHBOARD_TO_CLONE}.json
 
   jq ".url = \"${NEW_DASHBOARD}\"" ${DASHBOARD_TO_CLONE}.json > ${NEW_DASHBOARD}.json
 

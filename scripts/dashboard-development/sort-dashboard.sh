@@ -14,7 +14,7 @@ function print_usage_and_exit() {
 }
 
 function main() {
-  cd "$(dirname "$0")/../working"
+  cd "${REPO_ROOT}/scripts/dashboard-development/working"
 
   # REQUIRED
   local DASHBOARD_INPUT_FILE=
