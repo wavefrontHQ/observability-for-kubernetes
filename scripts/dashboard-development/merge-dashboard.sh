@@ -1,8 +1,9 @@
 #!/bin/bash -e
 
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
 SCRIPT_DIR=$(dirname $0)
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
 
 function print_usage_and_exit() {
   echo "Failure: $1"

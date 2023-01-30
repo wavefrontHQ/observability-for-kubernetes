@@ -1,8 +1,9 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
-excludedKeys=$(jq -r '.exclude | join(", ")' ${REPO_ROOT}/hack/integrations/key-filter.json)
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
+excludedKeys=$(jq -r '.exclude | join(", ")' ${REPO_ROOT}/scripts/dashboard-development/key-filter.json)
 
 function print_usage_and_exit() {
   echo "Failure: $1"

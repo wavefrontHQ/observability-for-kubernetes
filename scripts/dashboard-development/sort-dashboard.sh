@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 function print_usage_and_exit() {
   echo "Failure: $1"
@@ -56,8 +56,8 @@ function main() {
     ${DASHBOARD_INPUT_FILE}.partial-parameterDetails \
     > ${DASHBOARD_OUTPUT_FILE}
 
-  rm -f $REPO_ROOT/hack/integrations/working/*.partial*
-  rm -f $REPO_ROOT/hack/integrations/working/*-partial*
+  rm -f $REPO_ROOT/scripts/dashboard-development/working/*.partial*
+  rm -f $REPO_ROOT/scripts/dashboard-development/working/*-partial*
 }
 
 main $@

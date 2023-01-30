@@ -81,7 +81,7 @@ function main() {
 
   # OPTIONAL/DEFAULT
   local VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)"
-  local K8S_ENV=$("${SCRIPT_DIR}"/deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
+  local K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
   local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
   local COLLECTOR_YAML="${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
   local USE_TEST_PROXY="false"

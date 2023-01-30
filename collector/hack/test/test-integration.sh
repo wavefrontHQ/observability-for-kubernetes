@@ -42,7 +42,7 @@ function run_fake_proxy_test() {
       -p "$USE_TEST_PROXY" \
       $additional_args
 
-  wait_for_cluster_ready
+  wait_for_cluster_ready $NS
 
   kill $(jobs -p) &>/dev/null || true
   kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
@@ -113,7 +113,7 @@ function run_real_proxy() {
     additional_args="$additional_args -e $EXPERIMENTAL_FEATURES"
   fi
 
-  wait_for_cluster_ready
+  wait_for_cluster_ready $NS
 
   "${SCRIPT_DIR}"/deploy.sh \
       -c "$WAVEFRONT_CLUSTER" \
@@ -155,7 +155,7 @@ function main() {
 
   # OPTIONAL/DEFAULT
   local VERSION=$(semver-cli inc patch "$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)")
-  local K8S_ENV=$("${SCRIPT_DIR}"/deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}')
+  local K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
   local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
   local EXPERIMENTAL_FEATURES=
   local tests_to_run=()

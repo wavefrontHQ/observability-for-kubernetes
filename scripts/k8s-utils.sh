@@ -77,10 +77,10 @@ function wait_for_cluster_resource_deleted() {
 }
 
 function create_cluster_name() {
-  local K8S_ENV=$(cd ${REPO_ROOT}/hack/test && ./get-k8s-cluster-env.sh)
-  echo $(whoami)-${K8S_ENV}-operator-$(date +"%y%m%d")
+  echo $(whoami)-$(k8s_env | awk '{print tolower($0)}')-operator-$(date +"%y%m%d")
 }
 
 function k8s_env() {
-  echo $(cd ${REPO_ROOT}/hack/test && ./get-k8s-cluster-env.sh)
+  local REPO_ROOT=$(git rev-parse --show-toplevel)
+  "${REPO_ROOT}/scripts/get-k8s-cluster-env.sh"
 }
