@@ -79,7 +79,11 @@ func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.C
 	if len(sink.Prefix) > 0 {
 		name = sink.Prefix + "." + name
 	}
-	logTagCleaningReasons(name, cleanTags(tags, sink.filters.GetTagGuaranteeList(), maxWavefrontTags))
+	var tagGuaranteeList []string
+	if sink.filters != nil {
+		tagGuaranteeList = sink.filters.GetTagGuaranteeList()
+	}
+	logTagCleaningReasons(name, cleanTags(tags, tagGuaranteeList, maxWavefrontTags))
 	return sink.WavefrontClient.SendDistribution(name, centroids, hgs, ts, source, tags)
 }
 
@@ -164,7 +168,11 @@ func (sink *wavefrontSink) SendMetric(metricName string, value float64, timestam
 	if len(sink.Prefix) > 0 {
 		metricName = sink.Prefix + "." + metricName
 	}
-	logTagCleaningReasons(metricName, cleanTags(tags, sink.filters.GetTagGuaranteeList() , maxWavefrontTags))
+	var tagGuaranteeList []string
+	if sink.filters != nil {
+		tagGuaranteeList = sink.filters.GetTagGuaranteeList()
+	}
+	logTagCleaningReasons(metricName, cleanTags(tags, tagGuaranteeList , maxWavefrontTags))
 
 	return sink.WavefrontClient.SendMetric(metricName, value, timestamp, source, tags)
 }
