@@ -270,6 +270,12 @@ spec:
                             items:
                               type: string
                             type: array
+                          tagGuaranteeList:
+                            description: List of tags that are guaranteed to not be
+                              removed
+                            items:
+                              type: string
+                            type: array
                         type: object
                       nodeCollector:
                         default:
