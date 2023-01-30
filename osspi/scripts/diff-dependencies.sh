@@ -1,20 +1,18 @@
-#!/bin/bash -e
-
-REPO_ROOT=$(git rev-parse --show-toplevel)
+#!/bin/bash
 
 function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: $0 [flags] [options]"
-  echo -e "\t-r repository name (required)"
-  echo "Run this script from the repository where you want to compare its osspi scan result with the open_source_licenses.txt file."
+  echo -e "\t-d directory path to scan (required)"
+  echo "Run this script from the folder where you want to compare its open_source_licenses.txt file with its osspi scan result."
   exit 1
 }
 
 function main() {
-  while getopts ":r:" opt; do
+  while getopts ":d:" opt; do
     case $opt in
-    r)
-      REPO="$OPTARG"
+    d)
+      DIR_NAME="$OPTARG"
       ;;
     \?)
       print_usage_and_exit "Invalid option: -$OPTARG"
@@ -22,14 +20,17 @@ function main() {
     esac
   done
 
-  if [[ -z ${REPO} ]]; then
-    print_usage_and_exit "repository name required"
+  if [[ -z ${DIR_NAME} ]]; then
+    print_usage_and_exit "directory path required"
   fi
-  cd "$REPO_ROOT"
-  TEMP_DIR="$REPO"_compare
-  mkdir $TEMP_DIR
-  echo "TEMP_DIR: $TEMP_DIR"
+  cd "$DIR_NAME"
   SCRIPT_DIR=$(dirname "$0")
+  OSSPI_DIR="$DIR_NAME"_osspi_scan_results
+  rm -rf $OSSPI_DIR; mkdir $OSSPI_DIR
+
+  COMPARE_DIR=$OSSPI_DIR/compare
+  mkdir $COMPARE_DIR
+  echo "COMPARE_DIR: $COMPARE_DIR"
 
   OSSPI_SCANNING_PARAMS=$(cat <<EOF
   enable: true
@@ -50,20 +51,20 @@ EOF
 
   declare -a scanning_params_flag
   if [ "${OSSPI_SCANNING_PARAMS+defined}" = defined ] && [ -n "$OSSPI_SCANNING_PARAMS" ]; then
-    printf "%s" "$OSSPI_SCANNING_PARAMS" >scanning-params.yaml
-    scanning_params_flag=("--conf" "scanning-params.yaml")
+    printf "%s" "$OSSPI_SCANNING_PARAMS" >"$OSSPI_DIR/scanning-params.yaml"
+    scanning_params_flag=("--conf" "$OSSPI_DIR/scanning-params.yaml")
   else
-    scanning_params_flag=("--conf" "scanning-params.yaml")
+    scanning_params_flag=("--conf" "$OSSPI_DIR/scanning-params.yaml")
   fi
 
   declare -a ignore_package_flag
   if [ "${OSSPI_IGNORE_RULES+defined}" = defined ] && [ -n "$OSSPI_IGNORE_RULES" ]; then
-    printf "%s" "$OSSPI_IGNORE_RULES" >ignore-rules.yaml
-    ignore_package_flag=("--ignore-package-file" "ignore-rules.yaml")
+    printf "%s" "$OSSPI_IGNORE_RULES" >"$OSSPI_DIR/ignore-rules.yaml"
+    ignore_package_flag=("--ignore-package-file" "$OSSPI_DIR/ignore-rules.yaml")
   fi
 
   PREPARE="go mod vendor"
-  OUTPUT="scan-report.json"
+  OUTPUT="$OSSPI_DIR/scan-report.json"
   rm -rf "$OUTPUT"
   if [ "${PREPARE+defined}" = defined ] && [ -n "$PREPARE" ]; then
     bash -c "$PREPARE" >/dev/null 2>&1
@@ -75,32 +76,32 @@ EOF
     "${scanning_params_flag[@]}" \
     "${ignore_package_flag[@]}" \
     --format json \
-    --output-dir "$REPO"_bom >/dev/null 2>&1
+    --output-dir "$OSSPI_DIR/bom" >/dev/null 2>&1
 
   $HOME/.osspicli/osspi/osspi scan signature \
     "${scanning_params_flag[@]}" \
     "${ignore_package_flag[@]}" \
     --format json \
-    --output-dir "$REPO"_signature >/dev/null 2>&1
+    --output-dir "$OSSPI_DIR/signature" >/dev/null 2>&1
 
   # If nothing was found through bom scan, then results file is not created
   declare -a input_bom_result_flag
-  RESULT_FILE="${REPO}_bom/osspi_bom_detect_result.json"
+  RESULT_FILE="${OSSPI_DIR}/bom/osspi_bom_detect_result.json"
   if [[ -f ${RESULT_FILE} ]]; then
-    input_bom_result_flag=('--input' "$REPO"_bom/osspi_bom_detect_result.json)
+    input_bom_result_flag=('--input' "$OSSPI_DIR"/bom/osspi_bom_detect_result.json)
   fi
 
   $HOME/.osspicli/osspi/osspi merge \
     "${input_bom_result_flag[@]}" \
-    --input "$REPO"_signature/osspi_signature_detect_result.json \
+    --input "$OSSPI_DIR"/signature/osspi_signature_detect_result.json \
     --output "$OUTPUT" >/dev/null 2>&1
 
-  grep '   >>> ' open_source_licenses.txt | grep -v Apache | grep -v Mozilla | awk '{print $2}' | rev | awk -F'v-' '{print $2}' | rev | sort -u > $TEMP_DIR/from_open_source_licenses.txt
-  cat scan-report.json | jq '.packages' | jq '.[] | {name} | add' | cut -d '"' -f2 | sort -u > $TEMP_DIR/from_osspi_scan.txt
+  grep '   >>> ' open_source_licenses.txt | grep -v Apache | grep -v Mozilla | cut -c 8- | sed 's/-[0-9a-zA-Z]\{40\}//' | sed 's/-v[0-9\.]\{0,\}.*//' | sort -u > $COMPARE_DIR/from_open_source_licenses.txt
+  cat $OUTPUT | jq '.packages' | jq '.[] | {name} | add' | cut -d '"' -f2 | sort -u > $COMPARE_DIR/from_osspi_scan.txt
 
   EXIT_CODE=0
-  ADDED_DEP=$(comm -13 <(sort $TEMP_DIR/from_open_source_licenses.txt | uniq) <(sort $TEMP_DIR/from_osspi_scan.txt | uniq))
-  REMOVED_DEP=$(comm -13 <(sort $TEMP_DIR/from_osspi_scan.txt | uniq) <(sort $TEMP_DIR/from_open_source_licenses.txt | uniq))
+  ADDED_DEP=$(comm -13 <(sort $COMPARE_DIR/from_open_source_licenses.txt | uniq) <(sort $COMPARE_DIR/from_osspi_scan.txt | uniq))
+  REMOVED_DEP=$(comm -13 <(sort $COMPARE_DIR/from_osspi_scan.txt | uniq) <(sort $COMPARE_DIR/from_open_source_licenses.txt | uniq))
 
   ADDED_DEP_COUNT="$(printf "%s" "${ADDED_DEP//[!$'\n']/}" | grep -c '^')"
   if [[ $ADDED_DEP_COUNT -ne 0 ]]; then
