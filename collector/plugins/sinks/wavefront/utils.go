@@ -29,7 +29,7 @@ func cleanTags(tags map[string]string, tagGuaranteeList []string, maxCapacity in
 
 	// Split include tags and adjust maxCapacity
 	tagsToGuarantee, tagsToGuaranteeSize := splitGuaranteedTags(tags, tagGuaranteeList)
-	adjustedMaxCapacity := maxCapacity-tagsToGuaranteeSize
+	adjustedMaxCapacity := maxCapacity - tagsToGuaranteeSize
 	if len(tags) > adjustedMaxCapacity {
 		removedReasons[dedupeReason] = dedupeTagValues(tags, []string{})
 	}

@@ -172,7 +172,7 @@ func (sink *wavefrontSink) SendMetric(metricName string, value float64, timestam
 	if sink.filters != nil {
 		tagGuaranteeList = sink.filters.GetTagGuaranteeList()
 	}
-	logTagCleaningReasons(metricName, cleanTags(tags, tagGuaranteeList , maxWavefrontTags))
+	logTagCleaningReasons(metricName, cleanTags(tags, tagGuaranteeList, maxWavefrontTags))
 
 	return sink.WavefrontClient.SendMetric(metricName, value, timestamp, source, tags)
 }
