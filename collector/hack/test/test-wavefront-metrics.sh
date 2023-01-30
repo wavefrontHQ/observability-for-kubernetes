@@ -1,7 +1,8 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-source "${REPO_ROOT}"/hack/test/deploy/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}"/scripts/k8s-utils.sh
+COLLECTOR_REPO_ROOT=$(git rev-parse --show-toplevel)/collector
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 function curl_query_to_wf_dashboard() {
@@ -92,7 +93,7 @@ function main() {
   local WAVEFRONT_TOKEN=
 
   local WF_CLUSTER=nimba
-  local VERSION="$(cat "${REPO_ROOT}"/release/VERSION)"
+  local VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)"
   local K8S_ENV=$("${SCRIPT_DIR}"/deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
   local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
 

@@ -3,18 +3,19 @@ set -e
 
 cd "$(dirname "$0")" # cd to deploy-local.sh is in
 
-source "./k8s-utils.sh"
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source ${REPO_ROOT}/scripts/k8s-utils.sh
 
 if [[ -z ${WAVEFRONT_TOKEN} ]] ; then
 	print_msg_and_exit "WAVEFRONT_TOKEN required"
 fi
 
 NS=wavefront-collector
-ROOT_DIR=$(git rev-parse --show-toplevel)
+COLLECTOR_REPO_ROOT=$(git rev-parse --show-toplevel)/collector
 TEMP_DIR=$(mktemp -d)
 
 # TODO: this rename breaks Jenkins so if we go with it we have updating to do
-DEFAULT_COLLECTOR_VERSION=$(cat ${ROOT_DIR}/release/VERSION) #version you want to test
+DEFAULT_COLLECTOR_VERSION=$(cat ${COLLECTOR_REPO_ROOT}/release/VERSION) #version you want to test
 CURRENT_COLLECTOR_VERSION=${CURRENT_COLLECTOR_VERSION:-$DEFAULT_COLLECTOR_VERSION}
 DEFAULT_COLLECTOR_REPO=projects.registry.vmware.com/tanzu_observability/kubernetes-collector
 CURRENT_COLLECTOR_REPO=${CURRENT_COLLECTOR_REPO:-$DEFAULT_COLLECTOR_REPO}
@@ -25,7 +26,7 @@ DEFAULT_PROXY_REPO=projects.registry.vmware.com/tanzu_observability/proxy
 CURRENT_PROXY_REPO=${CURRENT_PROXY_REPO:-$DEFAULT_PROXY_REPO}
 DEPLOY_TARGETS="${DEPLOY_TARGETS:-yes}"
 
-pushd "$ROOT_DIR"
+pushd "$COLLECTOR_REPO_ROOT"
   make clean-deployment
   if [ "${DEPLOY_TARGETS}" == "yes" ] ; then
   	make deploy-targets
@@ -43,13 +44,13 @@ fi
 echo "Using cluster name '$CONFIG_CLUSTER_NAME' in '$WF_CLUSTER'"
 echo "Temp dir: $TEMP_DIR"
 
-cp "$ROOT_DIR"/deploy/kubernetes/*.yaml  "$TEMP_DIR/."
+cp "$COLLECTOR_REPO_ROOT"/deploy/kubernetes/*.yaml  "$TEMP_DIR/."
 rm "$TEMP_DIR"/kustomization.yaml || true
 
 if [ "${DEPLOY_TARGETS}" == "yes" ] ; then
-  cp "$ROOT_DIR/hack/test/deploy/memcached-config.yaml" "$TEMP_DIR/."
-  cp "$ROOT_DIR/hack/test/deploy/mysql-config.yaml" "$TEMP_DIR/."
-  cp "$ROOT_DIR/hack/test/deploy/prom-example.yaml" "$TEMP_DIR/."
+  cp "$COLLECTOR_REPO_ROOT/hack/test/deploy/memcached-config.yaml" "$TEMP_DIR/."
+  cp "$COLLECTOR_REPO_ROOT/hack/test/deploy/mysql-config.yaml" "$TEMP_DIR/."
+  cp "$COLLECTOR_REPO_ROOT/hack/test/deploy/prom-example.yaml" "$TEMP_DIR/."
 fi
 
 pushd "$TEMP_DIR"

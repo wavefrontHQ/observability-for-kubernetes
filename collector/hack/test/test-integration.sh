@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-source "${REPO_ROOT}"/hack/test/deploy/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}"/scripts/k8s-utils.sh
+
+COLLECTOR_REPO_ROOT=$(git rev-parse --show-toplevel)/collector
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 NS=wavefront-collector
 
@@ -152,7 +154,7 @@ function main() {
   local WAVEFRONT_TOKEN=
 
   # OPTIONAL/DEFAULT
-  local VERSION=$(semver-cli inc patch "$(cat "${REPO_ROOT}"/release/VERSION)")
+  local VERSION=$(semver-cli inc patch "$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)")
   local K8S_ENV=$("${SCRIPT_DIR}"/deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}')
   local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
   local EXPERIMENTAL_FEATURES=
@@ -199,12 +201,12 @@ function main() {
   fi
   if [[ "${tests_to_run[*]}" =~ "histogram-conversion" ]]; then
     echo "==================== Running fake_proxy histogram-conversion test ===================="
-    run_fake_proxy_test "all-metrics" "${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
+    run_fake_proxy_test "all-metrics" "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "default" ]]; then
     echo "==================== Running fake_proxy default test ===================="
-    run_fake_proxy_test "all-metrics" "${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
+    run_fake_proxy_test "all-metrics" "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "real-proxy-metrics" ]]; then

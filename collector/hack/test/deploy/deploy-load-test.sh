@@ -1,7 +1,8 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source ${REPO_ROOT}/scripts/k8s-utils.sh
+COLLECTOR_REPO_ROOT=$(git rev-parse --show-toplevel)/collector
 
 function print_usage_and_exit() {
   echo "Failure: $1"
@@ -56,7 +57,7 @@ function main() {
   DEPLOY_TARGETS=no ./deploy-local.sh
 
   green "PPS Goal: ${PPS_GOAL} Number of prom example replicas: ${NUMBER_OF_PROM_REPLICAS}"
-  cp "$REPO_ROOT/hack/test/deploy/load-test-prom-example.yaml" "$TEMP_DIR/."
+  cp "$COLLECTOR_REPO_ROOT/hack/test/deploy/load-test-prom-example.yaml" "$TEMP_DIR/."
 
   kubectl delete namespace load-test || true
 
