@@ -32,7 +32,13 @@ OBSERVABILITY_FOR_KUBERNETES_HEADER=-H "Authorization: token $(TOKEN)"
 endif
 
 REPO_DIR=$(shell git rev-parse --show-toplevel)/operator
-#GOBIN=$(REPO_DIR)/bin
+
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
+else
+GOBIN=$(shell go env GOBIN)
+endif
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -196,7 +202,7 @@ define go-get-tool
 @[ -f $(1) ] || { \
 set -e ;\
 echo "Downloading $(2)" ;\
-GOOS= GOARCH= go install $(2) ;\
+GOOS= GOARCH= GOBIN=$(REPO_DIR)/bin go install $(2) ;\
 }
 endef
 
