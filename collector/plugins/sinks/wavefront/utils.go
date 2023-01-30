@@ -26,7 +26,6 @@ var iaasNameRegex = regexp.MustCompile("^label.*gke|azure*")
 func cleanTags(tags map[string]string, tagGuaranteeList []string, maxCapacity int) map[string][]string {
 	removedReasons := map[string][]string{}
 	removedReasons[emptyReason] = removeEmptyTags(tags)
-	removedReasons[excludeListReason] = excludeTags(tags)
 
 	// Split include tags and adjust maxCapacity
 	tagsToGuarantee, tagsToGuaranteeSize := splitGuaranteedTags(tags, tagGuaranteeList)
@@ -34,12 +33,14 @@ func cleanTags(tags map[string]string, tagGuaranteeList []string, maxCapacity in
 		removedReasons[dedupeReason] = dedupeTagValues(tags, []string{})
 	}
 
+	removedReasons[excludeListReason] = excludeTags(tags)
 	// remove IaaS label tags is over max capacity
 	if len(tags) > maxCapacity-tagsToGuaranteeSize {
 		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-maxCapacity+tagsToGuaranteeSize)
 		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity+tagsToGuaranteeSize)
 	}
 	combineTags(tagsToGuarantee, tags)
+
 	return removedReasons
 }
 
