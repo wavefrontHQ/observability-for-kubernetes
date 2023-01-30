@@ -2,7 +2,7 @@
 
 1. Run the below script to create a development copy of the dashboard from nimba API.
     ```
-    ~/workspace/wavefront-collector-for-kubernetes/hack/integrations/scripts/create-or-update-dashboard-in-ui.sh  -t $WAVEFRONT_TOKEN -d <DASHBOARD_TO_CLONE> -n <NEW_DASHBOARD>
+    ~/workspace/observability-for-kubernetes/scripts/dashboard-development/create-or-update-dashboard-in-ui.sh  -t $WAVEFRONT_TOKEN -d <DASHBOARD_TO_CLONE> -n <NEW_DASHBOARD>
     ```
    * `<DASHBOARD_TO_CLONE>` should be the url slug for the dashboard you want to clone. For instance `-d integration-kubernetes-clusters` for https://nimba.wavefront.com/dashboards/integration-kubernetes-clusters.
      If it is not set, it will default to `integration-dashboard-template`
@@ -12,7 +12,7 @@
 2. PM or engineering team member iterate on dev dashboard created by `create-or-update-dashboard-in-ui.sh` (For instance: `kubernetes-K8SSAAS-123`).
 3. Periodically pull and validate the changes from the dev dashboard to the integration repo branch by running the below script.
     ```
-    ~/workspace/wavefront-collector-for-kubernetes/hack/integrations/scripts/merge-dashboard.sh  -t $WAVEFRONT_TOKEN -s <SOURCE_DASHBOARD> -d <DEST_DASHBOARD> -b <BRANCH_NAME>
+    ~/workspace/observability-for-kubernetes/scripts/dashboard-development/merge-dashboard.sh  -t $WAVEFRONT_TOKEN -s <SOURCE_DASHBOARD> -d <DEST_DASHBOARD> -b <BRANCH_NAME>
     ```
    * `<SOURCE_DASHBOARD>` is the source dashboard's url in UI that you want to copy **from** (For instance: `-s kubernetes-K8SSAAS-123`). 
    * `<DEST_DASHBOARD>` is the destination dashboard's url in integrations repo to copy **to** (For instance: `-d integration-kubernetes-clusters`). 
