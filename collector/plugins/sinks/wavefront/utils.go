@@ -23,20 +23,45 @@ var iaasNameRegex = regexp.MustCompile("^label.*gke|azure*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
 // that lists removed tag names by their reason for removal
-func cleanTags(tags map[string]string, maxCapacity int) map[string][]string {
+func cleanTags(tags map[string]string, tagGuaranteeList []string, maxCapacity int) map[string][]string {
 	removedReasons := map[string][]string{}
 	removedReasons[emptyReason] = removeEmptyTags(tags)
-	removedReasons[excludeListReason] = excludeTags(tags)
-	if len(tags) > maxCapacity {
-		removedReasons[dedupeReason] = dedupeTagValues(tags)
+
+	// Split include tags and adjust maxCapacity
+	tagsToGuarantee, tagsToGuaranteeSize := splitGuaranteedTags(tags, tagGuaranteeList)
+	adjustedMaxCapacity := maxCapacity - tagsToGuaranteeSize
+	if len(tags) > adjustedMaxCapacity {
+		removedReasons[dedupeReason] = dedupeTagValues(tags, []string{})
 	}
 
+	// Exclude tags irrespective of annotation count as long as they are not in the guarantee list.
+	removedReasons[excludeListReason] = excludeTags(tags)
+
 	// remove IaaS label tags is over max capacity
-	if len(tags) > maxCapacity {
-		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-maxCapacity)
-		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-maxCapacity)
+	if len(tags) > adjustedMaxCapacity {
+		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-adjustedMaxCapacity)
+		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-adjustedMaxCapacity)
 	}
+	combineTags(tagsToGuarantee, tags)
+
 	return removedReasons
+}
+
+func combineTags(include map[string]string, tags map[string]string) {
+	for includedTagKey, includedTagVal := range include {
+		tags[includedTagKey] = includedTagVal
+	}
+}
+
+func splitGuaranteedTags(tags map[string]string, tagGuaranteeList []string) (map[string]string, int) {
+	var tagsToGuarantee = make(map[string]string)
+	for _, tagKey := range tagGuaranteeList {
+		if val, ok := tags[tagKey]; ok {
+			tagsToGuarantee[tagKey] = val
+		}
+		delete(tags, tagKey)
+	}
+	return tagsToGuarantee, len(tagsToGuarantee)
 }
 
 func logTagCleaningReasons(metricName string, reasons map[string][]string) {
@@ -53,7 +78,7 @@ func logTagCleaningReasons(metricName string, reasons map[string][]string) {
 
 const minDedupeTagValueLen = 5
 
-func dedupeTagValues(tags map[string]string) []string {
+func dedupeTagValues(tags map[string]string, tagInclude []string) []string {
 	var removedTags []string
 	invertedTags := map[string]string{} // tag value -> tag name
 	for name, value := range tags {
@@ -63,10 +88,12 @@ func dedupeTagValues(tags map[string]string) []string {
 		if len(invertedTags[value]) == 0 {
 			invertedTags[value] = name
 		} else if isWinningName(name, invertedTags[value]) {
+			// Do below only if not present in tagInclude
 			removedTags = append(removedTags, invertedTags[value])
 			delete(tags, invertedTags[value])
 			invertedTags[value] = name
 		} else {
+			// Do below only if not present in tagInclude
 			removedTags = append(removedTags, name)
 			delete(tags, name)
 		}
