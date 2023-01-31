@@ -1,3 +1,5 @@
+COLLECTOR_REPO_ROOT=$(shell git rev-parse --show-toplevel)/collector
+
 deploy-targets:
 	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/deploy-targets.sh)
 

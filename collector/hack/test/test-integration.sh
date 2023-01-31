@@ -113,7 +113,7 @@ function run_real_proxy() {
     additional_args="$additional_args -e $EXPERIMENTAL_FEATURES"
   fi
 
-  wait_for_cluster_ready $NS
+  wait_for_cluster_resource_deleted namespace/$NS
 
   "${SCRIPT_DIR}"/deploy.sh \
       -c "$WAVEFRONT_CLUSTER" \
@@ -122,6 +122,8 @@ function run_real_proxy() {
       -v "$VERSION" \
       -n "$K8S_CLUSTER_NAME" \
       $additional_args
+
+  wait_for_cluster_ready $NS
 
   green "SUCCEEDED"
 }
