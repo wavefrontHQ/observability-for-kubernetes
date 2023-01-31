@@ -278,6 +278,18 @@ func TestReconcileCollector(t *testing.T) {
 		require.True(t, mockKM.CollectorConfigMapContains("metricDenyList:\n        - denyAnotherTag\n        - denyThisTag"))
 	})
 
+	t.Run("can add custom filter with tag guarantee list", func(t *testing.T) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Filters.TagGuaranteeList = []string{"someTagToAlwaysProtect", "someOtherTagToAlwaysProtect"}
+		}))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.NoError(t, err)
+
+		require.True(t, mockKM.CollectorConfigMapContains("tagGuaranteeList:\n        - someTagToAlwaysProtect\n        - someOtherTagToAlwaysProtect"))
+	})
+
 	t.Run("can add custom tags", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Tags = map[string]string{"env": "non-production"}
