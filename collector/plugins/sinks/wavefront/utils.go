@@ -56,7 +56,9 @@ func combineTags(include map[string]string, tags map[string]string) {
 func splitGuaranteedTags(tags map[string]string, tagGuaranteeList []string) (map[string]string, int) {
 	var tagsToGuarantee = make(map[string]string)
 	for _, tagKey := range tagGuaranteeList {
-		tagsToGuarantee[tagKey] = tags[tagKey]
+		if val, ok := tags[tagKey]; ok {
+			tagsToGuarantee[tagKey] = val
+		}
 		delete(tags, tagKey)
 	}
 	return tagsToGuarantee, len(tagsToGuarantee)

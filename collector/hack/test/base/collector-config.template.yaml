@@ -22,7 +22,7 @@ data:
         - 'annotation_kubectl_kubernetes_io_last_applied_configuration'
         - 'label?failure-domain?beta?kubernetes?io/*'
         tagGuaranteeList:
-        - label.failure-domain.beta.kubernetes.io/zone
+        - 'label.failure-domain.beta.kubernetes.io/zone'
 
 
     sources:
