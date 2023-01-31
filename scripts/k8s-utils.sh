@@ -26,12 +26,21 @@ function popd_check() {
 }
 
 function wait_for_cluster_ready() {
-  printf "Waiting for all Pods to be 'Ready' ..."
-  local ns=${1:-observability-system}
-  while ! kubectl wait --for=condition=Ready pod --all -l exclude-me!=true -n "$ns" --timeout=5s &> /dev/null; do
-    printf "."
-    sleep 1
-  done
+  if [ -z "${1}" ]; then
+    printf "Waiting for all Pods to be 'Ready' ..."
+    while ! kubectl wait --for=condition=Ready pod --all -l exclude-me!=true --all-namespaces --timeout=5s  &> /dev/null; do
+      printf "."
+      sleep 1
+    done
+  else
+    local ns=${1:-observability-system}
+    printf "Waiting for all Pods in \"${1}\" namespace to be 'Ready' ..."
+    while ! kubectl wait --for=condition=Ready pod --all -l exclude-me!=true -n "$ns" --timeout=5s &> /dev/null; do
+      printf "."
+      sleep 1
+    done
+  fi
+
   echo " done."
 }
 

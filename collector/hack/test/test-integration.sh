@@ -42,7 +42,7 @@ function run_fake_proxy_test() {
       -p "$USE_TEST_PROXY" \
       $additional_args
 
-  wait_for_cluster_ready $NS
+  wait_for_cluster_ready
 
   kill $(jobs -p) &>/dev/null || true
   kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
@@ -113,7 +113,7 @@ function run_real_proxy() {
     additional_args="$additional_args -e $EXPERIMENTAL_FEATURES"
   fi
 
-  wait_for_cluster_resource_deleted namespace/$NS
+  wait_for_cluster_ready
 
   "${SCRIPT_DIR}"/deploy.sh \
       -c "$WAVEFRONT_CLUSTER" \
@@ -122,8 +122,6 @@ function run_real_proxy() {
       -v "$VERSION" \
       -n "$K8S_CLUSTER_NAME" \
       $additional_args
-
-  wait_for_cluster_ready $NS
 
   green "SUCCEEDED"
 }

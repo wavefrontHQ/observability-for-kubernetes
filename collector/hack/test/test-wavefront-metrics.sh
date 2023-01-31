@@ -117,7 +117,7 @@ function main() {
   local VERSION_IN_DECIMAL+="$(echo "${VERSION}" | cut -d '.' -f3)"
   local VERSION_IN_DECIMAL="$(echo "${VERSION_IN_DECIMAL}" | sed 's/0$//')"
 
-  wait_for_cluster_ready $NS
+  wait_for_cluster_ready
 
   exit_on_fail wait_for_query_match_exact "ts(kubernetes.collector.version%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22%20AND%20installation_method%3D%22manual%22)" "${VERSION_IN_DECIMAL}"
   exit_on_fail wait_for_query_non_zero "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22)"
