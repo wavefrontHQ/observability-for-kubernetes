@@ -33,7 +33,7 @@ function wait_for_cluster_ready() {
       sleep 1
     done
   else
-    local ns=${1:-observability-system}
+    local ns=${1}
     printf "Waiting for all Pods in \"${1}\" namespace to be 'Ready' ..."
     while ! kubectl wait --for=condition=Ready pod --all -l exclude-me!=true -n "$ns" --timeout=5s &> /dev/null; do
       printf "."

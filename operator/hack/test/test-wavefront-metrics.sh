@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/operator
+REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -187,7 +187,7 @@ function main() {
   local COLLECTOR_VERSION_IN_DECIMAL+="$(echo "${EXPECTED_COLLECTOR_VERSION}" | cut -d '.' -f3)"
   local COLLECTOR_VERSION_IN_DECIMAL="$(echo "${COLLECTOR_VERSION_IN_DECIMAL}" | sed 's/0$//')"
 
-  wait_for_cluster_ready $NS
+  wait_for_cluster_ready "$NS"
 
   local EXPECTED_TAGS_JSON=$(mktemp)
   jq -S -n --arg status Healthy \

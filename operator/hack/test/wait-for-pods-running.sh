@@ -3,8 +3,10 @@
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
+NS=observability-system
+
 function main() {
-  wait_for_cluster_ready
+  wait_for_cluster_ready "$NS"
 }
 
 #TODO: Figure out the difference between READY vs RUNNING state. Below is WIP
