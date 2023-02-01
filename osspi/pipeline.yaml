@@ -72,6 +72,7 @@ jobs:
           params: { submodules: all }
       - in_parallel:
         - task: osspi-scan-packages
+          attempts: 3
           file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
           input_mapping:
             ci_repo: observability-for-kubernetes
