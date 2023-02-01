@@ -3,7 +3,7 @@
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
-OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)
+OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)/operator
 
 function curl_query_to_wf_dashboard() {
   local query=$1

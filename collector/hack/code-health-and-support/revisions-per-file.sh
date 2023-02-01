@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-OUTPUT_FILE=$REPO_ROOT/hack/code-health/commits-per-file.txt
+COLLECTOR_REPO_ROOT=$(git rev-parse --show-toplevel)/collector
+OUTPUT_FILE=$COLLECTOR_REPO_ROOT/hack/code-health/commits-per-file.txt
 
 go_files=$(find . -type f -name '*.go' -not -path '*/vendor/*')
 
