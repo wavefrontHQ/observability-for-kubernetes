@@ -99,75 +99,16 @@ jobs:
                 version_regex: .*
               - name_regex: gomega
                 version_regex: .*
-  - name: osspi-scan-wavefront-kubernetes-adapter
-    serial: true
-    plan:
-    - in_parallel:
-      - get: observability-for-kubernetes
-        params: { submodules: all }
-      - get: wavefront-kubernetes-adapter
-        trigger: true
-        params: { submodules: all }
-    - in_parallel:
-      - task: osspi-scan-packages
-        file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
-        input_mapping:
-          ci_repo: observability-for-kubernetes
-          project_repo: wavefront-kubernetes-adapter
-        params:
-          REPO: project_repo
-          API_KEY: ((osspi.osm-prod-api-key))
-          USERNAME: ((osspi.osm-prod-username))
-          PRODUCT: WavefrontKubernetesAdapter
-          VERSION: Latest
-          PREPARE: |
-            go mod vendor
-          OSSPI_SCANNING_PARAMS: |
-            enable: true
-            include_bomtools: "go_mod"
-            search_depth: 5
-            go_mod.path: "/go/bin/go"
-            # exclude for signature scans
-            exclude_patterns:
-              - vendor
-          OSSPI_IGNORE_RULES: |
-            - name_regex: onsi\/ginkgo
-              version_regex: .*
-            - name_regex: gomega
-              version_regex: .*
-  - name: osspi-scan-prometheus-storage-adapter
-    serial: true
-    plan:
-    - in_parallel:
-      - get: observability-for-kubernetes
-        params: { submodules: all }
-      - get: prometheus-storage-adapter
-        trigger: true
-        params: { submodules: all }
-    - in_parallel:
-      - task: osspi-scan-packages
-        file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
-        input_mapping:
-          ci_repo: observability-for-kubernetes
-          project_repo: prometheus-storage-adapter
-        params:
-          REPO: project_repo
-          API_KEY: ((osspi.osm-prod-api-key))
-          USERNAME: ((osspi.osm-prod-username))
-          PRODUCT: PrometheusStorageAdapter
-          VERSION: Latest
-          PREPARE: |
-            go mod vendor
-          OSSPI_SCANNING_PARAMS: |
-            enable: true
-            include_bomtools: "go_mod"
-            search_depth: 5
-            go_mod.path: "/go/bin/go"
-            # exclude for signature scans
-            exclude_patterns:
-              - vendor
-          OSSPI_IGNORE_RULES: |
-            - name_regex: onsi\/ginkgo
-              version_regex: .*
-            - name_regex: gomega
-              version_regex: .*
+        - task: osspi-scan-docker
+          file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
+          input_mapping:
+            ci_repo: observability-for-kubernetes
+          params:
+            IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit
+            TAG: 2.0.8
+            API_KEY: ((osspi.osm-prod-api-key))
+            USERNAME: ((osspi.osm-prod-username))
+            PRODUCT: Wavefront_K8_Operator
+            VERSION: Latest
+            APPEND: true
+
