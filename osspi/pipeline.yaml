@@ -99,6 +99,18 @@ jobs:
                 version_regex: .*
               - name_regex: gomega
                 version_regex: .*
+        - task: osspi-scan-docker
+          file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
+          input_mapping:
+            ci_repo: observability-for-kubernetes
+          params:
+            IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit
+            TAG: 2.0.8
+            API_KEY: ((osspi.osm-prod-api-key))
+            USERNAME: ((osspi.osm-prod-username))
+            PRODUCT: Wavefront_K8_Operator
+            VERSION: Latest
+            APPEND: true
   - name: osspi-scan-wavefront-kubernetes-adapter
     serial: true
     plan:
