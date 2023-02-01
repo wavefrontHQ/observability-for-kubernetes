@@ -28,11 +28,11 @@ The operator simplifies operational aspects of managing the Wavefront integratio
  - Efficient Kubernetes resource usage supports scaling  out the cluster (leader) node and worker nodes independently.
 
 **Note:** The Collector that is deployed by the Operator still supports configuration via configmap.
-For example, Istio and MySQL metrics, Telegraf configuration, etc. are still supported. For details on the Collector, see [collector.md](docs/collector.md).
+For example, Istio and MySQL metrics, Telegraf configuration, etc. are still supported. For details on the Collector, see [collector.md](docs/collector/collector.md).
 
 ## Architecture
 
-![Wavefront Operator for Kubernetes Architecture](operator/architecture-logging.png)
+![Wavefront Operator for Kubernetes Architecture](docs/images/architecture-logging.png)
 
 # Installation
 
@@ -117,9 +117,9 @@ The following tools are required for installing the integration.
    NAME        STATUS    PROXY           CLUSTER-COLLECTOR   NODE-COLLECTOR   LOGGING        AGE    MESSAGE
    wavefront   Healthy   Running (1/1)   Running (1/1)       Running (3/3)    Running (3/3)  2m4s   All components are healthy
    ```
-   If `STATUS` is `Unhealthy`, check [troubleshooting](docs/troubleshooting.md).
+   If `STATUS` is `Unhealthy`, check [troubleshooting](docs/operator/troubleshooting.md).
 
-**Note**: For details on migrating from existing helm chart or manual deploy, see [Migration](docs/migration.md).
+**Note**: For details on migrating from existing helm chart or manual deploy, see [Migration](docs/operator/migration.md).
 
 # Configuration
 
@@ -157,7 +157,7 @@ You can see all configuration options in the [wavefront-full-config.yaml](operat
 The operator deploys a data export component (wavefront-proxy) which can recieve log data and relay it to wavefront.
 You will need to configure your logs shipper to send logs to the data export component (wavefront-proxy) deployed by the operator.
 
-Here is a Wavefront Custom Resource [example config](./deploy/kubernetes/scenarios/wavefront-bring-your-own-logs-shipper.yaml) for this scenario.
+Here is a Wavefront Custom Resource [example config](operator/deploy/kubernetes/scenarios/wavefront-bring-your-own-logs-shipper.yaml) for this scenario.
 
 In order to make the best use of your logging solution on kubernetes, we recommend having the below kubernetes log attributes
 
@@ -180,7 +180,7 @@ Upgrade the Wavefront Operator (both Collector and Proxy) to a new version by ru
 kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/deploy/kubernetes/wavefront-operator.yaml
 ```
 
-Note: This command will not upgrade any existing wavefront/wavefront helm installation. See [migration.md](docs/migration.md) for migration instructions.
+Note: This command will not upgrade any existing wavefront/wavefront helm installation. See [migration.md](docs/operator/migration.md) for migration instructions.
 
 # Downgrade
 
@@ -202,4 +202,4 @@ kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/observability-fo
 
 # Contribution
 
-See the [Contribution page](docs/contribution.md)
+See the [Contribution page](docs/operator/contribution.md)
