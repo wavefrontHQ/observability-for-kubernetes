@@ -7,8 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/testhelper/wftest"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/testhelper/wftest"
 
 	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/health"
 
@@ -22,8 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/stretchr/testify/require"
-	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/controllers"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +31,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
+	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/controllers"
 )
 
 func TestReconcileAll(t *testing.T) {
@@ -152,7 +154,7 @@ func TestReconcileAll(t *testing.T) {
 
 		require.True(t, mockKM.NodeCollectorDaemonSetContains("image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector"))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector"))
-		require.True(t, mockKM.LoggingDaemonSetContains("image: cr.fluentbit.io/fluent/fluent-bit"))
+		require.True(t, mockKM.LoggingDaemonSetContains("image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit"))
 		require.True(t, mockKM.ProxyDeploymentContains("image: projects.registry.vmware.com/tanzu_observability/proxy"))
 	})
 
@@ -171,7 +173,7 @@ func TestReconcileAll(t *testing.T) {
 
 		require.True(t, mockKM.NodeCollectorDaemonSetContains("image: docker.io/kubernetes-collector"))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("image: docker.io/kubernetes-collector"))
-		require.True(t, mockKM.LoggingDaemonSetContains("image: docker.io/fluent/fluent-bit"))
+		require.True(t, mockKM.LoggingDaemonSetContains("image: docker.io/kubernetes-operator-fluentbit"))
 		require.True(t, mockKM.ProxyDeploymentContains("image: docker.io/proxy"))
 	})
 
