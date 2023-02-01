@@ -112,10 +112,12 @@ class ProseFormatting
   end
 
   def self.ignored?(index, str)
+    first_words_result = NON_CAPS_FIRST_WORDS.include?(str.gsub(/[.()]/, ''))
+
     if index == 0
-      NON_CAPS_FIRST_WORDS.include?(str.gsub(/[.()]/, ''))
+      first_words_result
     else
-      NON_CAPS_WORDS.include?(str.gsub(/[.()]/, ''))
+      NON_CAPS_WORDS.include?(str.gsub(/[.()]/, '')) || first_words_result
     end
   end
 
