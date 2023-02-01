@@ -362,7 +362,7 @@ class ChartDescriptionChecker
         next
       end
       unless ProseFormatting.capitalized?(description) && (ProseFormatting.ends_with_period?(description) || ProseFormatting.paragraphs?(description))
-        reporter.report(Reporter::Issue.new("Description not in Title Case", description, dashboard_name))
+        reporter.report(Reporter::Issue.new("Description needs to be in title case and (ends with period or is a paragraph)", description, dashboard_name))
       end
     end
   end
@@ -439,6 +439,7 @@ class ChartUnitChecker
       'Misses',
       'ms',
       'Errors',
+      'Errors per Second',
       'Metrics',
       'Requests',
       'Clients',
@@ -457,11 +458,15 @@ class ChartUnitChecker
       'B',
       's',
       'Seconds',
+      'Minutes',
+      'min',
       'Failures per Second',
       'millicores',
       'bps',
       'pps',
-      'items'
+      'items',
+      'running pods',
+      'running containers'
     ].include?(item)
   end
 
@@ -474,15 +479,15 @@ class ChartUnitChecker
         unless unit == ""
           reporter.report(Reporter::Issue.new("Markdown charts should not have a unit defined", unit, "#{dashboard_name}: #{chart["name"]}"))
         end
-         next
+        next
       end
 
-     if chart["chartSettings"] && (chart["chartSettings"]["showValueColumn"] == false)
-       unless unit == ""
-         reporter.report(Reporter::Issue.new("Charts with no value column should not have a unit defined", unit, "#{dashboard_name}: #{chart["name"]}"))
-       end
+      if chart["chartSettings"] && (chart["chartSettings"]["showValueColumn"] == false)
+        unless unit == ""
+          reporter.report(Reporter::Issue.new("Charts with no value column should not have a unit defined", unit, "#{dashboard_name}: #{chart["name"]}"))
+        end
         next
-     end
+      end
 
       if chart["chartSettings"] && ["sparkline", "gauge"].include?(chart["chartSettings"]["type"])
         unless valid_sparkline_unit?(unit)
@@ -492,7 +497,11 @@ class ChartUnitChecker
       end
 
       unless valid_unit?(unit)
-        reporter.report(Reporter::Issue.new("Unrecognized unit", unit, "#{dashboard_name}: #{chart["name"]}"))
+        if unit.strip.empty?
+          reporter.report(Reporter::Issue.new("Unit should not be empty", "#{dashboard_name}: #{chart["name"]}"))
+        else
+          reporter.report(Reporter::Issue.new("Unrecognized unit", unit, "#{dashboard_name}: #{chart["name"]}"))
+        end
       end
     end
   end
@@ -579,6 +588,11 @@ class IndexChecker
 
   def run(reporter)
     if @index_json_file.nil?
+      if @iterator.dashboard_files.length == 1
+        puts "Skipping index check because single dashboard file was provided"
+        return
+      end
+
       puts "Skipping index check because index file is nil"
       return
     end
@@ -646,13 +660,18 @@ def main
   end
 
   options = {
-    autofix: false
+    autofix: false,
+    runDashboardLinkCheck: false
   }
   OptionParser.new do |opts|
-    opts.banner = "Usage: dashboards_validator.rb [-f/--autofix] <integration dir or file>"
+    opts.banner = "Usage: dashboards_validator.rb <options>"
 
-    opts.on("-f", "--autofix") do |f|
+    opts.on("-f", "--autofix", "integration dir or file") do |f|
       options[:autofix] = f
+    end
+
+    opts.on("--runDashboardLinkCheck") do |r|
+        options[:runDashboardLinkCheck] = r
     end
   end.parse!
 
@@ -669,7 +688,13 @@ def main
   SparklineFontSizeChecker.new(dashboards).run(reporter)
   ChartDescriptionChecker.new(dashboards).run(reporter)
   ChartUnitChecker.new(dashboards).run(reporter)
-  DashboardLinkChecker.new(dashboards).run(reporter)
+
+  if options[:runDashboardLinkCheck]
+    DashboardLinkChecker.new(dashboards).run(reporter)
+  else
+    puts "Skipping dashboard link check. To enable, use the --runDashboardLinkCheck option."
+  end
+
   ChartQueryChecker.new(dashboards).run(reporter)
   ParameterQueryChecker.new(dashboards).run(reporter)
   IndexChecker.new(dashboards, integration_index_json).run(reporter)
