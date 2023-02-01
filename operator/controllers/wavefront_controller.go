@@ -45,10 +45,10 @@ import (
 
 	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/validation"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/health"
 	baseYaml "gopkg.in/yaml.v2"
 
-	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
+	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/health"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -56,6 +56,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
 )
 
 const DeployDir = "../deploy/internal"
@@ -344,11 +346,6 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	wavefront.Spec.Namespace = r.namespace
 
 	wavefront.Spec.ImageRegistry = filepath.Dir(deployment.Spec.Template.Spec.Containers[0].Image)
-	if wavefront.Spec.ImageRegistry == util.DefaultImageRegistry {
-		wavefront.Spec.LoggingImageRegistry = util.DefaultLoggingImageRegistry
-	} else {
-		wavefront.Spec.LoggingImageRegistry = wavefront.Spec.ImageRegistry
-	}
 
 	if wavefront.Spec.DataCollection.Metrics.Enable {
 		if len(wavefront.Spec.DataCollection.Metrics.CustomConfig) == 0 {
@@ -444,7 +441,14 @@ func setHttpProxyConfigs(httpProxySecret *corev1.Secret, wavefront *wf.Wavefront
 		httpProxySecretData[k] = string(v)
 	}
 
-	httpUrl, err := url.Parse(httpProxySecretData["http-url"])
+	rawHttpUrl := httpProxySecretData["http-url"]
+
+	// append http:// if we receive a service in order to correctly parse it -- only the hostname is used, not the scheme
+	if !strings.Contains(rawHttpUrl, "http://") && !strings.Contains(rawHttpUrl, "https://") {
+		rawHttpUrl = "http://" + rawHttpUrl
+	}
+
+	httpUrl, err := url.Parse(rawHttpUrl)
 	if err != nil {
 		return err
 	}

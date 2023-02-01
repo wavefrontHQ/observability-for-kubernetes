@@ -54,9 +54,6 @@ type WavefrontSpec struct {
 	// ImageRegistry for internal use
 	ImageRegistry string `json:"-"`
 
-	// LoggingImageRegistry for internal use
-	LoggingImageRegistry string `json:"-"`
-
 	// ControllerManagerUID is for internal use of deletion delegation
 	ControllerManagerUID string `json:"-"`
 
@@ -320,6 +317,11 @@ type Filters struct {
 
 	// List of metric patterns to allow
 	AllowList []string `json:"allowList,omitempty"`
+
+	// List of tags to keep. Supersedes all other filters.
+	TagGuaranteeList []string `json:"tagGuaranteeList,omitempty"`
+
+	// TODO: metricTagAllowList, metricTagDenyList, tagInclude, and tagExclude
 }
 
 type LogFilters struct {

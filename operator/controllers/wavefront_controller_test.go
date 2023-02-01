@@ -7,8 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/testhelper/wftest"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/testhelper/wftest"
 
 	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/health"
 
@@ -22,8 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/stretchr/testify/require"
-	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/controllers"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +31,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
+	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/controllers"
 )
 
 func TestReconcileAll(t *testing.T) {
@@ -152,7 +154,7 @@ func TestReconcileAll(t *testing.T) {
 
 		require.True(t, mockKM.NodeCollectorDaemonSetContains("image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector"))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector"))
-		require.True(t, mockKM.LoggingDaemonSetContains("image: cr.fluentbit.io/fluent/fluent-bit"))
+		require.True(t, mockKM.LoggingDaemonSetContains("image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit"))
 		require.True(t, mockKM.ProxyDeploymentContains("image: projects.registry.vmware.com/tanzu_observability/proxy"))
 	})
 
@@ -171,7 +173,7 @@ func TestReconcileAll(t *testing.T) {
 
 		require.True(t, mockKM.NodeCollectorDaemonSetContains("image: docker.io/kubernetes-collector"))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("image: docker.io/kubernetes-collector"))
-		require.True(t, mockKM.LoggingDaemonSetContains("image: docker.io/fluent/fluent-bit"))
+		require.True(t, mockKM.LoggingDaemonSetContains("image: docker.io/kubernetes-operator-fluentbit"))
 		require.True(t, mockKM.ProxyDeploymentContains("image: docker.io/proxy"))
 	})
 
@@ -276,6 +278,18 @@ func TestReconcileCollector(t *testing.T) {
 
 		require.True(t, mockKM.CollectorConfigMapContains("metricAllowList:\n        - allowSomeTag\n        - allowOtherTag"))
 		require.True(t, mockKM.CollectorConfigMapContains("metricDenyList:\n        - denyAnotherTag\n        - denyThisTag"))
+	})
+
+	t.Run("can add custom filter with tag guarantee list", func(t *testing.T) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Filters.TagGuaranteeList = []string{"someTagToAlwaysProtect", "someOtherTagToAlwaysProtect"}
+		}))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.NoError(t, err)
+
+		require.True(t, mockKM.CollectorConfigMapContains("tagGuaranteeList:\n        - someTagToAlwaysProtect\n        - someOtherTagToAlwaysProtect"))
 	})
 
 	t.Run("can add custom tags", func(t *testing.T) {
@@ -727,7 +741,7 @@ func TestReconcileProxy(t *testing.T) {
 		containsProxyArg(t, "--proxyUser myUser", *mockKM)
 		containsProxyArg(t, "--proxyPassword myPassword", *mockKM)
 
-		volumeMountHasPath(t, deployment, "http-proxy-ca", "/tmp/ca")
+		initContainerVolumeMountHasPath(t, deployment, "http-proxy-ca", "/tmp/ca")
 		volumeHasSecret(t, deployment, "http-proxy-ca", "testHttpProxySecret")
 
 		require.NotEmpty(t, deployment.Spec.Template.GetObjectMeta().GetAnnotations()["configHash"])
@@ -754,6 +768,34 @@ func TestReconcileProxy(t *testing.T) {
 
 		containsProxyArg(t, "--proxyHost myproxyhost_url ", *mockKM)
 		containsProxyArg(t, "--proxyPort 8080", *mockKM)
+	})
+
+	t.Run("can create proxy with HTTP configuration where url is a service", func(t *testing.T) {
+		r, mockKM := emptyScenario(
+			wftest.CR(func(w *wf.Wavefront) {
+				w.Spec.DataExport.WavefrontProxy.HttpProxy.Secret = "testHttpProxySecret"
+			}),
+			&v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "testHttpProxySecret",
+					Namespace: wftest.DefaultNamespace,
+				},
+				Data: map[string][]byte{
+					"http-url": []byte("myproxyservice:8080"),
+				},
+			},
+		)
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		deployment, err := mockKM.GetAppliedDeployment("proxy", util.ProxyName)
+		require.NoError(t, err)
+
+		containsProxyArg(t, "--proxyHost myproxyservice", *mockKM)
+		containsProxyArg(t, "--proxyPort 8080", *mockKM)
+
+		require.NotEmpty(t, deployment.Spec.Template.GetObjectMeta().GetAnnotations()["configHash"])
 	})
 
 	t.Run("can be disabled", func(t *testing.T) {
@@ -989,6 +1031,16 @@ func volumeHasSecret(t *testing.T, deployment appsv1.Deployment, name string, se
 		}
 	}
 	require.Failf(t, "could not find secret", "could not find secret named %s on deployment %s", name, deployment.Name)
+}
+
+func initContainerVolumeMountHasPath(t *testing.T, deployment appsv1.Deployment, name, path string) {
+	for _, volumeMount := range deployment.Spec.Template.Spec.InitContainers[0].VolumeMounts {
+		if volumeMount.Name == name {
+			require.Equal(t, path, volumeMount.MountPath)
+			return
+		}
+	}
+	require.Failf(t, "could not find init container volume mount", "could not find init container volume mount named %s on deployment %s", name, deployment.Name)
 }
 
 func containsPortInServicePort(t *testing.T, port int32, mockKM testhelper.MockKubernetesManager) {

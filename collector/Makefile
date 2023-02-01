@@ -1,3 +1,6 @@
+include ../Makefile
+include make/k8s-envs/*.mk
+
 DEBUG?=false
 COVER?=false
 IMAGE_MODE_POSTFIX?=
@@ -17,7 +20,6 @@ ssh-collector:
 
 PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
 DOCKER_IMAGE?=kubernetes-collector-snapshot
-ARCH?=amd64
 WAVEFRONT_CLUSTER?=nimba
 
 REPO_DIR=$(shell git rev-parse --show-toplevel)/collector
@@ -40,7 +42,6 @@ TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
-SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
 VERSION_POSTFIX?=$(IMAGE_MODE_POSTFIX)-dev-$(shell whoami)-$(shell git rev-parse --short HEAD)
 RELEASE_VERSION?=$(shell cat ./release/VERSION)
@@ -51,8 +52,6 @@ GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
 
 LDFLAGS=-w -X main.version=$(RELEASE_VERSION) -X main.commit=$(GIT_COMMIT)
-
-include make/k8s-envs/*.mk
 
 .PHONY: release
 
@@ -88,27 +87,32 @@ tests:
 test: tests
 
 .PHONY: build
-build: clean fmt vet
-	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME) ./cmd/wavefront-collector/
+build: fmt vet
+	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -a -o $(OUT_DIR)/$(GOOS)/$(GOARCH)/$(BINARY_NAME) cmd/wavefront-collector/main.go
+	cp open_source_licenses.txt $(OUT_DIR)
 
 .PHONY: vet
 vet:
 	go vet -composites=false ./...
-
-# test driver for local development
-.PHONY: driver
-driver: clean fmt
-	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test ./cmd/test-driver/
 
 .PHONY: containers
 containers: container test-proxy-container
 
 .PHONY: container
 container: $(SEMVER_CLI_BIN)
+	make build -o fmt -o vet
+	docker build -f Dockerfile \
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OUT_DIR)
+ifneq ($(OVERRIDE_IMAGE_NAME),)
+	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
+endif
+
+cover-container: $(SEMVER_CLI_BIN)
 	# Run build in a container in order to have reproducible builds
 	docker build \
-	-f $(REPO_DIR)/Dockerfile.non-cross-platform$(IMAGE_MODE_POSTFIX) \
-	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
+	-f $(REPO_DIR)/Dockerfile.non-cross-platform-cover \
+	--build-arg BINARY_NAME=$(BINARY_NAME) \
+	--build-arg RELEASE_VERSION=$(RELEASE_VERSION) --build-arg GIT_COMMIT="$(GIT_COMMIT)" \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
@@ -118,19 +122,18 @@ BUILDER_SUFFIX=$(shell echo $(PREFIX) | cut -d '/' -f1)
 
 .PHONY: publish
 publish:
+	GOOS=linux GOARCH=amd64 make build -o fmt -o vet
+	GOOS=linux GOARCH=arm64 make build -o fmt -o vet
 	docker buildx create --use --node wavefront_collector_builder_$(BUILDER_SUFFIX)
 ifeq ($(RELEASE_TYPE), release)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
-	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION) -t $(PREFIX)/$(DOCKER_IMAGE):latest .
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION) -t $(PREFIX)/$(DOCKER_IMAGE):latest -f Dockerfile $(OUT_DIR)
 else ifeq ($(RELEASE_TYPE), rc)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
-	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc-$(RC_NUMBER) .
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc-$(RC_NUMBER) -f Dockerfile $(OUT_DIR)
 else
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
-	--build-arg BINARY_NAME=$(BINARY_NAME) --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
+	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) -f Dockerfile $(OUT_DIR)
 endif
 
 .PHONY: test-proxy-container
@@ -147,21 +150,15 @@ publish-test-proxy:  test-proxy-container
 
 .PHONY: test-proxy
 test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
-	GOARCH=$(ARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(ARCH)/test-proxy ./cmd/test-proxy/...
+	GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(GOARCH)/test-proxy ./cmd/test-proxy/...
 
 .PHONY: peg
 peg:
 	@which peg > /dev/null || \
-		(cd $(REPO_DIR)/..; GOARCH=$(ARCH) CGO_ENABLED=0 go install github.com/pointlander/peg@latest)
+		(cd $(REPO_DIR)/..; GOARCH=$(GOARCH) CGO_ENABLED=0 go install github.com/pointlander/peg@latest)
 
 $(GO_IMPORTS_BIN):
 	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest)
-
-.PHONY: semver-cli
-semver-cli: $(SEMVER_CLI_BIN)
-
-$(SEMVER_CLI_BIN):
-	@(cd ../ && make semver-cli)
 
 %.peg.go: %.peg
 	peg -switch -inline $<
@@ -183,9 +180,7 @@ push_rhel_redhat_connect: container_rhel
 
 .PHONY: clean
 clean:
-	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)
-	@rm -f $(OUT_DIR)/$(ARCH)/$(BINARY_NAME)-test
-	@rm -f $(OUT_DIR)/$(ARCH)/test-proxy
+	@rm -rf $(OUT_DIR)
 
 .PHONY: token-check
 token-check:
@@ -231,26 +226,6 @@ coverage-test:
 .PHONY: integration-test-rhel
 integration-test-rhel: token-check k8s-env clean-deployment deploy-targets
 	VERSION=$(VERSION)-rhel make container_rhel test-proxy-container delete-images push-images proxy-test
-
-# create a new branch from main
-# usage: make branch JIRA=XXXX OR make branch NAME=YYYY
-.PHONY: branch
-branch:
-	$(eval NAME := $(if $(JIRA),K8SAAS-$(JIRA),$(NAME)))
-	@if [ -z "$(NAME)" ]; then \
-		echo "usage: make branch JIRA=XXXX OR make branch NAME=YYYY"; \
-		exit 1; \
-	fi
-	git stash
-	git checkout main
-	git pull
-	git checkout -b $(NAME)
-
-.PHONY: git-rebase
-git-rebase:
-	git fetch origin
-	git rebase origin/main
-	git log --oneline -n 10
 
 .PHONY: clean-cluster
 clean-cluster:
