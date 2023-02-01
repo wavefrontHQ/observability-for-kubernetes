@@ -153,7 +153,7 @@ See the reference [example](https://github.com/wavefrontHQ/wavefront-kubernetes-
 ### Plugin Types
 The supported plugin types are:
 - **prometheus**: For collecting metrics from prometheus metric endpoints.
-- **telegraf/pluginName**: For collecting metrics from applications that are supported by telegraf. See [here](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/main/docs/metrics.md#telegraf-source) for the list of supported applications.
+- **telegraf/pluginName**: For collecting metrics from applications that are supported by telegraf. See [here](https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/docs/metrics.md#telegraf-source) for the list of supported applications.
 
   **Note:** The version of telegraf embedded within the collector is 1.10.x.
 

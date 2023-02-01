@@ -87,7 +87,7 @@ kubectl logs daemonset/wavefront-logging -n observability-system
 
 If you are experiencing gaps in data, where expected metrics or metric tags are not showing, please review the following steps.
 
-**Note:** For out of the box Kubernetes Control Plane dashboard, certain managed Kubernetes environments do not support collecting metrics of all control plane elements. For detailed information, please refer to our [supported metrics page](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/main/docs/metrics.md#control-plane-metrics).
+**Note:** For out of the box Kubernetes Control Plane dashboard, certain managed Kubernetes environments do not support collecting metrics of all control plane elements. For detailed information, please refer to our [supported metrics page](https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/docs/metrics.md#control-plane-metrics).
 
 ### Are all components Healthy?
 Check wavefront integration status locally to determine if all components are healthy by using the below command,

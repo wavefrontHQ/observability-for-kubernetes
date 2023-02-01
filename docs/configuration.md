@@ -169,7 +169,7 @@ prefix: <string>
 ```
 
 ### kubernetes_control_plane_source
-For more information on control plane metrics, see [reference](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/main/docs/metrics.md#control-plane-metrics).
+For more information on control plane metrics, see [reference](https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/docs/metrics.md#control-plane-metrics).
 
 ```yaml
 # We recommend using `120s`
@@ -205,7 +205,7 @@ conf: |
   [ <Telegraf Plugin Config> ]
 ```
 
-See a reference [example](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/main/deploy/examples/conf.example.yaml#L78) for details.
+See a reference [example](https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/collector/deploy/examples/conf.example.yaml#L78) for details.
 
 ### systemd_source
 
@@ -299,6 +299,6 @@ To enable the HTTP proxy with CA cert, you will need to create a Kubernetes secr
 
 ```kubectl create secret generic http-proxy-secret -n wavefront --from-file=tls-root-ca-bundle=<YOUR_CA_CERT_FILE>```
 
-Then use this [example](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/blob/main/deploy/examples/6-wavefront-proxy-with-http-proxy.yaml) to deploy proxy. 
+Then use this [example](https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/collector/deploy/examples/6-wavefront-proxy-with-http-proxy.yaml) to deploy proxy. 
 
 **Note:** You will need to change YOUR_CLUSTER, YOUR_API_TOKEN, YOUR_HTTP_PROXY_HOST, and YOUR_HTTP_PROXY_PORT in the above example.
