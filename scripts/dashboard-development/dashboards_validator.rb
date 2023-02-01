@@ -92,6 +92,7 @@ RGBA_PATTERN = /rgb.*\)/
 
 class ProseFormatting
   NON_CAPS_WORDS = %(of the vs to by per in with no for over a but from and v1 v2 on)
+  NON_CAPS_FIRST_WORDS = %(etcd)
 
   def self.ends_with_period?(str)
     str[-1] == "."
@@ -101,15 +102,29 @@ class ProseFormatting
     if str.nil? || str == ""
       return true
     end
-    str.split.all? { |w| capitalized?(w) || NON_CAPS_WORDS.include?(w.gsub(/[.()]/, '')) }
+
+    i = 0
+    str.split.all? do |w|
+      result = capitalized?(w) || ignored?(i, w)
+      i = i + 1
+      result
+    end
+  end
+
+  def self.ignored?(index, str)
+    if index == 0
+      NON_CAPS_FIRST_WORDS.include?(str.gsub(/[.()]/, ''))
+    else
+      NON_CAPS_WORDS.include?(str.gsub(/[.()]/, ''))
+    end
   end
 
   def self.capitalized?(str)
-    str[0] == str[0].capitalize
+    (str[0] == str[0].capitalize)
   end
 
   def self.paragraphs?(str)
-    str.split(".").size > 1 || str.include?(",")
+    str.split(".").size > 1
   end
 end
 
@@ -361,8 +376,8 @@ class ChartDescriptionChecker
         reporter.report(Reporter::Issue.new("Description should not be empty", chart["name"], dashboard_name))
         next
       end
-      unless ProseFormatting.capitalized?(description) && (ProseFormatting.ends_with_period?(description) || ProseFormatting.paragraphs?(description))
-        reporter.report(Reporter::Issue.new("Description needs to be in title case and (ends with period or is a paragraph)", description, dashboard_name))
+      unless (ProseFormatting.capitalized?(description) || ProseFormatting.ignored?(0, description.split.first)) && (ProseFormatting.ends_with_period?(description) || ProseFormatting.paragraphs?(description))
+        reporter.report(Reporter::Issue.new("Description needs to start with a capital letter and (end with period or is a paragraph)", description, dashboard_name))
       end
     end
   end
@@ -435,6 +450,7 @@ class ChartUnitChecker
       'Chunks',
       'Crashes',
       'Bytes',
+      'Bytes per Second',
       'Hits',
       'Misses',
       'ms',
@@ -450,6 +466,7 @@ class ChartUnitChecker
       'Envelopes',
       'Connections per Second',
       'Connections',
+      'Requests per Second',
       'Commands per Second',
       'Queries',
       'GiB',
@@ -466,7 +483,8 @@ class ChartUnitChecker
       'pps',
       'items',
       'running pods',
-      'running containers'
+      'running containers',
+      'Containers',
     ].include?(item)
   end
 
