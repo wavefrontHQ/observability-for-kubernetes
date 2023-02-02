@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
 
 	"github.com/influxdata/telegraf"
 	telegrafPlugins "github.com/influxdata/telegraf/plugins/inputs"
@@ -16,10 +16,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 )
 
 type telegrafPluginSource struct {

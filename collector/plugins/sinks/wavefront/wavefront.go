@@ -12,16 +12,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	"github.com/wavefronthq/wavefront-sdk-go/senders"
 
 	gm "github.com/rcrowley/go-metrics"

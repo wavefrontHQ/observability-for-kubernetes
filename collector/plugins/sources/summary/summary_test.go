@@ -28,8 +28,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	core "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/summary/kubelet"
+	core "github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/summary/kubelet"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	util "k8s.io/client-go/util/testing"

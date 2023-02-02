@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 )
 

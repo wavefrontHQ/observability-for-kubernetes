@@ -3,13 +3,13 @@ package kstate
 import (
 	"testing"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

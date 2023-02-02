@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/wavefront/metric"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric"
 )
 
 var InvalidVersion = errors.New("invalid version (must be in semantic version format)")

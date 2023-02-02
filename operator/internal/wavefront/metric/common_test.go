@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/wavefront/metric"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric"
 
 	"github.com/stretchr/testify/require"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 )
 
 var tooLong = strings.Repeat("0123456789", int(math.Ceil(float64(util.MaxTagLength)/10)))[:util.MaxTagLength]

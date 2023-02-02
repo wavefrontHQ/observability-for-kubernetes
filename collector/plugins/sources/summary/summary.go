@@ -29,11 +29,11 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	. "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/summary/kubelet"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	. "github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/summary/kubelet"
 
 	kube_api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"

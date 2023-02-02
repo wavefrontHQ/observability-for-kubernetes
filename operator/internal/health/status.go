@@ -12,9 +12,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 
-	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 )
 
 const (

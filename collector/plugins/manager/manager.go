@@ -23,9 +23,9 @@ package manager
 import (
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sinks/wavefront"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources"
 
 	log "github.com/sirupsen/logrus"
 )

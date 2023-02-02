@@ -8,9 +8,9 @@ import (
 	"os"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/handlers"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/handlers"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/logs"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metrics"
 )
 
 var (

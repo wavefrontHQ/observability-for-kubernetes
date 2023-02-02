@@ -29,8 +29,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	wavefrontcomv1alpha1 "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/controllers"
+	wavefrontcomv1alpha1 "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 

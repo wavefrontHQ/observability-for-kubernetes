@@ -26,21 +26,21 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/controlplane"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/controlplane"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/cadvisor"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/cadvisor"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/kstate"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/stats"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/summary"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/systemd"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/telegraf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/kstate"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/prometheus"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/stats"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/summary"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/systemd"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/telegraf"
 
 	gometrics "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/go-metrics-wavefront/reporting"

@@ -10,7 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/autoscaling/v2beta1"
 	batchv1 "k8s.io/api/batch/v1"

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/prometheus"
 )
 
 func TestMetricEmptyFile(t *testing.T) {

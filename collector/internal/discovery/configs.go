@@ -6,7 +6,7 @@ package discovery
 import (
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 )
 
 // configuration for auto discovery

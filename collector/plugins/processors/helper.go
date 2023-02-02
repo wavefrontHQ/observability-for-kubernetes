@@ -20,7 +20,7 @@ package processors
 import (
 	"fmt"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 )
 
 func aggregate(src, dst *metrics.Set, metricsToAggregate []string) error {

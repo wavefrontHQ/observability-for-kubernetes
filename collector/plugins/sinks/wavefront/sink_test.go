@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 )
 
 func NewTestWavefrontSink() *wavefrontSink {

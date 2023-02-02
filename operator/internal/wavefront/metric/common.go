@@ -1,6 +1,6 @@
 package metric
 
-import "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/util"
+import "github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 
 func Common(clusterName string, ms []Metric) []Metric {
 	transformed := ms[:0]

@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/testhelper"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/wavefront/metric"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric"
 )
 
 func TestConnection(t *testing.T) {

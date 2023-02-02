@@ -13,11 +13,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/discovery/prometheus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/discovery/telegraf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/discovery/prometheus"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/discovery/telegraf"
 
 	gm "github.com/rcrowley/go-metrics"
 

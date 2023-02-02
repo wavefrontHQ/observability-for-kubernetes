@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/options"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 )
 
 var collectorArgs []string

@@ -24,11 +24,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sinks/wavefront"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 
 	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"

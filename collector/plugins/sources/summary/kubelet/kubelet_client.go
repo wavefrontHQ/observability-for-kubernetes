@@ -30,7 +30,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/kubernetes"
 
 	cadvisor "github.com/google/cadvisor/info/v1"
 	jsoniter "github.com/json-iterator/go"

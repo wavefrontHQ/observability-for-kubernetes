@@ -23,9 +23,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources"
 )
 
 func TestFlow(t *testing.T) {

@@ -7,12 +7,12 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	"k8s.io/api/autoscaling/v2beta2"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 )
 
 func pointsForHPA(item interface{}, transforms configuration.Transforms) []wf.Metric {

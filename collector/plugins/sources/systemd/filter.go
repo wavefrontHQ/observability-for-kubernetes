@@ -6,7 +6,7 @@ package systemd
 import (
 	"github.com/gobwas/glob"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 )
 
 type unitFilter struct {

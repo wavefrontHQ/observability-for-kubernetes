@@ -1,7 +1,7 @@
 package wftest
 
 import (
-	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

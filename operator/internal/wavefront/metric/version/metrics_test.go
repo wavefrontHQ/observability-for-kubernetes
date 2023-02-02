@@ -3,10 +3,10 @@ package version_test
 import (
 	"testing"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/testhelper"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper"
 
 	"github.com/stretchr/testify/require"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/wavefront/metric/version"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric/version"
 )
 
 func TestMetrics(t *testing.T) {

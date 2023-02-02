@@ -11,8 +11,8 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

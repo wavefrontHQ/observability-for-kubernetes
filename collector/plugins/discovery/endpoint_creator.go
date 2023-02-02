@@ -5,7 +5,7 @@ package discovery
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
 )
 
 type endpointCreator struct {

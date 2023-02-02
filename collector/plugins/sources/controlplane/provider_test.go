@@ -3,17 +3,17 @@ package controlplane
 import (
 	"testing"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/options"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"k8s.io/client-go/kubernetes/fake"
 )
 

@@ -6,8 +6,8 @@ package discovery
 import (
 	"fmt"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 
 	"github.com/gobwas/glob"
 )

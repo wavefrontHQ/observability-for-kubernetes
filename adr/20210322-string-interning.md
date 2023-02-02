@@ -9,7 +9,7 @@ The team had discovered that the collector was crash looping because of OOM kill
 Use [string interning](https://en.wikipedia.org/wiki/String_interning#:~:text=In%20computer%20science%2C%20string%20interning,string%20is%20created%20or%20interned.): method of storing only one copy of each distinct string value, which must be immutable.
 
 ## Status
-[Implemented](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/pull/111)
+[Implemented](https://github.com/wavefrontHQ/observability-for-kubernetes/commit/3e2553a69cd98a2dd601ee3b2c2ea6da921f19c9)
 
 ## Consequences
 Increases code complexity by introducing the string interning code and the calls to it.

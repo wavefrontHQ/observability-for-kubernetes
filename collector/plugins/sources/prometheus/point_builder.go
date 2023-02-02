@@ -9,15 +9,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/experimental"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 
 	prom "github.com/prometheus/client_model/go"
 
 	gometrics "github.com/rcrowley/go-metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 )
 
 type pointBuilder struct {

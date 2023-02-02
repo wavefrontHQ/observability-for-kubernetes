@@ -13,7 +13,7 @@ The output test was introduced in order to provide an end-to-end integration tes
 We decided to develop a test proxy written in go that was a drop in replacement for the wavefront proxy. This test proxy recorded all metrics in memory and exposed an API to diff them.
 
 ## Status
-[Implemented](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/pull/143)
+[Implemented](https://github.com/wavefrontHQ/observability-for-kubernetes/commit/c6bbf6f524770ddc80327d5393c4b08d1a4bb808)
 
 ## Consequences
 

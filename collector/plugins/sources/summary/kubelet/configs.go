@@ -22,9 +22,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 
-	kube_config "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/kubernetes"
+	kube_config "github.com/wavefronthq/observability-for-kubernetes/collector/internal/kubernetes"
 	kube_client "k8s.io/client-go/rest"
 )
 

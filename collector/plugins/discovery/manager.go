@@ -8,10 +8,10 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 
 	gm "github.com/rcrowley/go-metrics"
 

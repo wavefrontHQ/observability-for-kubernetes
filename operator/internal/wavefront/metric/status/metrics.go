@@ -6,12 +6,12 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/wavefront/metric"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 
-	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/health"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
 )
 
 const (

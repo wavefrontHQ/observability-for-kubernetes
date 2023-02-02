@@ -9,8 +9,8 @@ import (
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/logs"
-	metrics2 "github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/testproxy/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/logs"
+	metrics2 "github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metrics"
 )
 
 func LogJsonArrayHandler(logVerifier *logs.LogVerifier) http.HandlerFunc {

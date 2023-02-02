@@ -23,10 +23,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/events"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 )
 
 type DummySink struct {

@@ -13,17 +13,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/leadership"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/options"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/options"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 
 	gm "github.com/rcrowley/go-metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/httputil"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/httputil"
 )
 
 func TestNoFilters(t *testing.T) {

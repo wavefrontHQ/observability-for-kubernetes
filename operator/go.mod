@@ -1,4 +1,4 @@
-module github.com/wavefrontHQ/wavefront-operator-for-kubernetes
+module github.com/wavefronthq/observability-for-kubernetes/operator
 
 go 1.17
 
