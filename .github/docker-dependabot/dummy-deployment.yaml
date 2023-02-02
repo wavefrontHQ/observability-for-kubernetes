@@ -14,5 +14,7 @@ spec:
       containers:
         - name: wf-proxy
           image: projects.registry.vmware.com/tanzu_observability/proxy:12.0
+        # For instructions on copying fluent-bit to Harbor, see https://confluence.eng.vmware.com/display/CNA/Technical+References.
+        # Also, search this repo for references of old version tag and update as commit on dependabot PR.
         - name: fluent-bit
-          image: cr.fluentbit.io/fluent/fluent-bit:2.0.7
+          image: cr.fluentbit.io/fluent/fluent-bit:2.0.8
