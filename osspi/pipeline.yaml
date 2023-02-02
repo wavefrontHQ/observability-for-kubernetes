@@ -24,7 +24,7 @@ resources:
     type: git
     source:
       uri: git@github.com:fluent/fluent-bit.git
-#      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
 jobs:
   - name: update-self
     plan:
@@ -75,6 +75,7 @@ jobs:
         - get: observability-for-kubernetes
           trigger: true
           params: { submodules: all }
+        - get: fluent-bit # TODO pull version we actually use in operator
       - in_parallel:
         - task: osspi-scan-packages
           attempts: 3
