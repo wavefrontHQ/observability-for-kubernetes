@@ -205,7 +205,7 @@ conf: |
   [ <Telegraf Plugin Config> ]
 ```
 
-See a reference [example](../../collector/deploy/examples/conf.example.yaml#L78) for details.
+See a reference [example](../../collector/deploy/examples/conf.example.yaml#L90) for details.
 
 ### systemd_source
 

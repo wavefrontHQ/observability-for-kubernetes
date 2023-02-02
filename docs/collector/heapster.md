@@ -1,6 +1,6 @@
 # Changes
 
-The wavefront-kubernetes-collector leverages code from [heapster](https://github.com/kubernetes/heapster) for scraping metrics from the Kubelet's summary API.
+The wavefront-kubernetes-collector leverages code from [heapster](https://github.com/kubernetes-retired/heapster) for scraping metrics from the Kubelet's summary API.
 
 Code adopted from heapster have been repackaged under the `internal` and `plugin` directories and retain their original copyright notices.
 
