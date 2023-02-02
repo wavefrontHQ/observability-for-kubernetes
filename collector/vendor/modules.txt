@@ -67,7 +67,7 @@ github.com/gobwas/glob/util/strings
 # github.com/godbus/dbus/v5 v5.0.6
 ## explicit; go 1.12
 github.com/godbus/dbus/v5
-# github.com/gofrs/uuid v3.3.0+incompatible
+# github.com/gofrs/uuid v4.4.0+incompatible
 ## explicit
 # github.com/gogo/protobuf v1.3.2
 ## explicit; go 1.15
@@ -189,8 +189,8 @@ github.com/jackc/pgx/stdlib
 github.com/json-iterator/go
 # github.com/kylelemons/godebug v1.1.0
 ## explicit; go 1.11
-# github.com/lib/pq v1.3.0
-## explicit
+# github.com/lib/pq v1.10.7
+## explicit; go 1.13
 # github.com/mattn/go-colorable v0.1.6
 ## explicit; go 1.13
 github.com/mattn/go-colorable
@@ -242,7 +242,7 @@ github.com/shirou/gopsutil/load
 github.com/shirou/gopsutil/mem
 github.com/shirou/gopsutil/net
 github.com/shirou/gopsutil/process
-# github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
+# github.com/shopspring/decimal v1.3.1
 ## explicit; go 1.13
 # github.com/sirupsen/logrus v1.9.0
 ## explicit; go 1.13

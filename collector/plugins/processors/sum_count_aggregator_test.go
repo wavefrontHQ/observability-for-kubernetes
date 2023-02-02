@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 
 	"github.com/stretchr/testify/assert"
 )

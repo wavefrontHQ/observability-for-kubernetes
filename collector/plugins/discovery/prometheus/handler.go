@@ -4,9 +4,9 @@
 package prometheus
 
 import (
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/discovery"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/prometheus"
 )
 
 func NewProviderInfo(handler metrics.ProviderHandler, prefix string) discovery.ProviderInfo {

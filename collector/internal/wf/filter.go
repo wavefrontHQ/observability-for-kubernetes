@@ -2,7 +2,7 @@ package wf
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 )
 
 type Incrementer interface {

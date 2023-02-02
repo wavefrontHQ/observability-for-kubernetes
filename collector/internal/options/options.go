@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/flags"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/flags"
 )
 
 var DaemonAndAgentErr = errors.New("cannot set --daemon with --agent")

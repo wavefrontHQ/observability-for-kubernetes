@@ -21,12 +21,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sinks/wavefront"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/metrics"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 )
 
 func TestAllExportsInTime(t *testing.T) {

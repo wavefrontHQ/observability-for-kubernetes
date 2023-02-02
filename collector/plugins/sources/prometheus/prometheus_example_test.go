@@ -9,10 +9,10 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/filter"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/experimental"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/experimental"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

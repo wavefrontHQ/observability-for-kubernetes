@@ -4,7 +4,7 @@
 package kstate
 
 import (
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
 func buildTags(key, name, ns string, srcTags map[string]string) map[string]string {

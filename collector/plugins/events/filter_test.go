@@ -5,7 +5,7 @@ package events
 import (
 	"testing"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 )
 
 func TestAllowList(t *testing.T) {

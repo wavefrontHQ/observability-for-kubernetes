@@ -8,7 +8,7 @@ import (
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/discovery"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/discovery"
 	v1 "k8s.io/api/authorization/v1"
 )
 

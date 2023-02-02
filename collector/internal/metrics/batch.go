@@ -3,7 +3,7 @@ package metrics
 import (
 	"time"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
 // Batch contains sets of metrics tied to specific k8s resources and other more general wavefront points

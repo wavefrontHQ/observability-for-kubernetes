@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/wavefronthq/wavefront-collector-for-kubernetes/plugins/sources/prometheus"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/prometheus"
 )
 
 func TransformPermissionError(err error) error {
