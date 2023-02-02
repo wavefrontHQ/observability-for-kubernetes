@@ -11,8 +11,4 @@ The team considered, extending the existing test proxy or creating a new one for
 * In addition, we move code from cmd directory into package files to make it better factored and easier to test. We confirmed the test files will not be included in the wavefront binary.
 
 ## Status
-* [Implemented](https://github.com/wavefrontHQ/wavefront-collector-for-kubernetes/pull/549)
-
-## Future concerns
-* Duplication of the test proxy yaml and start scripts between this repo and the [Wavefront K8s Operator](https://github.com/wavefrontHQ/wavefront-operator-for-kubernetes) repo. We should consider consolidating 
-them as part of the mono repo effort. 
+* [Implemented](https://github.com/wavefrontHQ/observability-for-kubernetes/commit/b068ba72fad9caad8b0ae882657bc0f403a2a83d)

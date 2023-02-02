@@ -60,6 +60,6 @@ docker run \
   -it harbor-repo.vmware.com/source_insight_tooling/osspi-runner:latest
 
 # then when you're in the command prompt, just run the osspi task scripts
-# e.g. /workspace/wavefront-collector-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.sh
+# e.g. /workspace/observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.sh
 
 # see what jq is getting from OSM server and troubleshoot error message

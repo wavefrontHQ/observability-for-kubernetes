@@ -14,7 +14,7 @@ Install the Wavefront Operator into `observability-system` namespace.
 | Wavefront logging              | `projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit:2.0.8` | `YOUR_IMAGE_REGISTRY/kubernetes-operator-fluentbit:2.0.8` |
 
 2. Create a local directory called `observability`
-3. Download [wavefront-operator.yaml](https://raw.githubusercontent.com/wavefrontHQ/wavefront-operator-for-kubernetes/main/deploy/kubernetes/wavefront-operator.yaml) into the `observability` directory.
+3. Download [wavefront-operator.yaml](https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/deploy/kubernetes/wavefront-operator.yaml) into the `observability` directory.
 4. Create a `kustomization.yaml` file in the `observability` directory.
   ```yaml
   # Need to change YOUR_IMAGE_REGISTRY
@@ -37,7 +37,7 @@ Install the Wavefront Operator into `observability-system` namespace.
 # Deploy the Wavefront Operator into a custom namespace
 
 1. Create a local directory called `observability`
-2. Download [wavefront-operator.yaml](https://raw.githubusercontent.com/wavefrontHQ/wavefront-operator-for-kubernetes/main/deploy/kubernetes/wavefront-operator.yaml) into the `observability` directory.
+2. Download [wavefront-operator.yaml](https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/deploy/kubernetes/wavefront-operator.yaml) into the `observability` directory.
 3. Create a `kustomization.yaml` file in the `observability` directory.
   ```yaml
   # Need to change YOUR_NAMESPACE
