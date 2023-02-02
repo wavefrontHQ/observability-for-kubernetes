@@ -26,3 +26,8 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "sigs.k8s.io/*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+  - package-ecosystem: "docker"
+    directory: "/.github/docker-dependabot"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 2

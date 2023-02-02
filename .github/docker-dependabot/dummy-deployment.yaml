@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dummy-dependabot-deployment
+spec:
+  selector:
+    matchLabels:
+      app: dummy
+  template:
+    metadata:
+      labels:
+        app: dummy
+    spec:
+      containers:
+        - name: wf-proxy
+          image: projects.registry.vmware.com/tanzu_observability/proxy:12.0
+        - name: fluent-bit
+          image: cr.fluentbit.io/fluent/fluent-bit:2.0.7
