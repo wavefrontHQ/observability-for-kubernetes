@@ -10,7 +10,6 @@ bin
 /build
 testbin/*
 config/samples/*.yaml
-config/manager/kustomization.yaml
 hack/test/_v1alpha1_wavefront_test.yaml
 hack/test/egress-http-proxy/mitmproxy-ca-cert.pem
 
