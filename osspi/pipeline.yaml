@@ -20,6 +20,11 @@ resources:
     source:
       uri: git@github.com:wavefrontHQ/prometheus-storage-adapter.git
       private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+  - name: fluent-bit
+    type: git
+    source:
+      uri: git@github.com:fluent/fluent-bit.git
+#      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
 jobs:
   - name: update-self
     plan:
@@ -79,6 +84,34 @@ jobs:
             project_repo: observability-for-kubernetes
           params:
             SCAN_PATH: operator
+            REPO: project_repo
+            API_KEY: ((osspi.osm-prod-api-key))
+            USERNAME: ((osspi.osm-prod-username))
+            PRODUCT: Wavefront_K8_Operator
+            VERSION: Latest
+            PREPARE: |
+              go mod vendor
+            OSSPI_SCANNING_PARAMS: |
+              enable: true
+              include_bomtools: "go_mod"
+              search_depth: 5
+              go_mod.path: "/go/bin/go"
+
+              # exclude for signature scans
+              exclude_patterns:
+                - vendor
+            OSSPI_IGNORE_RULES: |
+              - name_regex: onsi\/ginkgo
+                version_regex: .*
+              - name_regex: gomega
+                version_regex: .*
+        - task: osspi-scan-fluentbit
+          attempts: 3
+          file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
+          input_mapping:
+            ci_repo: observability-for-kubernetes
+            project_repo: fluent-bit
+          params:
             REPO: project_repo
             API_KEY: ((osspi.osm-prod-api-key))
             USERNAME: ((osspi.osm-prod-username))
