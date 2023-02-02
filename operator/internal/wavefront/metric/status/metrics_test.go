@@ -5,14 +5,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/testhelper"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper"
 
 	"github.com/stretchr/testify/require"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/health"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/util"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/wavefront/metric/status"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric/status"
 
-	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 )
 
 func TestMetrics(t *testing.T) {

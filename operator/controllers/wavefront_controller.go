@@ -34,20 +34,20 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/wavefront/metric"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/wavefront/metric/version"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric/version"
 
-	kubernetes_manager "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/kubernetes"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/util"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/wavefront/metric/status"
+	kubernetes_manager "github.com/wavefronthq/observability-for-kubernetes/operator/internal/kubernetes"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric/status"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/validation"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 
 	baseYaml "gopkg.in/yaml.v2"
 
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/health"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -57,7 +57,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 )
 
 const DeployDir = "../deploy/internal"

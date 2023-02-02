@@ -8,11 +8,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/stretchr/testify/require"
-	"github.com/wavefrontHQ/wavefront-operator-for-kubernetes/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/stretchr/testify/assert"
-	wf "github.com/wavefrontHQ/wavefront-operator-for-kubernetes/api/v1alpha1"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
