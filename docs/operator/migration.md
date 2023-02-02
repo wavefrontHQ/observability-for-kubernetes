@@ -16,7 +16,7 @@ In your `wavefront.yaml`,
 
 Modify your `wavefront.yaml` to match your helm installation based on the information below.
 The following table lists the mapping of configurable parameters of the Wavefront Helm chart to Wavefront Operator Custom Resource.
-See [Custom Resource Scenarios](../../operator/deploy/kubernetes/scenarios) for examples or refer to [config/crd/bases/wavefront.com_wavefronts.yaml](../../operator/config/crd/bases/wavefront.com_wavefronts.yaml) for information on all Custom Resource fields.
+See [Custom Resource Scenarios](../../operator/deploy/kubernetes/scenarios) for examples or refer to [wavefront.com_wavefronts.yaml](../../operator/config/crd/bases/wavefront.com_wavefronts.yaml) for information on all Custom Resource fields.
 
 | Helm collector parameter           | Wavefront operator Custom Resource `spec`.                                                         | Description                                                                                                                                                    |
 |------------------------------------|----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -79,7 +79,7 @@ NAME        STATUS    PROXY           CLUSTER-COLLECTOR   NODE-COLLECTOR   LOGGI
 wavefront   Healthy   Running (1/1)   Running (1/1)       Running (3/3)                   2m4s   All components are healthy
 ```
 
-If `STATUS` is `Unhealthy`, check [troubleshooting](troubleshooting.md).
+If `STATUS` is `Unhealthy`, check [troubleshooting](../troubleshooting.md).
 
 ### 5. Check That You Are Receiving Metrics From The Operator
 
@@ -107,7 +107,7 @@ kubectl apply -f <path_to_your_wavefront.yaml>
 ### Wavefront Proxy Configuration
 
 #### References:
-* See [Custom Resource Scenarios](/deploy/kubernetes/scenarios) for proxy configuration examples.
+* See [Custom Resource Scenarios](../../operator/deploy/kubernetes/scenarios) for proxy configuration examples.
 * Copy and save your existing collector configMaps and any other configurations.
 * Uninstall your currently deployed wavefront collector and proxy.
 * Make sure the wavefront operator is already installed.

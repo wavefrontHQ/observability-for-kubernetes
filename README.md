@@ -117,7 +117,7 @@ The following tools are required for installing the integration.
    NAME        STATUS    PROXY           CLUSTER-COLLECTOR   NODE-COLLECTOR   LOGGING        AGE    MESSAGE
    wavefront   Healthy   Running (1/1)   Running (1/1)       Running (3/3)    Running (3/3)  2m4s   All components are healthy
    ```
-   If `STATUS` is `Unhealthy`, check [troubleshooting](docs/operator/troubleshooting.md).
+   If `STATUS` is `Unhealthy`, check [troubleshooting](docs/troubleshooting.md).
 
 **Note**: For details on migrating from existing helm chart or manual deploy, see [Migration](docs/operator/migration.md).
 
@@ -202,4 +202,4 @@ kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/observability-fo
 
 # Contribution
 
-See the [Contribution page](docs/operator/contribution.md)
+See the [Contribution page](docs/contribution.md)

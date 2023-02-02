@@ -8,16 +8,16 @@ The Wavefront Collector for Kubernetes is an agent that runs as a [DaemonSet](ht
 ## Features
 * Collects real-time data from all layers of a Kubernetes environment
 * Multiple sources of metrics providing comprehensive insight:
-  - Kubernetes (kubelet) source: For [core kubernetes metrics](https://github.com/wavefrontHQ/observability-for-kubernetes/tree/main/docs/metrics.md#kubernetes-source)
+  - Kubernetes (kubelet) source: For [core kubernetes metrics](metrics.md#kubernetes-source)
   - Prometheus source: For scraping prometheus metric endpoints (API server, etcd, NGINX etc)
-  - Kubernetes state source: For [resource state metrics](https://github.com/wavefrontHQ/observability-for-kubernetes/tree/main/docs/metrics.md#kubernetes-state-source)
-  - Telegraf source: For [host and application](https://github.com/wavefrontHQ/observability-for-kubernetes/tree/main/docs/metrics.md#telegraf-source) level metrics
-  - Systemd source: For [host level systemd metrics](https://github.com/wavefrontHQ/observability-for-kubernetes/tree/main/docs/metrics.md#systemd-source)
-* [Auto discovery](https://github.com/wavefrontHQ/observability-for-kubernetes/tree/main/docs/discovery.md) of pods and services based on annotation and configuration
+  - Kubernetes state source: For [resource state metrics](metrics.md#kubernetes-state-source)
+  - Telegraf source: For [host and application](metrics.md#telegraf-source) level metrics
+  - Systemd source: For [host level systemd metrics](metrics.md#systemd-source)
+* [Auto discovery](discovery.md) of pods and services based on annotation and configuration
 * Daemonset mode for high scalability with leader election for monitoring cluster level resources
-* Rich [filtering](https://github.com/wavefrontHQ/observability-for-kubernetes/tree/main/docs/filtering.md) support
+* Rich [filtering](filtering.md) support
 * Auto reload of configuration changes
-* [Internal metrics](https://github.com/wavefrontHQ/observability-for-kubernetes/tree/main/docs/metrics.md#collector-health-metrics) for tracking the collector health and configuration
+* [Internal metrics](metrics.md#collector-health-metrics) for tracking the collector health and configuration
 
 ## Installation
 
@@ -25,7 +25,7 @@ Refer to the [installation instructions](https://docs.wavefront.com/kubernetes.h
 
 ## Configuration
 
-The installation instructions use a default configuration suitable for most use cases. Refer to the [documentation](https://github.com/wavefrontHQ/observability-for-kubernetes/tree/main/docs) for details on all the configuration options.
+The installation instructions use a default configuration suitable for most use cases. Refer to the [documentation](configuration.md) for details on all the configuration options.
 
 ## Building
 
@@ -44,7 +44,7 @@ However, logic has been added to the collector to automatically drop tags in pri
 to ensure that metrics make it through to the proxy and no longer cause this error.
 This is the order of the logic used to drop tags:
 1. Explicitly excluded tags (from `tagExclude` config).
-   Refer [here](https://github.com/wavefrontHQ/observability-for-kubernetes/tree/main/operator/deploy/kubernetes/scenarios/wavefront-full-config.yaml) for an example scenario.
+   Refer [here](../../operator/deploy/kubernetes/scenarios/wavefront-full-config.yaml) for an example scenario.
 1. Tags are empty or are interpreted to be empty (`"tag.key": ""`, `"tag.key": "-"`, or `"tag.key": "/"`).
 1. Tags are explicitly excluded
    (`"namespace_id": "..."`, `"host_id": "..."`, `"pod_id": "..."`, or `"hostname": "..."`).
