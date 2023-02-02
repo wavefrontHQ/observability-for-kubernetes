@@ -15,4 +15,4 @@ spec:
         - name: wf-proxy
           image: projects.registry.vmware.com/tanzu_observability/proxy:12.0
         - name: fluent-bit
-          image: cr.fluentbit.io/fluent/fluent-bit:2.0.7
+          image: cr.fluentbit.io/fluent/fluent-bit:2.0.8
