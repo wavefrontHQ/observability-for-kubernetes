@@ -7,7 +7,49 @@ Previously, there were two separate repos for the k8s operator(wavefront-operato
 ## Decision
 We eventually decided on the below structure:
 
-![Final north star structure](images/20230201-repo-structure-final.png)
+```
+.
+├── adr
+├── ci
+│   ├── jenkins
+│   └── osspi
+├── docs
+│   ├── collector
+│   ├── operator
+│   └── something.md
+├── collector
+│   ├── cmd
+│   │   └── main.go
+│   ├── internal
+│   │   └── <packages>
+│   ├── hack
+│   │   └── <test scripts>
+│   ├── Dockerfile
+│   ├── LICENSE
+│   ├── go.mod
+│   ├── go.sum
+│   └── open_source_licenses.txt
+├── operator
+│   ├── api
+│   │   └── v1alpha1
+│   ├── internal
+│   │   └── <packages>
+│   ├── hack
+│   │   └── <test scripts>
+│   ├── main.go
+│   ├── Dockerfile
+│   ├── go.mod
+│   ├── go.sum
+│   └── open_source_licenses.txt
+├── test-proxy
+│   └── cmd
+│       └── main.go
+├── scripts
+│   └── test.sh
+├── LICENSE
+├── Makefile
+└── README.md
+```
 
 The team refactored to achieve some of the structure from the above architecture diagram, mainly
 - Bring specific files and folders (docs/adr/README/LICENSE) under repo root.
@@ -30,7 +72,43 @@ The team refactored to achieve some of the structure from the above architecture
 ## Other options considered:
 This is the original structure we came up with:
 
-![Initial north star structure](images/20230201-repo-structure-initial.png)
+```
+.
+├── adr
+├── ci
+│   ├── jenkins
+│   └── osspi
+├── docs
+│   └── something.md
+├── docker
+│   ├── Dockerfile <for collector>
+│   └── Dockerfile <for operator>
+├── cmd
+│   ├── collector
+│   │   └── main.go
+│   ├── operator
+│   │   └── main.go
+│   └── test-proxy
+│       └── main.go
+├── pkg
+│   ├── controllers
+│   ├── integration
+│   │   ├── fakes
+│   │   │   └── some-testing-strategy.yaml
+│   │   └── integration_test.go
+│   └── util
+│       ├── something.go
+│       └── something_test.go
+├── scripts
+│   └── test.sh
+├── go.mod
+├── go.sum
+├── collector_osl_file
+├── operator_osl_file
+├── LICENSE
+├── Makefile
+└── README.md
+```
 
 As we spiked on it, we realized the following pain points and decided to not go ahead with it:
 - Maintaining multiple go versions is required due to kube-builder having a specific go version dependency.
