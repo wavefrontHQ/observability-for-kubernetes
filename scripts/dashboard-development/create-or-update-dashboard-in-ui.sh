@@ -1,8 +1,7 @@
 #!/bin/bash -e
 
-SCRIPT_DIR=$(dirname $0)
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 function print_usage_and_exit() {
   red "Failure: $1"
@@ -15,7 +14,7 @@ function print_usage_and_exit() {
 }
 
 function main() {
-  cd "${REPO_ROOT}/hack/integrations/working"
+  cd "${REPO_ROOT}/scripts/dashboard-development/working"
 
   # REQUIRED
   local WAVEFRONT_TOKEN=
@@ -54,7 +53,7 @@ function main() {
     print_usage_and_exit "-n new dashboard url to create (required)"
   fi
 
-  ../scripts/get-dashboard.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_TO_CLONE} -o ${DASHBOARD_TO_CLONE}.json
+  "${REPO_ROOT}/scripts/dashboard-development/get-dashboard.sh" -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -d ${DASHBOARD_TO_CLONE} -o ${DASHBOARD_TO_CLONE}.json
 
   jq ".url = \"${NEW_DASHBOARD}\"" ${DASHBOARD_TO_CLONE}.json > ${NEW_DASHBOARD}.json
 

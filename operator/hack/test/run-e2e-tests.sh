@@ -1,8 +1,10 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/operator
-source ${REPO_ROOT}/hack/test/k8s-utils.sh
-source ${REPO_ROOT}/hack/test/egress-http-proxy/egress-proxy-setup-functions.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
+OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)/operator
+source "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/egress-proxy-setup-functions.sh"
 
 NS=observability-system
 NO_CLEANUP=false
@@ -16,7 +18,7 @@ function setup_test() {
 
   wait_for_cluster_ready "$NS"
 
-  sed "s/YOUR_CLUSTER_NAME/$cluster_name/g" ${REPO_ROOT}/hack/test/deploy/scenarios/wavefront-$type.yaml |
+  sed "s/YOUR_CLUSTER_NAME/$cluster_name/g" ${OPERATOR_REPO_ROOT}/hack/test/deploy/scenarios/wavefront-$type.yaml |
     sed "s/YOUR_WAVEFRONT_URL/$wf_url/g" |
     sed "s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" |
     sed "s/YOUR_NAMESPACE/${NS}/g" >hack/test/_v1alpha1_wavefront_test.yaml
@@ -25,7 +27,7 @@ function setup_test() {
     deploy_egress_proxy
     create_mitmproxy-ca-cert_pem_file
     echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
-    yq eval '.stringData.tls-root-ca-bundle = "'"$(< ${REPO_ROOT}/hack/test/egress-http-proxy/mitmproxy-ca-cert.pem)"'"' ${REPO_ROOT}/hack/test/egress-http-proxy/https-proxy-secret.yaml >> hack/test/_v1alpha1_wavefront_test.yaml
+    yq eval '.stringData.tls-root-ca-bundle = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/mitmproxy-ca-cert.pem)"'"' "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/https-proxy-secret.yaml" >> hack/test/_v1alpha1_wavefront_test.yaml
   fi
 
   kubectl apply -f hack/test/_v1alpha1_wavefront_test.yaml
@@ -38,7 +40,7 @@ function run_test_wavefront_metrics() {
   local cluster_name=${CONFIG_CLUSTER_NAME}-$type
   echo "Running test wavefront metrics, cluster_name $cluster_name ..."
 
-  ${REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t ${WAVEFRONT_TOKEN} -n $cluster_name -e "$type-test.sh" -o ${VERSION}
+  ${OPERATOR_REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t "${WAVEFRONT_TOKEN}" -n "${cluster_name}" -e "$type-test.sh" -o "${VERSION}"
 }
 
 function run_health_checks() {
@@ -132,7 +134,7 @@ function run_static_analysis() {
 
   local kube_lint_results_file=$(mktemp)
   local kube_lint_check_errors=$(mktemp)
-  ${REPO_ROOT}/bin/kube-linter lint "$resources_yaml_file" --format json 1>"$kube_lint_results_file" 2>/dev/null || true
+  ${OPERATOR_REPO_ROOT}/bin/kube-linter lint "$resources_yaml_file" --format json 1>"$kube_lint_results_file" 2>/dev/null || true
 
   local current_lint_errors="$(jq '.Reports | length' "$kube_lint_results_file")"
   yellow "Kube linter error count: ${current_lint_errors}"
@@ -157,7 +159,7 @@ function run_static_analysis() {
   echo "Running static analysis: kube-score"
   local kube_score_results_file=$(mktemp)
   local kube_score_critical_errors=$(mktemp)
-  ${REPO_ROOT}/bin/kube-score score "$resources_yaml_file" --ignore-test pod-networkpolicy --output-format ci >"$kube_score_results_file" || true
+  ${OPERATOR_REPO_ROOT}/bin/kube-score score "$resources_yaml_file" --ignore-test pod-networkpolicy --output-format ci >"$kube_score_results_file" || true
 
   grep '\[CRITICAL\]' "$kube_score_results_file" >"$kube_score_critical_errors"
   local current_score_errors=$(cat "$kube_score_critical_errors" | wc -l)
@@ -381,8 +383,8 @@ function main() {
 
   local WAVEFRONT_URL="https:\/\/nimba.wavefront.com"
   local WF_CLUSTER=nimba
-  local VERSION=$(cat ${REPO_ROOT}/release/OPERATOR_VERSION)
-  local K8S_ENV=$(cd ${REPO_ROOT}/hack/test && ./get-k8s-cluster-env.sh)
+  local VERSION=$(cat ${OPERATOR_REPO_ROOT}/release/OPERATOR_VERSION)
+  local K8S_ENV=$(k8s_env)
   local CONFIG_CLUSTER_NAME=$(create_cluster_name)
   local tests_to_run=()
 
@@ -435,7 +437,7 @@ function main() {
     CONFIG_CLUSTER_NAME=$(create_cluster_name)
   fi
 
-  cd "$REPO_ROOT"
+  cd "$OPERATOR_REPO_ROOT"
 
   if [[ " ${tests_to_run[*]} " =~ " validation-errors " ]]; then
     run_test "validation-errors" "unhealthy"

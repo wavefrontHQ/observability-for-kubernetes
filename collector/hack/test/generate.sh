@@ -1,20 +1,22 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-source "${REPO_ROOT}"/hack/test/deploy/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
+COLLECTOR_REPO_ROOT=$(git rev-parse --show-toplevel)/collector
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 NS=wavefront-collector
 
 function copy_collector_deployment_files() {
   echo "Copying collector deployment files"
 
-  cp "${REPO_ROOT}/deploy/kubernetes/0-collector-namespace.yaml" base/deploy/0-collector-namespace.yaml
-  cp "${REPO_ROOT}/deploy/kubernetes/1-collector-cluster-role.yaml" base/deploy/1-collector-cluster-role.yaml
-  cp "${REPO_ROOT}/deploy/kubernetes/2-collector-rbac.yaml" base/deploy/2-collector-rbac.yaml
-  cp "${REPO_ROOT}/deploy/kubernetes/3-collector-service-account.yaml" base/deploy/3-collector-service-account.yaml
-  cp "${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" base/deploy/collector-deployments/5-collector-daemonset.yaml
-  cp "${REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-single-deployment.yaml" base/deploy/collector-deployments/5-collector-single-deployment.yaml
-  cp "${REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-combined.yaml" base/deploy/collector-deployments/5-collector-combined.yaml
+  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/0-collector-namespace.yaml" base/deploy/0-collector-namespace.yaml
+  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/1-collector-cluster-role.yaml" base/deploy/1-collector-cluster-role.yaml
+  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/2-collector-rbac.yaml" base/deploy/2-collector-rbac.yaml
+  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/3-collector-service-account.yaml" base/deploy/3-collector-service-account.yaml
+  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" base/deploy/collector-deployments/5-collector-daemonset.yaml
+  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-single-deployment.yaml" base/deploy/collector-deployments/5-collector-single-deployment.yaml
+  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-combined.yaml" base/deploy/collector-deployments/5-collector-combined.yaml
 
   csplit base/deploy/collector-deployments/5-collector-combined.yaml '/^---$/' &>/dev/null
   mv xx00 base/deploy/collector-deployments/5-collector-node-metrics-only.yaml
@@ -78,10 +80,10 @@ function main() {
   local WAVEFRONT_TOKEN=
 
   # OPTIONAL/DEFAULT
-  local VERSION="$(cat "${REPO_ROOT}"/release/VERSION)"
-  local K8S_ENV=$("${SCRIPT_DIR}"/deploy/get-k8s-cluster-env.sh | awk '{print tolower($0)}' )
+  local VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)"
+  local K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
   local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
-  local COLLECTOR_YAML="${REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
+  local COLLECTOR_YAML="${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
   local USE_TEST_PROXY="false"
   local EXPERIMENTAL_FEATURES=
 

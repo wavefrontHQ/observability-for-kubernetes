@@ -1,8 +1,7 @@
 #!/bin/bash -e
 
-SCRIPT_DIR=$(dirname $0)
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 function print_usage_and_exit() {
   echo "Failure: $1"
@@ -16,7 +15,7 @@ function print_usage_and_exit() {
 }
 
 function main() {
-  cd "$(dirname "$0")/../working"
+  cd "${REPO_ROOT}/scripts/dashboard-development/working"
 
   # REQUIRED
   local WAVEFRONT_TOKEN=
@@ -66,7 +65,7 @@ function main() {
     print_usage_and_exit "integrations branch required"
   fi
 
-  ../scripts/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${SOURCE_DASHBOARD} -o ${SOURCE_DASHBOARD}.json
+  ${REPO_ROOT}/scripts/dashboard-development/get-dashboard.sh -t ${WAVEFRONT_TOKEN} -d ${SOURCE_DASHBOARD} -o ${SOURCE_DASHBOARD}.json
 
   local INTEGRATION_DIR=${REPO_ROOT}/../integrations
   git -C "$INTEGRATION_DIR" stash
@@ -81,13 +80,13 @@ function main() {
   jq ". += {"systemDashboardVersion":${VERSION}}" ${DEST_DASHBOARD}.json > "tmp" && mv "tmp" ${DEST_DASHBOARD}.json
 
   # Do the sorting here so our systemDashboardVersion gets bumped to the top of the file
-  ${SCRIPT_DIR}/sort-dashboard.sh -i ${DEST_DASHBOARD}.json -o 'tmp' && mv "tmp" ${DEST_DASHBOARD}.json
+  ${REPO_ROOT}/scripts/dashboard-development/sort-dashboard.sh -i ${DEST_DASHBOARD}.json -o 'tmp' && mv "tmp" ${DEST_DASHBOARD}.json
 
   cat ${DEST_DASHBOARD}.json > ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json
 
   local VALIDATION_EXIT_CODE=0
   green "\n===============Begin dashboard validation==============="
-  ruby ${SCRIPT_DIR}/dashboards_validator.rb ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json || VALIDATION_EXIT_CODE=$?
+  ruby ${REPO_ROOT}/scripts/dashboard-development/dashboards_validator.rb ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json || VALIDATION_EXIT_CODE=$?
   green "================End dashboard validation================\n"
   green "Next steps:"
   if [ $VALIDATION_EXIT_CODE -ne 0 ]; then

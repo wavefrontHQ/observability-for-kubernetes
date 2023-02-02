@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/operator
-source ${REPO_ROOT}/hack/test/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
+OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)/operator
 
 function curl_query_to_wf_dashboard() {
   local query=$1
@@ -138,8 +140,8 @@ function main() {
   local WAVEFRONT_TOKEN=
   local CONFIG_CLUSTER_NAME=
 
-  local EXPECTED_COLLECTOR_VERSION=$(cat ${REPO_ROOT}/release/COLLECTOR_VERSION)
-  local EXPECTED_OPERATOR_VERSION=$(cat ${REPO_ROOT}/release/OPERATOR_VERSION)
+  local EXPECTED_COLLECTOR_VERSION=$(cat ${OPERATOR_REPO_ROOT}/release/COLLECTOR_VERSION)
+  local EXPECTED_OPERATOR_VERSION=$(cat ${OPERATOR_REPO_ROOT}/release/OPERATOR_VERSION)
   local WF_CLUSTER=nimba
   local EXTRA_TESTS=
   local LOGGING_TEST_PROXY_NAME=
@@ -185,7 +187,7 @@ function main() {
   local COLLECTOR_VERSION_IN_DECIMAL+="$(echo "${EXPECTED_COLLECTOR_VERSION}" | cut -d '.' -f3)"
   local COLLECTOR_VERSION_IN_DECIMAL="$(echo "${COLLECTOR_VERSION_IN_DECIMAL}" | sed 's/0$//')"
 
-  wait_for_cluster_ready $NS
+  wait_for_cluster_ready "$NS"
 
   local EXPECTED_TAGS_JSON=$(mktemp)
   jq -S -n --arg status Healthy \

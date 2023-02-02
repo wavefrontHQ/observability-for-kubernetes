@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/operator
-source ${REPO_ROOT}/hack/test/k8s-utils.sh
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
+NS=observability-system
 
 function print_usage_and_exit() {
   echo "Failure: $1"
@@ -49,15 +51,15 @@ function main() {
 
   kubectl delete -f ./deploy/kubernetes/wavefront-operator.yaml || true
   kubectl apply -f ./deploy/kubernetes/wavefront-operator.yaml
-  kubectl create -n observability-system secret generic wavefront-secret --from-literal token=${WAVEFRONT_TOKEN} || true
-  kubectl create -n observability-system secret generic wavefront-secret-logging --from-literal token=${WAVEFRONT_LOGGING_TOKEN} || true
+  kubectl create -n ${NS} secret generic wavefront-secret --from-literal token=${WAVEFRONT_TOKEN} || true
+  kubectl create -n ${NS} secret generic wavefront-secret-logging --from-literal token=${WAVEFRONT_LOGGING_TOKEN} || true
 
   cat <<EOF | kubectl apply -f -
   apiVersion: wavefront.com/v1alpha1
   kind: Wavefront
   metadata:
     name: wavefront
-    namespace: observability-system
+    namespace: ${NS}
   spec:
     clusterName: $CONFIG_CLUSTER_NAME
     wavefrontUrl: $WAVEFRONT_URL
@@ -69,8 +71,8 @@ function main() {
         enable: true
 EOF
 
-  wait_for_cluster_ready
-  kubectl get wavefront -n observability-system
+  wait_for_cluster_ready "$NS"
+  kubectl get wavefront -n ${NS}
 }
 
 main "$@"

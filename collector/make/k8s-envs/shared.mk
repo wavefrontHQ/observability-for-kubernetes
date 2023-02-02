@@ -1,14 +1,16 @@
+COLLECTOR_REPO_ROOT=$(shell git rev-parse --show-toplevel)/collector
+
 deploy-targets:
-	@(cd $(DEPLOY_DIR) && ./deploy-targets.sh)
+	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/deploy-targets.sh)
 
 clean-targets:
-	@(cd $(DEPLOY_DIR) && ./uninstall-targets.sh)
+	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/uninstall-targets.sh)
 
 k9s:
 	watch -n 1 k9s
 
 clean-deployment:
-	@(cd $(DEPLOY_DIR) && ./uninstall-wavefront-helm-release.sh)
+	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/uninstall-wavefront-helm-release.sh)
 	@(cd $(TEST_DIR) && ./clean-deploy.sh)
 
 k8s-env:

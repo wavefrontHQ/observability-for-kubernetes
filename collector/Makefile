@@ -5,10 +5,10 @@ PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
 DOCKER_IMAGE?=kubernetes-collector-snapshot
 WAVEFRONT_CLUSTER?=nimba
 
-REPO_DIR=$(shell git rev-parse --show-toplevel)/collector
-TEST_DIR=$(REPO_DIR)/hack/test
-DEPLOY_DIR=$(REPO_DIR)/hack/test/deploy
-OUT_DIR?=$(REPO_DIR)/_output
+REPO_ROOT=$(shell git rev-parse --show-toplevel)
+COLLECTOR_REPO_ROOT=$(shell git rev-parse --show-toplevel)/collector
+TEST_DIR=$(COLLECTOR_REPO_ROOT)/hack/test
+OUT_DIR?=$(COLLECTOR_REPO_ROOT)/_output
 INTEGRATION_TEST_ARGS?=default -r real-proxy
 
 BINARY_NAME=wavefront-collector
@@ -18,7 +18,7 @@ RC_NUMBER?=1
 GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
 
-K8S_ENV=$(shell cd $(DEPLOY_DIR) && ./get-k8s-cluster-env.sh)
+K8S_ENV=$(shell $(REPO_ROOT)/scripts/get-k8s-cluster-env.sh)
 
 ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
@@ -50,8 +50,8 @@ fmt: $(GO_IMPORTS_BIN)
 .PHONY: sort-integrations-keys
 sort-integrations-keys:
 	# TODO: uncomment to run this on all of our dashboards when we're comfortable
-	@#$(REPO_DIR)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/*.json
-	@$(REPO_DIR)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/integration-kubernetes-control-plane.json
+	@#$(COLLECTOR_REPO_ROOT)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/*.json
+	@$(COLLECTOR_REPO_ROOT)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/integration-kubernetes-control-plane.json
 
 .PHONY: checkfmt
 checkfmt: $(GO_IMPORTS_BIN)
@@ -93,7 +93,7 @@ endif
 cover-container: $(SEMVER_CLI_BIN)
 	# Run build in a container in order to have reproducible builds
 	docker build \
-	-f $(REPO_DIR)/Dockerfile.cover-non-cross-platform \
+	-f $(COLLECTOR_REPO_ROOT)/Dockerfile.cover-non-cross-platform \
 	--build-arg BINARY_NAME=$(BINARY_NAME) \
 	--build-arg RELEASE_VERSION=$(RELEASE_VERSION) --build-arg GIT_COMMIT="$(GIT_COMMIT)" \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
@@ -123,7 +123,7 @@ endif
 test-proxy-container: $(SEMVER_CLI_BIN)
 	docker build \
 	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -f $(REPO_DIR)/Dockerfile.test-proxy \
+	--pull -f $(COLLECTOR_REPO_ROOT)/Dockerfile.test-proxy \
 	-t $(PREFIX)/test-proxy:$(VERSION) -t $(PREFIX)/test-proxy:latest .
 
 .PHONY: publish-test-proxy
@@ -132,16 +132,16 @@ publish-test-proxy:  test-proxy-container
 	docker push $(PREFIX)/test-proxy:$(VERSION)
 
 .PHONY: test-proxy
-test-proxy: peg $(REPO_DIR)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
+test-proxy: peg $(COLLECTOR_REPO_ROOT)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
 	GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(GOARCH)/test-proxy ./cmd/test-proxy/...
 
 .PHONY: peg
 peg:
 	@which peg > /dev/null || \
-		(cd $(REPO_DIR)/..; GOARCH=$(GOARCH) CGO_ENABLED=0 go install github.com/pointlander/peg@latest)
+		(cd $(COLLECTOR_REPO_ROOT)/..; GOARCH=$(GOARCH) CGO_ENABLED=0 go install github.com/pointlander/peg@latest)
 
 $(GO_IMPORTS_BIN):
-	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest)
+	@(cd $(COLLECTOR_REPO_ROOT)/..; CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest)
 
 %.peg.go: %.peg
 	peg -switch -inline $<
@@ -149,7 +149,7 @@ $(GO_IMPORTS_BIN):
 .PHONY: container_rhel
 container_rhel: $(SEMVER_CLI_BIN)
 	docker build \
-		-f $(REPO_DIR)/deploy/docker/Dockerfile-rhel \
+		-f $(COLLECTOR_REPO_ROOT)/deploy/docker/Dockerfile-rhel \
 		--build-arg COLLECTOR_VERSION=$(RELEASE_VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
 		-t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)

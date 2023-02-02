@@ -1,9 +1,5 @@
 #!/bin/bash -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-source ${REPO_ROOT}/hack/test/deploy/k8s-utils.sh
-
-
 function main() {
 	cd "$(dirname "$0")"
 
