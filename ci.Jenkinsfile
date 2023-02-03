@@ -38,7 +38,6 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
           }
           steps {
-            sh 'exit 1'
             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
                sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
                sh 'cd collector && make semver-cli'
