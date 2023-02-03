@@ -30,6 +30,9 @@ helm upgrade --install memcached-release bitnami/memcached \
 --set persistence.size=200Mi \
 --namespace collector-targets >/dev/null
 
+MEMCACHED_RS=$(kubectl get rs -n collector-targets | awk '/memcached-release/ {print $1}')
+kubectl autoscale rs -n collector-targets ${MEMCACHED_RS} --min=2 --max=5 --cpu-percent=80
+
 helm upgrade --install mysql-release bitnami/mysql \
 --set auth.rootPassword=password123 \
 --set primary.persistence.size=200Mi \
