@@ -8,6 +8,7 @@ updates:
     directory: "/collector" # Location of package manifests
     schedule:
       interval: "daily"
+      time: "13:00" # 6am MST
     # reasoning: use exclude rules for things we will not upgrade in a timely manner
     open-pull-requests-limit: 1
     ignore:
@@ -19,6 +20,7 @@ updates:
     directory: "/operator" # Location of package manifests
     schedule:
       interval: "daily"
+      time: "14:00" # 7am MST
     # reasoning: use exclude rules for things we will not upgrade in a timely manner
     open-pull-requests-limit: 1
     ignore:
