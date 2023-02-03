@@ -83,9 +83,9 @@ containers: container test-proxy-container
 
 .PHONY: container
 container: $(SEMVER_CLI_BIN)
-	make build -o fmt -o vet
-	docker build -f Dockerfile \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OUT_DIR)
+	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) make -s build -o fmt -o vet
+	@docker build -f Dockerfile \
+		--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OUT_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
