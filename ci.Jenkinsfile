@@ -1,8 +1,19 @@
 pipeline {
   stages {
-    stage("Regression") {
+    stage("Aborted") {
+      steps {
+        sh 'sleep 4000'
+      }
     }
-    stage("Abort") {
+    stage("Regression") {
+      steps {
+        sh 'exit 1'
+      }
+    }
+    stage("Fixed") {
+      steps {
+        sh 'exit 0'
+      }
     }
   }
 
