@@ -38,6 +38,7 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector-snapshot"
           }
           steps {
+            sh 'exit 1'
             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
                sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
                sh 'cd collector && make semver-cli'
@@ -330,7 +331,11 @@ pipeline {
   }
 
   post {
-    regression {
+    when {
+      branch 'main'
+    }
+
+    failure {
       slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "CI BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
     }
     fixed {
