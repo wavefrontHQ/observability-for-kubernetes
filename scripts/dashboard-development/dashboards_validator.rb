@@ -3,43 +3,47 @@ require 'optparse'
 
 class Palette
   BACKGROUND_COLORS = [
-    "#f54f47", # Red           rgba(245,79,71,1)
-    "#f57600", # Orange        rgba(245,118,0,1)
-    "#85c81a", # Green         rgba(133,200,26,1)
-    "#49afd9", # neutral Blue  rgba(73,175,217,1)
+    "#f54f47ff", # Red           rgba(245,79,71,1)
+    "#f57600ff", # Orange        rgba(245,118,0,1)
+    "#85c81aff", # Green         rgba(133,200,26,1)
+    "#49afd9ff", # neutral Blue  rgba(73,175,217,1)
+  ]
+
+  # todo: Update sparkline colors
+  SPARKLINE_COLORS = [
+    "#0000004d", # SparklineLineColor rgba(0,0,0,0.3)
+    "#00000033", # SparklineFillColor rgba(0,0,0,0.2)
   ]
 
   OTHER_COLORS = [
-    "#000000", # Pure White
-    "#ffffff", # Pure Black
+    "#000000ff", # Pure Black
+    "#ffffffff", # Pure White
   ]
 
-  def self.all_colors
+  def self.valid_colors
+    BACKGROUND_COLORS + SPARKLINE_COLORS + OTHER_COLORS
+  end
+
+  def self.autofix_colors
     BACKGROUND_COLORS + OTHER_COLORS
   end
 
   def self.print
     puts "Palette"
-    self.all_colors.sort.each do |color_string|
+    self.autofix_colors.sort.each do |color_string|
       color = Color.print(color_string)
     end
   end
 end
 
-def rgba(hex_string)
-  colors = hex_string.gsub("#", "").chars.each_slice(2).map do |hex|
-    hex.join.to_i(16)
-  end.to_a
-  "rgba(#{colors.join(",")},1)"
-end
-
 class Color
-  attr_reader :r, :g, :b
+  attr_reader :r, :g, :b, :a
 
-  def initialize(r, g, b)
+  def initialize(r, g, b, a)
     @r = r
     @g = g
     @b = b
+    @a = a # store as float value, print as 1, 0, or 0.<digit>
   end
 
   def self.from_string(str)
@@ -51,13 +55,20 @@ class Color
     args = hex_string.gsub("#", "").chars.each_slice(2).map do |hex|
       hex.join.to_i(16)
     end.to_a
+
+    if args.length() == 3
+      args << nil
+    else
+      args[3] = args[3].to_f / 255
+    end
+
     new(*args)
   end
 
   def self.from_rgba(rgba_string)
-    #rgba(255,0,0,1)
-    m = /rgba\((?<r>\d+),(?<g>\d+),(?<b>\d+)/.match(rgba_string.gsub(" ", ""))
-    new(m[:r], m[:g], m[:b])
+    m = /rgba\((?<r>\d+),(?<g>\d+),(?<b>\d+)(,)?(?<a>\d?\.?\d*)/.match(rgba_string.gsub(" ", ""))
+
+    new(m[:r], m[:g], m[:b], m[:a])
   end
 
   def self.print(color_string)
@@ -69,7 +80,13 @@ class Color
   end
 
   def rgba
-    "rgba(#{r},#{g},#{b},1)"
+    a_round = a.to_f.round(1)
+    a_str = a_round
+    if a.to_i == a_round
+      a_str = a.to_i
+    end
+
+    "rgba(#{r},#{g},#{b},#{a_str})"
   end
 
   def hex
@@ -87,8 +104,9 @@ NonMatch = Struct.new(:dashboard_file, :lineno, :line, :match) do
   end
 end
 
-HEX_PATTERN = /#[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]/
+HEX_PATTERN = /#[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]?[0-9a-fA-F]?/
 RGBA_PATTERN = /rgb.*\)/
+RGBA_PATTERNS_TO_NOT_AUTOFIX = /(sparklineFillColor|sparklineLineColor)/
 
 class ProseFormatting
   NON_CAPS_WORDS = %(of the vs to by per in with no for over a but from and v1 v2 on)
@@ -164,19 +182,24 @@ class ColorChecker
     print_results
   end
 
-  def get_rgb_color_diffs(color_to_replace)
+  def get_rgb_color_diffs(color_to_replace, rgba_out)
+    tail = ""
+    if rgba_out
+      tail = "ff"
+    end
+
     color_sum = color_to_replace.r.to_f + color_to_replace.g.to_f + color_to_replace.b.to_f
     case color_sum
     when 0.0 # do nothing and move on to original color fix
     when color_to_replace.r.to_f
-      return [[Color.from_string("#f54f47"), 0]]
+      return [[Color.from_string("#f54f47"+tail), 0]]
     when color_to_replace.g.to_f
-      return [[Color.from_string("#85c81a"), 0]]
+      return [[Color.from_string("#85c81a"+tail), 0]]
     when color_to_replace.b.to_f
-      return [[Color.from_string("#49afd9"), 0]]
+      return [[Color.from_string("#49afd9"+tail), 0]]
     end
 
-    return color_diffs = all_colors.map do |hex|
+    autofix_colors.map do |hex|
       converted_color = Color.from_string(hex)
 
       r_diff = (color_to_replace.r.to_f - converted_color.r.to_f).abs
@@ -198,24 +221,30 @@ class ColorChecker
     puts " #{tail_msg}"
   end
 
+  def self.announce_not_fixing_color(from_color_str, tail_msg)
+    printf("NOT autofix-ing #{from_color_str} due to match of \"#{RGBA_PATTERNS_TO_NOT_AUTOFIX.inspect}\" pattern")
+
+    puts " #{tail_msg}"
+  end
+
   def line_with_closest_hex(line, hex_str_to_replace)
-    color_diffs = get_rgb_color_diffs(Color.from_string(hex_str_to_replace))
+    color_diffs = get_rgb_color_diffs(Color.from_string(hex_str_to_replace), false)
 
     fixed_hex_str = color_diffs.min_by(&:last)[0].hex
     ColorChecker.announce_color_fix hex_str_to_replace, fixed_hex_str, "in '#{line.strip}'"
     line[hex_str_to_replace] = fixed_hex_str
 
-    return line
+    line
   end
 
   def line_with_closest_rgba(line, rgba_str_to_replace)
-    color_diffs = get_rgb_color_diffs(Color.from_string(rgba_str_to_replace))
+    color_diffs = get_rgb_color_diffs(Color.from_string(rgba_str_to_replace), true)
 
     fixed_rgba_str = color_diffs.min_by(&:last)[0].rgba
     ColorChecker.announce_color_fix rgba_str_to_replace, fixed_rgba_str, "in '#{line.strip}'"
     line[rgba_str_to_replace] = fixed_rgba_str
 
-    return line
+    line
   end
 
   def fix_hex_and_rgba(line)
@@ -230,12 +259,19 @@ class ColorChecker
     RGBA_PATTERN.match(line).tap do |match|
       if match
         unless matches_any_rgba?(match.to_s)
+          RGBA_PATTERNS_TO_NOT_AUTOFIX.match(line) do |no_autofix|
+            if no_autofix
+              ColorChecker.announce_not_fixing_color match.to_s, "in '#{line.strip}'"
+              return line
+            end
+          end
+
           return line_with_closest_rgba(line, match.to_s)
         end
       end
     end
 
-    return line
+    line
   end
 
   def print_results
@@ -285,15 +321,22 @@ class ColorChecker
   end
 
   def matches_any_hex?(hex_color)
-    !all_colors.select { |color| !!color.casecmp?(hex_color) }.none?
+    if hex_color.length() == 7 # normal hex length - ex: #000000
+      hex_color = hex_color + "ff"
+    end
+    return !valid_colors.select { |color| !!color.casecmp?(hex_color) }.none?
   end
 
   def matches_any_rgba?(rgba_color)
-    !all_colors.map { |hex| rgba(hex) }.select { |color| !!color.casecmp?(rgba_color) }.none?
+    !valid_colors.map { |hex| Color.from_string(hex).rgba }.select { |color| !!color.casecmp?(rgba_color) }.none?
   end
 
-  def all_colors
-    Palette.all_colors
+  def valid_colors
+    Palette.valid_colors
+  end
+
+  def autofix_colors
+    Palette.autofix_colors
   end
 end
 
@@ -556,9 +599,9 @@ end
 
 class QueryChecks
 
-  UNQUOTED_VAR=/(?<==)\${[a-z_]*}/
-  UNQUOTED_TAS_METRIC_NAME=/(?<!")tas\.(?:\w|\.|-)*/
-  UNQUOTED_METRIC_NAME=/(?<!exis)ts\(((?:\w|\.|-|~|\*)+)/
+  UNQUOTED_VAR = /(?<==)\${[a-z_]*}/
+  UNQUOTED_TAS_METRIC_NAME = /(?<!")tas\.(?:\w|\.|-)*/
+  UNQUOTED_METRIC_NAME = /(?<!exis)ts\(((?:\w|\.|-|~|\*)+)/
 
   def self.unquoted_metrics(query)
     if query == 'label_replace(tas.gorouter.file_descriptors, "placement_tag", "cf", "placement_tag", "")'
@@ -691,7 +734,7 @@ def main
     end
 
     opts.on("--runDashboardLinkCheck") do |r|
-        options[:runDashboardLinkCheck] = r
+      options[:runDashboardLinkCheck] = r
     end
   end.parse!
 
