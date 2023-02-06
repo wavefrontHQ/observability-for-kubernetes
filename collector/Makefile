@@ -26,7 +26,7 @@ endif
 
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
 
-VERSION_POSTFIX?=-dev-$(shell whoami)-$(shell git rev-parse --short HEAD)
+VERSION_POSTFIX:=-dev-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 RELEASE_VERSION?=$(shell cat ./release/VERSION)
 VERSION?=$(shell ../scripts/get-bumped-version.sh -s patch -v $(RELEASE_VERSION))$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
@@ -83,7 +83,7 @@ containers: container test-proxy-container
 
 .PHONY: container
 container: $(SEMVER_CLI_BIN)
-	make build -o fmt -o vet
+	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) make build -o fmt -o vet
 	docker build -f Dockerfile \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OUT_DIR)
 ifneq ($(OVERRIDE_IMAGE_NAME),)

@@ -158,6 +158,10 @@
 {"Name":"kubernetes.deployment.ready_replicas","Tags":{"cluster":"","deployment":"memcached-release","namespace_name": "collector-targets","source":""}}
 {"Name":"kubernetes.deployment.ready_replicas","Tags":{"cluster":"","deployment":"wavefront-proxy","namespace_name":"wavefront-collector","source":""}}
 {"Name":"kubernetes.deployment.ready_replicas","Tags":{"cluster":"","deployment":"","namespace_name":"","source":""}}
+{"Name":"kubernetes.hpa.current_replicas","Tags":{"cluster":"","deployment":"memcached-release","namespace_name": "collector-targets","source":""}}
+{"Name":"kubernetes.hpa.desired_replicas","Tags":{"cluster":"","deployment":"memcached-release","namespace_name": "collector-targets","source":""}}
+{"Name":"kubernetes.hpa.max_replicas","Tags":{"cluster":"","deployment":"memcached-release","namespace_name": "collector-targets","source":""}}
+{"Name":"kubernetes.hpa.min_replicas","Tags":{"cluster":"","deployment":"memcached-release","namespace_name": "collector-targets","source":""}}
 {"Name":"kubernetes.job.active","Tags":{"cluster":"","job":"","namespace_name":"","source":""}}
 {"Name":"kubernetes.job.completions","Value":"1","Tags":{"cluster":"","job":"job-failure","namespace_name":"","source":""}}
 {"Name":"kubernetes.job.completions","Value":"1","Tags":{"cluster":"","job":"job-success","namespace_name":"","source":""}}
