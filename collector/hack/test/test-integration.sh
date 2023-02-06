@@ -106,6 +106,7 @@ function run_real_proxy_metrics_test() {
   "${SCRIPT_DIR}"/test-wavefront-metrics.sh -t "$WAVEFRONT_TOKEN"
   green "SUCCEEDED"
 }
+
 function run_real_proxy() {
   local USE_TEST_PROXY="false"
   local additional_args="-p $USE_TEST_PROXY"
