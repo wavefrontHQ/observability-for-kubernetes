@@ -114,8 +114,6 @@ function run_real_proxy() {
     additional_args="$additional_args -e $EXPERIMENTAL_FEATURES"
   fi
 
-  wait_for_cluster_resource_deleted namespace/$NS
-
   wait_for_cluster_ready
 
   "${SCRIPT_DIR}"/deploy.sh \
