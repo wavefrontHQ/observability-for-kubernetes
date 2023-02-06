@@ -26,7 +26,9 @@ endif
 
 GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
 
+ifndef VERSION_POSTFIX
 VERSION_POSTFIX:=-dev-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
+endif
 RELEASE_VERSION?=$(shell cat ./release/VERSION)
 VERSION?=$(shell ../scripts/get-bumped-version.sh -s patch -v $(RELEASE_VERSION))$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)

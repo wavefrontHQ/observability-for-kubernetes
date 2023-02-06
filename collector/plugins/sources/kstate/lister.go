@@ -5,9 +5,10 @@ package kstate
 
 import (
 	"fmt"
-	"k8s.io/api/autoscaling/v2beta2"
 	"sync"
 	"time"
+
+	"k8s.io/api/autoscaling/v2beta2"
 
 	log "github.com/sirupsen/logrus"
 
