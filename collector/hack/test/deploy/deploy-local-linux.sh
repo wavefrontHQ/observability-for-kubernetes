@@ -11,7 +11,7 @@ if [[ -z ${WAVEFRONT_TOKEN} ]] ; then
 fi
 
 NS=wavefront-collector
-ROOT_DIR=$(git rev-parse --show-toplevel)
+ROOT_DIR=$(git rev-parse --show-toplevel)/collector
 TEMP_DIR=$(mktemp -d)
 VERSION=$(cat ${ROOT_DIR}/release/VERSION) #version you want to test
 CURRENT_VERSION=${CURRENT_VERSION:-$VERSION}

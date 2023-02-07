@@ -14,45 +14,51 @@ pipeline {
 
   stages {
     stage("Setup tools") {
+      agent {
+        label "worker-1"
+      }
       steps {
-        dir("operator") {
-          withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-            sh './hack/jenkins/install_docker_buildx.sh'
-            sh 'make semver-cli'
-          }
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+          sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+          sh 'cd operator && make semver-cli'
         }
       }
     }
     stage("Create Bump Version Branch") {
+      agent {
+        label "worker-1"
+      }
       steps {
-        dir("operator") {
-          withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
-            sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
-            sh 'git config --global user.name "svc.wf-jenkins"'
-            sh 'git remote set-url origin https://${GITHUB_TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git'
-            sh './hack/jenkins/bump-version.sh -s "${BUMP_COMPONENT}"'
-          }
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
+          sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
+          sh 'git config --global user.name "svc.wf-jenkins"'
+          sh 'git remote set-url origin https://${GITHUB_TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git'
+          sh 'cd operator && ./hack/jenkins/bump-version.sh -s "${BUMP_COMPONENT}"'
         }
       }
     }
     stage("Publish Image and Generate YAML") {
+      agent {
+        label "worker-1"
+      }
       environment {
         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
         PREFIX = 'projects.registry.vmware.com/tanzu_observability'
         DOCKER_IMAGE = 'kubernetes-operator'
       }
       steps {
-        dir("operator") {
-          script {
-            env.VERSION = readFile('./release/OPERATOR_VERSION').trim()
-          }
-          sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-          sh 'make docker-xplatform-build released-kubernetes-yaml'
+        script {
+          env.VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
         }
+        sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+        sh 'cd operator && make docker-xplatform-build released-kubernetes-yaml'
       }
     }
     // deploy to GKE and run manual tests
     stage("Deploy and Test") {
+      agent {
+        label "worker-1"
+      }
       environment {
         GCP_CREDS = credentials("GCP_CREDS")
         GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
@@ -61,35 +67,35 @@ pipeline {
         WF_CLUSTER = 'nimba'
       }
       steps {
-        dir("operator") {
-          script {
-            env.VERSION = readFile('./release/OPERATOR_VERSION').trim()
-          }
-          withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-            lock("integration-test-gke") {
-              sh './hack/jenkins/setup-for-integration-test.sh'
-              sh 'make gke-connect-to-cluster'
-              sh 'make clean-cluster'
-              sh './hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
-              sh './hack/test/run-e2e-tests.sh -t $WAVEFRONT_TOKEN'
-              sh 'make clean-cluster'
-            }
+        script {
+          env.VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
+        }
+        withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+          lock("integration-test-gke") {
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && make gke-connect-to-cluster'
+            sh 'cd operator && make clean-cluster'
+            sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
+            sh 'cd operator && ./hack/test/run-e2e-tests.sh -t $WAVEFRONT_TOKEN'
+            sh 'cd operator && make clean-cluster'
           }
         }
       }
     }
     stage("Merge bumped versions") {
+      agent {
+        label "worker-1"
+      }
       steps {
-        dir("operator") {
-          sh './hack/jenkins/merge-version-bump.sh'
-        }
+        sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
       }
     }
     stage("Github Release") {
+      agent {
+        label "worker-1"
+      }
       steps {
-        dir("operator") {
-          sh './hack/jenkins/generate-github-release.sh'
-        }
+        sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
       }
     }
   }
@@ -99,12 +105,10 @@ pipeline {
       slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
     }
     success {
-      dir("operator") {
         script {
-          BUILD_VERSION = readFile('./release/OPERATOR_VERSION').trim()
-          slackSend (channel: '#tobs-k8s-assist', color: '#008000', message: "Success!! `observability-for-kubernetes:v${BUILD_VERSION}` released!")
+          BUILD_VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
+          slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "Success!! `observability-for-kubernetes:v${BUILD_VERSION}` is ready to be released!")
         }
-      }
     }
   }
 }
