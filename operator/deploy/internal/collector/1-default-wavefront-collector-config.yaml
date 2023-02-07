@@ -35,10 +35,6 @@ data:
         metricAllowList:
 {{ .DataCollection.Metrics.Filters.AllowList | toYaml | indent 8 }}
         {{- end }}
-        {{- if .DataCollection.Metrics.Filters.TagGuaranteeList }}
-        tagGuaranteeList:
-{{ .DataCollection.Metrics.Filters.TagGuaranteeList | toYaml | indent 8 }}
-        {{- end }}
         tagExclude:
         - label?controller?revision*
         - label?pod?template*

@@ -10,7 +10,6 @@ const (
 	MetricTagBlacklist = "metricTagBlacklist"
 	TagInclude         = "tagInclude"
 	TagExclude         = "tagExclude"
-	TagGuaranteeList   = "tagGuaranteeList"
 )
 
 // Configuration for filtering metrics.
@@ -34,9 +33,6 @@ type Config struct {
 	// List of glob pattern strings. Tags with matching keys will be excluded.
 	TagExclude []string `yaml:"tagExclude"`
 
-	// List of tag keys. Tags with matching keys will be protected against filtering.
-	TagGuaranteeList []string `yaml:"tagGuaranteeList"`
-
 	// Deprecated: use MetricAllowList instead
 	MetricWhitelist []string `yaml:"metricWhitelist"`
 
@@ -55,5 +51,5 @@ func (cfg Config) Empty() bool {
 		len(cfg.MetricBlacklist) == 0 && len(cfg.MetricDenyList) == 0 &&
 		len(cfg.MetricTagWhitelist) == 0 && len(cfg.MetricTagAllowList) == 0 &&
 		len(cfg.MetricTagBlacklist) == 0 && len(cfg.MetricTagDenyList) == 0 &&
-		len(cfg.TagInclude) == 0 && len(cfg.TagExclude) == 0 && len(cfg.TagGuaranteeList) == 0
+		len(cfg.TagInclude) == 0 && len(cfg.TagExclude) == 0
 }

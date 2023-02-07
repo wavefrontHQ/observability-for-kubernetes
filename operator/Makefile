@@ -274,6 +274,12 @@ integration-test: install-kube-score install-kube-linter undeploy deploy
 clean-cluster:
 	(cd $(REPO_DIR)/hack/test && ./clean-cluster.sh)
 
+#----- KIND ----#
+.PHONY: nuke-kind
+nuke-kind:
+	kind delete cluster
+	kind create cluster --image kindest/node:v1.24.7 #setting to 1.24.* to avoid floating to 1.25 which we currently don't support
+
 #----- GKE -----#
 GCP_PROJECT?=wavefront-gcp-dev
 GCP_REGION=us-central1
@@ -322,3 +328,21 @@ docker-login-eks:
 
 target-eks: docker-login-eks
 	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
+
+# create a new branch from main
+# usage: make branch JIRA=XXXX OR make branch NAME=YYYY
+branch:
+	$(eval NAME := $(if $(JIRA),K8SSAAS-$(JIRA),$(NAME)))
+	@if [ -z "$(NAME)" ]; then \
+		echo "usage: make branch JIRA=XXXX OR make branch NAME=YYYY"; \
+		exit 1; \
+  	fi
+	git stash
+	git checkout main
+	git pull
+	git checkout -b $(NAME)
+
+git-rebase:
+	git fetch origin
+	git rebase origin/main
+	git log --oneline -n 10
