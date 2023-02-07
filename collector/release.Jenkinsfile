@@ -17,23 +17,19 @@ pipeline {
   stages {
     stage("Setup tools") {
       steps {
-        dir("collector") {
-          withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-            sh './hack/jenkins/install_docker_buildx.sh'
-            sh 'make semver-cli'
-          }
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+          sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
+          sh 'cd collector && make semver-cli'
         }
       }
     }
     stage("Create Bump Version Branch") {
       steps {
-        dir("collector") {
-          withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
-            sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
-            sh 'git config --global user.name "svc.wf-jenkins"'
-            sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/wavefront-collector-for-kubernetes.git'
-            sh './hack/jenkins/create-bump-version-branch.sh "${BUMP_COMPONENT}"'
-          }
+        withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
+          sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
+          sh 'git config --global user.name "svc.wf-jenkins"'
+          sh 'git remote set-url origin https://${TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git'
+          sh 'cd collector && ./hack/jenkins/create-bump-version-branch.sh "${BUMP_COMPONENT}"'
         }
       }
     }
@@ -45,10 +41,8 @@ pipeline {
         RELEASE_TYPE = 'rc'
       }
       steps {
-        dir("collector") {
-          sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-          sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
-        }
+        sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+        sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
       }
     }
     // deploy to GKE and run manual tests
@@ -63,22 +57,20 @@ pipeline {
         RELEASE_TYPE = 'rc'
       }
       steps {
-        dir("collector") {
-          script {
-            env.VERSION = readFile('./release/VERSION').trim()
-            env.CURRENT_VERSION = "${env.VERSION}-rc-${env.RC_NUMBER}"
-            env.CONFIG_CLUSTER_NAME = "jenkins-${env.CURRENT_VERSION}-test"
-          }
-          withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {
-            withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-              lock("integration-test-gke") {
-                sh './hack/jenkins/setup-for-integration-test.sh -k gke'
-                sh 'make gke-connect-to-cluster'
-                sh 'make clean-cluster'
-                sh './hack/test/deploy/deploy-local-linux.sh'
-                sh './hack/test/test-wavefront-metrics.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
-                sh 'make clean-cluster'
-              }
+        script {
+          env.VERSION = readFile('./collector/release/VERSION').trim()
+          env.CURRENT_VERSION = "${env.VERSION}-rc-${env.RC_NUMBER}"
+          env.CONFIG_CLUSTER_NAME = "jenkins-${env.CURRENT_VERSION}-test"
+        }
+        withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {
+          withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+            lock("integration-test-gke") {
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+              sh 'cd collector && make gke-connect-to-cluster'
+              sh 'cd collector && make clean-cluster'
+              sh 'cd collector && ./hack/test/deploy/deploy-local-linux.sh'
+              sh 'cd collector && ./hack/test/test-wavefront-metrics.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
+              sh 'cd collector && make clean-cluster'
             }
           }
         }
@@ -92,10 +84,8 @@ pipeline {
         DOCKER_IMAGE = 'kubernetes-collector'
       }
       steps {
-        dir("collector") {
-          sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-          sh 'HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
-        }
+        sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+        sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
       }
     }
     stage("Publish GA Docker Hub") {
@@ -106,45 +96,39 @@ pipeline {
         DOCKER_IMAGE = 'wavefront-kubernetes-collector'
       }
       steps {
-        dir("collector") {
-          sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
-          sh 'make publish'
-        }
+        sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+        sh 'cd collector && make publish'
       }
     }
-    stage("Push Openshift Image to RedHat Connect") {
-      environment {
-        REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
-        REDHAT_OSPID=credentials("redhat-connect-ospid-wf-collector")
-        REDHAT_API_KEY=credentials("redhat-connect-api-key")
-        REDHAT_PROJECT_ID=credentials("redhat-connect-collector-project-id")
-        OPENSHIFT_CREDS_PSW=credentials('OPENSHIFT_CREDS_PSW')
-        OPENSHIFT_VM=credentials('OPENSHIFT_VM')
-        GIT_BUMP_BRANCH_NAME = "${sh(script:'git name-rev --name-only HEAD', returnStdout: true).trim()}"
-      }
-      steps {
-        dir("collector") {
-          script {
-            env.PREFIX = "quay.io/redhat-isv-containers/${env.REDHAT_PROJECT_ID}"
-          }
-          sh """
-          sshpass -p "${OPENSHIFT_CREDS_PSW}" ssh -o StrictHostKeyChecking=no root@${OPENSHIFT_VM} "bash -s" < hack/jenkins/release-openshift-container.sh \
-                                                                                                                       ${PREFIX} \
-                                                                                                                       ${REDHAT_CREDS_USR} \
-                                                                                                                       ${REDHAT_CREDS_PSW} \
-                                                                                                                       ${REDHAT_API_KEY} \
-                                                                                                                       ${REDHAT_PROJECT_ID} \
-                                                                                                                       ${GIT_BUMP_BRANCH_NAME} \
-                                                                                                                       ${RC_NUMBER}
-          """
-        }
-      }
-    }
+//     stage("Push Openshift Image to RedHat Connect") {
+//       environment {
+//         REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
+//         REDHAT_OSPID=credentials("redhat-connect-ospid-wf-collector")
+//         REDHAT_API_KEY=credentials("redhat-connect-api-key")
+//         REDHAT_PROJECT_ID=credentials("redhat-connect-collector-project-id")
+//         OPENSHIFT_CREDS_PSW=credentials('OPENSHIFT_CREDS_PSW')
+//         OPENSHIFT_VM=credentials('OPENSHIFT_VM')
+//         GIT_BUMP_BRANCH_NAME = "${sh(script:'git name-rev --name-only HEAD', returnStdout: true).trim()}"
+//       }
+//       steps {
+//           script {
+//             env.PREFIX = "quay.io/redhat-isv-containers/${env.REDHAT_PROJECT_ID}"
+//           }
+//           sh """
+//           sshpass -p "${OPENSHIFT_CREDS_PSW}" ssh -o StrictHostKeyChecking=no root@${OPENSHIFT_VM} "bash -s" < hack/jenkins/release-openshift-container.sh \
+//                                                                                                                        ${PREFIX} \
+//                                                                                                                        ${REDHAT_CREDS_USR} \
+//                                                                                                                        ${REDHAT_CREDS_PSW} \
+//                                                                                                                        ${REDHAT_API_KEY} \
+//                                                                                                                        ${REDHAT_PROJECT_ID} \
+//                                                                                                                        ${GIT_BUMP_BRANCH_NAME} \
+//                                                                                                                        ${RC_NUMBER}
+//           """
+//         }
+//     }
     stage("Create and Merge Bump Version Pull Request") {
       steps {
-        dir("collector") {
-          sh './hack/jenkins/create-and-merge-pull-request.sh'
-        }
+        sh 'cd collector && ./hack/jenkins/create-and-merge-pull-request.sh'
       }
     }
     stage("Github Release") {
@@ -152,9 +136,7 @@ pipeline {
         GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
       }
       steps {
-        dir("collector") {
-          sh './hack/jenkins/generate_github_release.sh'
-        }
+        sh 'cd collector && ./hack/jenkins/generate_github_release.sh'
       }
     }
   }
@@ -164,12 +146,10 @@ pipeline {
       slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
     }
     success {
-      dir("collector") {
         script {
-          BUILD_VERSION = readFile('./release/VERSION').trim()
-          slackSend (channel: '#tobs-k8s-assist', color: '#008000', message: "Success!! `wavefront-collector-for-kubernetes:v${BUILD_VERSION}` released!")
+          BUILD_VERSION = readFile('./collector/release/VERSION').trim()
+          slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "Success!! `wavefront-collector-for-kubernetes:v${BUILD_VERSION}` is ready to be released!")
         }
-      }
     }
   }
 }
