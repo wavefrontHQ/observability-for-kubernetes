@@ -137,12 +137,3 @@ func TestTagExclude(t *testing.T) {
 	assert.False(t, f.MatchTag("foobar"))
 	assert.True(t, f.MatchTag("barfoo"))
 }
-
-func TestTagGuaranteeList(t *testing.T) {
-	f := NewGlobFilter(Config{
-		TagGuaranteeList: []string{"foobar"},
-		TagExclude:       []string{"foo*"},
-	})
-
-	assert.True(t, f.MatchTag("foobar"))
-}
