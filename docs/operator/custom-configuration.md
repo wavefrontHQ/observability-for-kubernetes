@@ -10,7 +10,7 @@ Install the Wavefront Operator into `observability-system` namespace.
 |--------------------------------|----------------------------------------------------------------------------------------|-----------------------------------------------------------|
 | Wavefront kubernetes operator  | `projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.1.0`           | `YOUR_IMAGE_REGISTRY/kubernetes-operator:2.1.0`           |
 | Wavefront kubernetes collector | `projects.registry.vmware.com/tanzu_observability/kubernetes-collector:1.13.0`         | `YOUR_IMAGE_REGISTRY/kubernetes-collector:1.13.0`         |
-| Wavefront Proxy                | `projects.registry.vmware.com/tanzu_observability/proxy:12.0`                          | `YOUR_IMAGE_REGISTRY/proxy:12.0`                          |
+| Wavefront Proxy                | `projects.registry.vmware.com/tanzu_observability/proxy:12.1`                          | `YOUR_IMAGE_REGISTRY/proxy:12.1`                          |
 | Wavefront logging              | `projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit:2.0.8` | `YOUR_IMAGE_REGISTRY/kubernetes-operator-fluentbit:2.0.8` |
 
 2. Create a local directory called `observability`
