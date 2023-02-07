@@ -64,7 +64,7 @@ pipeline {
             sh 'cd operator && make gke-connect-to-cluster'
             sh 'cd operator && make clean-cluster'
             sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
-            sh 'cd operator && ./hack/test/run-e2e-tests.sh -t $WAVEFRONT_TOKEN'
+            sh 'cd operator && ./hack/test/run-e2e-tests.sh -t $WAVEFRONT_TOKEN -r advanced'
             sh 'cd operator && make clean-cluster'
           }
         }
