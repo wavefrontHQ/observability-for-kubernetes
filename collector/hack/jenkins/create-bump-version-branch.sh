@@ -19,7 +19,7 @@ OLD_VERSION=$(cat ../../release/VERSION)
 NEW_VERSION=$(semver-cli inc "$BUMP_COMPONENT" "$OLD_VERSION")
 echo "$NEW_VERSION" >../../release/VERSION
 
-GIT_BUMP_BRANCH_NAME="bump-${NEW_VERSION}"
+GIT_BUMP_BRANCH_NAME="bump-collector-${NEW_VERSION}"
 git branch -D "$GIT_BUMP_BRANCH_NAME" &>/dev/null || true
 git checkout -b "$GIT_BUMP_BRANCH_NAME"
 

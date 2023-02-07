@@ -39,85 +39,85 @@ pipeline {
         }
       }
     }
-    stage("Publish RC Release") {
-      agent {
-        label "worker-1"
-      }
-      environment {
-        HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
-        PREFIX = 'projects.registry.vmware.com/tanzu_observability'
-        DOCKER_IMAGE = 'kubernetes-collector'
-        RELEASE_TYPE = 'rc'
-      }
-      steps {
-        sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-        sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
-      }
-    }
-    // deploy to GKE and run manual tests
-    // now we have confidence in the validity of our RC release
-    stage("Deploy and Test") {
-      agent {
-        label "worker-1"
-      }
-      environment {
-        GCP_CREDS = credentials("GCP_CREDS")
-        GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
-        GCP_ZONE="a"
-        WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
-        WF_CLUSTER = 'nimba'
-        RELEASE_TYPE = 'rc'
-      }
-      steps {
-        script {
-          env.VERSION = readFile('./collector/release/VERSION').trim()
-          env.CURRENT_VERSION = "${env.VERSION}-rc-${env.RC_NUMBER}"
-          env.CONFIG_CLUSTER_NAME = "jenkins-${env.CURRENT_VERSION}-test"
-        }
-        withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {
-          withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-            lock("integration-test-gke") {
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd collector && make gke-connect-to-cluster'
-              sh 'cd collector && make clean-cluster'
-              sh 'cd collector && ./hack/test/deploy/deploy-local-linux.sh'
-              sh 'cd collector && ./hack/test/test-wavefront-metrics.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
-              sh 'cd collector && make clean-cluster'
-            }
-          }
-        }
-      }
-    }
-    stage("Publish GA Harbor Image") {
-      agent {
-        label "worker-1"
-      }
-      environment {
-        HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
-        RELEASE_TYPE = 'release'
-        PREFIX = 'projects.registry.vmware.com/tanzu_observability'
-        DOCKER_IMAGE = 'kubernetes-collector'
-      }
-      steps {
-        sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-        sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
-      }
-    }
-    stage("Publish GA Docker Hub") {
-      agent {
-        label "worker-1"
-      }
-      environment {
-        DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
-        RELEASE_TYPE = 'release'
-        PREFIX = 'wavefronthq'
-        DOCKER_IMAGE = 'wavefront-kubernetes-collector'
-      }
-      steps {
-        sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
-        sh 'cd collector && make publish'
-      }
-    }
+//     stage("Publish RC Release") {
+//       agent {
+//         label "worker-1"
+//       }
+//       environment {
+//         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+//         PREFIX = 'projects.registry.vmware.com/tanzu_observability'
+//         DOCKER_IMAGE = 'kubernetes-collector'
+//         RELEASE_TYPE = 'rc'
+//       }
+//       steps {
+//         sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+//         sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+//       }
+//     }
+//     // deploy to GKE and run manual tests
+//     // now we have confidence in the validity of our RC release
+//     stage("Deploy and Test") {
+//       agent {
+//         label "worker-1"
+//       }
+//       environment {
+//         GCP_CREDS = credentials("GCP_CREDS")
+//         GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
+//         GCP_ZONE="a"
+//         WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+//         WF_CLUSTER = 'nimba'
+//         RELEASE_TYPE = 'rc'
+//       }
+//       steps {
+//         script {
+//           env.VERSION = readFile('./collector/release/VERSION').trim()
+//           env.CURRENT_VERSION = "${env.VERSION}-rc-${env.RC_NUMBER}"
+//           env.CONFIG_CLUSTER_NAME = "jenkins-${env.CURRENT_VERSION}-test"
+//         }
+//         withCredentials([string(credentialsId: 'nimba-wavefront-token', variable: 'WAVEFRONT_TOKEN')]) {
+//           withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+//             lock("integration-test-gke") {
+//               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+//               sh 'cd collector && make gke-connect-to-cluster'
+//               sh 'cd collector && make clean-cluster'
+//               sh 'cd collector && ./hack/test/deploy/deploy-local-linux.sh'
+//               sh 'cd collector && ./hack/test/test-wavefront-metrics.sh -c ${WF_CLUSTER} -t ${WAVEFRONT_TOKEN} -n ${CONFIG_CLUSTER_NAME} -v ${VERSION}'
+//               sh 'cd collector && make clean-cluster'
+//             }
+//           }
+//         }
+//       }
+//     }
+//     stage("Publish GA Harbor Image") {
+//       agent {
+//         label "worker-1"
+//       }
+//       environment {
+//         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+//         RELEASE_TYPE = 'release'
+//         PREFIX = 'projects.registry.vmware.com/tanzu_observability'
+//         DOCKER_IMAGE = 'kubernetes-collector'
+//       }
+//       steps {
+//         sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+//         sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make publish'
+//       }
+//     }
+//     stage("Publish GA Docker Hub") {
+//       agent {
+//         label "worker-1"
+//       }
+//       environment {
+//         DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
+//         RELEASE_TYPE = 'release'
+//         PREFIX = 'wavefronthq'
+//         DOCKER_IMAGE = 'wavefront-kubernetes-collector'
+//       }
+//       steps {
+//         sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+//         sh 'cd collector && make publish'
+//       }
+//     }
 //     stage("Push Openshift Image to RedHat Connect") {
 //       environment {
 //         REDHAT_CREDS=credentials('redhat-connect-wf-collector-creds')
@@ -152,17 +152,17 @@ pipeline {
         sh 'cd collector && ./hack/jenkins/create-and-merge-pull-request.sh'
       }
     }
-    stage("Github Release") {
-      agent {
-        label "worker-1"
-      }
-      environment {
-        GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
-      }
-      steps {
-        sh 'cd collector && ./hack/jenkins/generate_github_release.sh'
-      }
-    }
+//     stage("Github Release") {
+//       agent {
+//         label "worker-1"
+//       }
+//       environment {
+//         GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
+//       }
+//       steps {
+//         sh 'cd collector && ./hack/jenkins/generate_github_release.sh'
+//       }
+//     }
   }
 
   post {
