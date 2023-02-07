@@ -60,4 +60,20 @@ describe ColorChecker do
         .to eq(0.0)
     end
   end
+
+  describe '.unquoted_metrics' do
+    it 'finds unquoted timeseries' do
+      qc = QueryChecks.new
+
+      expect(qc.unquoted_metrics("max(ts(\"kubernetes.cluster.cpu.limit\"), cluster)"))
+        .to eq([])
+      expect(qc.unquoted_metrics("exists(ts(\"kubernetes.cluster.cpu.limit\"), cluster)"))
+        .to eq([])
+
+      expect(qc.unquoted_metrics("max(ts(kubernetes.cluster.cpu.limit), cluster)"))
+        .to eq([["kubernetes.cluster.cpu.limit"]])
+      expect(qc.unquoted_metrics("exists(ts(kubernetes.cluster.cpu.limit), cluster)"))
+        .to eq([["kubernetes.cluster.cpu.limit"]])
+    end
+  end
 end

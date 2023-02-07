@@ -560,14 +560,14 @@ class QueryChecks
   UNQUOTED_TAS_METRIC_NAME=/(?<!")tas\.(?:\w|\.|-)*/
   UNQUOTED_METRIC_NAME=/(?<!exis)ts\(((?:\w|\.|-|~|\*)+)/
 
-  def self.unquoted_metrics(query)
+  def unquoted_metrics(query)
     if query == 'label_replace(tas.gorouter.file_descriptors, "placement_tag", "cf", "placement_tag", "")'
       return []
     end
     query.scan(UNQUOTED_TAS_METRIC_NAME) + query.scan(UNQUOTED_METRIC_NAME)
   end
 
-  def self.unquoted_variables(query)
+  def unquoted_variables(query)
     query.scan(UNQUOTED_VAR)
   end
 end
