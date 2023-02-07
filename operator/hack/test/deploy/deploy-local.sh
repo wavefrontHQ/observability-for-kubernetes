@@ -3,6 +3,8 @@
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
+OPERATOR_REPO_ROOT=${REPO_ROOT}/operator
+
 NS=observability-system
 
 function print_usage_and_exit() {
@@ -49,8 +51,8 @@ function main() {
   fi
 
 
-  kubectl delete -f ./deploy/kubernetes/wavefront-operator.yaml || true
-  kubectl apply -f ./deploy/kubernetes/wavefront-operator.yaml
+  kubectl delete -f ${OPERATOR_REPO_ROOT}/deploy/kubernetes/wavefront-operator.yaml || true
+  kubectl apply -f ${OPERATOR_REPO_ROOT}/deploy/kubernetes/wavefront-operator.yaml
   kubectl create -n ${NS} secret generic wavefront-secret --from-literal token=${WAVEFRONT_TOKEN} || true
   kubectl create -n ${NS} secret generic wavefront-secret-logging --from-literal token=${WAVEFRONT_LOGGING_TOKEN} || true
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-cd "$(dirname "$-1")"
+OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)/operator
 
-operator_yaml="deploy/kubernetes/wavefront-operator.yaml"
+operator_yaml="${OPERATOR_REPO_ROOT}/deploy/kubernetes/wavefront-operator.yaml"
 
-VERSION=$(cat ./release/OPERATOR_VERSION)
+VERSION=$(cat ${OPERATOR_REPO_ROOT}/release/OPERATOR_VERSION)
 GITHUB_REPO=wavefrontHQ/observability-for-kubernetes
 AUTH="Authorization: token ${GITHUB_TOKEN}"
 

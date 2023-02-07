@@ -14,9 +14,6 @@ pipeline {
 
   stages {
     stage("Setup tools") {
-      agent {
-        label "worker-1"
-      }
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
           sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
@@ -25,9 +22,6 @@ pipeline {
       }
     }
     stage("Create Bump Version Branch") {
-      agent {
-        label "worker-1"
-      }
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
           sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
@@ -38,9 +32,6 @@ pipeline {
       }
     }
     stage("Publish Image and Generate YAML") {
-      agent {
-        label "worker-1"
-      }
       environment {
         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
         PREFIX = 'projects.registry.vmware.com/tanzu_observability'
@@ -56,9 +47,6 @@ pipeline {
     }
     // deploy to GKE and run manual tests
     stage("Deploy and Test") {
-      agent {
-        label "worker-1"
-      }
       environment {
         GCP_CREDS = credentials("GCP_CREDS")
         GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
@@ -83,17 +71,11 @@ pipeline {
       }
     }
     stage("Merge bumped versions") {
-      agent {
-        label "worker-1"
-      }
       steps {
         sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
       }
     }
     stage("Github Release") {
-      agent {
-        label "worker-1"
-      }
       steps {
         sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
       }
