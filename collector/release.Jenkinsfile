@@ -16,6 +16,9 @@ pipeline {
 
   stages {
     stage("Setup tools") {
+      agent {
+        label "worker-1"
+      }
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
           sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
@@ -24,6 +27,9 @@ pipeline {
       }
     }
     stage("Create Bump Version Branch") {
+      agent {
+        label "worker-1"
+      }
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
           sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
@@ -34,6 +40,9 @@ pipeline {
       }
     }
     stage("Publish RC Release") {
+      agent {
+        label "worker-1"
+      }
       environment {
         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
         PREFIX = 'projects.registry.vmware.com/tanzu_observability'
@@ -48,6 +57,9 @@ pipeline {
     // deploy to GKE and run manual tests
     // now we have confidence in the validity of our RC release
     stage("Deploy and Test") {
+      agent {
+        label "worker-1"
+      }
       environment {
         GCP_CREDS = credentials("GCP_CREDS")
         GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
@@ -77,6 +89,9 @@ pipeline {
       }
     }
     stage("Publish GA Harbor Image") {
+      agent {
+        label "worker-1"
+      }
       environment {
         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
         RELEASE_TYPE = 'release'
@@ -89,6 +104,9 @@ pipeline {
       }
     }
     stage("Publish GA Docker Hub") {
+      agent {
+        label "worker-1"
+      }
       environment {
         DOCKERHUB_CREDS=credentials('Dockerhub_svcwfjenkins')
         RELEASE_TYPE = 'release'
@@ -127,11 +145,17 @@ pipeline {
 //         }
 //     }
     stage("Create and Merge Bump Version Pull Request") {
+      agent {
+        label "worker-1"
+      }
       steps {
         sh 'cd collector && ./hack/jenkins/create-and-merge-pull-request.sh'
       }
     }
     stage("Github Release") {
+      agent {
+        label "worker-1"
+      }
       environment {
         GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
       }
