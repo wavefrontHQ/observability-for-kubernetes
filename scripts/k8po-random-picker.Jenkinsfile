@@ -11,7 +11,7 @@ pipeline {
     stage ("Slack message rando-dev results") {
       steps {
         script {
-          ORDER_PICKED = sh (script: './hack/rando-dev.sh', returnStdout: true).trim()
+          ORDER_PICKED = sh (script: '.scripts/rando-dev.sh', returnStdout: true).trim()
         }
         slackSend (channel: '#tobs-k8po-team', message:
         """
