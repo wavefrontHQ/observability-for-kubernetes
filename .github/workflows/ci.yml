@@ -1,0 +1,40 @@
+name: ci
+on:
+  push:
+    branches:
+      - main
+      - 'hack-*'
+  pull_request:
+jobs:
+  operator:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: operator
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'operator/go.mod'
+      - name: Run linters
+        run: make linux-golangci-lint golangci-lint
+      - name: Build
+        run: make checkfmt vet test
+
+  collector:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: collector
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'collector/go.mod'
+      - name: Build
+        run: make checkfmt vet tests
+
