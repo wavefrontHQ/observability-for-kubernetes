@@ -100,6 +100,9 @@ type Metrics struct {
 
 	// ProxyAddress is for internal use only
 	ProxyAddress string `json:"-"`
+
+	// CollectorTag is for internal use only
+	CollectorTag string `json:"-"`
 }
 
 type DataExport struct {

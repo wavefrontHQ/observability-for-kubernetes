@@ -51,7 +51,10 @@ spec:
               apiVersion: v1
               fieldPath: metadata.namespace
         - name: COLLECTOR_TAG
-          value: 1.13.0
+          valueFrom:
+            configMapKeyRef:
+              name: manager-config
+              key: collectorTag
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true

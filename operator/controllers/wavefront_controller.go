@@ -405,6 +405,9 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 			return fmt.Errorf("error setting up proxy connection: %s", err.Error())
 		}
 	}
+
+	wavefront.Spec.DataCollection.Metrics.CollectorTag = os.Getenv("COLLECTOR_TAG")
+
 	return nil
 }
 
