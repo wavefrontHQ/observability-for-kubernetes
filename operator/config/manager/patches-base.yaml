@@ -1,3 +1,8 @@
 - op: replace
   path: "/spec/template/spec/containers/0/imagePullPolicy"
   value: Always
+- op: replace
+  path: "/spec/template/spec/containers/0/env/1"
+  value:
+    - name: COLLECTOR_TAG
+      value: "1.14.0"
