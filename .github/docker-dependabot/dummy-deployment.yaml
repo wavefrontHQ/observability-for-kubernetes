@@ -23,4 +23,4 @@ spec:
         # 1. Copy fluent-bit image to Harbor: see https://confluence.eng.vmware.com/display/CNA/Technical+References.
         # 2. Manually search/replace for references of `kubernetes-operator-fluentbit:<old.version.num>` and substitute <new.version.num>.
         - name: fluent-bit
-          image: cr.fluentbit.io/fluent/fluent-bit:2.0.8
+          image: cr.fluentbit.io/fluent/fluent-bit:2.0.9
