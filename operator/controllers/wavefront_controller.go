@@ -74,7 +74,7 @@ type WavefrontReconciler struct {
 	FS                fs.FS
 	KubernetesManager KubernetesManager
 	MetricConnection  *metric.Connection
-	OperatorVersion   string
+	Versions          Versions
 	namespace         string
 }
 
@@ -155,9 +155,14 @@ func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func NewWavefrontReconciler(operatorVersion string, client client.Client) (operator *WavefrontReconciler, err error) {
+type Versions struct {
+	OperatorVersion  string
+	CollectorVersion string
+}
+
+func NewWavefrontReconciler(versions Versions, client client.Client) (operator *WavefrontReconciler, err error) {
 	return &WavefrontReconciler{
-		OperatorVersion:   operatorVersion,
+		Versions:          versions,
 		Client:            client,
 		FS:                os.DirFS(DeployDir),
 		KubernetesManager: kubernetes_manager.NewKubernetesManager(client),
@@ -406,7 +411,7 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		}
 	}
 
-	wavefront.Spec.DataCollection.Metrics.CollectorTag = os.Getenv("COLLECTOR_TAG")
+	wavefront.Spec.DataCollection.Metrics.CollectorTag = r.Versions.CollectorVersion
 
 	return nil
 }
@@ -499,7 +504,7 @@ func (r *WavefrontReconciler) reportMetrics(sendStatusMetrics bool, clusterName 
 	var metrics []metric.Metric
 
 	if sendStatusMetrics {
-		statusMetrics, err := status.Metrics(clusterName, r.OperatorVersion, wavefrontStatus)
+		statusMetrics, err := status.Metrics(clusterName, r.Versions.OperatorVersion, wavefrontStatus)
 		if err != nil {
 			log.Log.Error(err, "could not create status metrics")
 		} else {
@@ -507,7 +512,7 @@ func (r *WavefrontReconciler) reportMetrics(sendStatusMetrics bool, clusterName 
 		}
 	}
 
-	versionMetrics, err := version.Metrics(clusterName, r.OperatorVersion)
+	versionMetrics, err := version.Metrics(clusterName, r.Versions.OperatorVersion)
 	if err != nil {
 		log.Log.Error(err, "could not create version metrics")
 	} else {

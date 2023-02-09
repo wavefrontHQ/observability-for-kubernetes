@@ -1125,7 +1125,10 @@ func emptyScenario(wfCR *wf.Wavefront, initObjs ...runtime.Object) (*controllers
 	mockKM := testhelper.NewMockKubernetesManager()
 
 	r := &controllers.WavefrontReconciler{
-		OperatorVersion:   "99.99.99",
+		Versions: controllers.Versions{
+			CollectorVersion: "12.34.56",
+			OperatorVersion:  "99.99.99",
+		},
 		Client:            objClient,
 		FS:                os.DirFS(controllers.DeployDir),
 		KubernetesManager: mockKM,
