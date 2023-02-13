@@ -257,7 +257,7 @@ func dirList(proxy, collector, logging bool) []string {
 
 func (r *WavefrontReconciler) readAndDeleteResources() error {
 	r.MetricConnection.Close()
-	resources, err := r.readAndInterpolateResources(wf.WavefrontSpec{Namespace: r.namespace}, allDirs())
+	resources, err := r.readAndInterpolateResources(wf.WavefrontSpec{Namespace: r.namespace, DataCollection: wf.DataCollection{Metrics: wf.Metrics{CollectorTag: "none"}}}, allDirs())
 	if err != nil {
 		return err
 	}
