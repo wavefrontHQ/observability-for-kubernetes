@@ -53,8 +53,8 @@ spec:
         - name: COLLECTOR_TAG
           valueFrom:
             configMapKeyRef:
-              name: manager-config
-              key: collectorTag
+              name: component-versions
+              key: collector
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true

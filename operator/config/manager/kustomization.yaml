@@ -1,5 +1,6 @@
 resources:
 - manager.yaml
+- component_versions.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -7,8 +8,6 @@ generatorOptions:
 configMapGenerator:
 - files:
   - controller_manager_config.yaml
-  literals:
-  - collectorTag=1.14.0
   name: manager-config
 
 apiVersion: kustomize.config.k8s.io/v1beta1
