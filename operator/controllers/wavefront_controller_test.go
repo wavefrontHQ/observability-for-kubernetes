@@ -1127,6 +1127,8 @@ func emptyScenario(wfCR *wf.Wavefront, initObjs ...runtime.Object) (*controllers
 	r := &controllers.WavefrontReconciler{
 		Versions: controllers.Versions{
 			CollectorVersion: "12.34.56",
+			ProxyVersion:     "99.99.99",
+			LoggingVersion:   "99.99.99",
 			OperatorVersion:  "99.99.99",
 		},
 		Client:            objClient,

@@ -158,6 +158,8 @@ func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
 type Versions struct {
 	OperatorVersion  string
 	CollectorVersion string
+	ProxyVersion     string
+	LoggingVersion   string
 }
 
 func NewWavefrontReconciler(versions Versions, client client.Client) (operator *WavefrontReconciler, err error) {
@@ -257,7 +259,23 @@ func dirList(proxy, collector, logging bool) []string {
 
 func (r *WavefrontReconciler) readAndDeleteResources() error {
 	r.MetricConnection.Close()
-	resources, err := r.readAndInterpolateResources(wf.WavefrontSpec{Namespace: r.namespace, DataCollection: wf.DataCollection{Metrics: wf.Metrics{CollectorTag: "none"}}}, allDirs())
+	specToDelete := wf.WavefrontSpec{
+		Namespace: r.namespace,
+		DataCollection: wf.DataCollection{
+			Metrics: wf.Metrics{
+				CollectorVersion: "none",
+			},
+			Logging: wf.Logging{
+				LoggingVersion: "none",
+			},
+		},
+		DataExport: wf.DataExport{
+			WavefrontProxy: wf.WavefrontProxy{
+				ProxyVersion: "none",
+			},
+		},
+	}
+	resources, err := r.readAndInterpolateResources(specToDelete, allDirs())
 	if err != nil {
 		return err
 	}
@@ -411,7 +429,9 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		}
 	}
 
-	wavefront.Spec.DataCollection.Metrics.CollectorTag = r.Versions.CollectorVersion
+	wavefront.Spec.DataCollection.Metrics.CollectorVersion = r.Versions.CollectorVersion
+	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
+	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
 
 	return nil
 }

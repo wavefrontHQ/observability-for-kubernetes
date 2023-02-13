@@ -52,8 +52,8 @@ func namespace() string {
 	return getEnvOrDie("NAMESPACE")
 }
 
-func collectorTag() string {
-	return getEnvOrDie("COLLECTOR_TAG")
+func getComponentVersion(component string) string {
+	return getEnvOrDie(component)
 }
 
 func getEnvOrDie(key string) string {
@@ -99,7 +99,9 @@ func main() {
 
 	controller, err := controllers.NewWavefrontReconciler(controllers.Versions{
 		OperatorVersion:  version,
-		CollectorVersion: collectorTag(),
+		CollectorVersion: getComponentVersion("COLLECTOR_VERSION"),
+		ProxyVersion:     getComponentVersion("PROXY_VERSION"),
+		LoggingVersion:   getComponentVersion("LOGGING_VERSION"),
 	}, objClient)
 
 	if err != nil {
