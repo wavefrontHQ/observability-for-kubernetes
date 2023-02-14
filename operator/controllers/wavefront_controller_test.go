@@ -72,12 +72,14 @@ func TestReconcileAll(t *testing.T) {
 
 		require.True(t, mockKM.CollectorServiceAccountContains())
 		require.True(t, mockKM.CollectorConfigMapContains("clusterName: testClusterName", "proxyAddress: wavefront-proxy:2878"))
-		require.True(t, mockKM.NodeCollectorDaemonSetContains())
-		require.True(t, mockKM.ClusterCollectorDeploymentContains())
-		require.True(t, mockKM.LoggingDaemonSetContains())
+		require.True(t, mockKM.NodeCollectorDaemonSetContains(fmt.Sprintf("kubernetes-collector:%s", r.Versions.CollectorVersion)))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains(fmt.Sprintf("kubernetes-collector:%s", r.Versions.CollectorVersion)))
+		require.True(t, mockKM.LoggingDaemonSetContains(fmt.Sprintf("kubernetes-operator-fluentbit:%s", r.Versions.LoggingVersion)))
+		require.True(t, mockKM.ProxyDeploymentContains(fmt.Sprintf("proxy:%s", r.Versions.ProxyVersion)))
 
 		require.Greater(t, len(mockSender.SentMetrics), 0, "should not have sent metrics")
 		require.Equal(t, 99.9999, VersionSent(mockSender), "should send OperatorVersion")
+
 	})
 
 	t.Run("transitions status when sub-components change (even if overall health is still unhealthy)", func(t *testing.T) {
