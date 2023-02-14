@@ -220,6 +220,15 @@ spec:
                         description: Enable is whether to enable the metrics. Defaults
                           to true.
                         type: boolean
+                      controlPlane:
+                        type: object
+                        description: Metrics for the Kubernetes control plane.
+                        properties:
+                          enable:
+                            default: true
+                            type: boolean
+                            description: Enable is whether to enable the metrics.
+                              Defaults to true.
                       enableDiscovery:
                         default: true
                         description: Rules based and Prometheus endpoints auto-discovery.

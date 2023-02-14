@@ -55,12 +55,15 @@ data:
 
       internal_stats_source:
         prefix: kubernetes.
+
       kubernetes_state_source:
         prefix: kubernetes.
 
+      {{- if .DataCollection.Metrics.ControlPlane.Enable }}
       kubernetes_control_plane_source:
         collection:
           interval: 120s
+      {{- end }}
 
     discovery:
       enable_runtime_plugins: true
