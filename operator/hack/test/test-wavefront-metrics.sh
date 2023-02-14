@@ -111,7 +111,7 @@ function print_usage_and_exit() {
   echo -e "\t-t wavefront token (required)"
   echo -e "\t-n config cluster name for metric grouping (required)"
   echo -e "\t-w wavefront instance name (default: 'nimba')"
-  echo -e "\t-c collector version (default: load from 'release/COLLECTOR_VERSION')"
+  echo -e "\t-c collector version (default: load from 'config/manager/component_versions.yaml')"
   echo -e "\t-o operator version (default: load from 'release/OPERATOR_VERSION')"
   echo -e "\t-e name of a file containing any extra asserts that should be made as part of this test (optional)"
   echo -e "\t-l name of test proxy used for logging (optional)"
@@ -140,7 +140,7 @@ function main() {
   local WAVEFRONT_TOKEN=
   local CONFIG_CLUSTER_NAME=
 
-  local EXPECTED_COLLECTOR_VERSION=$(cat ${OPERATOR_REPO_ROOT}/release/COLLECTOR_VERSION)
+  local EXPECTED_COLLECTOR_VERSION=$(yq .data.collector ${OPERATOR_REPO_ROOT}/config/manager/component_versions.yaml)
   local EXPECTED_OPERATOR_VERSION=$(cat ${OPERATOR_REPO_ROOT}/release/OPERATOR_VERSION)
   local WF_CLUSTER=nimba
   local EXTRA_TESTS=
