@@ -15,4 +15,6 @@ $(SEMVER_CLI_BIN):
 
 promote-internal:
 	cp -a $(REPO_DIR)/operator/dev-internal/* $(REPO_DIR)/
-	cp $(REPO_DIR)/operator/config/crd/bases/wavefront.com_wavefronts.yaml $(REPO_DIR)/deploy/kubernetes/crd
+
+	mkdir -p $(REPO_DIR)/deploy/crd/
+	cp $(REPO_DIR)/operator/config/crd/bases/wavefront.com_wavefronts.yaml $(REPO_DIR)/deploy/crd/
