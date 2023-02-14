@@ -4,6 +4,8 @@ set -e
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "${REPO_ROOT}"
 
+OPERATOR_REPO_ROOT=${REPO_ROOT}/operator
+
 function check_required_argument() {
   local required_arg=$1
   local failure_msg=$2
@@ -43,13 +45,13 @@ function main() {
   check_required_argument "$IMAGE_NAME" "-n <IMAGE_NAME> is required"
   check_required_argument "$VERSION_POSTFIX" "-v <VERSION_POSTFIX> is required"
 
-  local current_version="$(cat collector/release/VERSION)"
+  local current_version="$(yq .data.collector ${OPERATOR_REPO_ROOT}/config/manager/component_versions.yaml)"
   local bumped_version=$(./scripts/get-bumped-version.sh -v "${current_version}" -s patch)
   local image_version="${bumped_version}${VERSION_POSTFIX}"
   local image="${REGISTRY_NAME}/${IMAGE_NAME}:${image_version}"
 
-	sed -i.bak "s%image:.*kubernetes-collector:.*$%image: ${image}%" operator/deploy/internal/collector/3-wavefront-collector-deployment.yaml
-	sed -i.bak "s%image:.*kubernetes-collector:.*$%image: ${image}%" operator/deploy/internal/collector/2-wavefront-collector-daemonset.yaml
+	sed -i.bak "s%image:.*kubernetes-collector.*$%image: ${image}%" operator/deploy/internal/collector/3-wavefront-collector-deployment.yaml
+	sed -i.bak "s%image:.*kubernetes-collector.*$%image: ${image}%" operator/deploy/internal/collector/2-wavefront-collector-daemonset.yaml
 }
 
 main "$@"
