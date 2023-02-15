@@ -16,7 +16,7 @@ In your `wavefront.yaml`,
 
 Modify your `wavefront.yaml` to match your helm installation based on the information below.
 The following table lists the mapping of configurable parameters of the Wavefront Helm chart to Wavefront Operator Custom Resource.
-See [Custom Resource Scenarios](../../deploy/scenarios) for examples or refer to [wavefront.com_wavefronts.yaml](../../operator/config/crd/bases/wavefront.com_wavefronts.yaml) for information on all Custom Resource fields.
+See [Custom Resource Scenarios](../../deploy/scenarios) for examples or refer to [wavefront.com_wavefronts.yaml](../../deploy/crd/wavefront.com_wavefronts.yaml) for information on all Custom Resource fields.
 
 | Helm collector parameter           | Wavefront operator Custom Resource `spec`.                                                         | Description                                                                                                                                                    |
 |------------------------------------|----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
