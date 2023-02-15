@@ -2,6 +2,8 @@ export # Used to let all sub-make use the initialized value of variables whose n
 
 SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
+REPO_DIR=$(shell git rev-parse --show-toplevel)
+
 GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
 
@@ -10,3 +12,9 @@ semver-cli: $(SEMVER_CLI_BIN)
 
 $(SEMVER_CLI_BIN):
 	@(CGO_ENABLED=0 go install github.com/davidrjonas/semver-cli@latest)
+
+promote-internal:
+	cp -a $(REPO_DIR)/operator/dev-internal/* $(REPO_DIR)/
+
+	mkdir -p $(REPO_DIR)/deploy/crd/
+	cp $(REPO_DIR)/operator/config/crd/bases/wavefront.com_wavefronts.yaml $(REPO_DIR)/deploy/crd/
