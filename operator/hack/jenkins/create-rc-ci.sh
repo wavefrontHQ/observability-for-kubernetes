@@ -8,7 +8,7 @@ RELEASE_VERSION=$(cat ./release/OPERATOR_VERSION)
 NEW_VERSION=$(semver-cli inc patch "$RELEASE_VERSION")
 
 VERSION=$NEW_VERSION$VERSION_POSTFIX make released-kubernetes-yaml
-cp deploy/wavefront-operator.yaml build/wavefront-operator.yaml
+cp dev-internal/deploy/wavefront-operator.yaml build/wavefront-operator.yaml
 
 git checkout .
 git fetch

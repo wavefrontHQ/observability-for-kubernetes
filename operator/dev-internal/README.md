@@ -51,7 +51,7 @@ The following tools are required for installing the integration.
    **Note**: If you already have Wavefront installed via helm or manual deploy, *uninstall* before you install the operator.
  
    ```
-   kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/deploy/kubernetes/wavefront-operator.yaml
+   kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
    ```
 
 2. Create a Kubernetes secret with your Wavefront token.
@@ -137,27 +137,27 @@ See below for configuration options.
 
 We have templates for common scenarios. See the comments in each file for usage instructions.
 
- * [Using an existing collector ConfigMap](operator/deploy/kubernetes/scenarios/wavefront-collector-existing-configmap.yaml)
- * [With plugin configuration in a secret](operator/deploy/kubernetes/scenarios/wavefront-collector-with-plugin-secret.yaml)
- * [Filtering metrics upon collection](operator/deploy/kubernetes/scenarios/wavefront-collector-filtering.yaml)
- * [Defining Kubernetes resource limits](operator/deploy/kubernetes/scenarios/wavefront-pod-resources.yaml)
- * [Defining data collection pod tolerations](operator/deploy/kubernetes/scenarios/wavefront-daemonset-pod-tolerations.yaml)
- * [Defining proxy pre-processor rules](operator/deploy/kubernetes/scenarios/wavefront-proxy-preprocessor-rules.yaml)
- * [Enabling proxy histogram support](operator/deploy/kubernetes/scenarios/wavefront-proxy-histogram.yaml)
- * [Enabling proxy tracing support](operator/deploy/kubernetes/scenarios/wavefront-proxy-tracing.yaml)
- * [Using an HTTP Proxy](operator/deploy/kubernetes/scenarios/wavefront-proxy-with-http-proxy.yaml)
- * [Getting started with logging configuration](operator/deploy/kubernetes/scenarios/wavefront-logging-getting-started.yaml)
- * [Full logging configuration](operator/deploy/kubernetes/scenarios/wavefront-logging-full-config.yaml)
- * [Bring your own logs shipper](operator/deploy/kubernetes/scenarios/wavefront-bring-your-own-logs-shipper.yaml)
+ * [Using an existing collector ConfigMap](deploy/scenarios/wavefront-collector-existing-configmap.yaml)
+ * [With plugin configuration in a secret](deploy/scenarios/wavefront-collector-with-plugin-secret.yaml)
+ * [Filtering metrics upon collection](deploy/scenarios/wavefront-collector-filtering.yaml)
+ * [Defining Kubernetes resource limits](deploy/scenarios/wavefront-pod-resources.yaml)
+ * [Defining data collection pod tolerations](deploy/scenarios/wavefront-daemonset-pod-tolerations.yaml)
+ * [Defining proxy pre-processor rules](deploy/scenarios/wavefront-proxy-preprocessor-rules.yaml)
+ * [Enabling proxy histogram support](deploy/scenarios/wavefront-proxy-histogram.yaml)
+ * [Enabling proxy tracing support](deploy/scenarios/wavefront-proxy-tracing.yaml)
+ * [Using an HTTP Proxy](deploy/scenarios/wavefront-proxy-with-http-proxy.yaml)
+ * [Getting started with logging configuration](deploy/scenarios/wavefront-logging-getting-started.yaml)
+ * [Full logging configuration](deploy/scenarios/wavefront-logging-full-config.yaml)
+ * [Bring your own logs shipper](deploy/scenarios/wavefront-bring-your-own-logs-shipper.yaml)
 
-You can see all configuration options in the [wavefront-full-config.yaml](operator/deploy/kubernetes/scenarios/wavefront-full-config.yaml).
+You can see all configuration options in the [wavefront-full-config.yaml](deploy/scenarios/wavefront-full-config.yaml).
 
 ## Bring Your Own Logs Shipper
 
 The operator deploys a data export component (wavefront-proxy) which can recieve log data and relay it to wavefront.
 You will need to configure your logs shipper to send logs to the data export component (wavefront-proxy) deployed by the operator.
 
-Here is a Wavefront Custom Resource [example config](operator/deploy/kubernetes/scenarios/wavefront-bring-your-own-logs-shipper.yaml) for this scenario.
+Here is a Wavefront Custom Resource [example config](deploy/scenarios/wavefront-bring-your-own-logs-shipper.yaml) for this scenario.
 
 In order to make the best use of your logging solution on kubernetes, we recommend having the below kubernetes log attributes
 
@@ -177,7 +177,7 @@ In addition to these, here are some [general log attributes](https://docs.wavefr
 Upgrade the Wavefront Operator (both Collector and Proxy) to a new version by running the following command :
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/deploy/kubernetes/wavefront-operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
 ```
 
 Note: This command will not upgrade any existing wavefront/wavefront helm installation. See [migration.md](docs/operator/migration.md) for migration instructions.
@@ -197,7 +197,7 @@ kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/rel
 To remove the Wavefront Integration from your environment, run the following commands:
 
 ```
-kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/deploy/kubernetes/wavefront-operator.yaml
+kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
 ```
 
 # Contribution

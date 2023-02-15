@@ -223,7 +223,7 @@ base-kustomization-yaml: $(OPERATOR_BUILD_DIR)
 
 .PHONY: custom-kustomization-yaml
 custom-kustomization-yaml: $(OPERATOR_BUILD_DIR)
-	sed "s%YOUR_IMAGE_REGISTRY%$(PREFIX)%g" $(REPO_DIR)/deploy/kubernetes/kustomization.yaml | \
+	sed "s%YOUR_IMAGE_REGISTRY%$(PREFIX)%g" $(REPO_DIR)/dev-internal/deploy/kustomization.yaml | \
 		sed "s%YOUR_NAMESPACE%$(NS)%g" > $(KUSTOMIZATION_YAML)
 
 .PHONY: kubernetes-yaml
@@ -243,7 +243,7 @@ xplatform-kubernetes-yaml: docker-xplatform-build copy-base-patches kubernetes-y
 
 .PHONY: released-kubernetes-yaml
 released-kubernetes-yaml: copy-base-patches kubernetes-yaml
-	cp $(KUBERNETES_YAML) $(REPO_DIR)/deploy/kubernetes/wavefront-operator.yaml
+	cp $(KUBERNETES_YAML) $(REPO_DIR)/dev-internal/deploy/wavefront-operator.yaml
 
 .PHONY: kind-kubernetes-yaml
 kind-kubernetes-yaml: docker-build copy-kind-patches kubernetes-yaml
