@@ -44,7 +44,7 @@ However, logic has been added to the collector to automatically drop tags in pri
 to ensure that metrics make it through to the proxy and no longer cause this error.
 This is the order of the logic used to drop tags:
 1. Explicitly excluded tags (from `tagExclude` config).
-   Refer [here](../../operator/deploy/kubernetes/scenarios/wavefront-full-config.yaml) for an example scenario.
+   Refer [here](../../deploy/scenarios/wavefront-full-config.yaml) for an example scenario.
 1. Tags are empty or are interpreted to be empty (`"tag.key": ""`, `"tag.key": "-"`, or `"tag.key": "/"`).
 1. Tags are explicitly excluded
    (`"namespace_id": "..."`, `"host_id": "..."`, `"pod_id": "..."`, or `"hostname": "..."`).

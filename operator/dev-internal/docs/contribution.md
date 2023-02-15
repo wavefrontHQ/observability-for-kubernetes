@@ -39,5 +39,5 @@ make nuke-kind
 # Build and Deploy local operator image
 make deploy
 # Deploy Proxy
-kubectl apply -f deploy/kubernetes/scenarios/wavefront-getting-started.yaml
+kubectl apply -f deploy/scenarios/wavefront-getting-started.yaml
 ```
