@@ -1003,7 +1003,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-snapshot:2.2.1-alpha-f4e3c4c8
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-snapshot:2.2.1-alpha-f35092fe
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
