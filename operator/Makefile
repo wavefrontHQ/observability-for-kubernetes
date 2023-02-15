@@ -233,10 +233,7 @@ kubernetes-yaml: manifests kustomize $(OPERATOR_BUILD_DIR)
 
 .PHONY: rc-kubernetes-yaml
 rc-kubernetes-yaml: $(OPERATOR_BUILD_DIR)
-	curl -v https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/$(OPERATOR_YAML_RC_SHA)/operator/wavefront-operator-$(GIT_BRANCH).yaml \
-		-H "Accept: application/vnd.github.raw" \
-		$(OBSERVABILITY_FOR_KUBERNETES_HEADER) \
-		-o $(KUBERNETES_YAML)
+	cp $(REPO_DIR)/dev-internal/deploy/wavefront-operator.yaml $(KUBERNETES_YAML)
 
 .PHONY: xplatform-kubernetes-yaml
 xplatform-kubernetes-yaml: docker-xplatform-build copy-base-patches kubernetes-yaml
