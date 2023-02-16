@@ -277,12 +277,6 @@ spec:
                             items:
                               type: string
                             type: array
-                          tagGuaranteeList:
-                            description: List of tags to keep. Supersedes all other
-                              filters.
-                            items:
-                              type: string
-                            type: array
                         type: object
                       nodeCollector:
                         default:
@@ -981,7 +975,7 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.namespace
-        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-snapshot:2.1.1-alpha-9e8e76c8
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-snapshot:2.2.1-alpha-7cbe1264
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
