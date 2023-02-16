@@ -247,7 +247,9 @@ pipeline {
             GCP_PROJECT = "wavefront-gcp-dev"
             KUSTOMIZATION_TYPE="custom"
             NS="custom-namespace"
-            SOURCE_PREFIX="projects.registry.vmware.com/tanzu_observability"
+            SOURCE_PREFIX="projects.registry.vmware.com/tanzu_observability_keights_saas"
+            PREFIX="projects.registry.vmware.com/tanzu_observability"
+            HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
             INTEGRATION_TEST_ARGS="-r advanced"
           }
           steps {
