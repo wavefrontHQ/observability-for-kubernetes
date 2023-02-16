@@ -10,7 +10,7 @@ pipeline {
   environment {
     PATH = "${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
     GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
-    HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+    HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
     DOCKER_IMAGE = "kubernetes-operator"
     VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
@@ -33,7 +33,6 @@ pipeline {
           }
           environment {
             RELEASE_TYPE = "alpha"
-            HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
             DOCKER_IMAGE = "kubernetes-collector"
           }
           steps {
@@ -251,8 +250,6 @@ pipeline {
 //             KUSTOMIZATION_TYPE="custom"
 //             NS="custom-namespace"
 //             SOURCE_PREFIX="projects.registry.vmware.com/tanzu_observability"
-//             PREFIX="projects.registry.vmware.com/tanzu_observability_keights_saas"
-//             HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
 //             INTEGRATION_TEST_ARGS="-r advanced"
 //           }
 //           steps {
