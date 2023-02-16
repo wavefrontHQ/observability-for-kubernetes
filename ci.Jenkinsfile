@@ -60,7 +60,6 @@ pipeline {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             sh 'cd operator && make semver-cli clean-build'
-            sh 'cd operator && ./hack/jenkins/inject-collector-snapshot-image.sh -r $COLLECTOR_PREFIX -n $COLLECTOR_IMAGE -v $VERSION_POSTFIX'
             sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
             sh 'cd operator && make docker-xplatform-build'
             sh 'cd operator && ./hack/jenkins/restore-collector-images.sh'
