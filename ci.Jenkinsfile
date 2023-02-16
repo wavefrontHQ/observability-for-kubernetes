@@ -62,7 +62,6 @@ pipeline {
             sh 'cd operator && make semver-cli clean-build'
             sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
             sh 'cd operator && make docker-xplatform-build'
-            sh 'cd operator && ./hack/jenkins/restore-collector-images.sh'
             sh 'cd operator && ./hack/jenkins/create-rc-ci.sh'
             script {
               env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
