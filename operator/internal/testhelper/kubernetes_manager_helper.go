@@ -2,7 +2,6 @@ package testhelper
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -522,7 +521,7 @@ func contains(
 	for _, yamlStr := range yamls {
 		object, err := unstructuredFromStr(yamlStr)
 		if err != nil {
-			fmt.Printf("\n***********************************\nFailed to decode yaml below \n***********************************\n%s\n", yamlStr)
+			panic(err)
 		}
 
 		if objectMatchesAll(
