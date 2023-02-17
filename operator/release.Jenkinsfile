@@ -31,7 +31,7 @@ pipeline {
         }
       }
     }
-    stage("Publish Image and Generate YAML") {
+    stage("Promote Image and Generate YAML") {
       environment {
         HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
         PREFIX = 'projects.registry.vmware.com/tanzu_observability'
@@ -42,7 +42,7 @@ pipeline {
           env.VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
         }
         sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-        sh 'cd operator && make docker-xplatform-build released-kubernetes-yaml'
+        sh 'cd operator && make released-kubernetes-yaml'
       }
     }
     // deploy to GKE and run manual tests

@@ -1,0 +1,1 @@
+git show origin/rc:operator/wavefront-operator-main.yaml | yq 'select(.metadata.name == "wavefront-controller-manager" and .kind == "Deployment" ) | .spec.template.spec.containers[0].image' | cut -d ':' -f2

@@ -245,6 +245,11 @@ xplatform-kubernetes-yaml: docker-xplatform-build copy-base-patches kubernetes-y
 released-kubernetes-yaml: copy-base-patches kubernetes-yaml
 	cp $(KUBERNETES_YAML) $(REPO_DIR)/dev-internal/deploy/wavefront-operator.yaml
 
+.PHONY: promote-release-image
+promote-release-image:
+	$(eval ALPHA_TAG=$(shell ../scripts/get-latest-alpha-tag.sh))
+	crane copy projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:${ALPHA_TAG} projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:pginwoo-test
+
 .PHONY: kind-kubernetes-yaml
 kind-kubernetes-yaml: docker-build copy-kind-patches kubernetes-yaml
 	kind load docker-image $(IMG)
