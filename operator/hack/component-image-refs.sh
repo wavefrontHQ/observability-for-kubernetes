@@ -1,18 +1,10 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -e
 
-cd "$(dirname "$0")"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+OPERATOR_DIR="${REPO_ROOT}/operator"
+cd "${OPERATOR_DIR}"
 
-function component-image-refs() {
-  local name="$1"
-  delimiter='\}\}/'
-  (
-    while IFS= read -r line; do
-      echo "${line#*$delimiter}"
-    done < <(grep "/${name}:" ../deploy/internal/**/*.yaml | uniq)
-  ) | uniq
-}
-
-component-image-refs "kubernetes-collector"
-component-image-refs "kubernetes-operator-fluentd"
-component-image-refs "proxy"
+echo "kubernetes-collector:$(yq .data.collector "${OPERATOR_DIR}"/config/manager/component_versions.yaml)"
+echo "kubernetes-operator-fluentbit:$(yq .data.logging "${OPERATOR_DIR}"/config/manager/component_versions.yaml)"
+echo "proxy:$(yq .data.proxy "${OPERATOR_DIR}"/config/manager/component_versions.yaml)"

@@ -100,6 +100,9 @@ type Metrics struct {
 
 	// ProxyAddress is for internal use only
 	ProxyAddress string `json:"-"`
+
+	// CollectorVersion is for internal use only
+	CollectorVersion string `json:"-"`
 }
 
 type DataExport struct {
@@ -174,6 +177,9 @@ type WavefrontProxy struct {
 
 	// AvailableReplicas is for internal use only
 	AvailableReplicas int `json:"-"`
+
+	// ProxyVersion is for internal use only
+	ProxyVersion string `json:"-"`
 }
 
 type Tracing struct {
@@ -352,6 +358,9 @@ type Logging struct {
 
 	// ProxyAddress is for internal use only
 	ProxyAddress string `json:"-"`
+
+	// LoggingVersion is for internal use only
+	LoggingVersion string `json:"-"`
 }
 
 // WavefrontStatus defines the observed state of Wavefront

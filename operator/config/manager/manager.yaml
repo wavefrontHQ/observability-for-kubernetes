@@ -50,6 +50,21 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.namespace
+        - name: COLLECTOR_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: component-versions
+              key: collector
+        - name: PROXY_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: component-versions
+              key: proxy
+        - name: LOGGING_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: component-versions
+              key: logging
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true

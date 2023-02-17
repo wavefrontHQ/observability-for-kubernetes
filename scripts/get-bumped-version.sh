@@ -34,8 +34,8 @@ while getopts "s:v:" opt; do
   esac
 done
 
-check_required_argument "VERSION" "-v <VERSION> is required"
-check_required_argument "BUMP_COMPONENT" "-s <BUMP_COMPONENT> is required"
+check_required_argument "${VERSION}" "-v <VERSION> is required"
+check_required_argument "${BUMP_COMPONENT}" "-s <BUMP_COMPONENT> is required"
 
 make -s semver-cli
 

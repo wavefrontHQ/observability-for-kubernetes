@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+OPERATOR_DIR="${REPO_ROOT}/operator"
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
-OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)/operator
-cd "${OPERATOR_REPO_ROOT}"
-IMGPKG=${IMGPKG:-$OPERATOR_REPO_ROOT/bin/imgpkg}
+cd "${OPERATOR_DIR}"
+IMGPKG=${IMGPKG:-$OPERATOR_DIR/bin/imgpkg}
 
 function print_usage_and_exit() {
   echo "Failure: $1"
@@ -21,7 +21,9 @@ function copy-image-ref() {
     local image_ref="$1"
     local src_prefix="$2"
     local dst_prefix="$3"
-    local image_name=$(echo "$image_ref" | cut -d':' -f1)
+    local image_name
+
+    image_name=$(echo "$image_ref" | cut -d':' -f1)
     ${IMGPKG} copy -i "$src_prefix/$image_ref" --to-repo "$dst_prefix/$image_name"
 }
 

@@ -10,9 +10,9 @@ pipeline {
   environment {
     PATH = "${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
     GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
-    HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
-    PREFIX = 'projects.registry.vmware.com/tanzu_observability'
-    DOCKER_IMAGE = "kubernetes-operator-snapshot"
+    HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
+    PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+    DOCKER_IMAGE = "kubernetes-operator"
     VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
     WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
   }
@@ -33,9 +33,7 @@ pipeline {
           }
           environment {
             RELEASE_TYPE = "alpha"
-            HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
-            PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-            DOCKER_IMAGE = "kubernetes-collector-snapshot"
+            DOCKER_IMAGE = "kubernetes-collector"
           }
           steps {
             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
@@ -56,16 +54,14 @@ pipeline {
             RELEASE_TYPE = "alpha"
             COLLECTOR_PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             TOKEN = credentials('GITHUB_TOKEN')
-            COLLECTOR_IMAGE = "kubernetes-collector-snapshot"
+            COLLECTOR_IMAGE = "kubernetes-collector"
           }
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             sh 'cd operator && make semver-cli clean-build'
-            sh 'cd operator && ./hack/jenkins/inject-collector-snapshot-image.sh -r $COLLECTOR_PREFIX -n $COLLECTOR_IMAGE -v $VERSION_POSTFIX'
             sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
             sh 'cd operator && make docker-xplatform-build'
-            sh 'cd operator && ./hack/jenkins/restore-collector-images.sh'
             sh 'cd operator && ./hack/jenkins/create-rc-ci.sh'
             script {
               env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
@@ -126,8 +122,7 @@ pipeline {
             GCP_CREDS = credentials("GCP_CREDS")
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
             GCP_ZONE="a"
-            PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-            DOCKER_IMAGE = "kubernetes-collector-snapshot"
+            DOCKER_IMAGE = "kubernetes-collector"
             INTEGRATION_TEST_ARGS="all"
             INTEGRATION_TEST_BUILD="ci"
           }
@@ -154,8 +149,7 @@ pipeline {
 //             go 'Go 1.18'
 //           }
 //           environment {
-//             PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-//             DOCKER_IMAGE = "kubernetes-collector-snapshot"
+//             DOCKER_IMAGE = "kubernetes-collector"
 //             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
 //             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
 //             INTEGRATION_TEST_ARGS="all"
@@ -185,8 +179,7 @@ pipeline {
           }
           environment {
             AKS_CLUSTER_NAME = "k8po-ci"
-            PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-            DOCKER_IMAGE = "kubernetes-collector-snapshot"
+            DOCKER_IMAGE = "kubernetes-collector"
             INTEGRATION_TEST_ARGS="real-proxy-metrics"
             INTEGRATION_TEST_BUILD="ci"
           }
@@ -240,39 +233,39 @@ pipeline {
           }
         }
 
-        stage("GKE with customization") {
-          agent {
-            label "worker-2"
-          }
-          options {
-            timeout(time: 30, unit: 'MINUTES')
-          }
-          environment {
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci-2"
-            GCP_ZONE="a"
-            GCP_CREDS = credentials("GCP_CREDS")
-            GCP_PROJECT = "wavefront-gcp-dev"
-            KUSTOMIZATION_TYPE="custom"
-            NS="custom-namespace"
-            SOURCE_PREFIX="projects.registry.vmware.com/tanzu_observability"
-            PREFIX="projects.registry.vmware.com/tanzu_observability_keights_saas"
-            HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
-            INTEGRATION_TEST_ARGS="-r advanced"
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli'
-            lock("integration-test-gke-2") {
-              sh 'cd operator && make gke-connect-to-cluster'
-              sh 'cd operator && docker logout $PREFIX'
-              sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-              sh 'cd operator && make docker-copy-images'
-              sh 'cd operator && make integration-test'
-              sh 'cd operator && make clean-cluster'
-            }
-          }
-        }
+//         stage("GKE with customization") {
+//           agent {
+//             label "worker-2"
+//           }
+//           options {
+//             timeout(time: 30, unit: 'MINUTES')
+//           }
+//           environment {
+//             GKE_CLUSTER_NAME = "k8po-jenkins-ci-2"
+//             GCP_ZONE="a"
+//             GCP_CREDS = credentials("GCP_CREDS")
+//             GCP_PROJECT = "wavefront-gcp-dev"
+//             KUSTOMIZATION_TYPE="custom"
+//             NS="custom-namespace"
+//             SOURCE_PREFIX="projects.registry.vmware.com/tanzu_observability_keights_saas"
+//             PREFIX="projects.registry.vmware.com/tanzu_observability"
+//             HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+//             INTEGRATION_TEST_ARGS="-r advanced"
+//           }
+//           steps {
+//             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+//             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+//             sh 'cd operator && make semver-cli'
+//             lock("integration-test-gke-2") {
+//               sh 'cd operator && make gke-connect-to-cluster'
+//               sh 'cd operator && docker logout $PREFIX'
+//               sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+//               sh 'cd operator && make docker-copy-images'
+//               sh 'cd operator && make integration-test'
+//               sh 'cd operator && make clean-cluster'
+//             }
+//           }
+//         }
 
 //         stage("EKS") {
 //           agent {

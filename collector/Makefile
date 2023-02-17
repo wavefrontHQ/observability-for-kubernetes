@@ -2,7 +2,7 @@ include ../Makefile
 include make/k8s-envs/*.mk
 
 PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
-DOCKER_IMAGE?=kubernetes-collector-snapshot
+DOCKER_IMAGE?=kubernetes-collector
 WAVEFRONT_CLUSTER?=nimba
 
 REPO_ROOT=$(shell git rev-parse --show-toplevel)

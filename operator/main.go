@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	"go.uber.org/zap/zapcore"
@@ -48,12 +49,20 @@ func init() {
 }
 
 func namespace() string {
-	ns := os.Getenv("NAMESPACE")
-	if len(ns) == 0 {
-		panic("NAMESPACE must be set in environment")
+	return getEnvOrDie("NAMESPACE")
+}
+
+func getComponentVersion(component string) string {
+	return getEnvOrDie(component)
+}
+
+func getEnvOrDie(key string) string {
+	val := os.Getenv(key)
+	if len(val) == 0 {
+		panic(fmt.Sprintf("%s must be set in environment", key))
 	}
 
-	return ns
+	return val
 }
 
 func main() {
@@ -88,7 +97,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	controller, err := controllers.NewWavefrontReconciler(version, objClient)
+	controller, err := controllers.NewWavefrontReconciler(controllers.Versions{
+		OperatorVersion:  version,
+		CollectorVersion: getComponentVersion("COLLECTOR_VERSION"),
+		ProxyVersion:     getComponentVersion("PROXY_VERSION"),
+		LoggingVersion:   getComponentVersion("LOGGING_VERSION"),
+	}, objClient)
+
 	if err != nil {
 		setupLog.Error(err, "error creating wavefront operator reconciler")
 		os.Exit(1)
