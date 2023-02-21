@@ -4,7 +4,8 @@ set -e
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 OPERATOR_DIR="${REPO_ROOT}/operator"
 cd "${OPERATOR_DIR}"
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
-echo "kubernetes-collector:$(yq .data.collector "${OPERATOR_DIR}"/config/manager/component_versions.yaml)"
-echo "kubernetes-operator-fluentbit:$(yq .data.logging "${OPERATOR_DIR}"/config/manager/component_versions.yaml)"
-echo "proxy:$(yq .data.proxy "${OPERATOR_DIR}"/config/manager/component_versions.yaml)"
+echo "kubernetes-collector:$(get_component_version collector)"
+echo "kubernetes-operator-fluentbit:$(get_component_version logging)"
+echo "proxy:$(get_component_version proxy)"

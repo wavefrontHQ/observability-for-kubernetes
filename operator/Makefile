@@ -20,7 +20,7 @@ ifeq ($(origin VERSION_POSTFIX), undefined)
 VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
 
-RELEASE_VERSION?=$(shell cat ./release/OPERATOR_VERSION)
+RELEASE_VERSION?=$(shell ../scripts/get-operator-version.sh)
 VERSION?=$(shell ../scripts/get-bumped-version.sh -s patch -v $(RELEASE_VERSION))$(VERSION_POSTFIX)
 IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 NS?=observability-system

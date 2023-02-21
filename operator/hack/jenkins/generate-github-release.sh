@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
-OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)/operator
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+OPERATOR_REPO_ROOT=${REPO_ROOT}/operator
 
 operator_yaml="${OPERATOR_REPO_ROOT}/deploy/kubernetes/wavefront-operator.yaml"
 
-VERSION=$(cat ${OPERATOR_REPO_ROOT}/release/OPERATOR_VERSION)
+VERSION=$(get_operator_version)
 GITHUB_REPO=wavefrontHQ/observability-for-kubernetes
 AUTH="Authorization: token ${GITHUB_TOKEN}"
 

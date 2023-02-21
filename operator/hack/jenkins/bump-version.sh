@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
 cd "$(dirname "$0")"
 
 function print_usage_and_exit() {
@@ -25,6 +28,6 @@ pushd ../../
   make semver-cli
 popd
 
-OLD_OPERATOR_VERSION=$(cat ../../release/OPERATOR_VERSION)
+OLD_OPERATOR_VERSION=$(get_operator_version)
 NEW_OPERATOR_VERSION=$(semver-cli inc "$OPERATOR_BUMP_COMPONENT" "$OLD_OPERATOR_VERSION")
 echo "$NEW_OPERATOR_VERSION" >../../release/OPERATOR_VERSION
