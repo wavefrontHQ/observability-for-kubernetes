@@ -1,3 +1,5 @@
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
 function green() {
   echo -e $'\e[32m'"${1}"$'\e[0m'
 }
@@ -90,6 +92,14 @@ function create_cluster_name() {
 }
 
 function k8s_env() {
-  local REPO_ROOT=$(git rev-parse --show-toplevel)
   "${REPO_ROOT}/scripts/get-k8s-cluster-env.sh"
+}
+
+function get_component_version() {
+  local component_name=$1
+  yq .data."${component_name}" "${REPO_ROOT}"/operator/config/manager/component_versions.yaml
+}
+
+function get_operator_version() {
+  "${REPO_ROOT}"/scripts/get-operator-version.sh
 }

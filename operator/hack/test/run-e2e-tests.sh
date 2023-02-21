@@ -383,7 +383,7 @@ function main() {
 
   local WAVEFRONT_URL="https:\/\/nimba.wavefront.com"
   local WF_CLUSTER=nimba
-  local VERSION=$(cat ${OPERATOR_REPO_ROOT}/release/OPERATOR_VERSION)
+  local VERSION=$(get_operator_version)
   local K8S_ENV=$(k8s_env)
   local CONFIG_CLUSTER_NAME=$(create_cluster_name)
   local tests_to_run=()
