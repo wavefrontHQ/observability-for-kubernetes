@@ -18,3 +18,8 @@ promote-internal:
 
 	mkdir -p $(REPO_DIR)/deploy/crd/
 	cp $(REPO_DIR)/operator/config/crd/bases/wavefront.com_wavefronts.yaml $(REPO_DIR)/deploy/crd/
+
+.PHONY: promote-release-images
+promote-release-images:
+	$(eval ALPHA_TAG := $(shell scripts/get-latest-alpha-tag.sh))
+	echo "kubernetes-operator:$(ALPHA_TAG)" | ./operator/hack/docker/copy-image-refs.sh -s $(SOURCE_PREFIX) -d $(DEST_PREFIX)

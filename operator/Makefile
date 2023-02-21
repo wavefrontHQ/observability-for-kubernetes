@@ -155,7 +155,6 @@ docker-push: ## Push docker image with the manager.
 
 docker-copy-images:
 	@test $${SOURCE_PREFIX?Please set variable SOURCE_PREFIX}
-	docker buildx create --use --node wavefront_operator_copier_$(BUILDER_SUFFIX)
 	./hack/component-image-refs.sh | ./hack/docker/copy-image-refs.sh -d $(PREFIX) -s $(SOURCE_PREFIX)
 	echo "$(DOCKER_IMAGE):$(VERSION)" | ./hack/docker/copy-image-refs.sh -d $(PREFIX) -s $(SOURCE_PREFIX)
 
@@ -244,11 +243,6 @@ xplatform-kubernetes-yaml: docker-xplatform-build copy-base-patches kubernetes-y
 .PHONY: released-kubernetes-yaml
 released-kubernetes-yaml: copy-base-patches kubernetes-yaml
 	cp $(KUBERNETES_YAML) $(REPO_DIR)/dev-internal/deploy/wavefront-operator.yaml
-
-.PHONY: promote-release-image
-promote-release-image:
-	$(eval ALPHA_TAG=$(shell ../scripts/get-latest-alpha-tag.sh))
-	crane copy projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:${ALPHA_TAG} projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:pginwoo-test
 
 .PHONY: kind-kubernetes-yaml
 kind-kubernetes-yaml: docker-build copy-kind-patches kubernetes-yaml
