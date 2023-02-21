@@ -23,3 +23,4 @@ promote-internal:
 promote-release-images:
 	$(eval ALPHA_TAG := $(shell scripts/get-latest-alpha-tag.sh))
 	echo "kubernetes-operator:$(ALPHA_TAG)" | ./operator/hack/docker/copy-image-refs.sh -s $(SOURCE_PREFIX) -d $(DEST_PREFIX)
+	echo "kubernetes-collector:$(ALPHA_TAG)" | ./operator/hack/docker/copy-image-refs.sh -s $(SOURCE_PREFIX) -d $(DEST_PREFIX)
