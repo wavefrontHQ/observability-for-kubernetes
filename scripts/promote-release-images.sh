@@ -3,7 +3,22 @@
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
+function check_required_argument() {
+  local required_arg=$1
+  local failure_msg=$2
+  if [[ -z ${required_arg} ]]; then
+    print_usage_and_exit "$failure_msg"
+  fi
+}
 
+function print_usage_and_exit() {
+  echo "Failure: $1"
+  echo "Promotes Operator and Collector images to releasable version."
+  echo "Usage: $0 [flags] [options]"
+  echo -e "\t-o semver component to bump for operator version (required)"
+  echo -e "\t-c semver component to bump for collector version (required)"
+  exit 1
+}
 
 while getopts "o:c:" opt; do
   case $opt in
@@ -19,6 +34,9 @@ while getopts "o:c:" opt; do
   esac
 done
 
+check_required_argument "${OPERATOR_BUMP_COMPONENT}" "-o <OPERATOR_BUMP_COMPONENT> is required"
+check_required_argument "${COLLECTOR_BUMP_COMPONENT}" "-c <COLLECTOR_BUMP_COMPONENT> is required"
+
 OLD_OPERATOR_VERSION=$(get_operator_version)
 OPERATOR_VERSION="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${OLD_OPERATOR_VERSION}" -s "${OPERATOR_BUMP_COMPONENT}")"
 echo "$OPERATOR_VERSION" >"${REPO_ROOT}"/operator/release/OPERATOR_VERSION
@@ -26,7 +44,7 @@ echo "$OPERATOR_VERSION" >"${REPO_ROOT}"/operator/release/OPERATOR_VERSION
 OLD_COLLECTOR_VERSION=$(cat "${REPO_ROOT}"/collector/release/VERSION)
 COLLECTOR_VERSION="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${OLD_COLLECTOR_VERSION}" -s "${COLLECTOR_BUMP_COMPONENT}")"
 echo "$COLLECTOR_VERSION" >"${REPO_ROOT}"/collector/release/VERSION
-#echo "$COLLECTOR_VERSION" >"${REPO_ROOT}"/collector/release/VERSION
+yq -i e ".data.collector |= \"$COLLECTOR_VERSION\"" "${REPO_ROOT}"/operator/config/manager/component_versions.yaml
 
 git show origin/rc:operator/wavefront-operator-main.yaml > ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
 OPERATOR_ALPHA_TAG=$(cat "${REPO_ROOT}"/operator/dev-internal/deploy/wavefront-operator.yaml | yq 'select(.metadata.name == "wavefront-controller-manager" and .kind == "Deployment" ) | .spec.template.spec.containers[0].image' | cut -d ':' -f2)
