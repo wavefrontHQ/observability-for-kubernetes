@@ -18,14 +18,3 @@ promote-internal:
 
 	mkdir -p $(REPO_DIR)/deploy/crd/
 	cp $(REPO_DIR)/operator/config/crd/bases/wavefront.com_wavefronts.yaml $(REPO_DIR)/deploy/crd/
-
-.PHONY: promote-release-images
-promote-release-images:
-	$(eval ALPHA_TAG := $(shell $(REPO_DIR)/scripts/get-latest-alpha-tag.sh))
-	$(eval OPERATOR_VERSION := $(shell cat $(REPO_DIR)/operator/release/OPERATOR_VERSION))
-	$(eval COLLECTOR_VERSION := $(shell cat $(REPO_DIR)/collector/release/VERSION))
-	echo $(OPERATOR_VERSION), $(COLLECTOR_VERSION), $(ALPHA_TAG)
-	crane copy "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:$(ALPHA_TAG)" "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator-snapshot:$(OPERATOR_VERSION)"
-	crane copy "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector:$(ALPHA_TAG)" "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-snapshot:$(COLLECTOR_VERSION)"
-#	echo "kubernetes-operator:$(ALPHA_TAG)" | ./operator/hack/docker/copy-image-refs.sh -s $(SOURCE_PREFIX) -d $(DEST_PREFIX)
-#	echo "kubernetes-collector:$(ALPHA_TAG)" | ./operator/hack/docker/copy-image-refs.sh -s $(SOURCE_PREFIX) -d $(DEST_PREFIX)
