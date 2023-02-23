@@ -32,12 +32,14 @@ function print_random_generator_results() {
   local team_1_order_picked
   local team_3_order_picked
 
-  team_1_order_picked="$(echo "${TEAM_1_RESULT}" | awk '{ printf "%2d. %s\n", NR, $0 }')"
-  team_3_order_picked="$(echo "${TEAM_3_RESULT}" | awk '{ printf "%2d. %s\n", NR, $0 }')"
+  team_1_order_picked="$(echo "${TEAM_1_RESULT}" | awk '{ printf "%d. %s\n", NR, $0 }')"
+  team_3_order_picked="$(echo "${TEAM_3_RESULT}" | awk '{ printf "%d. %s\n", NR, $0 }')"
 
   cat <<EOF
+
 ${TEAM_1_NAME}:
 ${team_1_order_picked}
+
 ${TEAM_3_NAME}:
 ${team_3_order_picked}
 EOF
