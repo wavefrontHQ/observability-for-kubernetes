@@ -73,8 +73,9 @@ fi
 # crane
 #
 if ! [ -x "$(command -v crane)" ]; then
-  curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -L -s "https://github.com/google/go-containerregistry/releases/download/v0.13.0/go-containerregistry_Linux_x86_64.tar.gz" > go-containerregistry.tar.gz
-  tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
+  curl -H "Authorization: token ${GITHUB_CREDS_PSW}" -L -s "https://github.com/google/go-containerregistry/releases/download/v0.13.0/go-containerregistry_Linux_x86_64.tar.gz" \
+  | tar xz --to-stdout ./crane | sudo tee /usr/local/bin/crane >/dev/null
+#  tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
   sudo chmod +x /usr/local/bin/crane
 fi
 
