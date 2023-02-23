@@ -36,7 +36,6 @@ function print_random_generator_results() {
   team_3_order_picked="$(echo "${TEAM_3_RESULT}" | awk '{ printf "%d. %s\n", NR, $0 }')"
 
   cat <<EOF
-
 ${TEAM_1_NAME}:
 ${team_1_order_picked}
 

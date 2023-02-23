@@ -21,6 +21,7 @@ pipeline {
         slackSend (channel: '#tobs-k8po-team', message:
         """
 The results are in from <${env.BUILD_URL}|${env.JOB_NAME}>!!!
+
 ${ORDER_PICKED}
         """)
       }
