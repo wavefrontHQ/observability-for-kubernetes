@@ -16,8 +16,10 @@ pipeline {
   stages {
     stage("Promote release images") {
       steps {
-        sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-        sh './scripts/promote-release-images.sh'
+        withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+          sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+          sh './scripts/promote-release-images.sh'
+        }
       }
     }
     stage("Deploy and test release images") {
