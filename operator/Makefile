@@ -172,7 +172,7 @@ copy-base-patches:
 CONTROLLER_GEN = $(REPO_DIR)/bin/controller-gen
 .PHONY: controller-gen
 controller-gen:
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.11.3)
 
 KUSTOMIZE = $(REPO_DIR)/bin/kustomize
 .PHONY: kustomize
