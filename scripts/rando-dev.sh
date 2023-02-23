@@ -4,7 +4,7 @@ set -e
 function curl_query_to_random_generator() {
   local query="$1"
 
-  curl --no-progress-meter \
+  curl --silent \
     'https://www.random.org/lists/?mode=advanced' \
     -H 'authority: www.random.org' \
     -H 'content-type: application/x-www-form-urlencoded' \
