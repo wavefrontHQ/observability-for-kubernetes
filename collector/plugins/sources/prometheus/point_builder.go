@@ -54,7 +54,8 @@ func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily)
 			if mf.GetType() == prom.MetricType_SUMMARY {
 				result = append(result, builder.buildSummaryPoints(metricName, m, now, builder.buildTags(m))...)
 			} else if mf.GetType() == prom.MetricType_HISTOGRAM {
-				if experimental.IsEnabled(experimental.HistogramConversion) {
+				// always convert control plane metrics
+				if isControlPlaneMetric(metricName) || experimental.IsEnabled(experimental.HistogramConversion) {
 					point := builder.buildWFHistogram(metricName, m, now, builder.buildTags(m))
 					result = wf.FilterAppend(builder.filters, builder.filtered, result, point)
 				}
@@ -65,6 +66,10 @@ func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily)
 		}
 	}
 	return result, nil
+}
+
+func isControlPlaneMetric(metricName string) bool {
+	return strings.HasPrefix(metricName, "kubernetes_controlplane_")
 }
 
 func (builder *pointBuilder) point(name string, value float64, ts int64, source string, tags map[string]string) wf.Metric {

@@ -19,6 +19,18 @@ import (
 )
 
 // example pulled from https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md
+const controlplaneMetricString = `
+# A histogram, which has a pretty complex representation in the text format:
+# HELP kubernetes_controlplane_etcd_request_duration_seconds A histogram of the request duration.
+# TYPE kubernetes_controlplane_etcd_request_duration_seconds histogram
+kubernetes_controlplane_etcd_request_duration_seconds_bucket{le="0.05"} 24054
+kubernetes_controlplane_etcd_request_duration_seconds_bucket{le="0.1"} 33444
+kubernetes_controlplane_etcd_request_duration_seconds_bucket{le="0.2"} 100392
+kubernetes_controlplane_etcd_request_duration_seconds_bucket{le="0.5"} 129389
+kubernetes_controlplane_etcd_request_duration_seconds_bucket{le="1"} 133988
+kubernetes_controlplane_etcd_request_duration_seconds_bucket{le="+Inf"} 144320
+kubernetes_controlplane_etcd_request_duration_seconds_sum 53423
+kubernetes_controlplane_etcd_request_duration_seconds_count 144320`
 
 func TestParsingOfCounterPoints(t *testing.T) {
 	src := &prometheusMetricsSource{}
@@ -72,6 +84,59 @@ http_request_duration_seconds_count 144320
 	assert.Equal(t, float64(144320), points[6].Value)
 
 	assert.Equal(t, "http.request.duration.seconds.sum", points[7].Metric)
+	assert.Equal(t, float64(53423), points[7].Value)
+}
+
+func TestControlPaneMetricsWithFeatureFlagDisabled(t *testing.T) {
+	experimental.DisableFeature(experimental.HistogramConversion)
+
+	validatePrometheusHistogramSentAsDistribution(t)
+	validatePrometheusHistogramSentAsPoints(t)
+}
+
+func TestControlPaneMetricsWithFeatureFlagEnabled(t *testing.T) {
+	experimental.EnableFeature(experimental.HistogramConversion)
+
+	validatePrometheusHistogramSentAsDistribution(t)
+	validatePrometheusHistogramSentAsPoints(t)
+}
+
+func validatePrometheusHistogramSentAsDistribution(t *testing.T) {
+	src := &prometheusMetricsSource{}
+
+	distributions := parseDistributions(t, src, controlplaneMetricString)
+	require.Equal(t, 1, len(distributions))
+
+	assert.Equal(t, 6, len(distributions[0].Centroids))
+	expectedCentroids := []wf.Centroid{
+		{Value: 0.05, Count: 24054},
+		{Value: 0.1, Count: 33444},
+		{Value: 0.2, Count: 100392},
+		{Value: 0.5, Count: 129389},
+		{Value: 1.0, Count: 133988},
+		{Value: math.Inf(1), Count: 144320},
+	}
+	assert.Equal(t, expectedCentroids, distributions[0].Centroids)
+}
+
+func validatePrometheusHistogramSentAsPoints(t *testing.T) {
+	src := &prometheusMetricsSource{}
+
+	points := parsePoints(t, src, controlplaneMetricString)
+	assert.Equal(t, 8, len(points))
+
+	assert.Equal(t, "kubernetes.controlplane.etcd.request.duration.seconds.bucket", points[0].Metric)
+	assert.Equal(t, float64(24054), points[0].Value)
+	assert.Equal(t, map[string]string{"le": "0.05"}, points[0].Tags(), "wrong point tags")
+
+	assert.Equal(t, "kubernetes.controlplane.etcd.request.duration.seconds.bucket", points[5].Metric)
+	assert.Equal(t, float64(144320), points[5].Value)
+	assert.Equal(t, map[string]string{"le": "+Inf"}, points[5].Tags(), "wrong point tags")
+
+	assert.Equal(t, "kubernetes.controlplane.etcd.request.duration.seconds.count", points[6].Metric)
+	assert.Equal(t, float64(144320), points[6].Value)
+
+	assert.Equal(t, "kubernetes.controlplane.etcd.request.duration.seconds.sum", points[7].Metric)
 	assert.Equal(t, float64(53423), points[7].Value)
 }
 
