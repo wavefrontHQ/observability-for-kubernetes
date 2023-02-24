@@ -13,6 +13,7 @@ fi
 gcloud auth activate-service-account --key-file "$GCP_CREDS"
 gcloud config set project wavefront-gcp-dev
 
+echo after gcloud
 #
 # aws
 #
@@ -22,7 +23,7 @@ if ! [ -x "$(command -v aws)" ]; then
   sudo ./aws/install >/dev/null;
 fi
 
-
+echo after aws
 #
 # docker-credential-gcr
 #
@@ -33,7 +34,7 @@ docker-credential-gcr config --token-source="gcloud"
 docker-credential-gcr configure-docker --registries="us.gcr.io"
 (echo "https://us.gcr.io" | docker-credential-gcr get >/dev/null) \
   || (echo "docker credentials not configured properly"; exit 1)
-
+echo after docker-credential-gcr
 #
 # kubectl
 #
@@ -41,7 +42,7 @@ docker-credential-gcr configure-docker --registries="us.gcr.io"
 curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl"
 chmod +x ./kubectl
 sudo mv ./kubectl /usr/local/bin/kubectl
-
+echo after kubectl
 #
 # jq
 #
@@ -50,6 +51,8 @@ if ! [ -x "$(command -v jq)" ]; then
   chmod +x ./jq
   sudo mv ./jq /usr/local/bin
 fi
+echo after jq
+
 #
 # yq
 #
@@ -58,7 +61,7 @@ if ! [ -x "$(command -v yq)" ]; then
   chmod +x ./yq
   sudo mv ./yq /usr/local/bin
 fi
-
+echo after yq
 #
 # kustomize
 #
@@ -68,7 +71,7 @@ if ! [ -x "$(command -v kustomize)" ]; then
     | sudo tee /usr/local/bin/kustomize >/dev/null
   sudo chmod +x /usr/local/bin/kustomize
 fi
-
+echo after kustomize
 #
 # crane
 #
@@ -77,10 +80,12 @@ if ! [ -x "$(command -v crane)" ]; then
   | tar xz --to-stdout ./crane | sudo tee /usr/local/bin/crane >/dev/null
   sudo chmod +x /usr/local/bin/crane
 fi
-
+echo after crane
 #
 # semver cli
 #
 git config --global http.sslVerify false
 make semver-cli
 git config --global http.sslVerify true
+
+echo after semver
