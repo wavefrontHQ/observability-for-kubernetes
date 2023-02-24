@@ -23,6 +23,8 @@ pipeline {
     stage("Promote release images") {
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+          output = sh(returnStdout: true, script: 'cd operator && ./hack/jenkins/setup-for-integration-test.sh')
+          println(output)
           sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
           sh 'cd operator && make semver-cli'
           sh './scripts/promote-release-images.sh -o ${OPERATOR_BUMP_COMPONENT} -c ${COLLECTOR_BUMP_COMPONENT}'
