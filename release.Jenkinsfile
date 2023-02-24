@@ -17,7 +17,7 @@ pipeline {
     GCP_CREDS = credentials("GCP_CREDS")
     GCP_PROJECT = "wavefront-gcp-dev"
     INTEGRATION_TEST_ARGS="-r advanced"
-//     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
+    HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
 //     PREFIX = "projects.registry.vmware.com"
   }
 
