@@ -58,12 +58,17 @@ COLLECTOR_ALPHA_TAG=$(cat "${REPO_ROOT}"/operator/dev-internal/deploy/wavefront-
 crane auth login projects.registry.vmware.com -u $HARBOR_CREDS_USR -p $HARBOR_CREDS_PSW
 crane -v copy "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:${OPERATOR_ALPHA_TAG}" "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator-snapshot:${OPERATOR_VERSION}"
 crane -v copy "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector:${COLLECTOR_ALPHA_TAG}" "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-snapshot:${COLLECTOR_VERSION}"
-crane --help
 
 # Update wavefront-operator yaml in dev-internal with release versions
 sed -i.bak "s/collector: ${COLLECTOR_ALPHA_TAG}/collector: ${COLLECTOR_VERSION}/g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
-sed -i.bak "s#image: ${OPERATOR_ALPHA_IMAGE}#image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:${OPERATOR_VERSION}#g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
+sed -i.bak "s#image: ${OPERATOR_ALPHA_IMAGE}#image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:${OPERATOR_VERSION}#g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
 rm -rf ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml.bak
+
+#TODO Use the real code below
+## Update wavefront-operator yaml in dev-internal with release versions
+#sed -i.bak "s/collector: ${COLLECTOR_ALPHA_TAG}/collector: ${COLLECTOR_VERSION}/g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
+#sed -i.bak "s#image: ${OPERATOR_ALPHA_IMAGE}#image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:${OPERATOR_VERSION}#g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
+#rm -rf ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml.bak
 
 # Promote dev-internal to top level
 pushd ${REPO_ROOT}
