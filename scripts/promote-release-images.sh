@@ -55,20 +55,14 @@ git show origin/rc:operator/wavefront-operator-main.yaml > ${REPO_ROOT}/operator
 OPERATOR_ALPHA_IMAGE=$(cat "${REPO_ROOT}"/operator/dev-internal/deploy/wavefront-operator.yaml | yq 'select(.metadata.name == "wavefront-controller-manager" and .kind == "Deployment" ) | .spec.template.spec.containers[0].image')
 OPERATOR_ALPHA_TAG=$(echo ${OPERATOR_ALPHA_IMAGE} | cut -d ':' -f2)
 COLLECTOR_ALPHA_TAG=$(cat "${REPO_ROOT}"/operator/dev-internal/deploy/wavefront-operator.yaml | yq 'select(.metadata.name == "wavefront-component-versions" ) | .data.collector')
-crane auth login projects.registry.vmware.com -u $HARBOR_CREDS_USR -p $HARBOR_CREDS_PSW
+#crane auth login projects.registry.vmware.com -u $HARBOR_CREDS_USR -p $HARBOR_CREDS_PSW
 crane -v copy "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:${OPERATOR_ALPHA_TAG}" "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator-snapshot:${OPERATOR_VERSION}"
 crane -v copy "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector:${COLLECTOR_ALPHA_TAG}" "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector-snapshot:${COLLECTOR_VERSION}"
 
 # Update wavefront-operator yaml in dev-internal with release versions
 sed -i.bak "s/collector: ${COLLECTOR_ALPHA_TAG}/collector: ${COLLECTOR_VERSION}/g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
-sed -i.bak "s#image: ${OPERATOR_ALPHA_IMAGE}#image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:${OPERATOR_VERSION}#g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
+sed -i.bak "s#image: ${OPERATOR_ALPHA_IMAGE}#image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:${OPERATOR_VERSION}#g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
 rm -rf ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml.bak
-
-#TODO Use the real code below
-## Update wavefront-operator yaml in dev-internal with release versions
-#sed -i.bak "s/collector: ${COLLECTOR_ALPHA_TAG}/collector: ${COLLECTOR_VERSION}/g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
-#sed -i.bak "s#image: ${OPERATOR_ALPHA_IMAGE}#image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:${OPERATOR_VERSION}#g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
-#rm -rf ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml.bak
 
 # Promote dev-internal to top level
 pushd ${REPO_ROOT}
