@@ -21,7 +21,7 @@ function print_usage_and_exit() {
   exit 1
 }
 
-while getopts "o:c:" opt; do
+while getopts ":o:c:" opt; do
   case $opt in
     o)
       OPERATOR_BUMP_COMPONENT="$OPTARG"
