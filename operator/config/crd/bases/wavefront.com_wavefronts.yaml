@@ -206,6 +206,20 @@ spec:
                                 type: object
                             type: object
                         type: object
+                      controlPlane:
+                        default:
+                          enable: true
+                        description: Whether to enable or disable metrics from the
+                          Kubernetes control plane. Defaults to true.
+                        properties:
+                          enable:
+                            default: true
+                            description: Enable is whether to include kubernetes.controlplane.*
+                              metrics and whether to include kubernetes_control_plane_source
+                            type: boolean
+                        required:
+                        - enable
+                        type: object
                       customConfig:
                         description: CustomConfig is the custom ConfigMap name for
                           the collector. Leave blank to use defaults.
@@ -220,15 +234,6 @@ spec:
                         description: Enable is whether to enable the metrics. Defaults
                           to true.
                         type: boolean
-                      controlPlane:
-                        type: object
-                        description: Metrics for the Kubernetes control plane.
-                        properties:
-                          enable:
-                            default: true
-                            type: boolean
-                            description: Enable is whether to enable the metrics.
-                              Defaults to true.
                       enableDiscovery:
                         default: true
                         description: Rules based and Prometheus endpoints auto-discovery.

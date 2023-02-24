@@ -18,6 +18,9 @@ func CR(options ...func(*wf.Wavefront)) *wf.Wavefront {
 			DataCollection: wf.DataCollection{
 				Metrics: wf.Metrics{
 					Enable: true,
+					ControlPlane: wf.ControlPlane{
+						Enable: true,
+					},
 				},
 				Logging: wf.Logging{
 					Enable: true,
