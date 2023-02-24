@@ -83,6 +83,7 @@ if ! [ -x "$(command -v crane)" ]; then
   | sudo tee /usr/local/bin/crane >/dev/null
   sudo chmod +x /usr/local/bin/crane
 fi
+crane --help
 echo after crane
 #
 # semver cli
