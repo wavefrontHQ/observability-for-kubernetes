@@ -17,6 +17,8 @@ pipeline {
     GCP_CREDS = credentials("GCP_CREDS")
     GCP_PROJECT = "wavefront-gcp-dev"
     INTEGRATION_TEST_ARGS="-r advanced"
+    HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
+    PREFIX = 'projects.registry.vmware.com/tanzu_observability'
   }
 
   stages {
@@ -26,6 +28,7 @@ pipeline {
           sh(script: 'cd operator && ./hack/jenkins/setup-for-integration-test.sh')
 //           sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
           sh 'cd operator && make semver-cli'
+          sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
           sh './scripts/promote-release-images.sh -o ${OPERATOR_BUMP_COMPONENT} -c ${COLLECTOR_BUMP_COMPONENT}'
           lock("integration-test-gke") {
             sh 'cd operator && make gke-connect-to-cluster'
