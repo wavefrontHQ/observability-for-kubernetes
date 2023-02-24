@@ -35,9 +35,9 @@ pipeline {
 //             sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
 //             sh 'cd operator && make integration-test'
 //             sh 'cd operator && make clean-cluster'
+//           }
 //           sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
 //           sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
-          }
         }
       }
     }
