@@ -4,7 +4,7 @@ pipeline {
   }
 
   tools {
-    go 'Go 1.17'
+    go 'Go 1.18'
   }
 
   environment {
@@ -27,9 +27,6 @@ pipeline {
         stage("Publish Collector") {
           agent {
             label "worker-1"
-          }
-          tools {
-            go 'Go 1.18'
           }
           environment {
             RELEASE_TYPE = "alpha"
@@ -73,9 +70,6 @@ pipeline {
           agent {
             label "worker-3"
           }
-          tools {
-            go 'Go 1.18'
-          }
           steps {
             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
               sh 'cd collector && make checkfmt vet tests'
@@ -114,9 +108,6 @@ pipeline {
           }
           options {
             timeout(time: 30, unit: 'MINUTES')
-          }
-          tools {
-            go 'Go 1.18'
           }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
@@ -173,9 +164,6 @@ pipeline {
           }
           options {
             timeout(time: 30, unit: 'MINUTES')
-          }
-          tools {
-            go 'Go 1.18'
           }
           environment {
             AKS_CLUSTER_NAME = "k8po-ci"
