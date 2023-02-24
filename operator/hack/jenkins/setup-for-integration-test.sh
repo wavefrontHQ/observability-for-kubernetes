@@ -1,5 +1,5 @@
-#!/bin/bash -ex
-
+#!/bin/bash
+set -eoux pipefail
 #
 # gcloud
 #
