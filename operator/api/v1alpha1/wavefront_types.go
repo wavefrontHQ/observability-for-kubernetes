@@ -72,6 +72,10 @@ type Metrics struct {
 	// CustomConfig is the custom ConfigMap name for the collector. Leave blank to use defaults.
 	CustomConfig string `json:"customConfig,omitempty"`
 
+	// Whether to enable or disable metrics from the Kubernetes control plane. Defaults to true.
+	// +kubebuilder:default:={enable: true}
+	ControlPlane ControlPlane `json:"controlPlane,omitempty"`
+
 	// Filters to apply towards all metrics collected by the collector.
 	// +kubebuilder:default:={denyList: {kubernetes.sys_container.*, kubernetes.collector.runtime.*, kubernetes.*.network.rx_rate, kubernetes.*.network.rx_errors_rate, kubernetes.*.network.tx_rate, kubernetes.*.network.tx_errors_rate, kubernetes.*.memory.page_faults, kubernetes.*.memory.page_faults_rate, kubernetes.*.memory.major_page_faults, kubernetes.*.memory.major_page_faults_rate, kubernetes.*.filesystem.inodes, kubernetes.*.filesystem.inodes_free, kubernetes.*.ephemeral_storage.request, kubernetes.*.ephemeral_storage.limit}}
 	Filters Filters `json:"filters,omitempty"`
@@ -314,6 +318,13 @@ type Resources struct {
 
 	// Limits CPU and Memory requirements
 	Limits Resource `json:"limits,omitempty" yaml:"limits,omitempty"`
+}
+
+type ControlPlane struct {
+	// Enable is whether to include kubernetes.controlplane.* metrics
+	// and whether to include kubernetes_control_plane_source
+	// +kubebuilder:default:=true
+	Enable bool `json:"enable"`
 }
 
 type Filters struct {
