@@ -268,6 +268,64 @@ func TestReconcileCollector(t *testing.T) {
 		require.True(t, mockKM.CollectorConfigMapContains("enableDiscovery: false"))
 	})
 
+	t.Run("control plane metrics are propagated to default collector configmap", func(t *testing.T) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Enable = true
+		}))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		configMap, err := mockKM.GetAppliedYAML(
+			"v1",
+			"ConfigMap",
+			"wavefront",
+			"collector",
+			"default-wavefront-collector-config",
+			"clusterName: testClusterName",
+			"proxyAddress: wavefront-proxy:2878",
+		)
+		require.NoError(t, err)
+
+		configStr, found, err := unstructured.NestedString(configMap.Object, "data", "config.yaml")
+		require.Equal(t, true, found)
+		require.NoError(t, err)
+
+		var configs map[string]interface{}
+		err = yaml.Unmarshal([]byte(configStr), &configs)
+		require.NoError(t, err)
+
+		sources := configs["sources"]
+		sourceMap := sources.(map[string]interface{})
+		// sources: kubernetes_source, internal_stats_source, kubernetes_state_source, kubernetes_control_plane_source
+		require.Equal(t, 4, len(sourceMap), fmt.Sprintf("%#v", sourceMap))
+		require.True(t, mockKM.CollectorConfigMapContains("kubernetes_state_source"))
+	})
+
+	t.Run("control plane metrics can be enabled", func(t *testing.T) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Enable = true
+			w.Spec.DataCollection.Metrics.ControlPlane.Enable = true
+		}))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.True(t, mockKM.CollectorConfigMapContains("kubernetes_control_plane_source"))
+	})
+
+	t.Run("control plane metrics can be disabled", func(t *testing.T) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Enable = true
+			w.Spec.DataCollection.Metrics.ControlPlane.Enable = false
+		}))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.False(t, mockKM.CollectorConfigMapContains("kubernetes_control_plane_source"))
+	})
+
 	t.Run("can add custom filters", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Filters.AllowList = []string{"allowSomeTag", "allowOtherTag"}
