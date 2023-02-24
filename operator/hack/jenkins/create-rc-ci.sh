@@ -17,7 +17,7 @@ VERSION=$NEW_VERSION$VERSION_POSTFIX make released-kubernetes-yaml
 cp "${OPERATOR_DIR}"/dev-internal/deploy/wavefront-operator.yaml "${OPERATOR_DIR}"/build/wavefront-operator.yaml
 
 current_version="$(get_component_version collector)"
-bumped_version="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${current_version}" -s patch)"
+bumped_version="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${current_version}" -s minor)"
 image_version="${bumped_version}${VERSION_POSTFIX}"
 
 sed -i.bak "s%collector:.*$%collector: ${image_version}%" "${OPERATOR_DIR}"/build/wavefront-operator.yaml

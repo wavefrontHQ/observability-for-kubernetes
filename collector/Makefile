@@ -30,13 +30,14 @@ ifndef VERSION_POSTFIX
 VERSION_POSTFIX:=-dev-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
 RELEASE_VERSION?=$(shell cat ./release/VERSION)
-VERSION?=$(shell ../scripts/get-bumped-version.sh -s patch -v $(RELEASE_VERSION))$(VERSION_POSTFIX)
+BUMPED_VERSION?=$(shell ../scripts/get-bumped-version.sh -s minor -v $(RELEASE_VERSION))
+VERSION?=$(BUMPED_VERSION)$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
 OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
 
-LDFLAGS=-w -X main.version=$(RELEASE_VERSION) -X main.commit=$(GIT_COMMIT)
+LDFLAGS=-w -X main.version=$(BUMPED_VERSION) -X main.commit=$(GIT_COMMIT)
 
 .PHONY: release
 

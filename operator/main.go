@@ -96,13 +96,13 @@ func main() {
 		setupLog.Error(err, "error creating reconciler client")
 		os.Exit(1)
 	}
-
 	controller, err := controllers.NewWavefrontReconciler(controllers.Versions{
 		OperatorVersion:  version,
 		CollectorVersion: getComponentVersion("COLLECTOR_VERSION"),
 		ProxyVersion:     getComponentVersion("PROXY_VERSION"),
 		LoggingVersion:   getComponentVersion("LOGGING_VERSION"),
 	}, objClient)
+	setupLog.Info(fmt.Sprintf("Versions %+v", controller.Versions))
 
 	if err != nil {
 		setupLog.Error(err, "error creating wavefront operator reconciler")

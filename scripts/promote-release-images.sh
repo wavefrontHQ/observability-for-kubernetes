@@ -40,11 +40,11 @@ check_required_argument "${COLLECTOR_BUMP_COMPONENT}" "-c <COLLECTOR_BUMP_COMPON
 
 # Bump versions
 OLD_OPERATOR_VERSION=$(get_operator_version)
-OPERATOR_VERSION="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${OLD_OPERATOR_VERSION}" -s "${OPERATOR_BUMP_COMPONENT}")"
+OPERATOR_VERSION="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${OLD_OPERATOR_VERSION}" -s "${OPERATOR_BUMP_COMPONENT}")-test"
 echo "$OPERATOR_VERSION" >"${REPO_ROOT}"/operator/release/OPERATOR_VERSION
 
 OLD_COLLECTOR_VERSION=$(cat "${REPO_ROOT}"/collector/release/VERSION)
-COLLECTOR_VERSION="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${OLD_COLLECTOR_VERSION}" -s "${COLLECTOR_BUMP_COMPONENT}")"
+COLLECTOR_VERSION="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${OLD_COLLECTOR_VERSION}" -s "${COLLECTOR_BUMP_COMPONENT}")-test"
 echo "$COLLECTOR_VERSION" >"${REPO_ROOT}"/collector/release/VERSION
 yq -i e ".data.collector |= \"$COLLECTOR_VERSION\"" "${REPO_ROOT}"/operator/config/manager/component_versions.yaml
 

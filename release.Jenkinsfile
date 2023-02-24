@@ -35,8 +35,8 @@ pipeline {
             sh 'cd operator && make integration-test'
             sh 'cd operator && make clean-cluster'
           }
-          sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
-          sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
+//           sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
+//           sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
         }
       }
     }

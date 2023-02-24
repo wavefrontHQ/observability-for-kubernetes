@@ -21,10 +21,11 @@ VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
 
 RELEASE_VERSION?=$(shell ../scripts/get-operator-version.sh)
-VERSION?=$(shell ../scripts/get-bumped-version.sh -s patch -v $(RELEASE_VERSION))$(VERSION_POSTFIX)
+BUMPED_VERSION?=$(shell ../scripts/get-bumped-version.sh -s minor -v $(RELEASE_VERSION))
+VERSION?=$(BUMPED_VERSION)$(VERSION_POSTFIX)
 IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 NS?=observability-system
-LDFLAGS=-X main.version=$(VERSION)
+LDFLAGS=-X main.version=$(BUMPED_VERSION)
 
 OBSERVABILITY_FOR_KUBERNETES_HEADER=
 ifneq ($(TOKEN),)
