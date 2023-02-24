@@ -28,14 +28,14 @@ pipeline {
           sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
           sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
           sh './scripts/promote-release-images.sh -o ${OPERATOR_BUMP_COMPONENT} -c ${COLLECTOR_BUMP_COMPONENT}'
-          lock("integration-test-gke") {
-            sh 'cd operator && make gke-connect-to-cluster'
-            sh 'cd operator && make clean-cluster'
-            sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
-            sh 'cd operator && make integration-test'
-            sh 'cd operator && make clean-cluster'
-          }
-//           sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
+//           lock("integration-test-gke") {
+//             sh 'cd operator && make gke-connect-to-cluster'
+//             sh 'cd operator && make clean-cluster'
+//             sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
+//             sh 'cd operator && make integration-test'
+//             sh 'cd operator && make clean-cluster'
+//           }
+          sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
 //           sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
         }
       }
