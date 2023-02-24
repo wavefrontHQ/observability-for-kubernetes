@@ -17,6 +17,7 @@ pipeline {
     GCP_CREDS = credentials("GCP_CREDS")
     GCP_PROJECT = "wavefront-gcp-dev"
     INTEGRATION_TEST_ARGS="-r advanced"
+//     TODO Remove _keights_saas
     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
     PREFIX = "projects.registry.vmware.com"
   }
@@ -25,8 +26,7 @@ pipeline {
     stage("Promote release images") {
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-          sh(script: 'cd operator && ./hack/jenkins/setup-for-integration-test.sh')
-//           sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+          sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
           sh 'cd operator && make semver-cli'
           sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
           sh './scripts/promote-release-images.sh -o ${OPERATOR_BUMP_COMPONENT} -c ${COLLECTOR_BUMP_COMPONENT}'
