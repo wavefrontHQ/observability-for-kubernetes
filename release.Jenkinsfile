@@ -35,6 +35,9 @@ pipeline {
 //             sh 'cd operator && make integration-test'
 //             sh 'cd operator && make clean-cluster'
 //           }
+          sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
+          sh 'git config --global user.name "svc.wf-jenkins"'
+          sh 'git remote set-url origin https://${GITHUB_TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git'
           sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
 //           sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
         }
