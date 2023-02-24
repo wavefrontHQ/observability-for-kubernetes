@@ -82,8 +82,6 @@ fi
 #
 # semver cli
 #
-sudo rm -rf /home/worker/go/bin/semver-cli
 git config --global http.sslVerify false
 make semver-cli
 git config --global http.sslVerify true
-which semver-cli
