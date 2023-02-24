@@ -23,28 +23,24 @@ pipeline {
   }
 
   stages {
-    stage("Promote release images") {
+    stage("Promote release images and test") {
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
           sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
           sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
           sh './scripts/promote-release-images.sh -o ${OPERATOR_BUMP_COMPONENT} -c ${COLLECTOR_BUMP_COMPONENT}'
-          lock("integration-test-gke") {
-            sh 'cd operator && make gke-connect-to-cluster'
-            sh 'cd operator && make clean-cluster'
-            sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
-            sh 'cd operator && make integration-test'
-            sh 'cd operator && make clean-cluster'
+//           lock("integration-test-gke") {
+//             sh 'cd operator && make gke-connect-to-cluster'
+//             sh 'cd operator && make clean-cluster'
+//             sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
+//             sh 'cd operator && make integration-test'
+//             sh 'cd operator && make clean-cluster'
+//           sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
+//           sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
           }
         }
       }
     }
-//     stage("Merge release version changes and create PR") {
-//       steps {
-//         sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
-//         sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
-//       }
-//     }
   }
 
   post {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -eou pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
