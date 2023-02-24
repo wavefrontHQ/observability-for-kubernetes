@@ -24,7 +24,7 @@ pipeline {
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
           sh(script: 'cd operator && ./hack/jenkins/setup-for-integration-test.sh')
-          sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+//           sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
           sh 'cd operator && make semver-cli'
           sh './scripts/promote-release-images.sh -o ${OPERATOR_BUMP_COMPONENT} -c ${COLLECTOR_BUMP_COMPONENT}'
           lock("integration-test-gke") {
