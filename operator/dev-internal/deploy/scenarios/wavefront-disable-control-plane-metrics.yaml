@@ -10,6 +10,7 @@ spec:
   dataCollection:
     metrics:
       enable: true
+      # turn off control plane metrics with the following feature flag
       controlPlane:
         enable: false #defaults to true
   dataExport:
