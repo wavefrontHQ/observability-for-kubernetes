@@ -38,8 +38,7 @@ function setup_test() {
 function run_test_wavefront_metrics() {
   local type=$1
   local cluster_name=${CONFIG_CLUSTER_NAME}-$type
-  echo "Running test wavefront metrics, cluster_name $cluster_name ..."
-
+  echo "Running test wavefront metrics, cluster_name $cluster_name, version ${VERSION}..."
   ${OPERATOR_REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t "${WAVEFRONT_TOKEN}" -n "${cluster_name}" -e "$type-test.sh" -o "${VERSION}"
 }
 

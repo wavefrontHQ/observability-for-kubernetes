@@ -10,8 +10,9 @@ POSTFIX="-test"
 OPERATOR_VERSION=$(get_next_operator_version)
 COLLECTOR_VERSION=$(get_next_collector_version)
 
+#TODO: revert to getting wavefront-operator-main.yaml after done with integration testing
 # Copy last tested wavefront-operator yaml from rc branch to dev-internal
-git show origin/rc:operator/wavefront-operator-main.yaml > ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
+git show origin/rc:operator/wavefront-operator-PR-66.yaml > ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
 
 # Promote alpha images to release versions
 OPERATOR_ALPHA_IMAGE=$(cat "${REPO_ROOT}"/operator/dev-internal/deploy/wavefront-operator.yaml | yq 'select(.metadata.name == "wavefront-controller-manager" and .kind == "Deployment" ) | .spec.template.spec.containers[0].image')
