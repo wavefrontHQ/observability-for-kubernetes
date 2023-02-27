@@ -10,7 +10,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
   name: wavefronts.wavefront.com
 spec:
@@ -212,6 +212,20 @@ spec:
                                     type: string
                                 type: object
                             type: object
+                        type: object
+                      controlPlane:
+                        default:
+                          enable: true
+                        description: Whether to enable or disable metrics from the
+                          Kubernetes control plane. Defaults to true.
+                        properties:
+                          enable:
+                            default: true
+                            description: Enable is whether to include kubernetes.controlplane.*
+                              metrics and whether to include kubernetes_control_plane_source
+                            type: boolean
+                        required:
+                        - enable
                         type: object
                       customConfig:
                         description: CustomConfig is the custom ConfigMap name for
@@ -621,12 +635,6 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: v1
 automountServiceAccountToken: false
@@ -931,7 +939,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.14.1-alpha-a3777961
+  collector: 1.14.1-alpha-632c4042
   logging: 2.0.8
   proxy: "12.1"
 kind: ConfigMap
@@ -1003,7 +1011,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.2.1-alpha-a3777961
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.2.1-alpha-632c4042
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
