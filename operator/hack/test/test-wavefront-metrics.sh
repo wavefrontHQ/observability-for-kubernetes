@@ -140,7 +140,7 @@ function main() {
   local WAVEFRONT_TOKEN=
   local CONFIG_CLUSTER_NAME=
 
-  local EXPECTED_COLLECTOR_VERSION="$(get_next_collector_version)"
+  local EXPECTED_COLLECTOR_VERSION="$(get_component_version collector)"
   local EXPECTED_OPERATOR_VERSION="$(get_next_operator_version)"
   local WF_CLUSTER=nimba
   local EXTRA_TESTS=
@@ -198,7 +198,9 @@ function main() {
      '$ARGS.named' | \
      sort | sed 's/,//g' > "$EXPECTED_TAGS_JSON"
 
+  echo EXPECTED_TAGS_JSON: $EXPECTED_TAGS_JSON
   exit_on_fail wait_for_query_match_tags "at(%22end%22%2C%202m%2C%20ts(%22kubernetes.observability.status%22%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22))" "${EXPECTED_TAGS_JSON}"
+  echo COLLECTOR_VERSION_IN_DECIMAL: $COLLECTOR_VERSION_IN_DECIMAL
   exit_on_fail wait_for_query_match_exact "ts(kubernetes.collector.version%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22%20AND%20installation_method%3D%22operator%22)" "${COLLECTOR_VERSION_IN_DECIMAL}"
   exit_on_fail wait_for_query_non_zero "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22)"
 
