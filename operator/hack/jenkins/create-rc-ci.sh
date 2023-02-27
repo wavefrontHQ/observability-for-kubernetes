@@ -8,7 +8,7 @@ git config --global user.email "svc.wf-jenkins@vmware.com"
 git config --global user.name "svc.wf-jenkins"
 git remote set-url origin https://${TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git
 
-RELEASE_VERSION=$(get_operator_version)
+RELEASE_VERSION=$(get_next_operator_version)
 NEW_VERSION=$(semver-cli inc patch "$RELEASE_VERSION")
 
 git checkout .
@@ -16,9 +16,9 @@ git checkout .
 VERSION=$NEW_VERSION$VERSION_POSTFIX make released-kubernetes-yaml
 cp "${OPERATOR_DIR}"/dev-internal/deploy/wavefront-operator.yaml "${OPERATOR_DIR}"/build/wavefront-operator.yaml
 
-current_version="$(get_component_version collector)"
-bumped_version="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${current_version}" -s minor)"
-image_version="${bumped_version}${VERSION_POSTFIX}"
+current_version="$(get_next_collector_version)"
+image_version="${current_version}${VERSION_POSTFIX}"
+
 
 sed -i.bak "s%collector:.*$%collector: ${image_version}%" "${OPERATOR_DIR}"/build/wavefront-operator.yaml
 

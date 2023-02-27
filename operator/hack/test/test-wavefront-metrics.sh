@@ -140,8 +140,8 @@ function main() {
   local WAVEFRONT_TOKEN=
   local CONFIG_CLUSTER_NAME=
 
-  local EXPECTED_COLLECTOR_VERSION="$(get_component_version collector)"
-  local EXPECTED_OPERATOR_VERSION="$(get_operator_version)"
+  local EXPECTED_COLLECTOR_VERSION="$(get_next_collector_version)"
+  local EXPECTED_OPERATOR_VERSION="$(get_next_operator_version)"
   local WF_CLUSTER=nimba
   local EXTRA_TESTS=
   local LOGGING_TEST_PROXY_NAME=

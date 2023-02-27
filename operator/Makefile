@@ -20,12 +20,11 @@ ifeq ($(origin VERSION_POSTFIX), undefined)
 VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
 
-RELEASE_VERSION?=$(shell ../scripts/get-operator-version.sh)
-BUMPED_VERSION?=$(shell ../scripts/get-bumped-version.sh -s minor -v $(RELEASE_VERSION))
-VERSION?=$(BUMPED_VERSION)$(VERSION_POSTFIX)
+NEXT_RELEASE_VERSION?=$(shell ../scripts/get-next-operator-version.sh)
+VERSION?=$(NEXT_RELEASE_VERSION)$(VERSION_POSTFIX)
 IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 NS?=observability-system
-LDFLAGS=-X main.version=$(BUMPED_VERSION)
+LDFLAGS=-X main.version=$(NEXT_RELEASE_VERSION)
 
 OBSERVABILITY_FOR_KUBERNETES_HEADER=
 ifneq ($(TOKEN),)
