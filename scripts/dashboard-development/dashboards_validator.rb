@@ -544,7 +544,7 @@ class ChartQueryChecker
         query = source["query"]
 
         QueryChecks.unquoted_metrics(query).each do |unquoted_metric|
-          reporter.report(Reporter::Issue.new("Unquoted metric name #{unquoted_metric}: ", query, dashboard_name))
+          reporter.report(Reporter::Issue.new("Unquoted metric name: #{unquoted_metric}", query, dashboard_name))
         end
         QueryChecks.unquoted_variables(query).each do |unquoted_var|
           reporter.report(Reporter::Issue.new("Unquoted variable in filter expression: #{unquoted_var}", query, dashboard_name))
@@ -558,7 +558,7 @@ class QueryChecks
 
   UNQUOTED_VAR=/(?<==)\${[a-z_]*}/
   UNQUOTED_TAS_METRIC_NAME=/(?<!")tas\.(?:\w|\.|-)*/
-  UNQUOTED_METRIC_NAME=/(?<=ts\()(?:\w|\.|-|~|\*)+/
+  UNQUOTED_METRIC_NAME=/(?<!exis)ts\(((?:\w|\.|-|~|\*)+)/
 
   def self.unquoted_metrics(query)
     if query == 'label_replace(tas.gorouter.file_descriptors, "placement_tag", "cf", "placement_tag", "")'
@@ -581,10 +581,10 @@ class ParameterQueryChecker
     @iterator.each_dashboard do |dashboard|
       dashboard_name = dashboard["name"]
       dashboard["parameterDetails"].each do |_, param|
-        if param["queryValue"]
+        if param.has_key?("queryValue")
           query = param["queryValue"]
           QueryChecks.unquoted_metrics(query).each do |unquoted_metric|
-            reporter.report(Reporter::Issue.new("Unquoted metric name #{unquoted_metric}: ", query, dashboard_name))
+            reporter.report(Reporter::Issue.new("Unquoted metric name: #{unquoted_metric}", query, dashboard_name))
           end
           QueryChecks.unquoted_variables(query).each do |unquoted_var|
             reporter.report(Reporter::Issue.new("Unquoted variable in filter expression: #{unquoted_var}", query, dashboard_name))
