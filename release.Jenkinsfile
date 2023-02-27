@@ -14,7 +14,6 @@ pipeline {
     GCP_ZONE="a"
     GCP_CREDS = credentials("GCP_CREDS")
     GCP_PROJECT = "wavefront-gcp-dev"
-    INTEGRATION_TEST_ARGS="-r advanced"
     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
     PREFIX = "projects.registry.vmware.com"
   }
@@ -30,7 +29,7 @@ pipeline {
             sh 'cd operator && make gke-connect-to-cluster'
             sh 'cd operator && make clean-cluster'
             sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
-            sh 'cd operator && make integration-test'
+            sh 'cd operator && INTEGRATION_TEST_ARGS="-r advanced $(cat release/OPERATOR_VERSION)" make integration-test'
             sh 'cd operator && make clean-cluster'
           }
           sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
