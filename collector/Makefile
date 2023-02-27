@@ -13,7 +13,6 @@ INTEGRATION_TEST_ARGS?=default -r real-proxy
 
 BINARY_NAME=wavefront-collector
 
-RELEASE_TYPE?=dev
 RC_NUMBER?=1
 GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
@@ -29,15 +28,14 @@ GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimpor
 ifndef VERSION_POSTFIX
 VERSION_POSTFIX:=-dev-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
-RELEASE_VERSION?=$(shell cat ./release/VERSION)
-BUMPED_VERSION?=$(shell ../scripts/get-bumped-version.sh -s minor -v $(RELEASE_VERSION))
-VERSION?=$(BUMPED_VERSION)$(VERSION_POSTFIX)
+NEXT_RELEASE_VERSION?=$(shell cat ./release/NEXT_RELEASE_VERSION)
+VERSION?=$(NEXT_RELEASE_VERSION)$(VERSION_POSTFIX)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 
 # for testing, the built image will also be tagged with this name provided via an environment variable
 OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
 
-LDFLAGS=-w -X main.version=$(BUMPED_VERSION) -X main.commit=$(GIT_COMMIT)
+LDFLAGS=-w -X main.version=$(NEXT_RELEASE_VERSION) -X main.commit=$(GIT_COMMIT)
 
 .PHONY: release
 
@@ -98,7 +96,7 @@ cover-container: $(SEMVER_CLI_BIN)
 	docker build \
 	-f $(COLLECTOR_REPO_ROOT)/Dockerfile.cover-non-cross-platform \
 	--build-arg BINARY_NAME=$(BINARY_NAME) \
-	--build-arg RELEASE_VERSION=$(RELEASE_VERSION) --build-arg GIT_COMMIT="$(GIT_COMMIT)" \
+	--build-arg RELEASE_VERSION=$(NEXT_RELEASE_VERSION) --build-arg GIT_COMMIT="$(GIT_COMMIT)" \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
@@ -106,21 +104,13 @@ endif
 
 BUILDER_SUFFIX=$(shell echo $(PREFIX) | cut -d '/' -f1)
 
-.PHONY: publish
-publish:
+.PHONY: docker-xplatform-build
+docker-xplatform-build:
 	GOOS=linux GOARCH=amd64 make build -o fmt -o vet
 	GOOS=linux GOARCH=arm64 make build -o fmt -o vet
 	docker buildx create --use --node wavefront_collector_builder_$(BUILDER_SUFFIX)
-ifeq ($(RELEASE_TYPE), release)
-	docker buildx build --platform linux/amd64,linux/arm64 --push \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION) -t $(PREFIX)/$(DOCKER_IMAGE):latest -f Dockerfile $(OUT_DIR)
-else ifeq ($(RELEASE_TYPE), rc)
-	docker buildx build --platform linux/amd64,linux/arm64 --push \
-	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc-$(RC_NUMBER) -f Dockerfile $(OUT_DIR)
-else
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) -f Dockerfile $(OUT_DIR)
-endif
 
 .PHONY: test-proxy-container
 test-proxy-container: $(SEMVER_CLI_BIN)
@@ -153,7 +143,7 @@ $(GO_IMPORTS_BIN):
 container_rhel: $(SEMVER_CLI_BIN)
 	docker build \
 		-f $(COLLECTOR_REPO_ROOT)/deploy/docker/Dockerfile-rhel \
-		--build-arg COLLECTOR_VERSION=$(RELEASE_VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
+		--build-arg COLLECTOR_VERSION=$(NEXT_RELEASE_VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
 		-t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)
 	sudo docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
@@ -161,8 +151,8 @@ endif
 
 .PHONY: push_rhel_redhat_connect
 push_rhel_redhat_connect: container_rhel
-	docker tag  $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc
-	docker push $(PREFIX)/$(DOCKER_IMAGE):$(RELEASE_VERSION)-rc
+	docker tag  $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(PREFIX)/$(DOCKER_IMAGE):$(NEXT_RELEASE_VERSION)-rc
+	docker push $(PREFIX)/$(DOCKER_IMAGE):$(NEXT_RELEASE_VERSION)-rc
 
 .PHONY: clean
 clean:
