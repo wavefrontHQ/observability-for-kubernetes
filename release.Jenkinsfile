@@ -6,8 +6,6 @@ pipeline {
   }
 
   environment {
-    OPERATOR_BUMP_COMPONENT = "${params.OPERATOR_BUMP_COMPONENT}"
-    COLLECTOR_BUMP_COMPONENT = "${params.COLLECTOR_BUMP_COMPONENT}"
     GIT_BRANCH = "main"
     GIT_CREDENTIAL_ID = 'wf-jenkins-github'
     GITHUB_TOKEN = credentials('GITHUB_TOKEN')
@@ -27,7 +25,7 @@ pipeline {
         withEnv(["PATH+EXTRA=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
           sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
           sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-          sh './scripts/promote-release-images.sh -o ${OPERATOR_BUMP_COMPONENT} -c ${COLLECTOR_BUMP_COMPONENT}'
+          sh './scripts/promote-release-images.sh'
 //           lock("integration-test-gke") {
 //             sh 'cd operator && make gke-connect-to-cluster'
 //             sh 'cd operator && make clean-cluster'
