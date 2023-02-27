@@ -156,7 +156,7 @@ function main() {
   local WAVEFRONT_TOKEN=
 
   # OPTIONAL/DEFAULT
-  local VERSION=$(semver-cli inc patch "$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)")
+  local VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/NEXT_RELEASE_VERSION)"
   local K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
   local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
   local EXPERIMENTAL_FEATURES=

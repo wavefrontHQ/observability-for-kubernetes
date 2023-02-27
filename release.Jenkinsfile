@@ -43,15 +43,15 @@ pipeline {
     }
   }
 
-  post {
-    regression {
-      slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
-    }
-    success {
-        script {
-          BUILD_VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
-          slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "Success!! `observability-for-kubernetes:v${BUILD_VERSION}` is ready to be released!")
-        }
-    }
-  }
+//   post {
+//     regression {
+//       slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+//     }
+//     success {
+//         script {
+//           BUILD_VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
+//           slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "Success!! `observability-for-kubernetes:v${BUILD_VERSION}` is ready to be released!")
+//         }
+//     }
+//   }
 }
