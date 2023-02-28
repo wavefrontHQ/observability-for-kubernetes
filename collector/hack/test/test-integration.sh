@@ -104,7 +104,7 @@ function run_fake_proxy_test() {
 function run_real_proxy_metrics_test() {
 	run_real_proxy
 
-  "${SCRIPT_DIR}"/test-wavefront-metrics.sh -t "$WAVEFRONT_TOKEN" -v "$VERSION"
+  "${SCRIPT_DIR}"/test-wavefront-metrics.sh -t "$WAVEFRONT_TOKEN" -v get_next_collector_version
   green "SUCCEEDED"
 }
 
@@ -154,9 +154,9 @@ function main() {
   # REQUIRED
   local WAVEFRONT_CLUSTER=
   local WAVEFRONT_TOKEN=
+  local VERSION=
 
   # OPTIONAL/DEFAULT
-  local VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/NEXT_RELEASE_VERSION)"
   local K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
   local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
   local EXPERIMENTAL_FEATURES=
@@ -176,6 +176,7 @@ function main() {
 
   check_required_argument "$WAVEFRONT_CLUSTER" "-c <WAVEFRONT_CLUSTER> is required"
   check_required_argument "$WAVEFRONT_TOKEN" "-t <WAVEFRONT_TOKEN> is required"
+  check_required_argument "$VERSION" "-t <VERSION> is required"
 
   if [[ ${#tests_to_run[@]} -eq 0 ]]; then
     tests_to_run=( "default" )

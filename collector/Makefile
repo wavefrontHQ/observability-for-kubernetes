@@ -167,7 +167,7 @@ proxy-test: token-check $(SEMVER_CLI_BIN)
 ifeq ($(INTEGRATION_TEST_ARGS),all)
 	$(eval INTEGRATION_TEST_ARGS := cluster-metrics-only -r node-metrics-only -r combined -r default -r real-proxy-metrics)
 endif
-	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(NEXT_RELEASE_VERSION) -r $(INTEGRATION_TEST_ARGS))
+	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r $(INTEGRATION_TEST_ARGS))
 
 .PHONE: build-image
 build-image:
