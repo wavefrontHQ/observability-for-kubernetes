@@ -28,7 +28,7 @@ pipeline {
           sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
           sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
           sh './scripts/promote-release-images.sh'
-          lock("integration-test-gke") {
+          lock("integration-test-gke-2") {
             sh 'cd operator && make gke-connect-to-cluster'
             sh 'cd operator && make clean-cluster'
             sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
