@@ -5,7 +5,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 #TODO: Remove postfix
-POSTFIX="-test"
+POSTFIX="-test-2"
 
 # Get next release versions
 OPERATOR_VERSION=$(get_next_operator_version)
