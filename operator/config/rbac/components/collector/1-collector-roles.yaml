@@ -13,6 +13,7 @@ rules:
     resources:
       - events
       - namespaces
+      - endpoints
       - nodes
       - nodes/proxy
       - nodes/stats
