@@ -39,23 +39,21 @@ pipeline {
           sh 'git config --global user.name "svc.wf-jenkins"'
           sh 'git remote set-url origin https://${GITHUB_TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git'
           sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
-//           TODO: Uncomment release notes
-//           sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
+          sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
         }
       }
     }
   }
 
-//           TODO: Uncomment post to slack
-//   post {
-//     regression {
-//       slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
-//     }
-//     success {
-//         script {
-//           BUILD_VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
-//           slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "Success!! `observability-for-kubernetes:v${BUILD_VERSION}` is ready to be released!")
-//         }
-//     }
-//   }
+  post {
+    regression {
+      slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+    }
+    success {
+        script {
+          BUILD_VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
+          slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "Success!! `observability-for-kubernetes:v${BUILD_VERSION}` is released!")
+        }
+    }
+  }
 }
