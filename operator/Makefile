@@ -20,11 +20,11 @@ ifeq ($(origin VERSION_POSTFIX), undefined)
 VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
 
-RELEASE_VERSION?=$(shell ../scripts/get-operator-version.sh)
-VERSION?=$(shell ../scripts/get-bumped-version.sh -s patch -v $(RELEASE_VERSION))$(VERSION_POSTFIX)
+NEXT_RELEASE_VERSION?=$(shell ../scripts/get-next-operator-version.sh)
+VERSION?=$(NEXT_RELEASE_VERSION)$(VERSION_POSTFIX)
 IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 NS?=observability-system
-LDFLAGS=-X main.version=$(VERSION)
+LDFLAGS=-X main.version=$(NEXT_RELEASE_VERSION)
 
 OBSERVABILITY_FOR_KUBERNETES_HEADER=
 ifneq ($(TOKEN),)
@@ -155,7 +155,6 @@ docker-push: ## Push docker image with the manager.
 
 docker-copy-images:
 	@test $${SOURCE_PREFIX?Please set variable SOURCE_PREFIX}
-	docker buildx create --use --node wavefront_operator_copier_$(BUILDER_SUFFIX)
 	./hack/component-image-refs.sh | ./hack/docker/copy-image-refs.sh -d $(PREFIX) -s $(SOURCE_PREFIX)
 	echo "$(DOCKER_IMAGE):$(VERSION)" | ./hack/docker/copy-image-refs.sh -d $(PREFIX) -s $(SOURCE_PREFIX)
 
@@ -268,7 +267,7 @@ undeploy: operator-yaml
 
 .PHONY: integration-test
 integration-test: install-kube-score install-kube-linter undeploy deploy
-	(cd $(REPO_DIR)/hack/test && ./run-e2e-tests.sh -t $(WAVEFRONT_TOKEN) -d $(NS) -v $(VERSION) $(INTEGRATION_TEST_ARGS))
+	(cd $(REPO_DIR)/hack/test && ./run-e2e-tests.sh -t $(WAVEFRONT_TOKEN) -d $(NS) -v $(NEXT_RELEASE_VERSION) $(INTEGRATION_TEST_ARGS))
 
 .PHONY: clean-cluster
 clean-cluster:

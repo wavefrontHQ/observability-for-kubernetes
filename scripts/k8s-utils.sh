@@ -100,6 +100,10 @@ function get_component_version() {
   yq .data."${component_name}" "${REPO_ROOT}"/operator/config/manager/component_versions.yaml
 }
 
-function get_operator_version() {
-  "${REPO_ROOT}"/scripts/get-operator-version.sh
+function get_next_collector_version() {
+  cat ${REPO_ROOT}/collector/release/NEXT_RELEASE_VERSION
+}
+
+function get_next_operator_version() {
+  "${REPO_ROOT}"/scripts/get-next-operator-version.sh
 }

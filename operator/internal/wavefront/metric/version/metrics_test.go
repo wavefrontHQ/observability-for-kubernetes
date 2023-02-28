@@ -24,6 +24,13 @@ func TestMetrics(t *testing.T) {
 		m := testhelper.RequireMetric(t, ms, "kubernetes.observability.version")
 		testhelper.RequireMetricValue(t, m, 2.010300)
 	})
+	t.Run("encodes a valid SemVer into a metric value", func(t *testing.T) {
+		ms, err := version.Metrics("somecluster", "2.1.3-alpha-pselvaganesa-230224151812")
+
+		require.NoError(t, err)
+		m := testhelper.RequireMetric(t, ms, "kubernetes.observability.version")
+		testhelper.RequireMetricValue(t, m, 2.010300)
+	})
 
 	t.Run("rejects bad semvers", func(t *testing.T) {
 		ms, err := version.Metrics("somecluster", "2.a.b")

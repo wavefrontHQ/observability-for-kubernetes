@@ -11,9 +11,10 @@ IMGPKG=${IMGPKG:-$OPERATOR_DIR/bin/imgpkg}
 function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: $0 [flags] [options]"
-  echo "expects one image ref per line on stdin"
-  echo -e "\t-s source image prefix"
-  echo -e "\t-d destination image prefix"
+  echo "Copies a mutli-platform image bundle from one registry to another."
+  echo "Expects one image ref per line on stdin. Each line should look like 'kubernetes-operator:2.2.1-alpha-57321970'."
+  echo -e "\t-s source image prefix (like projects.registry.vmware.com/tanzu_observability_keights_saas)"
+  echo -e "\t-d destination image prefix (like projects.registry.vmware.com/tanzu_observability)"
   exit 1
 }
 

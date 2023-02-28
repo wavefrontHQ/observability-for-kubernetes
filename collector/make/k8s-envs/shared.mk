@@ -23,14 +23,14 @@ push-images:
 ifeq ($(K8S_ENV), Kind)
 	make push-to-kind
 else
-	make publish
+	make docker-xplatform-build
 endif
 
 cover-push-images:
 ifeq ($(K8S_ENV), Kind)
 	make cover-push-to-kind
 else
-	make publish
+	make docker-xplatform-build
 endif
 
 delete-images:

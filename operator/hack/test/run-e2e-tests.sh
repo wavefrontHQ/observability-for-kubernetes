@@ -38,8 +38,7 @@ function setup_test() {
 function run_test_wavefront_metrics() {
   local type=$1
   local cluster_name=${CONFIG_CLUSTER_NAME}-$type
-  echo "Running test wavefront metrics, cluster_name $cluster_name ..."
-
+  echo "Running test wavefront metrics, cluster_name $cluster_name, version ${VERSION}..."
   ${OPERATOR_REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t "${WAVEFRONT_TOKEN}" -n "${cluster_name}" -e "$type-test.sh" -o "${VERSION}"
 }
 
@@ -383,7 +382,7 @@ function main() {
 
   local WAVEFRONT_URL="https:\/\/nimba.wavefront.com"
   local WF_CLUSTER=nimba
-  local VERSION=$(get_operator_version)
+  local VERSION=$(get_next_operator_version)
   local K8S_ENV=$(k8s_env)
   local CONFIG_CLUSTER_NAME=$(create_cluster_name)
   local tests_to_run=()

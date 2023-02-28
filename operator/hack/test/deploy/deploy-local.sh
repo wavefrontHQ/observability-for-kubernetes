@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!/bin/bash
+set -eou pipefail
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
@@ -51,8 +52,8 @@ function main() {
   fi
 
 
-  kubectl delete -f ${OPERATOR_REPO_ROOT}/deploy/kubernetes/wavefront-operator.yaml || true
-  kubectl apply -f ${OPERATOR_REPO_ROOT}/deploy/kubernetes/wavefront-operator.yaml
+  kubectl delete -f ${REPO_ROOT}/deploy/wavefront-operator.yaml || true
+  kubectl apply -f ${REPO_ROOT}/deploy/wavefront-operator.yaml
   kubectl create -n ${NS} secret generic wavefront-secret --from-literal token=${WAVEFRONT_TOKEN} || true
   kubectl create -n ${NS} secret generic wavefront-secret-logging --from-literal token=${WAVEFRONT_LOGGING_TOKEN} || true
 
@@ -67,6 +68,8 @@ function main() {
     wavefrontUrl: $WAVEFRONT_URL
     dataCollection:
       metrics:
+        enable: true
+      logging:
         enable: true
     dataExport:
       wavefrontProxy:

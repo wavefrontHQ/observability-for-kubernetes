@@ -9,7 +9,7 @@ pipeline {
 
   environment {
     PATH = "${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
-    GITHUB_CREDS_PSW = credentials("GITHUB_TOKEN")
+    GITHUB_TOKEN = credentials("GITHUB_TOKEN")
     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
     DOCKER_IMAGE = "kubernetes-operator"
@@ -37,7 +37,7 @@ pipeline {
                sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
                sh 'cd collector && make semver-cli'
                sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-               sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean publish'
+               sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
             }
           }
         }
