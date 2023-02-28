@@ -39,4 +39,4 @@ echo "$OPERATOR_VERSION" >"${REPO_ROOT}"/operator/release/OPERATOR_VERSION
 NEXT_OPERATOR_RELEASE_VERSION="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${OPERATOR_VERSION}" -s minor)"
 echo "$NEXT_OPERATOR_RELEASE_VERSION" >"${REPO_ROOT}"/operator/release/NEXT_RELEASE_VERSION
 NEXT_COLLECTOR_RELEASE_VERSION="$("${REPO_ROOT}"/scripts/get-bumped-version.sh -v "${COLLECTOR_VERSION}" -s minor)"
-echo "$NEXT_OPERATOR_RELEASE_VERSION" >"${REPO_ROOT}"/collector/release/NEXT_RELEASE_VERSION
+echo "$NEXT_COLLECTOR_RELEASE_VERSION" >"${REPO_ROOT}"/collector/release/NEXT_RELEASE_VERSION
