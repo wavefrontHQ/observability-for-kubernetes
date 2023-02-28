@@ -18,7 +18,6 @@ cp "${OPERATOR_DIR}"/dev-internal/deploy/wavefront-operator.yaml "${OPERATOR_DIR
 current_version="$(get_next_collector_version)"
 image_version="${current_version}${VERSION_POSTFIX}"
 
-
 sed -i.bak "s%collector:.*$%collector: ${image_version}%" "${OPERATOR_DIR}"/build/wavefront-operator.yaml
 
 git checkout .
