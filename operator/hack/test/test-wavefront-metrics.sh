@@ -140,7 +140,7 @@ function main() {
   local WAVEFRONT_TOKEN=
   local CONFIG_CLUSTER_NAME=
 
-  local EXPECTED_COLLECTOR_VERSION="$(get_component_version collector)"
+  local EXPECTED_COLLECTOR_VERSION=$(kubectl get configmaps --namespace observability-system wavefront-component-versions -o yaml | yq '.data.collector' | cut -d '-' -f1)
   local EXPECTED_OPERATOR_VERSION="$(get_next_operator_version)"
   local WF_CLUSTER=nimba
   local EXTRA_TESTS=
