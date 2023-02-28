@@ -20,6 +20,9 @@ pipeline {
 
   stages {
     stage("Promote release images and test") {
+      options {
+        timeout(time: 30, unit: 'MINUTES')
+      }
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
           sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -36,12 +39,14 @@ pipeline {
           sh 'git config --global user.name "svc.wf-jenkins"'
           sh 'git remote set-url origin https://${GITHUB_TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git'
           sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
+//           TODO: Uncomment release notes
 //           sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
         }
       }
     }
   }
 
+//           TODO: Uncomment post to slack
 //   post {
 //     regression {
 //       slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")

@@ -103,8 +103,7 @@ function run_fake_proxy_test() {
 
 function run_real_proxy_metrics_test() {
 	run_real_proxy
-
-  "${SCRIPT_DIR}"/test-wavefront-metrics.sh -t "$WAVEFRONT_TOKEN" -v get_next_collector_version
+  "${SCRIPT_DIR}"/test-wavefront-metrics.sh -t "$WAVEFRONT_TOKEN" -v $(get_next_collector_version)
   green "SUCCEEDED"
 }
 
