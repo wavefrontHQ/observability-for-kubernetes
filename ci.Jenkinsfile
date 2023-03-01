@@ -23,6 +23,13 @@ pipeline {
   }
 
   stages {
+    stage("print change set") {
+      steps {
+        script {
+          print "Change sets: ${currentBuild.changeSets.getItems}"
+        }
+      }
+    }
     stage("Set RUN_CI Env Var") {
       when {
         anyOf {
