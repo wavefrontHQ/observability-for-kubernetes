@@ -26,7 +26,10 @@ pipeline {
     stage("print change set") {
       steps {
         script {
-          print "Change sets: ${currentBuild.changeSets.isEmptySet()}"
+          groovyVars = [:] << getBinding().getVariables()
+          groovyVars.each  {k,v -> print "$k = $v"}
+          print "----------------------------------------------------------------------------------"
+          print "Change set empty?: ${currentBuild.changeSets.isEmpty()}"
           print "Change sets: ${currentBuild.changeSets.getItems().getAffectedFiles()}"
         }
       }
