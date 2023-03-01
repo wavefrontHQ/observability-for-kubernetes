@@ -13,6 +13,7 @@ pipeline {
     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
     DOCKER_IMAGE = "kubernetes-operator"
+    RUN_CI = "false"
     VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
     WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
   }
@@ -22,7 +23,19 @@ pipeline {
   }
 
   stages {
+    stage("Set RUN_CI Env Var") {
+      when {
+        anyOf {
+          changeset pattern: "^collector\\/", comparator: "REGEXP"
+          changeset pattern: "^operator\\/", comparator: "REGEXP"
+          changeset pattern: ".*\\.Jenkinsfile", comparator: "REGEXP"
+        }
+      }
+      steps { script { env.RUN_CI = "true" } }
+    }
+
     stage("Go Tests and Publish Images") {
+      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       parallel{
         stage("Publish Collector") {
           agent {
@@ -101,6 +114,7 @@ pipeline {
     stage('Run Collector Integration Tests') {
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
+      when { beforeAgent true; expression { return false } }
       parallel {
         stage("GKE Integration Test") {
           agent {
@@ -189,6 +203,7 @@ pipeline {
     }
 
     stage("Run Operator Integration Tests") {
+      when { beforeAgent true; expression { return false } }
       environment {
         OPERATOR_YAML_TYPE="rc"
         TOKEN = credentials('GITHUB_TOKEN')
