@@ -26,8 +26,8 @@ pipeline {
     stage("print change set") {
       steps {
         script {
-          print "Change sets: ${currentBuild.changeSets.isEmptySet}"
-          print "Change sets: ${currentBuild.changeSets.getItems().getAffectedPaths()}"
+          print "Change sets: ${currentBuild.changeSets.isEmptySet()}"
+          print "Change sets: ${currentBuild.changeSets.getItems().getAffectedFiles()}"
         }
       }
     }
