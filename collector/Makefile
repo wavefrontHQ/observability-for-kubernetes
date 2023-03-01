@@ -23,7 +23,7 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
+GO_IMPORTS_BIN:=$(if $(shell which goimports),$(shell which goimports),$(GOPATH)/bin/goimports)
 
 ifndef VERSION_POSTFIX
 VERSION_POSTFIX:=-dev-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
