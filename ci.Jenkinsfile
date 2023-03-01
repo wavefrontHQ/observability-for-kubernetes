@@ -26,7 +26,7 @@ pipeline {
     stage("print change set") {
       steps {
         script {
-          print "Change sets: ${currentBuild.changeSets.getItems}"
+          print "Change sets: ${currentBuild.changeSets.all.getItems}"
         }
       }
     }
