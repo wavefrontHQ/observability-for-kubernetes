@@ -20,6 +20,9 @@ data:
     flushInterval: 10s
     sinkExportDataTimeout: 20s
 
+    experimental:
+    - histogram-conversion
+
     sinks:
     - proxyAddress: {{.DataCollection.Metrics.ProxyAddress}}
       {{- if .DataCollection.Metrics.Tags }}
