@@ -21,14 +21,19 @@ pipeline {
       string(name: 'OPERATOR_YAML_RC_SHA', defaultValue: '')
   }
 
-  steps {
-    script {
-      env.RUN_CI = 'false'
-      //git diff  --quiet --name-only --diff-filter=ADMR @~..@  -- operator scripts  || echo true
-    }
-  }
-
   stages {
+    stage("Set RUN_CI") {
+      steps {
+        script {
+          env.RUN_CI = 'false'
+          //git diff  --quiet --name-only --diff-filter=ADMR @~..@  -- operator scripts  || echo true
+          // or ..
+          //git rev-list --count origin/main..{$BRANCH} -- **/*Jenkinsfile collector/ operator/
+          env.RUN_CI = 'true'
+        }
+      }
+    }
+
     stage("Go Tests and Publish Images") {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
 
