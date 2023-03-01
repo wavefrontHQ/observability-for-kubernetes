@@ -21,17 +21,8 @@ pipeline {
       string(name: 'OPERATOR_YAML_RC_SHA', defaultValue: '')
   }
 
-  steps {
-    script {
-      env.RUN_CI = 'false'
-      //git diff  --quiet --name-only --diff-filter=ADMR @~..@  -- operator scripts  || echo true
-    }
-  }
-
   stages {
     stage("Go Tests and Publish Images") {
-      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
-
       parallel{
         stage("Publish Collector") {
           agent {
@@ -108,7 +99,6 @@ pipeline {
     }
 
     stage('Run Collector Integration Tests') {
-      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
@@ -199,8 +189,6 @@ pipeline {
     }
 
     stage("Run Operator Integration Tests") {
-      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
-
       environment {
         OPERATOR_YAML_TYPE="rc"
         TOKEN = credentials('GITHUB_TOKEN')
