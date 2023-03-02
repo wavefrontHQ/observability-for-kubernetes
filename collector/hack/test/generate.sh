@@ -44,7 +44,7 @@ function replace_placeholders_in_template_yaml() {
 
   sed -e "s/NAMESPACE/${NS}/g" \
       -e "s/YOUR_CLUSTER_NAME/${K8S_CLUSTER_NAME}/g" \
-      -e "s/YOUR_EXPERIMENTAL_FEATURES/${EXPERIMENTAL_FEATURES}/g" \
+      -e "s/YOUR_EXPERIMENTAL_FEATURES/[${EXPERIMENTAL_FEATURES}]/g" \
       -e "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" \
       -e "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" \
       base/collector-config.template.yaml > base/deploy/4-collector-config.yaml
