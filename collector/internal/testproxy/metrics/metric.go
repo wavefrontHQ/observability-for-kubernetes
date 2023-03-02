@@ -5,6 +5,7 @@ type Metric struct {
 	Value     string
 	Timestamp string
 	Tags      map[string]string
+	Buckets   map[string]string
 }
 
 func ParseMetric(line string) (*Metric, error) {
@@ -14,13 +15,15 @@ func ParseMetric(line string) (*Metric, error) {
 		return nil, err
 	}
 	g.Execute()
-	if g.Histogram {
-		return nil, nil
-	}
-	return &Metric{
+	m := &Metric{
 		Name:      g.Name,
-		Value:     g.Value,
 		Timestamp: g.Timestamp,
 		Tags:      g.Tags,
-	}, nil
+	}
+	if g.Histogram {
+		m.Buckets = g.Buckets
+	} else {
+		m.Value = g.Value
+	}
+	return m, nil
 }
