@@ -11,8 +11,11 @@ import (
 func TestParseMetric(t *testing.T) {
 	t.Run("can parse histograms", func(t *testing.T) {
 		metric, err := metrics.ParseMetric("!M 1493773500 #20 30 #10 5 request.latency source=\"appServer1\" region=\"us-west\"")
-		assert.Nil(t, metric)
 		assert.NoError(t, err)
+		assert.Equal(t, "request.latency", metric.Name)
+		assert.Equal(t, "1493773500", metric.Timestamp)
+		assert.Equal(t, map[string]string{"region": "us-west", "source": "appServer1"}, metric.Tags)
+		assert.Equal(t, map[string]string{"30": "20", "5": "10"}, metric.Buckets)
 	})
 
 	t.Run("can parse metrics", func(t *testing.T) {
