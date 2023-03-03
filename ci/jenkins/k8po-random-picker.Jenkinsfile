@@ -17,14 +17,13 @@ pipeline {
       steps {
         script {
           ORDER_PICKED = sh (script: '$REPO_DIR/scripts/rando-dev.sh', returnStdout: true).trim()
-          echo currentBuild.getPreviousBuild().description
         }
-//         slackSend (channel: '#tobs-k8po-team', message:
-//         """
-// The results are in from <${env.BUILD_URL}|${env.JOB_NAME}>!!!
-//
-// ${ORDER_PICKED}
-//         """)
+        slackSend (channel: '#tobs-k8po-team', message:
+        """
+The results are in from <${env.BUILD_URL}|${env.JOB_NAME}>!!!
+
+${ORDER_PICKED}
+        """)
       }
     }
   }
