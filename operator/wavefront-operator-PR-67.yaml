@@ -790,6 +790,7 @@ rules:
   resources:
   - events
   - namespaces
+  - endpoints
   - nodes
   - nodes/proxy
   - nodes/stats
@@ -939,7 +940,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.14.1-alpha-a0dd63f5
+  collector: 1.15.0-alpha-a07a5638
   logging: 2.0.8
   proxy: "12.1"
 kind: ConfigMap
@@ -1011,7 +1012,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.2.1-alpha-a0dd63f5
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.3.0-alpha-a07a5638
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
