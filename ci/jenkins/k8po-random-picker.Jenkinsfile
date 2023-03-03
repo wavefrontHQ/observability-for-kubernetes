@@ -17,8 +17,7 @@ pipeline {
       steps {
         script {
           ORDER_PICKED = sh (script: '$REPO_DIR/scripts/rando-dev.sh', returnStdout: true).trim()
-          currentBuild.description = ORDER_PICKED
-          currentBuild.test123 = "foo"
+          echo currentBuild.getPreviousBuild().description
         }
 //         slackSend (channel: '#tobs-k8po-team', message:
 //         """
