@@ -17,9 +17,9 @@ pipeline {
       steps {
         script {
           ORDER_PICKED = sh (script: '$REPO_DIR/scripts/rando-dev.sh', returnStdout: true).trim()
+          currentBuild.description = ${ORDER_PICKED}
+          currentBuild.test123 = "foo"
         }
-        currentBuild.description = ${ORDER_PICKED}
-        currentBuild.test123 = "foo"
 //         slackSend (channel: '#tobs-k8po-team', message:
 //         """
 // The results are in from <${env.BUILD_URL}|${env.JOB_NAME}>!!!
