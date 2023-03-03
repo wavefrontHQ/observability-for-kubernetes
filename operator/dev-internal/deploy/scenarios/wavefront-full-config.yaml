@@ -126,7 +126,7 @@ spec:
       # OpenTelemetry Protocol configuration
       otlp:
         grpcPort: 4317
-        httpPrt: 4318
+        httpPort: 4318
         resourceAttrsOnMetricsIncluded: false
       # DeltaCounterPort accumulates 1-minute delta counters on Wavefront data format
       deltaCounterPort: 50000
