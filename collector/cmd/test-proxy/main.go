@@ -34,6 +34,7 @@ var (
 		"pod_id",
 		"container_id",
 		"integration",
+		"log",
 	}
 	// Needs to match what is set up in log sender
 	optionalTags = map[string]string{
