@@ -77,6 +77,7 @@ data:
         Allowlist_key   container_id
         Allowlist_key   service
         Allowlist_key   application
+        Allowlist_key   log
         Record          source   ${K8S_NODE_NAME}
         Record          cluster  ${CLUSTER_NAME}
         Record          integration  Kubernetes 
