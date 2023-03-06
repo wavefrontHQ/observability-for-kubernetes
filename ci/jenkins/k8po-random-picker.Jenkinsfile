@@ -13,10 +13,37 @@ pipeline {
     REPO_DIR = sh (script: 'git rev-parse --show-toplevel', returnStdout: true).trim()
   }
   stages {
-    stage ("Slack message rando-dev results") {
+    stage ("Slack message rando-dev results for Team Helios") {
+      when {
+        equals(actual: currentBuild.number % 2, expected: 0)
+      }
+      environment {
+        TEAM_NAME = 'Team Helios :sun_with_face:'
+        TEAM_DEV_LIST = 'Anil,Devon,Ginwoo,Glenn,Priya'
+      }
       steps {
         script {
-          ORDER_PICKED = sh (script: '$REPO_DIR/scripts/rando-dev.sh', returnStdout: true).trim()
+          ORDER_PICKED = sh (script: '$REPO_DIR/scripts/rando-dev.sh -n "$TEAM_NAME" -l "$TEAM_DEV_LIST"', returnStdout: true).trim()
+        }
+        slackSend (channel: '#tobs-k8po-team', message:
+        """
+The results are in from <${env.BUILD_URL}|${env.JOB_NAME}>!!!
+
+${ORDER_PICKED}
+        """)
+      }
+    }
+    stage ("Slack message rando-dev results for Team Raven") {
+      when {
+        equals(actual: currentBuild.number % 2, expected: 1)
+      }
+      environment {
+        TEAM_NAME = 'Team Raven :raven:'
+        TEAM_DEV_LIST = 'Jeremy,Jerry,Jesse,John,Peter,Yuqi'
+      }
+      steps {
+        script {
+          ORDER_PICKED = sh (script: '$REPO_DIR/scripts/rando-dev.sh -n "$TEAM_NAME" -l "$TEAM_DEV_LIST"', returnStdout: true).trim()
         }
         slackSend (channel: '#tobs-k8po-team', message:
         """
