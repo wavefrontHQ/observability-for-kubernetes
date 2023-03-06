@@ -29,24 +29,41 @@ function prepare_query_list() {
 }
 
 function print_random_generator_results() {
-  echo ${TEAM_1_NAME} : ${TEAM_1_RESULT} # Adding quotes around "${}" outputs a newline after each name, which we don't want
-  echo ${TEAM_2_NAME} : ${TEAM_2_RESULT}
+  echo ${TEAM_NAME} :
+  echo "${TEAM_RESULT}" # Adding quotes around "${}" outputs a newline after each name
+}
+
+function print_usage_and_exit() {
+  echo "Failure: $1"
+  echo "Usage: $0 [flags] [options]"
+  echo -e "\t-n team name (required)"
+  echo -e "\t-l list of devs (required, ex: Anil,Mark,Priya,John,Yuqi)"
+  exit 1
 }
 
 function main() {
-  # Joe's team
-  TEAM_1_NAME='Team Helios :sun_with_face:'
-  local team_1_dev_list='Anil,Devon,Ginwoo,Glenn,Priya'
-  # Amanda's team
-  TEAM_2_NAME='Team Raven :raven:'
-  local team_2_dev_list='Jeremy,Jerry,Jesse,John,Peter,Yuqi'
+  TEAM_NAME=''
+  local team_dev_list=''
 
-  # Get the random order results for team 1
-  local team_1_query_list="$(prepare_query_list "${team_1_dev_list}")"
-  TEAM_1_RESULT="$(curl_query_to_random_generator "${team_1_query_list}")"
-  # Get the random order results for team 3
-  local team_2_query_list="$(prepare_query_list "${team_2_dev_list}")"
-  TEAM_2_RESULT="$(curl_query_to_random_generator "${team_2_query_list}")"
+  while getopts "n:l:" opt; do
+    case $opt in
+      n) TEAM_NAME="$OPTARG" ;;
+      l) team_dev_list="$OPTARG" ;;
+      \?) print_usage_and_exit "Invalid option: -$OPTARG" ;;
+    esac
+  done
+
+  if [[ -z "${TEAM_NAME}" ]]; then
+    print_usage_and_exit "-n <TEAM_NAME> is required"
+  fi
+
+  if [[ -z "${team_dev_list}" ]]; then
+    print_usage_and_exit "-l <TEAM_DEV_LIST> is required"
+  fi
+
+  # Get the random order results for the team
+  local team_query_list="$(prepare_query_list "${team_dev_list}")"
+  TEAM_RESULT="$(curl_query_to_random_generator "${team_query_list}")"
 
   print_random_generator_results
 }
