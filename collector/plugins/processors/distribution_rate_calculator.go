@@ -52,7 +52,6 @@ func (rc *DistributionRateCalculator) Process(batch *metrics.Batch) (*metrics.Ba
 }
 
 func filterMapInPlace(f func(wf.Metric) (wf.Metric, bool), es []wf.Metric) []wf.Metric {
-	// TODO pstone clean up
 	newEs := es[:0]
 	for _, e := range es {
 		newE, include := f(e)
