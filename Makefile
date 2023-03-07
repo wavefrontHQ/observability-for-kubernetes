@@ -2,7 +2,7 @@ export # Used to let all sub-make use the initialized value of variables whose n
 
 SEMVER_CLI_BIN:=$(if $(which semver-cli),$(which semver-cli),$(GOPATH)/bin/semver-cli)
 
-REPO_DIR=$(shell git rev-parse --show-toplevel)
+MONOREPO_DIR=$(shell git rev-parse --show-toplevel)
 
 GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
@@ -14,10 +14,10 @@ $(SEMVER_CLI_BIN):
 	@(CGO_ENABLED=0 go install github.com/davidrjonas/semver-cli@latest)
 
 promote-internal:
-	cp -a $(REPO_DIR)/operator/dev-internal/* $(REPO_DIR)/
+	cp -a $(MONOREPO_DIR)/operator/dev-internal/* $(MONOREPO_DIR)/
 
-	mkdir -p $(REPO_DIR)/deploy/crd/
-	cp $(REPO_DIR)/operator/config/crd/bases/wavefront.com_wavefronts.yaml $(REPO_DIR)/deploy/crd/
+	mkdir -p $(MONOREPO_DIR)/deploy/crd/
+	cp $(MONOREPO_DIR)/operator/config/crd/bases/wavefront.com_wavefronts.yaml $(MONOREPO_DIR)/deploy/crd/
 
 #----- KIND ----#
 .PHONY: nuke-kind
@@ -25,11 +25,27 @@ nuke-kind:
 	kind delete cluster
 	kind create cluster --image kindest/node:v1.24.7 #setting to 1.24.7 to avoid floating to 1.25 which we currently don't support
 
+nuke-kind-ha:
+	kind delete cluster
+	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha.yml"
+
+kind-connect-to-cluster:
+	kubectl config use kind-kind
+
+target-kind:
+	kubectl config use kind-kind
+
 #----- GKE -----#
 GCP_PROJECT?=wavefront-gcp-dev
 GCP_REGION=us-central1
 GCP_ZONE?=c
 NUMBER_OF_NODES?=3
+
+target-gke: connect-to-gke gke-connect-to-cluster
+
+connect-to-gke:
+	gcloud config set project $(GCP_PROJECT)
+	gcloud auth configure-docker --quiet
 
 gke-connect-to-cluster: gke-cluster-name-check
 	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
