@@ -74,6 +74,7 @@ func generatePrometheusSource(cfg configuration.CadvisorSourceConfig, promURL st
 		"",
 		cfg.Tags,
 		filter.FromConfig(cfg.Filters),
+		false,
 		generateHTTPCfg(restConfig),
 	)
 	if err != nil {

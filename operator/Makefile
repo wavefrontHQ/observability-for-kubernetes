@@ -6,7 +6,7 @@ export # Used to let all sub-make use the initialized value of variables whose n
 PREFIX?=projects.registry.vmware.com/tanzu_observability
 DOCKER_IMAGE?=kubernetes-operator-snapshot
 
-GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
+GO_IMPORTS_BIN:=$(if $(shell which goimports),$(shell which goimports),$(GOPATH)/bin/goimports)
 
 OS := $(shell uname -s | tr A-Z a-z)
 

@@ -56,10 +56,11 @@ type prometheusMetricsSource struct {
 	internalMetricsNames []string
 	autoDiscovered       bool
 
-	omitBucketSuffix bool
+	omitBucketSuffix  bool
+	convertHistograms bool
 }
 
-func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter, httpCfg httputil.ClientConfig) (metrics.Source, error) {
+func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, tags map[string]string, filters filter.Filter, convertHistograms bool, httpCfg httputil.ClientConfig) (metrics.Source, error) {
 	client, err := httpClient(metricsURL, httpCfg)
 	if err != nil {
 		log.Errorf("error creating http client: %q", err)
@@ -83,6 +84,7 @@ func NewPrometheusMetricsSource(metricsURL, prefix, source, discovered string, t
 		eps:                  gometrics.GetOrRegisterCounter(epsKey, gometrics.DefaultRegistry),
 		internalMetricsNames: []string{ppsKey, epsKey},
 		omitBucketSuffix:     omitBucketSuffix,
+		convertHistograms:    convertHistograms,
 		autoDiscovered:       len(discovered) > 0,
 	}, nil
 }
@@ -281,6 +283,7 @@ func NewPrometheusProvider(cfg configuration.PrometheusSourceConfig, lookupInsta
 				discovered,
 				copiedTags,
 				filters,
+				cfg.ConvertHistograms,
 				cfg.HTTPClientConfig,
 			)
 		},

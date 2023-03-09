@@ -149,6 +149,7 @@ func createPrometheusSourceConfig(name string, httpClientConfig httputil.ClientC
 			TagInclude:         nil,
 			TagExclude:         nil,
 		},
+		ConvertHistograms: true,
 	}
 
 	sourceConfig := configuration.PrometheusSourceConfig{
