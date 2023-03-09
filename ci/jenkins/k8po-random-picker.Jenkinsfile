@@ -1,7 +1,7 @@
 pipeline {
   agent any
   options {
-    buildDiscarder(logRotator(numToKeepStr: '5'))
+    buildDiscarder(logRotator(numToKeepStr: '15'))
   }
   triggers {
     // MST 4:00 PM (UTC -7) converted to UTC, every Sunday to Thursday.
@@ -9,48 +9,34 @@ pipeline {
     // MINUTE(0-59) HOUR(0-23) DOM(1-31) MONTH(1-12) DOW(0-7)
     cron('0 23 * * 0-4')
   }
-  environment {
-    REPO_DIR = sh (script: 'git rev-parse --show-toplevel', returnStdout: true).trim()
-  }
   stages {
-    stage ("Slack message rando-dev results for Team Helios") {
-      when {
-        equals(actual: currentBuild.number % 2, expected: 0)
-      }
-      environment {
-        TEAM_NAME = 'Team Helios :sun_with_face:'
-        TEAM_DEV_LIST = 'Anil,Devon,Ginwoo,Glenn,Priya'
-      }
+    stage('Randomize Team') {
       steps {
         script {
-          ORDER_PICKED = sh (script: '$REPO_DIR/scripts/rando-dev.sh -n "$TEAM_NAME" -l "$TEAM_DEV_LIST"', returnStdout: true).trim()
-        }
-        slackSend (channel: '#tobs-k8po-team', message:
-        """
-The results are in from <${env.BUILD_URL}|${env.JOB_NAME}>!!!
+          if (currentBuild.number %2 == 0) {
+            team_name = '*Team Helios* :sun_with_face:'
+            todays_team = ['Anil', 'Devon', 'Ginwoo', 'Glenn', 'Priya']
+          } else {
+            team_name = '*Team Raven* :raven:'
+            todays_team = ['Jeremy', 'Jerry', 'Jesse', 'John', 'Peter', 'Yuqi']
+          }
 
-${ORDER_PICKED}
-        """)
-      }
-    }
-    stage ("Slack message rando-dev results for Team Raven") {
-      when {
-        equals(actual: currentBuild.number % 2, expected: 1)
-      }
-      environment {
-        TEAM_NAME = 'Team Raven :raven:'
-        TEAM_DEV_LIST = 'Jeremy,Jerry,Jesse,John,Peter,Yuqi'
-      }
-      steps {
-        script {
-          ORDER_PICKED = sh (script: '$REPO_DIR/scripts/rando-dev.sh -n "$TEAM_NAME" -l "$TEAM_DEV_LIST"', returnStdout: true).trim()
-        }
-        slackSend (channel: '#tobs-k8po-team', message:
-        """
-The results are in from <${env.BUILD_URL}|${env.JOB_NAME}>!!!
+          // Prevent the same person from being selected twice in a row.
+          (rotating_off, staying_on) = currentBuild.getPreviousBuild().description.tokenize(',') //'Ginwoo,John'.tokenize(',')
+          todays_team -= rotating_off
+          Collections.shuffle todays_team
+          todays_team += rotating_off
 
-${ORDER_PICKED}
-        """)
+          currentBuild.description = "${staying_on},${todays_team[0]}"
+          SLACK_MSG = """
+The results are in from <${env.BUILD_URL}|${env.JOB_NAME}> :dice-9823:
+
+${team_name}
+${todays_team.join('\n')}
+"""
+          println SLACK_MSG
+        }
+        slackSend (channel: '#tobs-k8po-team', message: SLACK_MSG)
       }
     }
   }
