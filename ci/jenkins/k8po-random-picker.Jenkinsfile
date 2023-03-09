@@ -29,14 +29,14 @@ pipeline {
 
           currentBuild.description = "${staying_on},${todays_team[0]}"
           SLACK_MSG = """
-The results are in from <${env.BUILD_URL}|${env.JOB_NAME}>!!!
+The results are in from <${env.BUILD_URL}|${env.JOB_NAME}> :dice-9823:
 
 ${team_name}
 ${todays_team.join('\n')}
 """
           println SLACK_MSG
         }
-//        slackSend (channel: '#tobs-k8po-team', message: SLACK_MSG)
+        slackSend (channel: '#tobs-k8po-team', message: SLACK_MSG)
       }
     }
   }
