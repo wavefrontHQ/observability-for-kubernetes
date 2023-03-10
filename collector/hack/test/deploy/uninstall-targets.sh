@@ -7,6 +7,7 @@ kubectl delete -f exclude-prom-example.yaml &>/dev/null || true
 kubectl delete -f cpu-throttled-prom-example.yaml &>/dev/null || true
 kubectl delete -f pending-pod-cannot-be-scheduled.yaml &>/dev/null || true
 kubectl delete -f pending-pod-image-cannot-be-loaded.yaml &>/dev/null || true
+kubectl delete -f running-pod-crash-loop-backoff.yaml &>/dev/null || true
 kubectl delete -f jobs.yaml &>/dev/null || true
 
 helm uninstall memcached-release --namespace collector-targets &>/dev/null || true

@@ -29,6 +29,10 @@ nuke-kind-ha:
 	kind delete cluster
 	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha.yml"
 
+nuke-kind-ha-workers:
+	kind delete cluster
+	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha-workers.yml"
+
 kind-connect-to-cluster:
 	kubectl config use kind-kind
 
