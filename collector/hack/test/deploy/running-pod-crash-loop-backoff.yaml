@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: pod-crash-loop-backoff
+    exclude-me: "true"
+  name: pod-crash-loop-backoff
+  namespace: collector-targets
+spec:
+  containers:
+  - name: pod-crash-loop-backoff
+    image: busybox
+    resources:
+      requests:
+        memory: 100Mi
+      limits:
+        memory: 200Mi
+    args: [ /bin/sh, -c,
+            'exit 1' ]

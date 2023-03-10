@@ -20,25 +20,97 @@ package kubelet
 import (
 	"io/ioutil"
 	"net"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/require"
 	util "k8s.io/client-go/util/testing"
 )
 
-func setupTestServer(t *testing.T, status int) (net.IP, uint, func()) {
-	content, err := ioutil.ReadFile("k8s_api_pods.json")
-	require.NoError(t, err)
-	handler := util.FakeHandler{
-		StatusCode:   status,
+func TestGetPodList(t *testing.T) {
+	t.Run("it returns a list of Pods", func(t *testing.T) {
+		podsContent, err := ioutil.ReadFile("k8s_api_pods.json")
+		require.NoError(t, err)
+
+		ip, port, closeServer := setupTestServer(t, "/pods", string(podsContent))
+		defer closeServer()
+
+		kubeletClientConfig := &KubeletClientConfig{
+			Port: port,
+		}
+		kubeletClient, err := NewKubeletClient(kubeletClientConfig)
+		require.NoError(t, err)
+
+		pods, err := kubeletClient.GetPodList(ip)
+		require.NoError(t, err)
+
+		require.Len(t, pods.Items, 7)
+		assert.Equal(t, pods.Items[0].Name, "mult-job-success-8cpzn", "Expected first Pod name to be `mult-job-success-8cpzn`")
+	})
+
+	t.Run("it returns an error if the request to the kublet server fails", func(t *testing.T) {
+		kubeletClientConfig := &KubeletClientConfig{
+			Port: 12345,
+		}
+		kubeletClient, err := NewKubeletClient(kubeletClientConfig)
+		require.NoError(t, err)
+
+		_, err = kubeletClient.GetPodList(nil)
+		require.Error(t, err)
+	})
+}
+
+func TestGetSummary(t *testing.T) {
+	t.Run("it returns a summary", func(t *testing.T) {
+		summaryContent, err := ioutil.ReadFile("k8s_api_summary.json")
+		require.NoError(t, err)
+
+		ip, port, closeServer := setupTestServer(t, "/stats/summary", string(summaryContent))
+		defer closeServer()
+
+		kubeletClientConfig := &KubeletClientConfig{
+			Port: port,
+		}
+		kubeletClient, err := NewKubeletClient(kubeletClientConfig)
+		require.NoError(t, err)
+
+		summary, err := kubeletClient.GetSummary(ip)
+		require.NoError(t, err)
+
+		require.Len(t, summary.Pods, 2)
+		assert.Equal(t, summary.Node.NodeName, "some-node")
+		assert.Equal(t, summary.Pods[0].PodRef.Name, "some-pod")
+	})
+
+	t.Run("it returns an error if the request to the kublet server fails", func(t *testing.T) {
+		kubeletClientConfig := &KubeletClientConfig{
+			Port: 12345,
+		}
+		kubeletClient, err := NewKubeletClient(kubeletClientConfig)
+		require.NoError(t, err)
+
+		_, err = kubeletClient.GetSummary(nil)
+		require.Error(t, err)
+	})
+}
+
+func setupTestServer(t *testing.T, endpoint string, content string) (net.IP, uint, func()) {
+	podsHandler := util.FakeHandler{
+		StatusCode:   http.StatusOK,
 		RequestBody:  "",
-		ResponseBody: string(content),
+		ResponseBody: content,
 		T:            t,
 	}
-	server := httptest.NewServer(&handler)
+
+	router := http.NewServeMux()
+	router.Handle(endpoint, &podsHandler)
+
+	server := httptest.NewServer(router)
 	mockServerUrl, _ := url.Parse(server.URL)
 	_, port, _ := net.SplitHostPort(mockServerUrl.Host)
 	mockPort, _ := strconv.ParseUint(port, 10, 64)

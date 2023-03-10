@@ -226,6 +226,113 @@ func TestAddSummaryMetrics(t *testing.T) {
 	}
 }
 
+func TestAddMissingRunningPodMetricSets(t *testing.T) {
+	statusStartTime := metav1.NewTime(startTime)
+	podList := v1.PodList{
+		Items: []v1.Pod{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "running-pod",
+					Namespace: namespace0,
+				},
+				Status: v1.PodStatus{
+					Phase:     v1.PodRunning,
+					StartTime: &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "running-pod-in-stats-summary",
+					Namespace: namespace0,
+					UID:       "podList UID",
+				},
+				Status: v1.PodStatus{
+					Phase:     v1.PodRunning,
+					StartTime: &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pending-pod",
+					Namespace: namespace0,
+				},
+				Status: v1.PodStatus{
+					Phase:     v1.PodPending,
+					StartTime: &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "succeeded-pod",
+					Namespace: namespace1,
+				},
+				Status: v1.PodStatus{
+					Phase:     v1.PodSucceeded,
+					StartTime: &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "failed-pod",
+					Namespace: namespace1,
+				},
+				Status: v1.PodStatus{
+					Phase:     v1.PodFailed,
+					StartTime: &statusStartTime,
+				},
+			},
+		},
+	}
+
+	ms := testingSummaryMetricsSource(1234)
+	dataBatch := &core.Batch{
+		Timestamp: time.Now(),
+		Sets:      map[core.ResourceKey]*core.Set{},
+	}
+
+	t.Run("handles empty pod list", func(t *testing.T) {
+		emptyPodList := v1.PodList{
+			Items: []v1.Pod{},
+		}
+		ms.addMissingRunningPodMetricSets(dataBatch, &emptyPodList)
+		assert.Equal(t, 0, len(dataBatch.Sets))
+	})
+
+	t.Run("only adds missing running pods", func(t *testing.T) {
+		modifiedExistingPod := podList.Items[1]
+		modifiedExistingPod.UID = "stats/summary uid"
+
+		addFakePodMetric(dataBatch, ms, modifiedExistingPod)
+		assert.Equal(t, 1, len(dataBatch.Sets))
+
+		ms.addMissingRunningPodMetricSets(dataBatch, &podList)
+		assert.Equal(t, 2, len(dataBatch.Sets))
+
+		// Make sure the new running pod exists
+		podMetrics := dataBatch.Sets[core.PodKey(namespace0, "running-pod")]
+		assert.Equal(t, "running-pod", podMetrics.Labels[core.LabelPodName.Key])
+
+		// Make sure we didn't overwrite an existing pod from the stats/summary output
+		podMetrics = dataBatch.Sets[core.PodKey(namespace0, "running-pod-in-stats-summary")]
+		assert.Equal(t, "stats/summary uid", podMetrics.Labels[core.LabelPodId.Key])
+	})
+
+	t.Run("pod metrics values", func(t *testing.T) {
+		ms.addMissingRunningPodMetricSets(dataBatch, &podList)
+		podMetrics := dataBatch.Sets[core.PodKey(namespace0, "running-pod")]
+		pod := podList.Items[0]
+
+		assert.Equal(t, core.MetricSetTypePod, podMetrics.Labels[core.LabelMetricSetType.Key])
+		assert.Equal(t, pod.Status.StartTime.Time, podMetrics.CollectionStartTime)
+		assert.Equal(t, dataBatch.Timestamp, podMetrics.ScrapeTime)
+		assert.Equal(t, pod.Name, podMetrics.Labels[core.LabelPodName.Key])
+		assert.Equal(t, pod.Namespace, podMetrics.Labels[core.LabelNamespaceName.Key])
+		assert.Equal(t, ms.node.NodeName, podMetrics.Labels[core.LabelNodename.Key])
+		assert.Equal(t, ms.node.HostName, podMetrics.Labels[core.LabelHostname.Key])
+		assert.Equal(t, ms.node.HostID, podMetrics.Labels[core.LabelHostID.Key])
+	})
+}
+
 func TestDecodeEphemeralStorageStatsForContainer(t *testing.T) {
 	ms := testingSummaryMetricsSource(1234)
 	rootFs := &stats.FsStats{}
