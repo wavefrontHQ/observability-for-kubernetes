@@ -6,8 +6,6 @@ package main
 import (
 	"context"
 	"fmt"
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -16,6 +14,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/experimental"
 
