@@ -134,6 +134,9 @@ type WavefrontSinkConfig struct {
 	// Internal: Cluster name pulled in from the top level property.
 	ClusterName string `yaml:"-"`
 
+	// Internal: UUID of the default namespace for the cluster
+	ClusterUUID string `yaml:"-"`
+
 	// Internal: Collector version pulled in from top level. Used for the heartbeat metric.
 	Version float64 `yaml:"-"`
 
