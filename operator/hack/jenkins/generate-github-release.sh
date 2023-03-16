@@ -7,7 +7,7 @@ OPERATOR_REPO_ROOT=${REPO_ROOT}/operator
 
 operator_yaml="${OPERATOR_REPO_ROOT}/deploy/kubernetes/wavefront-operator.yaml"
 
-VERSION=$(get_next_operator_version)
+VERSION=$(cat ${REPO_ROOT}/operator/release/OPERATOR_VERSION)
 GITHUB_REPO=wavefrontHQ/observability-for-kubernetes
 AUTH="Authorization: token ${GITHUB_TOKEN}"
 
