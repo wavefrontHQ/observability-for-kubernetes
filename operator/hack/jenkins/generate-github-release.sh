@@ -3,9 +3,8 @@ set -eou pipefail
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
-OPERATOR_REPO_ROOT=${REPO_ROOT}/operator
 
-operator_yaml="${OPERATOR_REPO_ROOT}/deploy/kubernetes/wavefront-operator.yaml"
+operator_yaml="${REPO_ROOT}/deploy/wavefront-operator.yaml"
 
 VERSION=$(cat ${REPO_ROOT}/operator/release/OPERATOR_VERSION)
 GITHUB_REPO=wavefrontHQ/observability-for-kubernetes
