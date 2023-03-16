@@ -222,7 +222,7 @@ func setInternalSinkProperties(ns v1.NamespaceInterface, cfg *configuration.Conf
 	version := getVersion()
 	defaultNS, err := ns.Get(context.Background(), "default", v12.GetOptions{})
 	if err != nil {
-		log.Errorf("error reading default namesapce: %s", err.Error())
+		log.Errorf("error reading default namespace: %s", err.Error())
 	}
 	clusterUUID := string(defaultNS.GetUID())
 	for _, sink := range cfg.Sinks {
