@@ -21,24 +21,26 @@ import (
 )
 
 type pointBuilder struct {
-	filters          filter.Filter
-	filtered         gometrics.Counter
-	source           string
-	prefix           string
-	omitBucketSuffix bool
-	tags             map[string]string
-	interner         util.StringInterner
+	filters           filter.Filter
+	filtered          gometrics.Counter
+	source            string
+	prefix            string
+	omitBucketSuffix  bool
+	convertHistograms bool
+	tags              map[string]string
+	interner          util.StringInterner
 }
 
 func NewPointBuilder(src *prometheusMetricsSource, filtered gometrics.Counter) *pointBuilder {
 	return &pointBuilder{
-		source:           src.source,
-		prefix:           src.prefix,
-		omitBucketSuffix: src.omitBucketSuffix,
-		tags:             src.tags,
-		filters:          src.filters,
-		filtered:         filtered,
-		interner:         util.NewStringInterner(),
+		source:            src.source,
+		prefix:            src.prefix,
+		omitBucketSuffix:  src.omitBucketSuffix,
+		convertHistograms: src.convertHistograms,
+		tags:              src.tags,
+		filters:           src.filters,
+		filtered:          filtered,
+		interner:          util.NewStringInterner(),
 	}
 
 }
@@ -54,7 +56,7 @@ func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily)
 			if mf.GetType() == prom.MetricType_SUMMARY {
 				result = append(result, builder.buildSummaryPoints(metricName, m, now, builder.buildTags(m))...)
 			} else if mf.GetType() == prom.MetricType_HISTOGRAM {
-				if experimental.IsEnabled(experimental.HistogramConversion) {
+				if experimental.IsEnabled(experimental.HistogramConversion) || builder.convertHistograms {
 					point := builder.buildWFHistogram(metricName, m, now, builder.buildTags(m))
 					result = wf.FilterAppend(builder.filters, builder.filtered, result, point)
 				}

@@ -2,6 +2,8 @@ package metrics
 
 type MetricGrammar Peg {
     Histogram bool
+    Buckets map[string]string
+    currentHistogramCount string
     Name string
     Value string
     Timestamp string
@@ -13,9 +15,13 @@ MetricGrammar <- aggregationInterval (' ' timestamp)? ' ' histogramValues ' ' me
 
 aggregationInterval <- '!' ('M' / 'H' / 'D') { p.Histogram = true }
 
-histogramValues <- histogramValue (' ' histogramValue)*
+histogramValues <- { p.Buckets = map[string]string{} } histogramBucket (' ' histogramBucket)*
 
-histogramValue <- '#' DIGIT+ ' ' metricValue
+histogramBucket <- histogramCount ' ' histogramValue
+
+histogramCount <- '#' <'-'? DIGIT+ ( '.' DIGIT+ )?> { p.currentHistogramCount = text }
+
+histogramValue <- <'-'? DIGIT+ ( '.' DIGIT+ )?> { p.Buckets[text] = p.currentHistogramCount }
 
 tags <- { p.Tags = map[string]string{} } tag ( ' ' tag )*
 

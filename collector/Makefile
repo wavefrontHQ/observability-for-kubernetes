@@ -23,7 +23,7 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
+GO_IMPORTS_BIN:=$(if $(shell which goimports),$(shell which goimports),$(GOPATH)/bin/goimports)
 
 ifndef VERSION_POSTFIX
 VERSION_POSTFIX:=-dev-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
@@ -125,7 +125,7 @@ publish-test-proxy:  test-proxy-container
 	docker push $(PREFIX)/test-proxy:$(VERSION)
 
 .PHONY: test-proxy
-test-proxy: peg $(COLLECTOR_REPO_ROOT)/cmd/test-proxy/metric_grammar.peg.go clean fmt vet
+test-proxy: peg $(COLLECTOR_REPO_ROOT)/internal/testproxy/metrics/metric_grammar.peg.go clean fmt vet
 	GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(GOARCH)/test-proxy ./cmd/test-proxy/...
 
 .PHONY: peg
