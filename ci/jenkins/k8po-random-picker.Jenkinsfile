@@ -15,7 +15,7 @@ pipeline {
         script {
           if (currentBuild.number %2 == 0) {
             team_name = '*Team Helios* :sun_with_face:'
-            todays_team = ['Anil', 'Devon', 'Ginwoo', 'Glenn', 'Matt', 'Priya']
+            todays_team = ['Anil', 'Devon', 'Ginwoo', 'Glenn', 'Matt']
           } else {
             team_name = '*Team Raven* :raven:'
             todays_team = ['Jeremy', 'Jerry', 'Jesse', 'John', 'Peter', 'Yuqi']
