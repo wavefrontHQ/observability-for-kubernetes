@@ -34,7 +34,7 @@ type Config struct {
 	// List of glob pattern strings. Tags with matching keys will be excluded.
 	TagExclude []string `yaml:"tagExclude"`
 
-	// List of tag keys. Tags with matching keys will be protected against filtering.
+	// List of tags guaranteed to not be removed during kubernetes metrics collection. Supersedes all other collection filters. These tags are given priority if you hit the 20 tag limit.
 	TagGuaranteeList []string `yaml:"tagGuaranteeList"`
 
 	// Deprecated: use MetricAllowList instead
