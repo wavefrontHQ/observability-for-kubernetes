@@ -109,8 +109,8 @@ kubectl apply -f <path_to_your_wavefront.yaml>
 #### References:
 * See [Custom Resource Scenarios](../../deploy/scenarios) for proxy configuration examples.
 * Copy and save your existing collector configMaps and any other configurations.
-* Uninstall your currently deployed wavefront collector and proxy.
-* Make sure the wavefront operator is already installed.
+* Uninstall your currently deployed Wavefront collector and proxy.
+* Make sure the Observability for Kubernetes Operator is already installed.
 * Create a Kubernetes secret with your Wavefront Token `kubectl create -n observability-system secret generic wavefront-secret --from-literal token=YOUR_WAVEFRONT_TOKEN`
 
 Most of the proxy configurations could be set using environment variables for proxy container.

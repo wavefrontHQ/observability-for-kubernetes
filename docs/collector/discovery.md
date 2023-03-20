@@ -169,7 +169,7 @@ discovery:
   # frequency of evaluating changes to runtime configs (adds/updates/deletes)
   discovery_interval: 5m
 ```
-The runtime configmaps should be annotated with `wavefront.com/discovery-config: 'true'` and deployed under the same namespace as the Wavefront collector.
+The runtime configmaps should be annotated with `wavefront.com/discovery-config: 'true'` and deployed under the same namespace as the Kubernetes Metrics Collector.
 
 Discovery rules specified in the main config and via runtime configs are combined together to form a single set of rules to drive auto-discovery decisions.
 
