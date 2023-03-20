@@ -65,3 +65,17 @@ create-gke-cluster: gke-cluster-name-check
 	kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
+
+#----- AKS -----#
+AKS_CLUSTER_NAME?=k8po-ci
+AKS_RESOURCE_GROUP?=K8sSaaS
+
+aks-subscription-id-check:
+	@if [ -z ${AKS_SUBSCRIPTION_ID} ]; then echo "Need to set AKS_SUBSCRIPTION_ID" && exit 1; fi
+	@az account set --subscription $(AKS_SUBSCRIPTION_ID)
+
+aks-login-check:
+	@az aks list || az login --scope https://management.core.windows.net//.default
+
+aks-connect-to-cluster: aks-subscription-id-check aks-login-check
+	az aks get-credentials --resource-group $(AKS_RESOURCE_GROUP) --name $(AKS_CLUSTER_NAME)
