@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pl-monitoring
+    name: pl-nats
+  name: pl-nats
+  namespace: observability-system
+spec:
+  ports:
+  - name: client
+    port: 4222
+  selector:
+    app: pl-monitoring
+    name: pl-nats

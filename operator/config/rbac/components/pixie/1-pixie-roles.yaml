@@ -1,0 +1,249 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: pl-cloud-connector-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ""
+  resourceNames:
+  - kube-system
+  resources:
+  - namespaces
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+
+  labels:
+
+    app: pl-monitoring
+    component: vizier
+  name: pl-node-view
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - watch
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+
+  labels:
+
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: pl-updater-cluster-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - rbac.authorization.k8s.io
+  - etcd.database.coreos.com
+  - nats.io
+  resources:
+  - clusterroles
+  - clusterrolebindings
+  - persistentvolumes
+  - etcdclusters
+  - natsclusters
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+
+  labels:
+
+    app: pl-monitoring
+    component: vizier
+  name: pl-vizier-metadata
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  - apps
+  resources:
+  - pods
+  - services
+  - endpoints
+  - namespaces
+  - replicasets
+  - deployments
+  verbs:
+  - watch
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+
+  labels:
+
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: pl-cloud-connector-ns-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - events
+  - pods/log
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  - px.dev
+  resources:
+  - secrets
+  - endpoints
+  - pods
+  - viziers
+  verbs:
+  - '*'
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - coordination.k8s.io
+  resourceNames:
+  - cloud-conn-election
+  resources:
+  - leases
+  verbs:
+  - get
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+
+  labels:
+
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: pl-updater-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - rbac.authorization.k8s.io
+  - extensions
+  - batch
+  - policy
+  resources:
+  - configmaps
+  - secrets
+  - pods
+  - services
+  - deployments
+  - daemonsets
+  - persistentvolumes
+  - roles
+  - rolebindings
+  - serviceaccounts
+  - statefulsets
+  - cronjobs
+  - jobs
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+
+  labels:
+
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: pl-vizier-crd-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - px.dev
+  resources:
+  - viziers
+  - viziers/status
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+
+  labels:
+
+    app: pl-monitoring
+    component: vizier
+  name: pl-vizier-metadata-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - '*'
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - coordination.k8s.io
+  resourceNames:
+  - metadata-election
+  resources:
+  - leases
+  verbs:
+  - get
+  - update

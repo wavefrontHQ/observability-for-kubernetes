@@ -1,0 +1,160 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: kelvin
+  namespace: observability-system
+spec:
+  selector:
+    matchLabels:
+      app: pl-monitoring
+      component: vizier
+      name: kelvin
+  template:
+    metadata:
+      annotations:
+
+      labels:
+
+        app: pl-monitoring
+        component: vizier
+        name: kelvin
+        plane: data
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: Exists
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: Exists
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+      containers:
+      - env:
+        - name: PL_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: PL_CLUSTER_ID
+          valueFrom:
+            secretKeyRef:
+              key: cluster-id
+              name: pl-cluster-secrets
+        - name: PL_SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              key: sentry-dsn
+              name: pl-cluster-secrets
+              optional: true
+        - name: PL_HOST_PATH
+          value: /host
+        - name: PL_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: PL_HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: PL_JWT_SIGNING_KEY
+          valueFrom:
+            secretKeyRef:
+              key: jwt-signing-key
+              name: pl-cluster-secrets
+        - name: PL_VIZIER_ID
+          valueFrom:
+            secretKeyRef:
+              key: cluster-id
+              name: pl-cluster-secrets
+              optional: true
+        - name: PL_VIZIER_NAME
+          valueFrom:
+            secretKeyRef:
+              key: cluster-name
+              name: pl-cluster-secrets
+              optional: true
+        - name: PL_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: TCMALLOC_SAMPLE_PARAMETER
+          value: "1048576"
+        envFrom:
+        - configMapRef:
+            name: pl-tls-config
+        image: 'gcr.io/pixie-oss/pixie-prod/vizier/kelvin_image:0.12.18'
+        name: app
+        ports:
+        - containerPort: 59300
+        resources: {}
+        volumeMounts:
+        - mountPath: /certs
+          name: certs
+        - mountPath: /sys
+          name: sys
+          readOnly: true
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - 'set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz"; until [ $(curl
+          -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do echo "waiting
+          for ${URL}" sleep 2; done; '
+        env:
+        - name: SERVICE_NAME
+          value: vizier-cloud-connector-svc
+        - name: SERVICE_PORT
+          value: "50800"
+        image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0'
+        name: cc-wait
+      - command:
+        - sh
+        - -c
+        - 'set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [
+          $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
+          echo "waiting for ${URL}" sleep 2; done; '
+        env:
+        - name: SERVICE_NAME
+          value: vizier-query-broker-svc
+        - name: SERVICE_PORT
+          value: "50300"
+        image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0'
+        name: qb-wait
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoSchedule
+        key: kubernetes.io/arch
+        operator: Equal
+        value: amd64
+      - effect: NoExecute
+        key: kubernetes.io/arch
+        operator: Equal
+        value: amd64
+      - effect: NoSchedule
+        key: kubernetes.io/arch
+        operator: Equal
+        value: arm64
+      - effect: NoExecute
+        key: kubernetes.io/arch
+        operator: Equal
+        value: arm64
+      volumes:
+      - name: certs
+        secret:
+          secretName: service-tls-certs
+      - hostPath:
+          path: /sys
+          type: Directory
+        name: sys
