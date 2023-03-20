@@ -5,10 +5,9 @@ It is suitable for production usage.
 
 **Important:** Observability Logs (Beta) is enabled only for selected customers. If you’d like to participate, contact your Observability account representative.
 
-# Overview of Wavefront Operator for Kubernetes
+# Overview of Observability for Kubernetes Operator
 
-The Wavefront Operator for Kubernetes
-supports deploying the Wavefront Collector and the Wavefront Proxy in Kubernetes.
+The Observability for Kubernetes Operator supports deploying the Kubernetes Metrics Collector and the Wavefront Proxy in Kubernetes.
 This operator is based on [kubebuilder SDK](https://book.kubebuilder.io/).
 
 ## Quick Reference
@@ -18,25 +17,25 @@ This operator is based on [kubebuilder SDK](https://book.kubebuilder.io/).
 - [Operator Downgrade](#downgrade)
 - [Operator Removal](#removal)
 
-## Why use the Wavefront Operator for Kubernetes?
+## Why use the Observability for Kubernetes Operator?
 
-The operator simplifies operational aspects of managing the Wavefront integration. Here are some examples, with more to come!
- - Enhanced status reporting of the Wavefront integration so that users can ensure their cluster and Kubernetes resources are reporting data.
- - Kubernetes Operator features provide a declarative mechanism for deploying the Wavefront Collector and proxy in a Kubernetes environment.
+The operator simplifies operational aspects of managing the Kubernetes Integration for Operations for Applications. Here are some examples, with more to come!
+ - Enhanced status reporting of the Kubernetes Integration so that users can ensure their cluster and Kubernetes resources are reporting data.
+ - Kubernetes Operator features provide a declarative mechanism for deploying the Kubernetes Metrics Collector and Wavefront Proxy in a Kubernetes environment.
  - Centralized configuration.
  - Enhanced configuration validation to surface what needs to be corrected in order to deploy successfully.
  - Efficient Kubernetes resource usage supports scaling  out the cluster (leader) node and worker nodes independently.
 
-**Note:** The Collector that is deployed by the Operator still supports configuration via configmap.
+**Note:** The Kubernetes Metrics Collector that is deployed by this Operator still supports configuration via configmap.
 For example, Istio and MySQL metrics, Telegraf configuration, etc. are still supported. For details on the Collector, see [collector.md](docs/collector/collector.md).
 
 ## Architecture
 
-![Wavefront Operator for Kubernetes Architecture](docs/images/architecture-logging.png)
+![Observability for Kubernetes Operator Architecture](docs/images/architecture-logging.png)
 
 # Installation
 
-**Note:**  The Wavefront Operator for Kubernetes helm chart has been deprecated and is no longer supported. Use the deploy, upgrade and removal instructions below instead.
+**Note:**  The Observability for Kubernetes Operator helm chart has been deprecated and is no longer supported. Use the deploy, upgrade and removal instructions below instead.
 
 ## Prerequisites
 
@@ -44,22 +43,22 @@ The following tools are required for installing the integration.
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 
 
-## Deploy the Wavefront Collector and Proxy with the Operator
+## Deploy the Kubernetes Metrics Collector and Wavefront Proxy with the Observability for Kubernetes Operator
 
-1. Install the Wavefront Operator into `observability-system` namespace.
+1. Install the Observability for Kubernetes Operator into the `observability-system` namespace.
 
-   **Note**: If you already have Wavefront installed via helm or manual deploy, *uninstall* before you install the operator.
+   **Note**: If you already have the deprecated Wavefront Kubernetes Integration installed via helm or manual deploy, *uninstall* before you install this operator.
  
    ```
    kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
    ```
 
-2. Create a Kubernetes secret with your Wavefront token.
+2. Create a Kubernetes secret with your Operations for Applications token.
    See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
    ```
    kubectl create -n observability-system secret generic wavefront-secret --from-literal token=YOUR_WAVEFRONT_TOKEN
    ```
-3. Create a `wavefront.yaml` file with your Wavefront Custom Resource configuration.  The simplest configuration is:
+3. Create a `wavefront.yaml` file with your `Wavefront` Custom Resource configuration.  The simplest configuration is:
    ```yaml
    # Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL
    apiVersion: wavefront.com/v1alpha1
@@ -104,11 +103,11 @@ The following tools are required for installing the integration.
    
    See [Bring Your Own Logs Shipper](#bring-your-own-logs-shipper) for an overview of how to use the operator with your own logs shipper.
 
-5. Deploy the Wavefront Collector and Proxy with your configuration
+5. Deploy the Kubernetes Metrics Collector and Wavefront Proxy with your configuration
    ```
    kubectl apply -f <path_to_your_wavefront.yaml>
    ```
-6. Run the following command to get status for the Wavefront integration:
+6. Run the following command to get status for the Operations for Applications Kubernetes integration:
    ```
    kubectl get wavefront -n observability-system
    ```
@@ -123,7 +122,7 @@ The following tools are required for installing the integration.
 
 # Configuration
 
-You configure the Wavefront Operator with a custom resource file.
+You configure the Observability for Kubernetes Operator with a custom resource file.
 
 When you update the resource file,
 the Operator picks up the changes and updates the integration deployment accordingly.
@@ -140,7 +139,6 @@ We have templates for common scenarios. See the comments in each file for usage 
  * [Using an existing collector ConfigMap](deploy/scenarios/wavefront-collector-existing-configmap.yaml)
  * [With plugin configuration in a secret](deploy/scenarios/wavefront-collector-with-plugin-secret.yaml)
  * [Filtering metrics upon collection](deploy/scenarios/wavefront-collector-filtering.yaml)
- * [Disabling control plane metrics](deploy/scenarios/wavefront-disable-control-plane-metrics.yaml)
  * [Defining Kubernetes resource limits](deploy/scenarios/wavefront-pod-resources.yaml)
  * [Defining data collection pod tolerations](deploy/scenarios/wavefront-daemonset-pod-tolerations.yaml)
  * [Defining proxy pre-processor rules](deploy/scenarios/wavefront-proxy-preprocessor-rules.yaml)
@@ -155,10 +153,10 @@ You can see all configuration options in the [wavefront-full-config.yaml](deploy
 
 ## Bring Your Own Logs Shipper
 
-The operator deploys a data export component (wavefront-proxy) which can recieve log data and relay it to wavefront.
+The operator deploys a data export component (wavefront-proxy) which can recieve log data and relay it to Operations for Applications.
 You will need to configure your logs shipper to send logs to the data export component (wavefront-proxy) deployed by the operator.
 
-Here is a Wavefront Custom Resource [example config](deploy/scenarios/wavefront-bring-your-own-logs-shipper.yaml) for this scenario.
+Here is a `Wavefront` Custom Resource [example config](deploy/scenarios/wavefront-bring-your-own-logs-shipper.yaml) for this scenario.
 
 In order to make the best use of your logging solution on kubernetes, we recommend having the below kubernetes log attributes
 
@@ -175,13 +173,13 @@ In addition to these, here are some [general log attributes](https://docs.wavefr
 
 # Upgrade
 
-Upgrade the Wavefront Operator (both Collector and Proxy) to a new version by running the following command :
+Upgrade the Observability for Kubernetes Operator (both Kubernetes Metrics Collector and Wavefront Proxy) to a new version by running the following command :
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
 ```
 
-Note: This command will not upgrade any existing wavefront/wavefront helm installation. See [migration.md](docs/operator/migration.md) for migration instructions.
+Note: This command will not upgrade any existing deprecated wavefront/wavefront helm installations. See [migration.md](docs/operator/migration.md) for migration instructions.
 
 # Downgrade
 
@@ -195,7 +193,7 @@ kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/rel
 
 # Removal
 
-To remove the Wavefront Integration from your environment, run the following commands:
+To remove the Observability for Kubernetes Operator from your environment, run the following commands:
 
 ```
 kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
