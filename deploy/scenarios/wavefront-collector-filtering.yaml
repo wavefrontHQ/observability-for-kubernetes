@@ -16,6 +16,8 @@ spec:
         denyList:
         - kubernetes.sys_container.*
         - kubernetes.collector.runtime.*
+        tagGuaranteeList:
+        - label.env
       defaultCollectionInterval: 90s #defaults to 60s
       enableDiscovery: false #defaults to true
   dataExport:
