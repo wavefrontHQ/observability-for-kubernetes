@@ -181,7 +181,7 @@ Application metrics:
 
 ## Collector Health Metrics
 
-These are internal metrics about the health and configuration of the Wavefront Collector.
+These are internal metrics about the health and configuration of the Kubernetes Metrics Collector.
 
 | Metric Name                                          | Description                                                                                                                     |
 |------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
@@ -192,7 +192,7 @@ These are internal metrics about the health and configuration of the Wavefront C
 | kubernetes.collector.leaderelection.error            | leader election error counter. Only emitted in daemonset mode.                                                                  |
 | kubernetes.collector.leaderelection.leading          | 1 indicates a pod is the leader. 0 (no). Only emitted in daemonset mode.                                                        |
 | kubernetes.collector.runtime.*                       | Go runtime metrics (MemStats, NumGoroutine etc).                                                                                |
-| kubernetes.collector.sink.manager.timeouts           | Counter of timeouts in sending data to Wavefront.                                                                               |
+| kubernetes.collector.sink.manager.timeouts           | Counter of timeouts in sending data to Operations for Applications.                                                                               |
 | kubernetes.collector.source.manager.providers        | # of configured source providers. Includes sources configured via auto-discovery.                                               |
 | kubernetes.collector.source.manager.scrape.errors    | Scrape error counter across all sources.                                                                                        |
 | kubernetes.collector.source.manager.scrape.latency.* | Scrape latencies across all sources.                                                                                            |
@@ -201,14 +201,14 @@ These are internal metrics about the health and configuration of the Wavefront C
 | kubernetes.collector.source.points.collected         | collected points counter per source type.                                                                                       |
 | kubernetes.collector.source.points.filtered          | filtered points counter per source type.                                                                                        |
 | kubernetes.collector.version                         | The version of the collector.                                                                                                   |
-| kubernetes.collector.wavefront.points.*              | Wavefront sink points sent, filtered, errors etc.                                                                               |
-| kubernetes.collector.wavefront.events.*              | Wavefront sink events sent, filtered, errors etc.                                                                               |
+| kubernetes.collector.wavefront.points.*              | Operations for Applications sink points sent, filtered, errors etc.                                                                               |
+| kubernetes.collector.wavefront.events.*              | Operations for Applications sink events sent, filtered, errors etc.                                                                               |
 | kubernetes.collector.wavefront.sender.type           | 1 for proxy and 0 for direct ingestion.                                                                                         |
 | kubernetes.collector.histograms.duplicates           | Number of duplicate histogram series tagged by metricname (not emitted if no duplicates)                                        |
 
 ## cAdvisor Metrics
 
-cAdvisor exposes a prometheus endpoint which the collector can consume. See the [cAdvisor docs](https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md) for details on what metrics are available.
+cAdvisor exposes a prometheus endpoint which the Kubernetes Metrics Collector can consume. See the [cAdvisor docs](https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md) for details on what metrics are available.
 
 ## Control Plane Metrics
 
@@ -224,11 +224,11 @@ Metrics collected per type:
 | kubernetes.controlplane.apiserver.storage.objects.gauge             | etcd object counts                                                                                                            | Not available from kubernetes release version 1.23 onwards  |
 | kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge           | etcd database size                                                                                                            | -                               |
 | kubernetes.controlplane.apiserver.request.duration.seconds.bucket   | Histogram buckets for API server request latency                                                                              | -                               |
-| kubernetes.controlplane.apiserver.request.duration.seconds          | API server request latency as a [Wavefront Histogram](https://docs.wavefront.com/proxies_histograms.html)                     | -                               |
+| kubernetes.controlplane.apiserver.request.duration.seconds          | API server request latency as a [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html)                     | -                               |
 | kubernetes.controlplane.apiserver.request.total.counter             | API server total request count                                                                                                | -                               |
 | kubernetes.controlplane.workqueue.adds.total.counter                | Current depth of API server workqueue                                                                                         | -                               |
 | kubernetes.controlplane.workqueue.queue.duration.seconds.bucket     | Histogram buckets for workqueue latency                                                                                       | -                               |
-| kubernetes.controlplane.workqueue.queue.duration.seconds            | workqueue latency as a [Wavefront Histogram](https://docs.wavefront.com/proxies_histograms.html)                              | -                               |
+| kubernetes.controlplane.workqueue.queue.duration.seconds            | workqueue latency as a [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html)                              | -                               |
 | kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket | Histogram buckets for CoreDNS request latency                                                                                 | Not available in GKE, OpenShift |
-| kubernetes.controlplane.coredns.dns.request.duration.seconds        | CoreDNS request latency as a [Wavefront Histogram](https://docs.wavefront.com/proxies_histograms.html)                        | Not available in GKE, OpenShift |
+| kubernetes.controlplane.coredns.dns.request.duration.seconds        | CoreDNS request latency as a [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html)                        | Not available in GKE, OpenShift |
 | kubernetes.controlplane.coredns.dns.responses.total.counter         | CoreDNS total response count                                                                                                  | Not available in GKE, OpenShift |

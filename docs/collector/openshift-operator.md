@@ -30,10 +30,10 @@ curl -O https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernet
 
 * Set `collector.useProxy: true` in `wavefront-collector-operator_v1beta1_cr.yaml`
 
-Now configure the Wavefront proxy by following any one of the options:
+Now configure the Wavefront Proxy by following any one of the options:
 
-* Option 1: [Using external Wavefront proxy](#option-1-using-external-wavefront-proxy) to send metrics to a Wavefront proxy that is already configured and running outside of the cluster.
-* Option 2: [Using internal Wavefront proxy](#option-2-using-internal-wavefront-proxy) to deploy Wavefront proxy into the Openshift cluster and configuring it.
+* Option 1: [Using external Wavefront Proxy](#option-1-using-external-wavefront-proxy) to send metrics to a Wavefront Proxy that is already configured and running outside of the cluster.
+* Option 2: [Using internal Wavefront Proxy](#option-2-using-internal-wavefront-proxy) to deploy Wavefront Proxy into the Openshift cluster and configuring it.
 
 8. Replace OPENSHIFT_CLUSTER_NAME in `wavefront-collector-operator_v1beta1_cr.yaml` and run:
 ```
@@ -41,11 +41,11 @@ oc create -f wavefront-collector-operator_v1beta1_cr.yaml -n wavefront-collector
 ``` 
 
 
-### Option 1. Using external Wavefront proxy 
+### Option 1. Using external Wavefront Proxy 
 
-* Uncomment the property `collector.proxyAddress` and provide the external Wavefront proxy IP address with port and set `proxy.enabled: false` in `wavefront-collector-operator_v1beta1_cr.yaml`. 
+* Uncomment the property `collector.proxyAddress` and provide the external Wavefront Proxy IP address with port and set `proxy.enabled: false` in `wavefront-collector-operator_v1beta1_cr.yaml`. 
 
-### Option 2. Using internal Wavefront proxy
+### Option 2. Using internal Wavefront Proxy
 
 * Create a file `pvc.yaml` with below content and replace `<storage_class_name>` with available storage class in the cluster.
 

@@ -1,6 +1,6 @@
 # Auto Discovery
 
-The Wavefront Collector for Kubernetes can auto-discover pods and services that expose metrics, and dynamically start collecting metrics for the targets.
+The Kubernetes Metrics Collector can auto-discover pods and services that expose metrics, and dynamically start collecting metrics for the targets.
 
 Pods/Services can be discovered based on annotations and discovery rules. Discovery rules are provided via the configuration file.
 
@@ -40,8 +40,8 @@ discovery:
 
 ### Excluding annotation discovered resources
 
-The collector can exclude resources from being detected by annotation-based discovery. It can have multiple exclusion 
-selectors. The collector will exclude a resource if any of the exclusion selectors match.
+The Kubernetes Metrics Collector can exclude resources from being detected by annotation-based discovery. It can have multiple exclusion 
+selectors. The Collector will exclude a resource if any of the exclusion selectors match.
 
 ```yaml
 discovery:
@@ -71,7 +71,7 @@ Discovery rules encompass a few distinct aspects:
 - *Selectors*: The criteria for identifying matching kubernetes resources using container images, resource labels and/or namespaces.
 - *Plugin Type*: The [type](#plugin-types) of source plugin to use for collecting metrics from the discovered targets.
 - *Plugin Config*: Configuration information on how to collect metrics from the discovered targets.
-- *Transformations*: Adds prefix, tags and filters on the collected data before emitting them to Wavefront.
+- *Transformations*: Adds prefix, tags and filters on the collected data before emitting them to Operations for Applications.
 
 The rules can be supplied under the `discovery` section within the top-level `--config-file` or dynamically via [runtime configurations](#runtime-configurations).
 
@@ -138,7 +138,7 @@ includeLabels: <true|false>
 # filters applied towards the collected metrics before emitting them.
 filters:
   # see the filtering documentation:
-  # https://github.com/wavefrontHQ/wavefront-kubernetes-collector/blob/main/docs/filtering.md
+  # https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/docs/collector/filtering.md
 
 # custom collection interval for this rule
 collection:
