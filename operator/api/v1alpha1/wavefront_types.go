@@ -335,7 +335,7 @@ type Filters struct {
 	// List of metric patterns to allow
 	AllowList []string `json:"allowList,omitempty"`
 
-	// List of tags to keep. Supersedes all other filters.
+	// List of tags guaranteed to not be removed during kubernetes metrics collection. Supersedes all other collection filters. These tags are given priority if you hit the 20 tag limit.
 	TagGuaranteeList []string `json:"tagGuaranteeList,omitempty"`
 
 	// TODO: metricTagAllowList, metricTagDenyList, tagInclude, and tagExclude
