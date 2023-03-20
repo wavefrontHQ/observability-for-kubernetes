@@ -6,7 +6,7 @@ export # Used to let all sub-make use the initialized value of variables whose n
 PREFIX?=projects.registry.vmware.com/tanzu_observability
 DOCKER_IMAGE?=kubernetes-operator-snapshot
 
-GO_IMPORTS_BIN:=$(if $(shell which goimports),$(shell which goimports),$(GOPATH)/bin/goimports)
+GO_IMPORTS_BIN:=$(if $(which goimports),$(which goimports),$(GOPATH)/bin/goimports)
 
 OS := $(shell uname -s | tr A-Z a-z)
 
@@ -20,11 +20,11 @@ ifeq ($(origin VERSION_POSTFIX), undefined)
 VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
 
-NEXT_RELEASE_VERSION?=$(shell ../scripts/get-next-operator-version.sh)
-VERSION?=$(NEXT_RELEASE_VERSION)$(VERSION_POSTFIX)
+RELEASE_VERSION?=$(shell cat ./release/OPERATOR_VERSION)
+VERSION?=$(shell ../scripts/get-bumped-version.sh -s patch -v $(RELEASE_VERSION))$(VERSION_POSTFIX)
 IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 NS?=observability-system
-LDFLAGS=-X main.version=$(NEXT_RELEASE_VERSION)
+LDFLAGS=-X main.version=$(VERSION)
 
 OBSERVABILITY_FOR_KUBERNETES_HEADER=
 ifneq ($(TOKEN),)
@@ -155,6 +155,7 @@ docker-push: ## Push docker image with the manager.
 
 docker-copy-images:
 	@test $${SOURCE_PREFIX?Please set variable SOURCE_PREFIX}
+	docker buildx create --use --node wavefront_operator_copier_$(BUILDER_SUFFIX)
 	./hack/component-image-refs.sh | ./hack/docker/copy-image-refs.sh -d $(PREFIX) -s $(SOURCE_PREFIX)
 	echo "$(DOCKER_IMAGE):$(VERSION)" | ./hack/docker/copy-image-refs.sh -d $(PREFIX) -s $(SOURCE_PREFIX)
 
@@ -171,7 +172,7 @@ copy-base-patches:
 CONTROLLER_GEN = $(REPO_DIR)/bin/controller-gen
 .PHONY: controller-gen
 controller-gen:
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.11.3)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0)
 
 KUSTOMIZE = $(REPO_DIR)/bin/kustomize
 .PHONY: kustomize
@@ -222,7 +223,7 @@ base-kustomization-yaml: $(OPERATOR_BUILD_DIR)
 
 .PHONY: custom-kustomization-yaml
 custom-kustomization-yaml: $(OPERATOR_BUILD_DIR)
-	sed "s%YOUR_IMAGE_REGISTRY%$(PREFIX)%g" $(REPO_DIR)/dev-internal/deploy/kustomization.yaml | \
+	sed "s%YOUR_IMAGE_REGISTRY%$(PREFIX)%g" $(REPO_DIR)/deploy/kubernetes/kustomization.yaml | \
 		sed "s%YOUR_NAMESPACE%$(NS)%g" > $(KUSTOMIZATION_YAML)
 
 .PHONY: kubernetes-yaml
@@ -242,7 +243,7 @@ xplatform-kubernetes-yaml: docker-xplatform-build copy-base-patches kubernetes-y
 
 .PHONY: released-kubernetes-yaml
 released-kubernetes-yaml: copy-base-patches kubernetes-yaml
-	cp $(KUBERNETES_YAML) $(REPO_DIR)/dev-internal/deploy/wavefront-operator.yaml
+	cp $(KUBERNETES_YAML) $(REPO_DIR)/deploy/kubernetes/wavefront-operator.yaml
 
 .PHONY: kind-kubernetes-yaml
 kind-kubernetes-yaml: docker-build copy-kind-patches kubernetes-yaml
@@ -267,11 +268,35 @@ undeploy: operator-yaml
 
 .PHONY: integration-test
 integration-test: install-kube-score install-kube-linter undeploy deploy
-	(cd $(REPO_DIR)/hack/test && ./run-e2e-tests.sh -t $(WAVEFRONT_TOKEN) -d $(NS) -v $(NEXT_RELEASE_VERSION) $(INTEGRATION_TEST_ARGS))
+	(cd $(REPO_DIR)/hack/test && ./run-e2e-tests.sh -t $(WAVEFRONT_TOKEN) -d $(NS) -v $(VERSION) $(INTEGRATION_TEST_ARGS))
 
 .PHONY: clean-cluster
 clean-cluster:
 	(cd $(REPO_DIR)/hack/test && ./clean-cluster.sh)
+
+#----- GKE -----#
+GCP_PROJECT?=wavefront-gcp-dev
+GCP_REGION=us-central1
+GCP_ZONE?=c
+
+gke-connect-to-cluster: gke-cluster-name-check
+	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
+
+gke-cluster-name-check:
+	@if [ -z ${GKE_CLUSTER_NAME} ]; then echo "Need to set GKE_CLUSTER_NAME" && exit 1; fi
+
+delete-gke-cluster: gke-cluster-name-check connect-to-gke
+	echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
+	gcloud container clusters delete $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --quiet
+
+create-gke-cluster: gke-cluster-name-check connect-to-gke
+	echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
+	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=e2-standard-2 --zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 --num-nodes=$(NUMBER_OF_NODES)
+	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
+	kubectl create clusterrolebinding --clusterrole cluster-admin \
+		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
+		clusterrolebinding
+
 
 #----- AKS -----#
 aks-subscription-id-check:
@@ -297,21 +322,3 @@ docker-login-eks:
 
 target-eks: docker-login-eks
 	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
-
-# create a new branch from main
-# usage: make branch JIRA=XXXX OR make branch NAME=YYYY
-branch:
-	$(eval NAME := $(if $(JIRA),K8SSAAS-$(JIRA),$(NAME)))
-	@if [ -z "$(NAME)" ]; then \
-		echo "usage: make branch JIRA=XXXX OR make branch NAME=YYYY"; \
-		exit 1; \
-  	fi
-	git stash
-	git checkout main
-	git pull
-	git checkout -b $(NAME)
-
-git-rebase:
-	git fetch origin
-	git rebase origin/main
-	git log --oneline -n 10

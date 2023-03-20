@@ -284,6 +284,12 @@ spec:
                             items:
                               type: string
                             type: array
+                          tagGuaranteeList:
+                            description: List of tags to keep. Supersedes all other
+                              filters.
+                            items:
+                              type: string
+                            type: array
                         type: object
                       nodeCollector:
                         default:
