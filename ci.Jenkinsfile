@@ -27,7 +27,7 @@ pipeline {
         script {
           env.RUN_CI = 'false'
           collectorOperatorChanged = sh(
-            script: 'git diff --quiet --name-only --diff-filter=ADMR @~..@  -- operator scripts collector && echo false || echo true',
+            script: 'git diff --quiet --name-only --diff-filter=ADMR origin/main..@  -- operator scripts collector && echo false || echo true',
             returnStdout: true
           ).trim()
           env.RUN_CI = collectorOperatorChanged
