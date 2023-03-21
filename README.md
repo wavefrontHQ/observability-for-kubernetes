@@ -31,7 +31,7 @@ For example, Istio and MySQL metrics, Telegraf configuration, etc. are still sup
 
 ## Architecture
 
-![Observability for Kubernetes Operator Architecture](docs/images/architecture-logging.png)
+![Observability for Kubernetes Operator Architecture](docs/images/architecture-logging.jpg)
 
 # Installation
 
