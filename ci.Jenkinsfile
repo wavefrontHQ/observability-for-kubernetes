@@ -27,8 +27,10 @@ pipeline {
         script {
           env.RUN_CI = 'false'
           sh 'git show-ref'
+          sh 'git diff --name-only --diff-filter=ADMR refs/remotes/origin/main..${GIT_COMMIT}  -- operator scripts collector',
+          sh 'git diff --name-only --diff-filter=ADMR refs/remotes/origin/main..  -- operator scripts collector',
           collectorOperatorChanged = sh(
-            script: 'git diff --quiet --name-only --diff-filter=ADMR origin/main..@  -- operator scripts collector && echo false || echo true',
+            script: 'git diff --name-only --diff-filter=ADMR origin/main..${GIT_COMMIT}  -- operator scripts collector && echo false || echo true',
             returnStdout: true
           ).trim()
           env.RUN_CI = collectorOperatorChanged
