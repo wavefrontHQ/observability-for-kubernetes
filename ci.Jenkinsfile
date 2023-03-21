@@ -25,13 +25,10 @@ pipeline {
     stage("Set RUN_CI") {
       steps {
         script {
-          env.RUN_CI = 'false'
-          collectorOperatorChanged = sh(
+          env.RUN_CI = sh(
             script: 'git diff --quiet --name-only --diff-filter=ADMR origin/main..${GIT_COMMIT}  -- operator scripts collector && echo false || echo true',
             returnStdout: true
           ).trim()
-          env.RUN_CI = collectorOperatorChanged
-          sh 'echo RUN_CI: "$RUN_CI"'
         }
       }
     }
