@@ -48,7 +48,7 @@ func (km *KubernetesManager) ApplyResources(resourceYAMLs []string, exclude func
 		err = km.objClient.Get(context.Background(), util.ObjKey(object.GetNamespace(), object.GetName()), &getObj)
 		if errors.IsNotFound(err) {
 			if object.GetLabels()["app"] == "pl-monitoring" {
-				log.Log.Info(fmt.Sprintf("creating %s %s/%s", object.GetObjectKind(), object.GetNamespace(), object.GetName()))
+				log.Log.Info(fmt.Sprintf("creating %s %s/%s", object.GetKind(), object.GetNamespace(), object.GetName()))
 			}
 			err = km.objClient.Create(context.Background(), object)
 		} else if err == nil {
@@ -56,7 +56,7 @@ func (km *KubernetesManager) ApplyResources(resourceYAMLs []string, exclude func
 			diffObj.SetGroupVersionKind(*gvk)
 			patch := client.MergeFrom(&diffObj)
 			if object.GetLabels()["app"] == "pl-monitoring" {
-				log.Log.Info(fmt.Sprintf("patching %s %s/%s", object.GetObjectKind(), object.GetNamespace(), object.GetName()))
+				log.Log.Info(fmt.Sprintf("patching %s %s/%s", object.GetKind(), object.GetNamespace(), object.GetName()))
 			}
 			err = km.objClient.Patch(context.Background(), object, patch)
 		}

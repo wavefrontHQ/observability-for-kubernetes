@@ -1,7 +1,10 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
+  annotations:
+    
   labels:
+    
     app: pl-monitoring
     etcd_cluster: pl-etcd
   name: pl-etcd
@@ -16,7 +19,10 @@ spec:
   serviceName: pl-etcd
   template:
     metadata:
+      annotations:
+        
       labels:
+        
         app: pl-monitoring
         etcd_cluster: pl-etcd
         plane: control

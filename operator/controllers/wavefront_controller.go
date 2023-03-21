@@ -91,9 +91,9 @@ type WavefrontReconciler struct {
 // +kubebuilder:rbac:groups=apps,namespace=observability-system,resources=statefulsets,verbs=get;create;update;patch;delete;
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=serviceaccounts,verbs=get;create;update;patch;delete;watch;list
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=configmaps,verbs=get;create;update;patch;delete
-// +kubebuilder:rbac:groups="",namespace=observability-system,resources=secrets,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",namespace=observability-system,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=pods,verbs=get;list;watch
-// +kubebuilder:rbac:groups=batch,namespace=observability-system,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,namespace=observability-system,resources=jobs,verbs=get;list;watch;create;update;patch;:
 // +kubebuilder:rbac:groups=policy,namespace=observability-system,resources=poddisruptionbudgets,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -105,6 +105,8 @@ type WavefrontReconciler struct {
 const maxReconcileInterval = 60 * time.Second
 
 func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log.Log.Info("Reconcile start")
+	defer log.Log.Info("Reconcile end")
 	r.namespace = req.Namespace
 	wavefront := &wf.Wavefront{}
 	err := r.Client.Get(ctx, req.NamespacedName, wavefront)
@@ -227,7 +229,7 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec,
 }
 
 func allDirs() []string {
-	return dirList(true, true, true)
+	return dirList(true, true, true, true)
 }
 
 func enabledDirs(spec wf.WavefrontSpec) []string {
@@ -235,6 +237,7 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		spec.DataExport.WavefrontProxy.Enable,
 		spec.CanExportData && spec.DataCollection.Metrics.Enable,
 		spec.CanExportData && spec.DataCollection.Logging.Enable,
+		spec.Experimental.AutoInstrumentation.Enable,
 	)
 }
 
@@ -243,10 +246,11 @@ func disabledDirs(spec wf.WavefrontSpec) []string {
 		!spec.DataExport.WavefrontProxy.Enable,
 		!spec.DataCollection.Metrics.Enable,
 		!spec.DataCollection.Logging.Enable,
+		!spec.Experimental.AutoInstrumentation.Enable,
 	)
 }
 
-func dirList(proxy, collector, logging bool) []string {
+func dirList(proxy, collector, logging bool, pixie bool) []string {
 	dirsToInclude := []string{"internal"}
 	if proxy {
 		dirsToInclude = append(dirsToInclude, "proxy")
@@ -257,7 +261,9 @@ func dirList(proxy, collector, logging bool) []string {
 	if logging {
 		dirsToInclude = append(dirsToInclude, "logging")
 	}
-	dirsToInclude = append(dirsToInclude, "pixie")
+	if pixie {
+		dirsToInclude = append(dirsToInclude, "pixie")
+	}
 	return dirsToInclude
 }
 

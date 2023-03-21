@@ -62,6 +62,17 @@ type WavefrontSpec struct {
 
 	// Namespace is for internal use
 	Namespace string `json:"-"`
+
+	Experimental Experimental `json:"experimental,omitempty"`
+}
+
+type Experimental struct {
+	AutoInstrumentation AutoInstrumentation `json:"autoInstrumentation,omitempty"`
+}
+
+type AutoInstrumentation struct {
+	Enable    bool   `json:"enable,omitempty"`
+	DeployKey string `json:"deployKey,omitempty"`
 }
 
 type Metrics struct {
