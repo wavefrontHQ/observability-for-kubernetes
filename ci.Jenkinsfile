@@ -26,6 +26,7 @@ pipeline {
       steps {
         script {
           env.RUN_CI = 'false'
+          sh 'git fetch origin main'
           sh 'git show-ref'
           sh 'git branch --list'
           collectorOperatorChangeCount = sh(returnStdout: true, script: 'git rev-list --count origin/main..${BRANCH} -- **/*Jenkinsfile collector/ operator/').trim()
