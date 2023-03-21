@@ -26,8 +26,11 @@ pipeline {
       steps {
         script {
           env.RUN_CI = 'false'
-          collectorOperatorChangeCount = sh(returnStdout: true, script: 'echo $(git rev-list --count origin/rc.. -- **/*Jenkinsfile collector/ operator/)').trim()
-          env.RUN_CI = collectorOperatorChangeCount > 0
+          collectorOperatorChanged = sh(
+            script: 'git diff --quiet --name-only --diff-filter=ADMR @~..@  -- operator scripts collector && echo false || echo true',
+            returnStdout: true
+          ).trim()
+          env.RUN_CI = collectorOperatorChanged
           sh 'echo RUN_CI: "$RUN_CI"'
         }
       }
