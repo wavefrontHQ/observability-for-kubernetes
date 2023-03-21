@@ -262,6 +262,7 @@ func dirList(proxy, collector, logging bool) []string {
 }
 
 func (r *WavefrontReconciler) readAndDeleteResources() error {
+	log.Log.Info("deleting resources...")
 	r.MetricConnection.Close()
 	specToDelete := wf.WavefrontSpec{
 		Namespace: r.namespace,

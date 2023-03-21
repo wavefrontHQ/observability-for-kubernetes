@@ -2,6 +2,8 @@ package kubernetes_manager
 
 import (
 	"context"
+	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 
@@ -45,11 +47,18 @@ func (km *KubernetesManager) ApplyResources(resourceYAMLs []string, exclude func
 		getObj.SetGroupVersionKind(*gvk)
 		err = km.objClient.Get(context.Background(), util.ObjKey(object.GetNamespace(), object.GetName()), &getObj)
 		if errors.IsNotFound(err) {
+			if object.GetLabels()["app"] == "pl-monitoring" {
+				log.Log.Info(fmt.Sprintf("creating %s %s/%s", object.GetObjectKind(), object.GetNamespace(), object.GetName()))
+			}
 			err = km.objClient.Create(context.Background(), object)
 		} else if err == nil {
 			var diffObj unstructured.Unstructured
 			diffObj.SetGroupVersionKind(*gvk)
-			err = km.objClient.Patch(context.Background(), object, client.MergeFrom(&diffObj))
+			patch := client.MergeFrom(&diffObj)
+			if object.GetLabels()["app"] == "pl-monitoring" {
+				log.Log.Info(fmt.Sprintf("patching %s %s/%s", object.GetObjectKind(), object.GetNamespace(), object.GetName()))
+			}
+			err = km.objClient.Patch(context.Background(), object, patch)
 		}
 		if err != nil {
 			return err

@@ -15,7 +15,7 @@ kind: Kustomization
 images:
 - name: controller
   newName: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-snapshot
-  newTag: 2.5.0-alpha-matthewco-230320164921
+  newTag: 2.5.0-alpha-matthewco-230321143435
 
 patches:
 - path: patches.yaml
