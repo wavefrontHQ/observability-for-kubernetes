@@ -3,6 +3,7 @@ package kubernetes_manager
 import (
 	"context"
 	"fmt"
+
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
