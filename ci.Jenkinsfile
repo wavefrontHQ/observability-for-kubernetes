@@ -26,6 +26,9 @@ pipeline {
       steps {
         script {
           env.RUN_CI = 'false'
+          sh 'git branch --list'
+          sh 'git rev-list'
+          sh 'git diff --quiet --name-only --diff-filter=ADMR origin/main..@  -- operator scripts collector'
           collectorOperatorChanged = sh(
             script: 'git diff --quiet --name-only --diff-filter=ADMR origin/main..@  -- operator scripts collector && echo false || echo true',
             returnStdout: true
