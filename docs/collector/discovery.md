@@ -10,7 +10,7 @@ Pods/Services can be discovered based on annotations and discovery rules. Discov
 * [Use Cases](#use-cases)
 * [Disabling Discovery](#disabling-auto-discovery)
 
-## Annotation based discovery
+## Annotation Based Discovery
 **Note**: Annotation based discovery is only supported for prometheus endpoints currently.
 
 [Annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/) are metadata you attach to Kubernetes objects. Amongst other uses, they can act as pointers for monitoring tools.
@@ -30,7 +30,7 @@ Additional annotations that apply:
 
 See an [example](../../collector/deploy/examples/prometheus-annotations-example.yaml) for how to annotate a pod with the above annotations.
 
-### Disabling annotation discovery
+### Disabling Annotation Discovery
 Discovery based on annotations is enabled by default, but can be disabled by setting the `disable_annotation_discovery` configuration option to `true`:
 
 ```
@@ -38,7 +38,7 @@ discovery:
   disable_annotation_discovery: true
 ```
 
-### Excluding annotation discovered resources
+### Excluding Annotation Discovered Resources
 
 The Kubernetes Metrics Collector can exclude resources from being detected by annotation-based discovery. It can have multiple exclusion 
 selectors. The Collector will exclude a resource if any of the exclusion selectors match.
@@ -66,18 +66,18 @@ discovery:
     - default
 ```
 
-## Rule based discovery
+## Rule Based Discovery
 Discovery rules encompass a few distinct aspects:
 - *Selectors*: The criteria for identifying matching kubernetes resources using container images, resource labels and/or namespaces.
 - *Plugin Type*: The [type](#plugin-types) of source plugin to use for collecting metrics from the discovered targets.
 - *Plugin Config*: Configuration information on how to collect metrics from the discovered targets.
-- *Transformations*: Adds prefix, tags and filters on the collected data before emitting them to Operations for Applications.
+- *Transformations*: Adds prefix, tags, and filters on the collected data before emitting the data to the Operations for Applications service.
 
 The rules can be supplied under the `discovery` section within the top-level `--config-file` or dynamically via [runtime configurations](#runtime-configurations).
 
 The collector fetches all the pods/services on startup. It also listens for runtime changes. The rules that match a pod/service are used to collect metrics from the matching targets.
 
-### Configuration file
+### Configuration File
 Source: [configs.go](../../collector/internal/discovery/configs.go)
 
 The configuration file is YAML based. Each rule has the following structure:

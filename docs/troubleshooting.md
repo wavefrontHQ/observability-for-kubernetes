@@ -6,15 +6,15 @@ Get help when you have problems with your Kubernetes setup. This page is divided
 2. [Missing or incomplete data flowing into Operations for Applications](#missing-or-incomplete-data-flowing-into-operations-for-applications)
 3. [Running workloads not being discovered or monitored](#running-workloads-not-being-discovered-or-monitored)
 
-For an in depth overview of the integration and how it is deployed, please refer to our [github page](https://github.com/wavefrontHQ/observability-for-kubernetes).
+For an in depth overview of the integration and how it is deployed, please refer to our [GitHub page](https://github.com/wavefrontHQ/observability-for-kubernetes).
 
-**Note:** If you are currently using the helm managed and installed version of the Wavefront Proxy and Collector, please refer to our legacy troubleshooting guide for instructions on how to troubleshoot your integration.
+**Note:** If you are currently using the Helm managed and installed version of the Wavefront proxy and Collector, please refer to our legacy troubleshooting guide for instructions on how to troubleshoot your integration.
 
-## No data flowing into Operations for Applications
+## No Data Flowing into Operations for Applications
 
 If you have identified that there is a problem with data flowing into Operations for Applications, please follow the steps below.
 
-### Check Observability for Kubernetes Operator status locally
+### Check Observability for Kubernetes Operator Status Locally
 ```
 kubectl get wavefront -n observability-system
 ```
@@ -24,16 +24,16 @@ NAME        STATUS    PROXY           CLUSTER-COLLECTOR   NODE-COLLECTOR   LOGGI
 wavefront   Healthy   Running (1/1)   Running (1/1)       Running (3/3)    Running (3/3)   3h3m   All components are healthy
 ```
 
-### Proxy not running or unhealthy
+### Proxy Not Running or Unhealthy
 
-The Wavefront Proxy forwards logs, metrics, traces and spans from all other components to Operations for Applications. No data flowing into Operations for Applications likely means the proxy is failing.
+The Wavefront proxy forwards logs, metrics, traces and spans from all other components to Operations for Applications. No data flowing into Operations for Applications means that the proxy might be failing.
 
-Check the Proxy logs for errors
+Check the proxy logs for errors
 ```
 kubectl logs deployment/wavefront-proxy -n observability-system | grep ERROR
 ```
 
-### Common Proxy log errors
+### Common Proxy Log Errors
 
 #### HTTP 401 Unauthorized
 Run the following command to get your current token and follow resolution steps highlighted in [HTTP 401 Unauthorized ERROR Message](https://docs.wavefront.com/proxies_troubleshooting.html#proxy-error-messages)
@@ -43,10 +43,10 @@ Confirm that your Wavefront API token is correctly configured
 kubectl get secrets wavefront-secret -n observability-system -o json | jq '.data' | cut -d '"' -f 4 | tr -d '{}' | base64 --decode
 ```
 
-#### Unknown host or Unable to check in
+#### Unknown Host or Unable to Check In
 - *Without an HTTP Proxy*
 
-  - Check that you configured the correct Wavefront URL in your Observability for Kubernetes Operator Custom Resource
+  - Check that you configured the correct `wavefrontUrl` in your `Wavefront` Custom Resource
     ```
     kubectl -n observability-system get wavefront -o=jsonpath='{.items[*].spec.wavefrontUrl}'
     ```
@@ -68,7 +68,7 @@ kubectl get secrets wavefront-secret -n observability-system -o json | jq '.data
     ```
   - Check your HTTP proxy logs
 
-### Cluster or node collector not running or unhealthy
+### Cluster or Node Collector Not Running or Unhealthy
 
 Check the logs for errors
 ```
@@ -76,21 +76,21 @@ kubectl logs deployment/wavefront-cluster-collector -n observability-system
 kubectl logs daemonset/wavefront-node-collector -n observability-system
 ```
 
-### Logging is not running or unhealthy
+### Logging is Not Running or Unhealthy
 
 Check the logs for errors
 ```
 kubectl logs daemonset/wavefront-logging -n observability-system
 ```
 
-## Missing or incomplete data flowing into Operations for Applications
+## Missing or Incomplete Data Flowing Into Operations for Applications
 
 If you are experiencing gaps in data, where expected metrics or metric tags are not showing, please review the following steps.
 
 **Note:** For out of the box Kubernetes Control Plane dashboard, certain managed Kubernetes environments do not support collecting metrics of all control plane elements. For detailed information, please refer to our [supported metrics page](https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/docs/metrics.md#control-plane-metrics).
 
-### Are all components Healthy?
-Check Observability for Kubernetes Operator status locally to determine if all components are healthy by using the below command,
+### Are All Components Healthy?
+Check the Observability for Kubernetes Operator status locally to determine if all components are healthy by using the below command:
 ```
 kubectl get wavefront -n observability-system
 ```
@@ -101,14 +101,14 @@ wavefront   Healthy   Running (1/1)   Running (1/1)       Running (3/3)    Runni
 ```
 Verify that the `STATUS` column is `Healthy` and all the requested resources are running i.e., `Running (1/1)`.
 
-### Is there a Proxy backlog?
+### Is There a Proxy Backlog?
 
 You can check if the proxy is having backlog issues by following the instructions on [406 - Cannot Post Push Data WARN Message](https://docs.wavefront.com/proxies_troubleshooting.html#proxy-warn-messages). 
 If your proxy is having backlog issues, below are some options for fixes:
 - Filter more metrics - Refer [this example scenario](../deploy/scenarios/wavefront-collector-filtering.yaml) for filtering metrics
 - Increase limits - Contact VMware Aria Operations for Applications Support to request a higher backend limit as suggested in [406 - Cannot Post Push Data WARN Message](https://docs.wavefront.com/proxies_troubleshooting.html#proxy-warn-messages)
 
-### Are metrics being dropped?
+### Are Metrics Being Dropped?
 
 Formerly, we would see the following error in the proxy logs when a metric has too many tags: `Too many point tags`.
 However, logic has been added to the collector to automatically drop tags in priority order
@@ -126,7 +126,7 @@ This is the order of the logic used to drop tags:
 1. (As a last resort) tag key matches IaaS-specific tags, after keys have been sorted
    (`"kubernetes.azure.com/agentpool": "agentpool"`, `"topology.gke.io/zone": "us-central1-c"`, `"eksctl.io/nodegroup-name": "arm-group"`, etc.).
 
-### Are Metrics being filtered?
+### Are Metrics Being Filtered?
 
 Check custom resource configuration for verifying the metrics that are being filtered, by running the below command.
 ```
@@ -142,7 +142,7 @@ kubectl get wavefront -n observability-system
 ```
 If there are any configuration or validation errors, the `MESSAGE` column in the result will describe the error.
 
-## Running workloads not being discovered or monitored
+## Running Workloads Not Being Discovered or Monitored
 
 - Check the Kubernetes Metrics Collector Troubleshooting dashboard in the Kubernetes integration for collection errors. The `Collection Errors per Type` chart and `Collection Errors per Endpoint` chart can be used to find the sources whose metrics are not being collected
 - Refer to [this](../deploy/scenarios/wavefront-full-config.yaml) example scenario for configuring sources for metric collection

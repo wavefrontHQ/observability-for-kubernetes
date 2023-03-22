@@ -2,7 +2,7 @@
 
 The Kubernetes Metrics Collector is configured via command-line flags and a configuration file.
 
-Starting with version 1.0, most command line flags have been deprecated in favor of a top-level configuration file.
+Starting with version 1.0, most command line flags are deprecated in favor of a top-level configuration file.
 
 ## Flags
 
@@ -17,7 +17,7 @@ Usage of ./wavefront-collector:
                                        Less than 1 for default (number of cores)
 ```
 
-## Configuration file
+## Configuration File
 
 Source: [config.go](../../collector/internal/configuration/config.go)
 
@@ -33,7 +33,7 @@ clusterName: k8s-cluster
 # Whether auto-discovery is enabled. Defaults to true.
 enableDiscovery: true
 
-# Whether event collection is enabled. Requires Wavefront Proxy v6.0+.
+# Whether event collection is enabled. Requires Wavefront proxy v6.0+.
 enableEvents: false
 
 # The global interval at which data is flushed. Defaults to 60 seconds.
@@ -113,10 +113,10 @@ events:
   # see the filtering documentation for details
 ```
 
-### `Wavefront` sink
+### `Wavefront` Sink
 
 ```yaml
-# The Wavefront Proxy address of the form 'hostname:port'.
+# The Wavefront proxy address of the form 'hostname:port'.
 proxyAddress: wavefront-proxy.default.svc.cluster.local:2878
 
 # Wavefront URL of the form https:YOUR_INSTANCE.wavefront.com. Only required for direct ingestion.
@@ -230,9 +230,9 @@ unitDenyList:
 - 'etc*'
 ```
 
-### Common properties
+### Common Properties
 
-#### Prefix, tags and filters
+#### Prefix, Tags, and Filters
 
 All sources and sinks support the following common properties:
 
@@ -280,7 +280,7 @@ filters:
   - image
 ```
 
-#### Custom collection intervals
+#### Custom Collection Intervals
 
 All sources support using a custom collection interval:
 
@@ -293,12 +293,12 @@ collection:
   timeout: 20s
 ```
 
-##### CA cert configuration
+##### CA Certificate Configuration
 
 To enable the HTTP proxy with CA cert, you will need to create a Kubernetes secret with your CA cert file:
 
 ```kubectl create secret generic http-proxy-secret -n wavefront --from-file=tls-root-ca-bundle=<YOUR_CA_CERT_FILE>```
 
-Then use this [example](../../collector/deploy/examples/6-wavefront-proxy-with-http-proxy.yaml) to deploy the Wavefront Proxy.
+Then use this [example](../../collector/deploy/examples/6-wavefront-proxy-with-http-proxy.yaml) to deploy the Wavefront proxy.
 
 **Note:** You will need to change YOUR_CLUSTER, YOUR_API_TOKEN, YOUR_HTTP_PROXY_HOST, and YOUR_HTTP_PROXY_PORT in the above example.

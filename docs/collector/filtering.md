@@ -10,7 +10,7 @@ The Kubernetes Metrics Collector supports filtering metrics and events. Filters 
 
 ## Metrics Filtering
 
-The Kubernetes Metrics Collector supports filtering metrics before they are reported to Operations for Applications. The following filtering options are supported for metrics:
+The Kubernetes Metrics Collector supports filtering metrics before they are reported to the Operations for Applications service. The following filtering options are supported for metrics:
 
   * **metricAllowList**: List of glob patterns. Only metrics with names matching this list are reported.
   * **metricDenyList**: List of glob patterns. Metrics with names matching this list are dropped.
@@ -101,7 +101,7 @@ discovery_configs:
 
 ## Events Filtering
 
-The Kubernetes Metrics Collector also supports filtering events before they are reported to Operations for Applications. The following filtering options are supported for events:
+The Kubernetes Metrics Collector also supports filtering events before they are reported to the Operations for Applications service. The following filtering options are supported for events:
 
 * **tagAllowList**: Map of tag names to list of glob patterns. Only events containing tag keys and values matching the list will be reported.
 * **tagDenyList**: Map of tag names to list of glob patterns. Events containing these tag keys and values will be dropped.
