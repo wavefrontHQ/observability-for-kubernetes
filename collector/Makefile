@@ -1,5 +1,4 @@
 include ../Makefile
-include make/k8s-envs/*.mk
 
 PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
 DOCKER_IMAGE?=kubernetes-collector
@@ -45,6 +44,56 @@ all: container
 .PHONY: fmt
 fmt: $(GO_IMPORTS_BIN)
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
+
+COLLECTOR_REPO_ROOT=$(shell git rev-parse --show-toplevel)/collector
+
+deploy-targets:
+	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/deploy-targets.sh)
+
+clean-targets:
+	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/uninstall-targets.sh)
+
+clean-deployment:
+	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/uninstall-wavefront-helm-release.sh)
+	@(cd $(TEST_DIR) && ./clean-deploy.sh)
+
+k8s-env:
+	@echo "\033[92mK8s Environment: $(shell kubectl config current-context)\033[0m"
+
+k8s-nodes-arch:
+	kubectl get nodes --label-columns='kubernetes.io/arch'
+
+delete-images:
+ifeq ($(K8S_ENV), Kind)
+	make delete-images-kind
+endif
+
+push-to-kind: container
+	echo $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
+
+	@kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
+
+cover-push-to-kind: cover-container
+	echo $(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
+
+	@kind load docker-image $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) --name kind
+
+delete-images-kind:
+	@docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
+
+push-images:
+ifeq ($(K8S_ENV), Kind)
+	make push-to-kind
+else
+	make docker-xplatform-build
+endif
+
+cover-push-images:
+ifeq ($(K8S_ENV), Kind)
+	make cover-push-to-kind
+else
+	make docker-xplatform-build
+endif
 
 # TODO: exclude certain keys from sorting
 # because we want them to be at the top and visible when we open the file!
