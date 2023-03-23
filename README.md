@@ -52,7 +52,7 @@ To install the integration, you must use the [kubectl](https://kubernetes.io/doc
    kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
    ```
 
-2. Create a Kubernetes secret with your Operations for Applications token.
+2. Create a Kubernetes secret with your Wavefront API token.
    See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
    ```
    kubectl create -n observability-system secret generic wavefront-secret --from-literal token=YOUR_WAVEFRONT_TOKEN

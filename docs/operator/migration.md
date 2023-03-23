@@ -111,7 +111,7 @@ kubectl apply -f <path_to_your_wavefront.yaml>
 * Copy and save your existing Collector configMaps and any other configurations.
 * Uninstall your currently deployed Collector and Wavefront proxy.
 * Make sure the Observability for Kubernetes Operator is already installed.
-* Create a Kubernetes secret with your Wavefront Token `kubectl create -n observability-system secret generic wavefront-secret --from-literal token=YOUR_WAVEFRONT_TOKEN`
+* Create a Kubernetes secret with your Wavefront API Token `kubectl create -n observability-system secret generic wavefront-secret --from-literal token=YOUR_WAVEFRONT_TOKEN`
 
 Most of the proxy configurations could be set using environment variables for proxy container.
 Here are the different proxy environment variables and how they map to the Operator config.
