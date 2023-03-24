@@ -4,7 +4,7 @@ pipeline {
   }
 
   tools {
-    go 'Go 1.18'
+    go 'Go 1.19'
   }
 
   environment {
@@ -150,7 +150,7 @@ pipeline {
 //             timeout(time: 30, unit: 'MINUTES')
 //           }
 //           tools {
-//             go 'Go 1.18'
+//             go 'Go 1.19'
 //           }
 //           environment {
 //             DOCKER_IMAGE = "kubernetes-collector"
