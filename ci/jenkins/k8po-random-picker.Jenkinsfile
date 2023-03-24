@@ -4,10 +4,11 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '15'))
   }
   triggers {
-    // MST 4:00 PM (UTC -7) converted to UTC, every Sunday to Thursday.
+    // 4:44PM in Denver Timezone, every Monday to Friday.
     // See: https://www.jenkins.io/doc/book/pipeline/syntax/#cron-syntax
     // MINUTE(0-59) HOUR(0-23) DOM(1-31) MONTH(1-12) DOW(0-7)
-    cron('0 23 * * 0-4')
+    cron '''TZ=America/Denver
+44 16 * * 1-5'''
   }
   stages {
     stage('Randomize Team') {
@@ -22,7 +23,7 @@ pipeline {
           }
 
           // Prevent the same person from being selected twice in a row.
-          (rotating_off, staying_on) = currentBuild.getPreviousBuild().description.tokenize(',') //'Ginwoo,John'.tokenize(',')
+          (rotating_off, staying_on) = currentBuild.getPreviousBuild().description.tokenize(',')
           todays_team -= rotating_off
           Collections.shuffle todays_team
           todays_team += rotating_off
