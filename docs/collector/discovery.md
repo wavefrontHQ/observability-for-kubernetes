@@ -17,6 +17,8 @@ Pods/Services can be discovered based on annotations and discovery rules. Discov
 
 The collector can dynamically discover pods/services annotated with `prometheus.io/scrape` set to **true**. Additional annotations can be provided to inform the collector on how to perform the collection and what prefix and tags to add to the emitted metrics.
 
+**Note**: To scrape all pods behind a Kubernetes service, annotate all the pods with `prometheus.io/scrape: true`. Applying the annotation on a Kubernetes service will exhibit scrape behavior according to the load balancer algorithm of the service (e.g. random pod selected).
+
 Additional annotations that apply:
 - `prometheus.io/scheme`: Defaults to **http**.
 - `prometheus.io/path`: Defaults to **/metrics**.
