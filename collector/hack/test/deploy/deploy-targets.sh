@@ -21,6 +21,9 @@ kubectl apply -f cpu-throttled-prom-example.yaml >/dev/null
 kubectl apply -f pending-pod-cannot-be-scheduled.yaml >/dev/null
 kubectl apply -f pending-pod-image-cannot-be-loaded.yaml >/dev/null
 kubectl apply -f running-pod-crash-loop-backoff.yaml >/dev/null
+kubectl apply -f running-pod.yaml >/dev/null
+kubectl apply -f running-pod-large-init-container.yaml >/dev/null
+kubectl apply -f running-pod-small-init-container.yaml >/dev/null
 
 kubectl delete -f jobs.yaml &>/dev/null || true
 kubectl apply -f jobs.yaml >/dev/null

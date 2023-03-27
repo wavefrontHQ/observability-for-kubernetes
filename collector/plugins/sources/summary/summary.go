@@ -115,6 +115,7 @@ func (src *summaryMetricsSource) Scrape() (*Batch, error) {
 		return nil, err
 	}
 	src.addMissingRunningPodMetricSets(result, podList)
+	src.addMissingPendingScheduledPodMetricSets(result, podList)
 
 	return result, nil
 }
@@ -130,6 +131,55 @@ const (
 var systemNameMap = map[string]string{
 	stats.SystemContainerRuntime: "docker-daemon",
 	stats.SystemContainerMisc:    "system",
+}
+
+// addMissingPendingScheduledPodMetricSets makes sure that all pending pods that are scheduled (and in the kube api),
+// but are unable to start up are included in the batch even if they aren't in stats/summary (ex: image not found errors)
+func (src *summaryMetricsSource) addMissingPendingScheduledPodMetricSets(dataBatch *Batch, podList *kube_api.PodList) {
+	nodeLabels := map[string]string{
+		LabelNodename.Key: src.node.NodeName,
+		LabelHostname.Key: src.node.HostName,
+		LabelHostID.Key:   src.node.HostID,
+	}
+	for _, pod := range podList.Items {
+		if pod.Status.Phase != kube_api.PodPending {
+			continue
+		}
+
+		if podIsNotScheduled(pod) {
+			continue
+		}
+
+		podKey := PodKey(pod.Namespace, pod.Name)
+		if dataBatch.Sets[podKey] != nil {
+			continue
+		}
+
+		podMetrics := &Set{
+			Labels:              src.cloneLabels(nodeLabels),
+			Values:              map[string]Value{},
+			LabeledValues:       []LabeledValue{},
+			CollectionStartTime: pod.Status.StartTime.Time,
+			ScrapeTime:          dataBatch.Timestamp,
+		}
+
+		podMetrics.Labels[LabelMetricSetType.Key] = MetricSetTypePod
+		podMetrics.Labels[LabelPodId.Key] = string(pod.UID)
+		podMetrics.Labels[LabelPodName.Key] = pod.Name
+		podMetrics.Labels[LabelNamespaceName.Key] = pod.Namespace
+
+		dataBatch.Sets[podKey] = podMetrics
+		log.Debugf("Added Set for key: %s", podKey)
+	}
+}
+
+func podIsNotScheduled(pod kube_api.Pod) bool {
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == kube_api.PodScheduled && condition.Status == "True" {
+			return false
+		}
+	}
+	return true
 }
 
 // addMissingRunningPodMetricSets makes sure that all running pods from the kubelet api are included in the batch

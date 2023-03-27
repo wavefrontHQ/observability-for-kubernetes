@@ -66,9 +66,11 @@ func (pbe *PodBasedEnricher) Process(batch *metrics.Batch) (*metrics.Batch, erro
 			pbe.addContainerInfo(k, v, pod, batch, newMs)
 		}
 	}
+
 	for k, v := range newMs {
 		batch.Sets[k] = v
 	}
+
 	return batch, nil
 }
 
@@ -77,9 +79,11 @@ func (pbe *PodBasedEnricher) getPod(namespace, name string) (*kube_api.Pod, erro
 	if err != nil {
 		return nil, err
 	}
+
 	if pod == nil {
 		return nil, fmt.Errorf("cannot find pod definition")
 	}
+
 	return pod, nil
 }
 

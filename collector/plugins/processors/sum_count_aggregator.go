@@ -63,7 +63,7 @@ func isType(matchType string) func(*metrics.Set) bool {
 
 func podTakesUpResources(set *metrics.Set) bool {
 	labels, _ := set.FindLabels(metrics.MetricPodPhase.Name)
-	return labels["phase"] == string(corev1.PodRunning)
+	return labels["phase"] != string(corev1.PodSucceeded) && labels["phase"] != string(corev1.PodFailed)
 }
 
 func podContainerTakesUpResources(set *metrics.Set) bool {
