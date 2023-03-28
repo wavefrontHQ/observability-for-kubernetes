@@ -156,3 +156,18 @@ kubectl get pods -n px-sock-shop
    ```
    2023-03-28 21:33:10,277 INFO  [AbstractReportableEntityHandler:printStats] [4317] Spans received rate: 0 sps (1 min), 0 sps (5 min), 0 sps (current).
    ```
+
+## Uninstall Pixie
+
+To uninstall pixie:
+```shell
+px delete
+kubectl delete namespace olm
+```
+
+## Uninstall Demo Microservices App
+
+To uninstall the demo app:
+```shell
+px demo delete px-sock-shop
+```
