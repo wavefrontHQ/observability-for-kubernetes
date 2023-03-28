@@ -26,7 +26,7 @@ pipeline {
       steps {
         script {
           env.RUN_CI = sh(
-            script: 'if [[ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]]; then git diff --quiet --name-only --diff-filter=ADMR ${GIT_COMMIT}~..${GIT_COMMIT} -- operator scripts collector ci.Jenkinsfile && echo false || echo true; else git diff --quiet --name-only --diff-filter=ADMR origin/main..${GIT_COMMIT} -- operator scripts collector ci.Jenkinsfile && echo false || echo true; fi',
+            script: 'if [[ "$(git rev-parse origin/main)" == "${GIT_COMMIT}" ]]; then git diff --quiet --name-only --diff-filter=ADMR ${GIT_COMMIT}~..${GIT_COMMIT} -- operator scripts collector ci.Jenkinsfile && echo false || echo true; else git diff --quiet --name-only --diff-filter=ADMR origin/main..${GIT_COMMIT} -- operator scripts collector ci.Jenkinsfile && echo false || echo true; fi',
             returnStdout: true
           ).trim()
         }
