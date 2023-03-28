@@ -14,13 +14,8 @@ def exclude_known_namespaces(df):
   # core-dns, aws-node, etc)
   df = df[df.ctx['namespace'] != 'kube-system']
   df = df[df.ctx['namespace'] != 'observability-system']
-  df = df[df.ctx['namespace'] != 'pl']
-
-  # Exclude DataFrames from aria-k8s
-  #
-  # This namespace is where the k8s-collector and telegraf-collector live. Excluding this namespace ensures that data
-  # sent to Lemans from telegraf will not be re-reported by Pixie (since sending to Lemans happens over HTTP(s)
-  df = df[df.ctx['namespace'] != 'aria-k8s']
+  df = df[df.ctx['namespace'] != 'olm']
+  df = df[df.ctx['namespace'] != 'px-operator']
 
   return df
 
