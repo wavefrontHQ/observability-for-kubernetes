@@ -45,6 +45,8 @@ above. Note that Step 4 (logging beta) is optional and not required for Pixie da
 
 ## Install Pixie
 
+**Note:** the steps below are a condensed version of the [installation guide for Pixie Community Cloud](https://docs.px.dev/installing-pixie/install-guides/community-cloud-for-pixie/).
+
 ### 1. Sign up
 
 Visit the [product page](https://work.withpixie.ai/) and sign up.
