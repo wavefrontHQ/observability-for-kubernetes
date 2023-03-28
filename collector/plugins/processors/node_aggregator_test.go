@@ -40,10 +40,15 @@ func TestNodeAggregate(t *testing.T) {
 					metrics.LabelNamespaceName.Key: "ns1",
 					metrics.LabelNodename.Key:      "h1",
 				},
-				Values: map[string]metrics.Value{"m1": {
-					ValueType: metrics.ValueInt64,
-					IntValue:  10,
-				}},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  10,
+					},
+					"m3": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  40,
+					}},
 				LabeledValues: []metrics.LabeledValue{{
 					Name:   metrics.MetricPodPhase.Name,
 					Labels: map[string]string{"phase": string(corev1.PodSucceeded)},
@@ -116,6 +121,54 @@ func TestNodeAggregate(t *testing.T) {
 					},
 				}},
 			},
+			metrics.PodKey("ns2", "pod1"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
+					metrics.LabelNamespaceName.Key: "ns2",
+					metrics.LabelNodename.Key:      "h1",
+				},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  30,
+					},
+					"m3": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  80,
+					}},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricPodPhase.Name,
+					Labels: map[string]string{"phase": string(corev1.PodFailed)},
+					Value: metrics.Value{
+						ValueType: metrics.ValueInt64,
+						IntValue:  util.ConvertPodPhase(corev1.PodFailed),
+					},
+				}},
+			},
+			metrics.PodKey("ns2", "pod2"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
+					metrics.LabelNamespaceName.Key: "ns2",
+					metrics.LabelNodename.Key:      "h1",
+				},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  20,
+					},
+					"m3": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  50,
+					}},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricPodPhase.Name,
+					Labels: map[string]string{"phase": string(corev1.PodPending)},
+					Value: metrics.Value{
+						ValueType: metrics.ValueInt64,
+						IntValue:  util.ConvertPodPhase(corev1.PodPending),
+					},
+				}},
+			},
 			metrics.NodeKey("h1"): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypeNode,
@@ -132,8 +185,8 @@ func TestNodeAggregate(t *testing.T) {
 	node := result.Sets[metrics.NodeKey("h1")]
 	assert.NotNil(t, node)
 
-	assert.Equal(t, int64(100), node.Values["m1"].IntValue)
-	assert.Equal(t, int64(30), node.Values["m3"].IntValue)
-	assert.Equal(t, int64(1), node.Values[metrics.MetricPodCount.Name].IntValue)
+	assert.Equal(t, int64(120), node.Values["m1"].IntValue)
+	assert.Equal(t, int64(80), node.Values["m3"].IntValue)
+	assert.Equal(t, int64(2), node.Values[metrics.MetricPodCount.Name].IntValue)
 	assert.Equal(t, int64(1), node.Values[metrics.MetricPodContainerCount.Name].IntValue)
 }

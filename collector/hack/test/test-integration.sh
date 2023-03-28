@@ -1,4 +1,3 @@
-
 #!/bin/bash -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)

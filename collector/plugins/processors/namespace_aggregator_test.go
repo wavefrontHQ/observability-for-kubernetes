@@ -104,6 +104,52 @@ func TestNamespaceAggregate(t *testing.T) {
 					IntValue:  10,
 				}},
 			},
+			metrics.PodKey("ns1", "pod3"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
+					metrics.LabelNamespaceName.Key: "ns1",
+				},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  30,
+					},
+					"m3": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  80,
+					}},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricPodPhase.Name,
+					Labels: map[string]string{"phase": string(corev1.PodFailed)},
+					Value: metrics.Value{
+						ValueType: metrics.ValueInt64,
+						IntValue:  util.ConvertPodPhase(corev1.PodFailed),
+					},
+				}},
+			},
+			metrics.PodKey("ns1", "pod4"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
+					metrics.LabelNamespaceName.Key: "ns1",
+				},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  20,
+					},
+					"m3": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  50,
+					}},
+				LabeledValues: []metrics.LabeledValue{{
+					Name:   metrics.MetricPodPhase.Name,
+					Labels: map[string]string{"phase": string(corev1.PodPending)},
+					Value: metrics.Value{
+						ValueType: metrics.ValueInt64,
+						IntValue:  util.ConvertPodPhase(corev1.PodPending),
+					},
+				}},
+			},
 		},
 	}
 	processor := NewNamespaceAggregator([]string{"m1", "m3"})
@@ -114,8 +160,8 @@ func TestNamespaceAggregate(t *testing.T) {
 	namespace := result.Sets[metrics.NamespaceKey("ns1")]
 	assert.NotNil(t, namespace)
 
-	assert.Equal(t, int64(100), namespace.Values["m1"].IntValue)
-	assert.Equal(t, int64(30), namespace.Values["m3"].IntValue)
-	assert.Equal(t, int64(1), namespace.Values[metrics.MetricPodCount.Name].IntValue)
+	assert.Equal(t, int64(120), namespace.Values["m1"].IntValue)
+	assert.Equal(t, int64(80), namespace.Values["m3"].IntValue)
+	assert.Equal(t, int64(2), namespace.Values[metrics.MetricPodCount.Name].IntValue)
 	assert.Equal(t, int64(1), namespace.Values[metrics.MetricPodContainerCount.Name].IntValue)
 }

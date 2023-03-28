@@ -56,7 +56,7 @@ func (aggregator *PodAggregator) Process(batch *metrics.Batch) (*metrics.Batch, 
 		podName, found := metricSet.Labels[metrics.LabelPodName.Key]
 		ns, found2 := metricSet.Labels[metrics.LabelNamespaceName.Key]
 		if !found || !found2 {
-			log.Errorf("No namespace and/or pod info in container %s: %v", key, metricSet.Labels)
+			log.Errorf("No namespace and/or pod info in container %s for pod aggregator: %v", key, metricSet.Labels)
 			continue
 		}
 
@@ -122,8 +122,12 @@ func (aggregator *PodAggregator) podMetricSet(labels map[string]string) *metrics
 	}
 }
 
-func NewPodAggregator() *PodAggregator {
+func NewPodAggregator(additionalMetricsToSkip []string) *PodAggregator {
 	skipped := make(map[string]struct{})
+	for _, metric := range additionalMetricsToSkip {
+		skipped[metric] = struct{}{}
+	}
+
 	for _, metric := range metrics.StandardMetrics {
 		if metric.MetricDescriptor.Type == metrics.Cumulative ||
 			metric.MetricDescriptor.Type == metrics.Delta {

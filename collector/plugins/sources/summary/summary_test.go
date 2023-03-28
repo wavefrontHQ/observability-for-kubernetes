@@ -118,10 +118,6 @@ var nodeInfo = NodeInfo{
 	KubeletVersion: "1.2",
 }
 
-type fakeSource struct {
-	scraped bool
-}
-
 func TestScrapeSummaryMetrics(t *testing.T) {
 	summary := stats.Summary{
 		Node: stats.NodeStats{
@@ -333,19 +329,190 @@ func TestAddMissingRunningPodMetricSets(t *testing.T) {
 	})
 }
 
+func TestAddMissingPendingScheduledPodMetricSets(t *testing.T) {
+	statusStartTime := metav1.NewTime(startTime)
+
+	podList := v1.PodList{
+		Items: []v1.Pod{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "running-pod",
+					Namespace: namespace0,
+					UID:       "running-pod UID",
+				},
+				Status: v1.PodStatus{
+					Phase:      v1.PodRunning,
+					Conditions: []v1.PodCondition{},
+					StartTime:  &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "running-and-scheduled-pod",
+					Namespace: namespace0,
+					UID:       "running-pod UID",
+				},
+				Status: v1.PodStatus{
+					Phase: v1.PodRunning,
+					Conditions: []v1.PodCondition{
+						{
+							Type:   v1.PodScheduled,
+							Status: "True",
+						},
+					},
+					StartTime: &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pending-scheduled-pod",
+					Namespace: namespace0,
+				},
+				Status: v1.PodStatus{
+					Phase: v1.PodPending,
+					Conditions: []v1.PodCondition{
+						{
+							Type:   v1.PodScheduled,
+							Status: "True",
+						},
+					},
+					StartTime: &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pending-nonscheduled-pod",
+					Namespace: namespace0,
+				},
+				Status: v1.PodStatus{
+					Phase: v1.PodPending,
+					Conditions: []v1.PodCondition{
+						{
+							Type:   v1.PodScheduled,
+							Status: "False",
+						},
+					},
+					StartTime: &statusStartTime,
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "pending-unscheduled-pod",
+					Namespace: namespace0,
+				},
+				Status: v1.PodStatus{
+					Phase: v1.PodPending,
+					Conditions: []v1.PodCondition{
+						{
+							Type:   v1.PodScheduled,
+							Status: "False",
+						},
+					},
+					StartTime: &statusStartTime,
+				},
+			},
+		},
+	}
+
+	ms := testingSummaryMetricsSource(1234)
+
+	dataBatch := &core.Batch{
+		Timestamp: time.Now(),
+		Sets:      map[core.ResourceKey]*core.Set{},
+	}
+
+	t.Run("handles empty pod list", func(t *testing.T) {
+		dataBatch.Sets = map[core.ResourceKey]*core.Set{}
+		emptyPodList := v1.PodList{
+			Items: []v1.Pod{},
+		}
+		ms.addMissingPendingScheduledPodMetricSets(dataBatch, &emptyPodList)
+		assert.Equal(t, 0, len(dataBatch.Sets))
+	})
+
+	t.Run("only adds pending pods", func(t *testing.T) {
+		dataBatch.Sets = map[core.ResourceKey]*core.Set{}
+		ms.addMissingPendingScheduledPodMetricSets(dataBatch, &podList)
+
+		// the pending pod is added
+		_, present := dataBatch.Sets[core.PodKey(namespace0, "pending-scheduled-pod")]
+		assert.True(t, present)
+
+		// the running pods are not added
+		assert.Equal(t, 1, len(dataBatch.Sets))
+	})
+
+	t.Run("skips if not condition scheduled/True", func(t *testing.T) {
+		dataBatch.Sets = map[core.ResourceKey]*core.Set{}
+		ms.addMissingPendingScheduledPodMetricSets(dataBatch, &podList)
+
+		// the pending-nonscheduled-pod pod is not added
+		_, present := dataBatch.Sets[core.PodKey(namespace0, "pending-nonscheduled-pod")]
+		assert.False(t, present)
+	})
+
+	t.Run("skips if already in data batch", func(t *testing.T) {
+		dataBatch.Sets = map[core.ResourceKey]*core.Set{}
+
+		preExistingPod := v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "pending-scheduled-pod",
+				Namespace: namespace0,
+				UID:       "uid-databatch",
+			},
+			Status: v1.PodStatus{
+				Phase: v1.PodPending,
+				Conditions: []v1.PodCondition{
+					{
+						Type:   v1.PodScheduled,
+						Status: "True",
+					},
+				},
+				StartTime: &statusStartTime,
+			},
+		}
+
+		addFakePodMetric(dataBatch, ms, preExistingPod)
+		assert.Equal(t, 1, len(dataBatch.Sets))
+
+		preExistingPod.UID = "uid-podlist"
+
+		pods := v1.PodList{
+			Items: []v1.Pod{preExistingPod},
+		}
+
+		ms.addMissingRunningPodMetricSets(dataBatch, &pods)
+		assert.Equal(t, 1, len(dataBatch.Sets))
+
+		// Make sure the UID has not been changed
+		podMetrics := dataBatch.Sets[core.PodKey(namespace0, "pending-scheduled-pod")]
+		assert.Equal(t, "uid-databatch", podMetrics.Labels[core.LabelPodId.Key])
+	})
+
+	t.Run("pod metrics values", func(t *testing.T) {
+		dataBatch.Sets = map[core.ResourceKey]*core.Set{}
+
+		ms.addMissingPendingScheduledPodMetricSets(dataBatch, &podList)
+		podMetrics := dataBatch.Sets[core.PodKey(namespace0, "pending-scheduled-pod")]
+		indexOfPendingScheduledPod := 2
+		pod := podList.Items[indexOfPendingScheduledPod]
+
+		assert.Equal(t, core.MetricSetTypePod, podMetrics.Labels[core.LabelMetricSetType.Key])
+		assert.Equal(t, pod.Status.StartTime.Time, podMetrics.CollectionStartTime)
+		assert.Equal(t, dataBatch.Timestamp, podMetrics.ScrapeTime)
+		assert.Equal(t, pod.Name, podMetrics.Labels[core.LabelPodName.Key])
+		assert.Equal(t, pod.Namespace, podMetrics.Labels[core.LabelNamespaceName.Key])
+		assert.Equal(t, ms.node.NodeName, podMetrics.Labels[core.LabelNodename.Key])
+		assert.Equal(t, ms.node.HostName, podMetrics.Labels[core.LabelHostname.Key])
+		assert.Equal(t, ms.node.HostID, podMetrics.Labels[core.LabelHostID.Key])
+	})
+}
+
 func TestDecodeEphemeralStorageStatsForContainer(t *testing.T) {
 	ms := testingSummaryMetricsSource(1234)
 	rootFs := &stats.FsStats{}
 	logs := &stats.FsStats{}
 	assert.NotPanics(t, func() { ms.decodeEphemeralStorageStatsForContainer(nil, rootFs, logs) })
-}
-
-// test support functions
-func (f *fakeSource) Name() string { return "fake" }
-
-func (f *fakeSource) ScrapeMetrics() (*core.Batch, error) {
-	f.scraped = true
-	return nil, nil
 }
 
 func testingSummaryMetricsSource(port uint) *summaryMetricsSource {

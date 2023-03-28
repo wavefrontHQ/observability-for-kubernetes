@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: running-pod
+    exclude-me: "true"
+  name: running-pod
+  namespace: collector-targets
+spec:
+  containers:
+  - name: container
+    image: busybox
+    resources:
+      requests:
+        memory: 50Mi
+        cpu: 50m
+        ephemeral-storage: 256Mi
+      limits:
+        memory: 75Mi
+        cpu: 75m
+        ephemeral-storage: 512Mi
+    args: [ /bin/sh, -c,
+            'i=0; while true; do echo "$i: $(date)\n"; echo "nextline"; i=$((i+1)); sleep 1; done' ]
