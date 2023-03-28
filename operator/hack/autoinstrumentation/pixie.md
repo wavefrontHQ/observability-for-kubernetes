@@ -3,22 +3,56 @@
 These instructions will guide you through setting up zero-instrumentation of a Kubernetes cluster via
 Pixie technology.
 
+## Prerequisites
+
+GKE is the only supported Kuberenetes provider right now. In addition, your cluster needs to conform to the following:
+
+- Minimum of five nodes.
+- Node VMs need a minimum of 4 vCPUs (`e2-standard-4`).
+
+
+## Install Operations for Applications Kubernetes Integration
+
+Follow Steps 1 and 2 in the [README](/README.md#installation) to deploy the Operator into your Kubernetes cluster.
+
+For Step 3, create a `wavefront.yaml` file with your Wavefront Custom Resource configuration. The
+simplest configuration to enable collection of Pixie data is:
+
+```yaml
+# Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
+apiVersion: wavefront.com/v1alpha1
+kind: Wavefront
+metadata:
+  name: wavefront
+  namespace: observability-system
+spec:
+  clusterName: YOUR_CLUSTER_NAME
+  wavefrontUrl: YOUR_WAVEFRONT_URL
+  dataCollection:
+    metrics:
+      enable: true
+  dataExport:
+    wavefrontProxy:
+      enable: true
+      otlp:
+        grpcPort: 4317
+        resourceAttrsOnMetricsIncluded: true
+```
+
+Continue following the installation through Step 6 to deploy the Collector and Proxy with the `wavefront.yaml`
+above. Note that Step 4 (logging beta) is optional and not required for Pixie data collection.
+
+
 ## Install Pixie
 
 ### 1. Sign up
 
 Visit the [product page](https://work.withpixie.ai/) and sign up.
 
-**Note:** use Google Login to be in a shared org with other teammates on the same domain.
+**Note:** use `Sign-up With Google` to be in a shared org with other teammates on the same domain.
 
 
-### 2. Set up a Kubernetes cluster
-
-GKE is the only supported provider right now. 
-- Minimum of five nodes.
-- Node VMs need a minimum of 4 vCPUs (`e2-standard-4`).
-
-### 3. Install the Pixie CLI
+### 2. Install the Pixie CLI
 
 ```bash
 # Copy and run command to install the Pixie CLI.
@@ -27,7 +61,7 @@ bash -c "$(curl -fsSL https://withpixie.ai/install.sh)"
 
 For alternate installation options, refer to the [Pixie CLI installation docs](https://docs.px.dev/installing-pixie/install-schemes/cli/).
 
-### 4. Deploy Pixie
+### 3. Deploy Pixie
 
 Pixie uses Operator Lifecycle Manager, and it is assumed your Kubernetes cluster does not have an
 existing OLM installed.
@@ -71,37 +105,6 @@ px-operator         pixie-operator-index
 px-operator         vizier-operator
 ```
 
-
-## Install Operations for Applications Kubernetes Integration
-
-Follow Steps 1 and 2 in the [README](/README.md#installation) to deploy the Operator into your Kubernetes cluster.
-
-For Step 3, create a `wavefront.yaml` file with your Wavefront Custom Resource configuration. The
-simplest configuration to enable collection of Pixie data is:
-
-```yaml
-# Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
-apiVersion: wavefront.com/v1alpha1
-kind: Wavefront
-metadata:
-  name: wavefront
-  namespace: observability-system
-spec:
-  clusterName: YOUR_CLUSTER_NAME
-  wavefrontUrl: YOUR_WAVEFRONT_URL
-  dataCollection:
-    metrics:
-      enable: true
-  dataExport:
-    wavefrontProxy:
-      enable: true
-      otlp:
-        grpcPort: 4317
-        resourceAttrsOnMetricsIncluded: true
-```
-
-Continue following the installation through Step 6 to deploy the Collector and Proxy with the `wavefront.yaml`
-above. Note that Step 4 (logging beta) is optional and not required for Pixie data collection.
 
 ## Deploy a Demo Microservices App
 
