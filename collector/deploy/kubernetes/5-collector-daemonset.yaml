@@ -30,7 +30,7 @@ spec:
 
       containers:
       - name: wavefront-collector
-        image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector:1.14.0
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector:COLLECTOR_VERSION
         imagePullPolicy: IfNotPresent
         command:
         - /wavefront-collector

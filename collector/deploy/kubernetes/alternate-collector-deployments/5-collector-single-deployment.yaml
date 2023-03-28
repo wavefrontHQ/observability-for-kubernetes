@@ -20,7 +20,7 @@ spec:
       serviceAccountName: wavefront-collector
       containers:
       - name: wavefront-collector
-        image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector:1.14.0
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector:COLLECTOR_VERSION
         imagePullPolicy: Always
         command:
         - /wavefront-collector
