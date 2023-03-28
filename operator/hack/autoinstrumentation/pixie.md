@@ -79,10 +79,10 @@ but may be suitable for a small cluster with limited resources.
 px deploy --help
 
 # Deploy the Pixie Platform in your K8s cluster (No OLM present on cluster).
-px deploy
+px deploy --cluster_name=YOUR_CLUSTER_NAME
 
 # Deploy Pixie with a specific memory limit (2Gi is the default, 1Gi is the minimum recommended)
-px deploy --pem_memory_limit=2.5Gi
+px deploy --pem_memory_limit=2.5Gi --cluster_name=YOUR_CLUSTER_NAME
 ```
 
 Pixie deploys the following pods to your cluster. Note that the number of `vizier-pem` pods 
@@ -138,12 +138,21 @@ kubectl get pods -n px-sock-shop
 5. Select `OpenTelemetry` in the `Plugin` field.
 6. Choose your cluster from the `Clusters` field.
 7. Set the `Summary Window (Seconds)` field to `60`.
+8. If the `Export URL` isn't already set to `wavefront-proxy.observability-system.svc.cluster.local:4317`, put that value in this field.
 8. Replace the contents of the `PxL` field with the script at [/operator/hack/autoinstrumentation/spans.pxl](/operator/hack/autoinstrumentation/spans.pxl).
 9. Click the `CREATE` button.
-10. To validate that the data is being received by the Wavefront proxy, check logs for the the `wavefront-proxy-*` pod. If the plugin configuration was successful, you should see logs: 
-```
-2022-04-15T21:17:27.530Z    INFO    loggingexporter/logging_exporter.go:54    MetricsExporter    {"#metrics": 32}
-2022-04-15T21:17:37.570Z    INFO    loggingexporter/logging_exporter.go:54    MetricsExporter    {"#metrics": 30}
-2022-04-15T21:17:47.609Z    INFO    loggingexporter/logging_exporter.go:54    MetricsExporter    {"#metrics": 29}
-2022-04-15T21:17:57.449Z    INFO    loggingexporter/logging_exporter.go:54    MetricsExporter    {"#metrics": 29}
-```
+10. To validate that the data is being received by the Wavefront proxy, check logs for the the `wavefront-proxy` pod.
+
+   `kubectl logs deployment/wavefront-proxy -n observability-system | grep "Spans received rate:"`
+
+   If the plugin configuration was successful, you should see logs like:
+   ```
+   2023-03-28 21:33:10,277 INFO  [AbstractReportableEntityHandler:printStats] [4317] Spans received rate: 0 sps (1 min), <1 sps (5 min), 0 sps (current).
+   2023-03-28 21:33:40,277 INFO  [AbstractReportableEntityHandler:printStats] [4317] Spans received rate: 6 sps (1 min), 2 sps (5 min), 0 sps (current).
+   2023-03-28 21:34:10,276 INFO  [AbstractReportableEntityHandler:printStats] [4317] Spans received rate: 6 sps (1 min), 1 sps (5 min), 0 sps (current).
+   ```
+   
+   If the installation was unsuccessful, you may see three zeros:
+   ```
+   2023-03-28 21:33:10,277 INFO  [AbstractReportableEntityHandler:printStats] [4317] Spans received rate: 0 sps (1 min), 0 sps (5 min), 0 sps (current).
+   ```
