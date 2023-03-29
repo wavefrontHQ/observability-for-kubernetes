@@ -10,6 +10,7 @@ GO_IMPORTS_BIN:=$(if $(shell which goimports),$(shell which goimports),$(GOPATH)
 
 OS := $(shell uname -s | tr A-Z a-z)
 
+GOLANGCI_LINT_VERSION:="1.52.2"
 ifeq ($(OS), darwin)
 DARWIN_GOLANGCI_LINT_BIN:=$(or $(shell which golangci-lint),"/usr/local/bin/golangci-lint")
 else
@@ -98,6 +99,10 @@ checkfmt: $(GO_IMPORTS_BIN)
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: delete-old-linter
+delete-old-linter: ## Add as a prerequisite for linux-golangci-lint if you bump GOLANGCI_LINT_VERSION
+	if command -v golangci-lint; then if [ ${GOLANGCI_LINT_VERSION} != `golangci-lint --version|cut -w -f 4` ]; then echo rm `which golangci-lint`; fi; fi
+
 .PHONY: golangci-lint
 golangci-lint: $(OS)-golangci-lint
 	golangci-lint run
@@ -109,10 +114,10 @@ $(DARWIN_GOLANGCI_LINT_BIN):
 	brew install golangci-lint
 
 .PHONY: linux-golangci-lint
-linux-golangci-lint: $(LINUX_GOLANGCI_LINT_BIN)
+linux-golangci-lint: delete-old-linter $(LINUX_GOLANGCI_LINT_BIN)
 
 $(LINUX_GOLANGCI_LINT_BIN):
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v1.52.2
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v${GOLANGCI_LINT_VERSION}
 
 .PHONY: test
 test: manifests generate fmt vet ## Run tests.
