@@ -42,7 +42,7 @@ For example, Istio and MySQL metrics, Telegraf configuration, etc. are still sup
 To install the integration, you must use the [kubectl](https://kubernetes.io/docs/tasks/tools/) tool.
 
 
-## Deploy the Observability for Applications Kubernetes Agents with the Observability for Kubernetes Operator
+## Deploy the Monitoring Agents with the Observability for Kubernetes Operator
 
 1. Install the Observability for Kubernetes Operator into the `observability-system` namespace.
 
