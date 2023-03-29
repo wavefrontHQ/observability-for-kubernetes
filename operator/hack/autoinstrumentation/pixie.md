@@ -5,10 +5,11 @@ Pixie technology.
 
 ## Prerequisites
 
-GKE is the only supported Kuberenetes provider right now. In addition, your cluster needs to conform to the following:
-
+A Kubernetes cluster:
 - Minimum of five nodes.
-- Node VMs need a minimum of 4 vCPUs (`e2-standard-4`).
+- Node VMs need a minimum of 4 vCPUs. For example, the GCP machine type of `e2-standard-4`.
+
+Refer to Pixie's [Setting up Kubernetes](https://docs.px.dev/installing-pixie/setting-up-k8s/) and [Requirements](https://docs.px.dev/installing-pixie/requirements/) documentation for more details.
 
 
 ## Install Operations for Applications Kubernetes Integration
