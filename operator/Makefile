@@ -120,7 +120,7 @@ $(DARWIN_GOLANGCI_LINT_BIN):
 	brew install golangci-lint
 
 .PHONY: linux-golangci-lint
-linux-golangci-lint: delete-old-linter $(LINUX_GOLANGCI_LINT_BIN)
+linux-golangci-lint: $(LINUX_GOLANGCI_LINT_BIN)
 
 $(LINUX_GOLANGCI_LINT_BIN):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v${GOLANGCI_LINT_VERSION}
