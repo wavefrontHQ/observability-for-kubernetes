@@ -102,9 +102,10 @@ vet: ## Run go vet against code.
 .PHONY: delete-old-linter
 delete-old-linter: ## Add as a prerequisite for linux-golangci-lint if you bump GOLANGCI_LINT_VERSION
 	$(eval LINT_VERSION := $(if $(shell command -v golangci-lint),$(shell golangci-lint version | awk '{print $$4}'),))
-	@if [ ${GOLANGCI_LINT_VERSION} != "$(LINT_VERSION)" ]; then \
-		if which golangci-lint >/dev/null; then \
-			rm $(shell which golangci-lint) || true; \
+	if [ ${GOLANGCI_LINT_VERSION} != "$(LINT_VERSION)" ]; then \
+		if which golangci-lint; then \
+			echo "Deleting golangci-lint version: $(LINT_VERSION)"; \
+			rm -f "$(shell which golangci-lint)" || true; \
 		fi; \
 	fi
 
