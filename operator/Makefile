@@ -105,7 +105,7 @@ delete-old-linter: ## Add as a prerequisite for linux-golangci-lint if you bump 
 	if [ ${GOLANGCI_LINT_VERSION} != "$(LINT_VERSION)" ]; then \
 		if which golangci-lint; then \
 			echo "Deleting golangci-lint version: $(LINT_VERSION)"; \
-			rm -f "$(shell which golangci-lint)" || true; \
+			sudo rm -f "$(shell which golangci-lint)" || true; \
 		fi; \
 	fi
 
