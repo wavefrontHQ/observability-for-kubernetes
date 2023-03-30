@@ -9,10 +9,13 @@ NS=wavefront-collector
 
 function curl_query_to_wf_dashboard() {
   local query=$1
+  local AFTER_UNIX_TS="$(date '+%s')000"
+
   # NOTE: any output inside this function is concatenated and used as the return value;
   # otherwise we would love to put a log such as this in here to give us more information:
   # echo "=============== Querying '$WF_CLUSTER' for query '${query}'"
-  curl -X GET --header "Accept: application/json" \
+  curl --silent --show-error -X GET \
+    --header "Accept: application/json" \
     --header "Authorization: Bearer $WAVEFRONT_TOKEN" \
     "https://$WF_CLUSTER.wavefront.com/api/v2/chart/api?q=${query}&queryType=WQL&s=$AFTER_UNIX_TS&g=s&view=METRIC&sorted=false&cached=true&useRawQK=false" |
     jq '.timeseries[0].data[0][1]'
@@ -87,7 +90,6 @@ function exit_on_fail() {
 function main() {
   cd "${SCRIPT_DIR}" # hack/test
 
-  local AFTER_UNIX_TS="$(date '+%s')000"
   local MAX_QUERY_TIMES=30
   local CURL_WAIT=15
 
