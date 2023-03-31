@@ -218,7 +218,10 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec,
 		if err != nil {
 			return nil, err
 		}
-		resources = append(resources, buffer.String())
+
+		if buffer.Len() != 0 {
+			resources = append(resources, buffer.String())
+		}
 	}
 	return resources, nil
 }

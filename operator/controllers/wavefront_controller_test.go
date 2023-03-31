@@ -540,6 +540,7 @@ func TestReconcileCollector(t *testing.T) {
 
 		require.False(t, mockKM.NodeCollectorDaemonSetContains("etcd-certs"))
 	})
+
 	t.Run("does not add the etcd secrets as a volume for the node collector when control plane metrics are disabled", func(t *testing.T) {
 		r, mockKM := componentScenario(
 			wftest.CR(func(w *wf.Wavefront) {

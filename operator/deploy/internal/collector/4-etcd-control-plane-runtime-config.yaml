@@ -1,0 +1,36 @@
+{{- if .DataCollection.Metrics.ControlPlane.EnableEtcd }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etcd-control-plane-config
+  namespace: {{ .Namespace }}
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: wavefront-controller-manager
+    uid: {{ .ControllerManagerUID }}
+  annotations:
+    wavefront.com/discovery-config: 'true'
+data:
+  collector.yaml: |
+    plugins:
+    - name: etcd-discovery
+      type: prometheus
+      selectors:
+        images:
+        - '*etcd:*'
+        labels:
+          component:
+          - etcd
+          tier:
+          - control-plane
+      port: 2379
+      path: /metrics
+      scheme: https
+      prefix: kubernetes.etcd.
+      conf: |
+        tls_config:
+          ca_file: '/etc/etcd-certs/ca.crt'
+          cert_file: '/etc/etcd-certs/peer.crt'
+          key_file: '/etc/etcd-certs/peer.key'
+{{- end }}
