@@ -540,6 +540,29 @@ func TestReconcileCollector(t *testing.T) {
 
 		require.False(t, mockKM.NodeCollectorDaemonSetContains("etcd-certs"))
 	})
+	t.Run("does not add the etcd secrets as a volume for the node collector when control plane metrics are disabled", func(t *testing.T) {
+		r, mockKM := componentScenario(
+			wftest.CR(func(w *wf.Wavefront) {
+				w.Spec.DataCollection.Metrics.ControlPlane.Enable = false
+			}),
+			&v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "etcd-certs",
+					Namespace: wftest.DefaultNamespace,
+				},
+				Data: map[string][]byte{
+					"ca.crt":   []byte("some-ca-cert"),
+					"peer.crt": []byte("some-peer-cert"),
+					"peer.key": []byte("some-peer-key"),
+				},
+			},
+		)
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.False(t, mockKM.NodeCollectorDaemonSetContains("etcd-certs"))
+	})
 }
 
 func TestReconcileProxy(t *testing.T) {
