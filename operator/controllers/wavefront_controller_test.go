@@ -505,6 +505,41 @@ func TestReconcileCollector(t *testing.T) {
 			},
 		)
 	})
+
+	t.Run("adds the etcd secrets as a volume for the node collector when there is an etcd-certs secret in the same namespace", func(t *testing.T) {
+		r, mockKM := componentScenario(
+			wftest.CR(),
+			&v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "etcd-certs",
+					Namespace: wftest.DefaultNamespace,
+				},
+				Data: map[string][]byte{
+					"ca.crt":   []byte("some-ca-cert"),
+					"peer.crt": []byte("some-peer-cert"),
+					"peer.key": []byte("some-peer-key"),
+				},
+			},
+		)
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		daemonSet, err := mockKM.GetAppliedDaemonSet("node-collector", util.NodeCollectorName)
+		require.NoError(t, err)
+
+		volumeMountHasPath(t, daemonSet.Spec.Template.Spec.Containers[0], "etcd-certs", "/etc/etcd-certs/", "DaemonSet", daemonSet.Name)
+		volumeHasSecret(t, daemonSet.Spec.Template.Spec.Volumes, "etcd-certs", "etcd-certs", "DaemonSet", daemonSet.Name)
+	})
+
+	t.Run("does not add the etcd secrets as a volume for the node collector when there is no etcd-certs secret in the same namespace", func(t *testing.T) {
+		r, mockKM := componentScenario(wftest.CR())
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.False(t, mockKM.NodeCollectorDaemonSetContains("etcd-certs"))
+	})
 }
 
 func TestReconcileProxy(t *testing.T) {
@@ -717,7 +752,7 @@ func TestReconcileProxy(t *testing.T) {
 		deployment, err := mockKM.GetAppliedDeployment("proxy", util.ProxyName)
 		require.NoError(t, err)
 
-		volumeMountHasPath(t, deployment, "preprocessor", "/etc/wavefront/preprocessor")
+		volumeMountHasPath(t, deployment.Spec.Template.Spec.Containers[0], "preprocessor", "/etc/wavefront/preprocessor", "Deployment", deployment.Name)
 		volumeHasConfigMap(t, deployment, "preprocessor", "preprocessor-rules")
 	})
 
@@ -802,7 +837,7 @@ func TestReconcileProxy(t *testing.T) {
 		containsProxyArg(t, "--proxyPassword myPassword", *mockKM)
 
 		initContainerVolumeMountHasPath(t, deployment, "http-proxy-ca", "/tmp/ca")
-		volumeHasSecret(t, deployment, "http-proxy-ca", "testHttpProxySecret")
+		volumeHasSecret(t, deployment.Spec.Template.Spec.Volumes, "http-proxy-ca", "testHttpProxySecret", "Deployment", deployment.Name)
 
 		require.NotEmpty(t, deployment.Spec.Template.GetObjectMeta().GetAnnotations()["configHash"])
 	})
@@ -1063,14 +1098,14 @@ func CanBeDisabled(t *testing.T, wfCR *wf.Wavefront, existingResources ...runtim
 	})
 }
 
-func volumeMountHasPath(t *testing.T, deployment appsv1.Deployment, name, path string) {
-	for _, volumeMount := range deployment.Spec.Template.Spec.Containers[0].VolumeMounts {
+func volumeMountHasPath(t *testing.T, container v1.Container, name, path string, objectKind string, objectName string) {
+	for _, volumeMount := range container.VolumeMounts {
 		if volumeMount.Name == name {
 			require.Equal(t, path, volumeMount.MountPath)
 			return
 		}
 	}
-	require.Failf(t, "could not find volume mount", "could not find volume mount named %s on deployment %s", name, deployment.Name)
+	require.Failf(t, "could not find volume mount", "could not find volume mount named %s on %s %s", name, objectKind, objectName)
 }
 
 func volumeHasConfigMap(t *testing.T, deployment appsv1.Deployment, name string, configMapName string) {
@@ -1083,14 +1118,14 @@ func volumeHasConfigMap(t *testing.T, deployment appsv1.Deployment, name string,
 	require.Failf(t, "could not find volume", "could not find volume named %s on deployment %s", name, deployment.Name)
 }
 
-func volumeHasSecret(t *testing.T, deployment appsv1.Deployment, name string, secretName string) {
-	for _, volume := range deployment.Spec.Template.Spec.Volumes {
+func volumeHasSecret(t *testing.T, volumes []v1.Volume, name string, secretName string, objectKind string, objectName string) {
+	for _, volume := range volumes {
 		if volume.Name == name {
 			require.Equal(t, secretName, volume.Secret.SecretName)
 			return
 		}
 	}
-	require.Failf(t, "could not find secret", "could not find secret named %s on deployment %s", name, deployment.Name)
+	require.Failf(t, "could not find secret", "could not find secret named %s on %s %s", name, objectKind, objectName)
 }
 
 func initContainerVolumeMountHasPath(t *testing.T, deployment appsv1.Deployment, name, path string) {
