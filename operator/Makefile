@@ -32,6 +32,7 @@ ifneq ($(TOKEN),)
 OBSERVABILITY_FOR_KUBERNETES_HEADER=-H "Authorization: token $(TOKEN)"
 endif
 
+MONOREPO_DIR=$(shell git rev-parse --show-toplevel)
 REPO_DIR=$(shell git rev-parse --show-toplevel)/operator
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
@@ -218,7 +219,12 @@ endef
 
 OPERATOR_BUILD_DIR:=$(REPO_DIR)/build/operator
 
+ifeq (Kind,$(shell $(MONOREPO_DIR)/scripts/get-k8s-cluster-env.sh))
 OPERATOR_YAML_TYPE?=kind
+else
+OPERATOR_YAML_TYPE?=xplatform
+endif
+
 KUBERNETES_YAML:=$(OPERATOR_BUILD_DIR)/wavefront-operator.yaml
 
 KUSTOMIZATION_TYPE?=base
