@@ -100,7 +100,7 @@ type Transforms struct {
 	Filters filter.Config `yaml:"filters"`
 
 	// ConvertHistograms causes Prometheus Histograms to be sent as WF Histograms instead of a collection of points.
-	ConvertHistograms bool `yaml:"convert-histograms"`
+	ConvertHistograms bool `yaml:"convertHistograms"`
 }
 
 // Configuration options for the Wavefront sink

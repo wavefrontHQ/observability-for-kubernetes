@@ -1,0 +1,33 @@
+# Need to change YOUR_CLUSTER_NAME, YOUR_WAVEFRONT_URL, YOUR_HTTP_PROXY_URL, YOUR_HTTP_PROXY_BASIC_AUTH_USERNAME, YOUR_HTTP_PROXY__BASIC_AUTH_PASSWORD, YOUR_HTTP_PROXY_CA_CERTIFICATE   accordingly
+apiVersion: wavefront.com/v1alpha1
+kind: Wavefront
+metadata:
+  name: wavefront
+  namespace: observability-system
+spec:
+  clusterName: YOUR_CLUSTER_NAME
+  wavefrontUrl: YOUR_WAVEFRONT_URL
+  dataCollection:
+    metrics:
+      enable: true
+  dataExport:
+    wavefrontProxy:
+      enable: true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: etcd-certs
+  namespace: observability-system
+type: Opaque
+stringData:
+  # The location of these certificates on the control plane host filesystem
+  # depends on your distribution. Check your distribution documentation for
+  # how to access them. See https://kubernetes.io/docs/setup/best-practices/certificates/#single-root-ca
+  # as an example.
+  ca.crt: |
+    CONTROL_PLANE_ETCD_CA_CERTIFICATE
+  peer.crt: |
+    CONTROL_PLANE_ETCD_PEER_CERTIFICATE
+  peer.key: |
+    CONTROL_PLANE_ETCD_PEER_KEY
