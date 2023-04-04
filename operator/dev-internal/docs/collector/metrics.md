@@ -221,8 +221,6 @@ Metrics collected per type:
 | kubernetes.node.cpu.node_utilization (node_role="control-plane")    | CPU utilization as a share of the contol-plane node allocatable in millicores.                                                | Not available in AKS, EKS, GKE  |
 | kubernetes.node.memory.working_set (node_role="control-plane")      | Total working set usage of the control-plane node. Working set is the memory being used and not easily dropped by the kernel. | Not available in AKS, EKS, GKE  |
 | kubernetes.node.filesystem.usage (node_role="control-plane")        | Total number of bytes consumed on a filesyste of the control-plane node                                                       | Not available in AKS, EKS, GKE  |
-| kubernetes.controlplane.apiserver.storage.objects.gauge             | etcd object counts                                                                                                            | Not available from kubernetes release version 1.23 onwards  |
-| kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge           | etcd database size                                                                                                            | -                               |
 | kubernetes.controlplane.apiserver.request.duration.seconds.bucket   | Histogram buckets for API server request latency                                                                              | -                               |
 | kubernetes.controlplane.apiserver.request.duration.seconds          | API server request latency as a [Wavefront Histogram](https://docs.wavefront.com/proxies_histograms.html)                     | -                               |
 | kubernetes.controlplane.apiserver.request.total.counter             | API server total request count                                                                                                | -                               |
@@ -232,3 +230,18 @@ Metrics collected per type:
 | kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket | Histogram buckets for CoreDNS request latency                                                                                 | Not available in GKE, OpenShift |
 | kubernetes.controlplane.coredns.dns.request.duration.seconds        | CoreDNS request latency as a [Wavefront Histogram](https://docs.wavefront.com/proxies_histograms.html)                        | Not available in GKE, OpenShift |
 | kubernetes.controlplane.coredns.dns.responses.total.counter         | CoreDNS total response count                                                                                                  | Not available in GKE, OpenShift |
+
+### etcd Metrics
+
+Metrics collected for etcd:
+
+| Metric Name                                                             | Description                       | K8s environment exceptions                                  |
+|-------------------------------------------------------------------------|-----------------------------------|-------------------------------------------------------------|
+| kubernetes.controlplane.apiserver.storage.objects.gauge                 | etcd object counts                | Not available from kubernetes release version 1.23 onwards  |
+| kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge               | etcd database size                | -                                                           |
+| kubernetes.controlplane.etcd.server.has.leader.gauge                    | etcd has a leader                 | Not available in AKS, EKS, GKE                              |
+| kubernetes.controlplane.etcd.server.leader.changes.seen.total.counter   | etcd leader changes               | Not available in AKS, EKS, GKE                              |
+| kubernetes.controlplane.etcd.server.proposals.failed.total.counter      | etcd concensus propopsal          | Not available in AKS, EKS, GKE                              |
+| kubernetes.controlplane.etcd.disk.backend.commit.duration.seconds.bucket | etcd Disk sync duration           | Not available in AKS, EKS, GKE                              |
+| kubernetes.controlplane.etcd.disk.wal.fsync.duration.seconds.bucket     | etcd Disk sync duration           | Not available in AKS, EKS, GKE                              |
+| kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds       | etcd Network peer round trip time | Not available in AKS, EKS, GKE                              |
