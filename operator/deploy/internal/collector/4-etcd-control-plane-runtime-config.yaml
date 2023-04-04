@@ -27,7 +27,7 @@ data:
       port: 2379
       path: /metrics
       scheme: https
-      prefix: kubernetes.controlplane.etcd.
+      prefix: kubernetes.controlplane.
       convertHistograms: true
       conf: |
         tls_config:
