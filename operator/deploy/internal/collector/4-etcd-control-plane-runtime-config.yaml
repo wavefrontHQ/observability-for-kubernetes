@@ -31,7 +31,7 @@ data:
       convertHistograms: true
       conf: |
         tls_config:
-          ca_file: '/etc/etcd-certs/ca.crt'
-          cert_file: '/etc/etcd-certs/server.crt'
-          key_file: '/etc/etcd-certs/server.key'
+          ca_file: '/etc/etcd-certs/ca_crt'
+          cert_file: '/etc/etcd-certs/server_crt'
+          key_file: '/etc/etcd-certs/server_key'
 {{- end }}

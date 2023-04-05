@@ -4,7 +4,7 @@ apiVersion: wavefront.com/v1alpha1
 kind: Wavefront
 metadata:
   name: wavefront
-  namespace: observability-system
+  namespace: YOUR_NAMESPACE
 spec:
   clusterName: YOUR_CLUSTER_NAME
   wavefrontUrl: YOUR_WAVEFRONT_URL
@@ -20,7 +20,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: etcd-certs
-  namespace: observability-system
+  namespace: YOUR_NAMESPACE
 type: Opaque
 stringData:
   # The location of these certificates on the control plane host filesystem depends on your distribution.

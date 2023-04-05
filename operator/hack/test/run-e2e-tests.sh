@@ -5,6 +5,7 @@ source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)/operator
 source "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/egress-proxy-setup-functions.sh"
+source "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-cert-setup-functions.sh"
 
 NS=observability-system
 NO_CLEANUP=false
@@ -29,6 +30,18 @@ function setup_test() {
     echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
     yq eval '.stringData.tls-root-ca-bundle = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/mitmproxy-ca-cert.pem)"'"' "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/https-proxy-secret.yaml" >> hack/test/_v1alpha1_wavefront_test.yaml
   fi
+
+  if [[ "$type" == 'control-plane-with-etcd-certs' ]]; then
+    deploy_etcd_certs_printer
+    create_etcd_cert_file
+    yq -i eval '.stringData.ca_crt = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/ca.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml"
+    yq -i eval '.stringData.server_crt = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/server.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml"
+    yq -i eval '.stringData.server_key = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/server.key)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml"
+    echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
+    cat "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml" >> hack/test/_v1alpha1_wavefront_test.yaml
+
+  fi
+
 
   kubectl apply -f hack/test/_v1alpha1_wavefront_test.yaml
 
@@ -325,6 +338,16 @@ function run_logging_integration_checks() {
   echo "Integration test complete. ${receivedLogCount} logs were checked."
 }
 
+
+function run_control_plane_etcd_metrics_checks() {
+  echo ""
+#  TODO: if node count is more than 1, do extra metrics checks for
+#   - kubernetes.controlplane.etcd.network.peer.received.failures.total.counter
+#   - kubernetes.controlplane.etcd.network.peer.sent.failures.total.counter
+#   - kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.bucket
+}
+
+
 function run_test() {
   local type=$1
   shift
@@ -354,6 +377,14 @@ function run_test() {
 
   if [[ " ${checks[*]} " =~ " logging-integration-checks " ]]; then
     run_logging_integration_checks
+  fi
+
+  if [[ " ${checks[*]} " =~ " control-plane-with-etcd-certs " ]]; then
+    if [[ "${K8S_ENV}" == "Kind" ]]; then
+      run_control_plane_etcd_metrics_checks
+    else
+      echo "Not running control-plane-with-etcd-certs tests on env: ${K8S_ENV}"
+    fi
   fi
 
 	if ! $NO_CLEANUP; then
@@ -425,6 +456,7 @@ function main() {
       "advanced"
       "logging-integration"
       "with-http-proxy"
+      "control-plane-with-etcd-certs"
     )
   fi
 
@@ -458,6 +490,9 @@ function main() {
   fi
   if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
+  fi
+  if [[ " ${tests_to_run[*]} " =~ " control-plane-with-etcd-certs " ]]; then
+    run_test "control-plane-with-etcd-certs"
   fi
 }
 
