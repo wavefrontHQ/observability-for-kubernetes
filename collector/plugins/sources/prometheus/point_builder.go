@@ -46,8 +46,7 @@ func NewPointBuilder(src *prometheusMetricsSource, filtered gometrics.Counter) *
 }
 
 // build converts a map of prometheus metric families by metric name to a collection of wavefront points
-// build actually never returns an error
-func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily) ([]wf.Metric, error) {
+func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily) []wf.Metric {
 	now := time.Now().Unix()
 	var result []wf.Metric
 	for metricName, mf := range metricFamilies {
@@ -66,7 +65,7 @@ func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily)
 			}
 		}
 	}
-	return result, nil
+	return result
 }
 
 func (builder *pointBuilder) point(name string, value float64, ts int64, source string, tags map[string]string) wf.Metric {
