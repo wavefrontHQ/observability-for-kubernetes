@@ -27,7 +27,7 @@ stringData:
   # as an example.
   ca.crt: |
     CONTROL_PLANE_ETCD_CA_CERTIFICATE
-  peer.crt: |
-    CONTROL_PLANE_ETCD_PEER_CERTIFICATE
-  peer.key: |
-    CONTROL_PLANE_ETCD_PEER_KEY
+  server.crt: |
+    CONTROL_PLANE_ETCD_SERVER_CERTIFICATE
+  server.key: |
+    CONTROL_PLANE_ETCD_SERVER_KEY

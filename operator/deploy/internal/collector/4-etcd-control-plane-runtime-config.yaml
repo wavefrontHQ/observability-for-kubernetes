@@ -32,6 +32,6 @@ data:
       conf: |
         tls_config:
           ca_file: '/etc/etcd-certs/ca.crt'
-          cert_file: '/etc/etcd-certs/peer.crt'
-          key_file: '/etc/etcd-certs/peer.key'
+          cert_file: '/etc/etcd-certs/server.crt'
+          key_file: '/etc/etcd-certs/server.key'
 {{- end }}
