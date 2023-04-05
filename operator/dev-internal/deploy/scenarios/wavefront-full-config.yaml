@@ -297,9 +297,9 @@ stringData:
   # The location of these certificates on the control plane host filesystem depends on your distribution.
   # Check your distribution documentation for how to access them. See the following as an example:
   # https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths
-  ca.crt: |
+  ca_crt: |
     CONTROL_PLANE_ETCD_CA_CERTIFICATE
-  server.crt: |
+  server_crt: |
     CONTROL_PLANE_ETCD_SERVER_CERTIFICATE
-  server.key: |
+  server_key: |
     CONTROL_PLANE_ETCD_SERVER_KEY
