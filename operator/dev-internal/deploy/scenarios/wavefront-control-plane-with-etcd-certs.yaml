@@ -1,4 +1,5 @@
-# Need to change YOUR_CLUSTER_NAME, YOUR_WAVEFRONT_URL, YOUR_HTTP_PROXY_URL, YOUR_HTTP_PROXY_BASIC_AUTH_USERNAME, YOUR_HTTP_PROXY__BASIC_AUTH_PASSWORD, YOUR_HTTP_PROXY_CA_CERTIFICATE   accordingly
+# Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
+# See https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/docs/collector/metrics.md#control-plane-metrics for more details
 apiVersion: wavefront.com/v1alpha1
 kind: Wavefront
 metadata:
@@ -14,6 +15,7 @@ spec:
     wavefrontProxy:
       enable: true
 ---
+# Need to change CONTROL_PLANE_ETCD_CA_CERTIFICATE, CONTROL_PLANE_ETCD_SERVER_CERTIFICATE, and CONTROL_PLANE_ETCD_SERVER_KEY accordingly
 apiVersion: v1
 kind: Secret
 metadata:
@@ -21,10 +23,9 @@ metadata:
   namespace: observability-system
 type: Opaque
 stringData:
-  # The location of these certificates on the control plane host filesystem
-  # depends on your distribution. Check your distribution documentation for
-  # how to access them. See https://kubernetes.io/docs/setup/best-practices/certificates/#single-root-ca
-  # as an example.
+  # The location of these certificates on the control plane host filesystem depends on your distribution.
+  # Check your distribution documentation for how to access them. See the following as an example:
+  # https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths
   ca.crt: |
     CONTROL_PLANE_ETCD_CA_CERTIFICATE
   server.crt: |
