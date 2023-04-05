@@ -171,6 +171,7 @@ func (src *prometheusMetricsSource) Scrape() (*metrics.Batch, error) {
 	if err != nil {
 		collectErrors.Inc(1)
 		src.eps.Inc(1)
+		// TODO bug: We shouldn't return result if there was an error
 		return result, err
 	}
 	collectedPoints.Inc(int64(result.Points()))
@@ -189,6 +190,9 @@ func (src *prometheusMetricsSource) parseMetrics(reader io.Reader) ([]wf.Metric,
 	for !metricReader.Done() {
 		var parser expfmt.TextParser
 		reader := bytes.NewReader(metricReader.Read())
+
+		// TODO bug: err is overwritten here for every metric,
+		// so whatever happens to be the last value of err is what is returned
 		metricFamilies, err := parser.TextToMetricFamilies(reader)
 		if err != nil {
 			log.Errorf("reading text format failed: %s", err)
