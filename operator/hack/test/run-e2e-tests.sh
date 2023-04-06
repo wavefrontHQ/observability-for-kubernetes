@@ -45,7 +45,6 @@ function setup_test() {
     fi
   fi
 
-
   kubectl apply -f hack/test/_v1alpha1_wavefront_test.yaml
 
   wait_for_cluster_ready "$NS"

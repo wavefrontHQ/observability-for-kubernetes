@@ -12,6 +12,7 @@ function deploy_etcd_cert_printer() {
   kubectl create namespace ${NS} > /dev/null 2>&1 || true
 
   # deploy the etcd cert printer
+  kubectl delete -f ${OPERATOR_DIR}/hack/test/control-plane/etcd-cert-printer.yaml || true
   kubectl apply -f ${OPERATOR_DIR}/hack/test/control-plane/etcd-cert-printer.yaml
 
   # wait for etcd cert printer
@@ -33,12 +34,17 @@ function create_etcd_cert_files() {
   POD_NAME=$(kubectl get pods -n default | awk 'NR==2, /etcd-cert-printer/ {print $1}')
   echo "POD NAME: $POD_NAME"
 
+  kubectl wait --for=condition=Ready pod/$POD_NAME -n default --timeout=5s &>/dev/null
+
   # get the control plane etcd certs
-  kubectl logs -p ${POD_NAME} > "${OPERATOR_DIR}/hack/test/control-plane/all_certs.txt"
+  kubectl logs ${POD_NAME} > "${OPERATOR_DIR}/hack/test/control-plane/all_certs.txt"
+  kubectl delete -f ${OPERATOR_DIR}/hack/test/control-plane/etcd-cert-printer.yam &>/dev/null || true
+
   csplit "${OPERATOR_DIR}/hack/test/control-plane/all_certs.txt" \
     '/^-----BEGIN CERTIFICATE-----$/' '/^-----BEGIN RSA PRIVATE KEY-----$/' &>/dev/null
   mv xx00 ${OPERATOR_DIR}/hack/test/control-plane/ca.crt
   mv xx01 ${OPERATOR_DIR}/hack/test/control-plane/server.crt
   mv xx02 ${OPERATOR_DIR}/hack/test/control-plane/server.key
-  rm "${OPERATOR_DIR}/hack/test/control-plane/all_certs.txt"
+  cat "${OPERATOR_DIR}/hack/test/control-plane/all_certs.txt"
+  rm "${OPERATOR_DIR}/hack/test/control-plane/all_certs.txt" || true
 }
