@@ -8,6 +8,8 @@ OPERATOR_REPO_ROOT="${REPO_ROOT}/operator"
 source "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/egress-proxy-setup-functions.sh"
 source "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-cert-setup-functions.sh"
 
+SCRIPT_DIR="${OPERATOR_REPO_ROOT}/hack/test"
+
 NS=observability-system
 NO_CLEANUP=false
 
@@ -32,12 +34,13 @@ function setup_test() {
     yq eval '.stringData.tls-root-ca-bundle = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/mitmproxy-ca-cert.pem)"'"' "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/https-proxy-secret.yaml" >> hack/test/_v1alpha1_wavefront_test.yaml
   fi
 
-  if [[ "$type" == "with-etcd-certs" ]]; then
+  if [[ "$type" == "with-etcd-certs" || "$type" == "control-plane" ]]; then
     if [[ "${K8S_ENV}" == "Kind" ]]; then
       deploy_etcd_cert_printer
       create_etcd_cert_files
 
       echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
+      curl https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/rc/operator/wavefront-operator-PR-116.yaml >> hack/test/_v1alpha1_wavefront_test.yaml
       yq eval '.stringData.ca_crt = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/ca.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml" \
         | yq eval '.stringData.server_crt = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/server.crt)"'"' - \
         | yq eval '.stringData.server_key = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/server.key)"'"' - \
@@ -70,6 +73,46 @@ function run_test_control_plane_metrics() {
 #   - kubernetes.controlplane.etcd.network.peer.received.failures.total.counter
 #   - kubernetes.controlplane.etcd.network.peer.sent.failures.total.counter
 #   - kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.bucket
+
+  local PROXY_NAME="test-proxy"
+  local SLEEP_TIME=70
+  local METRICS_FILE_DIR="${OPERATOR_REPO_ROOT}/hack/test/control-plane"
+  local METRICS_FILE_NAME=etcd-metrics
+
+  source "${REPO_ROOT}/scripts/compare-test-proxy-metrics.sh"
+
+#  TODO refactor the compare script to use function-based trap
+#  function clean_up_jobs() {
+#    if jobs -p &>/dev/null; then
+#      kill $(jobs -p) &>/dev/null || true
+#      sleep 3
+#    fi
+#  }
+#
+#  clean_up_jobs
+#  trap clean_up_jobs EXIT ERR SIGINT
+
+  # send request to the fake proxy control endpoint and check status code for success
+#  kill $(jobs -p) &>/dev/null || true
+#  kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &
+#  trap 'kill $(jobs -p) &>/dev/null || true' EXIT
+#
+#  echo "Waiting for logs ..."
+#  sleep ${SLEEP_TIME}
+#
+#  RES=$(mktemp)
+#
+#  for _ in {1..10}; do
+#    RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" \
+#      --data-binary "@$OPERATOR_REPO_ROOT/hack/test/control-plane/etcd-metrics.jsonl" \
+#      "http://localhost:8888/metrics/diff")
+#    if [[ $RES_CODE -eq 200 ]]; then
+#      break
+#    fi
+#    sleep 1
+#  done
+
+#  ${OPERATOR_REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t "${WAVEFRONT_TOKEN}" -n "${cluster_name}" -e "$type-test.sh" -o "${VERSION}"
 }
 
 function run_health_checks() {
@@ -383,6 +426,7 @@ function run_test() {
   fi
 
   if [[ " ${checks[*]} " =~ " test_control_plane_metrics " ]]; then
+#    run_test_wavefront_metrics "control-plane"
     run_test_control_plane_metrics $type
   fi
 
@@ -498,8 +542,8 @@ function main() {
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
   fi
   if [[ " ${tests_to_run[*]} " =~ " with-etcd-certs " ]]; then
-    run_test "with-etcd-certs" "test_control_plane_metrics"
-    #TODO: run_test "control-plane" "health" "test_wavefront_metrics"
+#    run_test "with-etcd-certs" "test_control_plane_metrics"
+    run_test "control-plane" "test_wavefront_metrics"
   fi
 }
 
