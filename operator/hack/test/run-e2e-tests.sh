@@ -1,9 +1,10 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
-OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)/operator
+OPERATOR_REPO_ROOT="${REPO_ROOT}/operator"
 source "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/egress-proxy-setup-functions.sh"
 source "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-cert-setup-functions.sh"
 
@@ -31,15 +32,17 @@ function setup_test() {
     yq eval '.stringData.tls-root-ca-bundle = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/mitmproxy-ca-cert.pem)"'"' "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/https-proxy-secret.yaml" >> hack/test/_v1alpha1_wavefront_test.yaml
   fi
 
-  if [[ "$type" == 'control-plane-with-etcd-certs' ]]; then
-    deploy_etcd_certs_printer
-    create_etcd_cert_file
-    yq -i eval '.stringData.ca_crt = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/ca.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml"
-    yq -i eval '.stringData.server_crt = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/server.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml"
-    yq -i eval '.stringData.server_key = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/server.key)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml"
-    echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
-    cat "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml" >> hack/test/_v1alpha1_wavefront_test.yaml
+  if [[ "$type" == "with-etcd-certs" ]]; then
+    if [[ "${K8S_ENV}" == "Kind" ]]; then
+      deploy_etcd_cert_printer
+      create_etcd_cert_files
 
+      echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
+      yq eval '.stringData.ca_crt = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/ca.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml" \
+        | yq eval '.stringData.server_crt = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/server.crt)"'"' - \
+        | yq eval '.stringData.server_key = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/server.key)"'"' - \
+        >> hack/test/_v1alpha1_wavefront_test.yaml
+    fi
   fi
 
 
@@ -53,6 +56,21 @@ function run_test_wavefront_metrics() {
   local cluster_name=${CONFIG_CLUSTER_NAME}-$type
   echo "Running test wavefront metrics, cluster_name $cluster_name, version ${VERSION}..."
   ${OPERATOR_REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t "${WAVEFRONT_TOKEN}" -n "${cluster_name}" -e "$type-test.sh" -o "${VERSION}"
+}
+
+function run_test_control_plane_metrics() {
+  local type=$1
+
+  if [[ "${K8S_ENV}" != "Kind" ]]; then
+    echo "Not running control plane metrics tests on env: ${K8S_ENV}"
+    exit 1
+  fi
+
+  echo "Running test control plane metrics '$type' ..."
+#  TODO: if node count is more than 1, do extra metrics checks for
+#   - kubernetes.controlplane.etcd.network.peer.received.failures.total.counter
+#   - kubernetes.controlplane.etcd.network.peer.sent.failures.total.counter
+#   - kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.bucket
 }
 
 function run_health_checks() {
@@ -113,6 +131,10 @@ function clean_up_test() {
 
   if [[ "$type" == "with-http-proxy" ]]; then
     delete_egress_proxy
+  fi
+
+  if [[ "$type" == "with-etcd-certs" ]]; then
+    delete_etcd_cert_printer
   fi
 
   wait_for_proxy_termination "$NS"
@@ -335,25 +357,15 @@ function run_logging_integration_checks() {
     exit 1
   fi
 
-  echo "Integration test complete. ${receivedLogCount} logs were checked."
+  yellow "Integration test complete. ${receivedLogCount} logs were checked."
 }
-
-
-function run_control_plane_etcd_metrics_checks() {
-  echo ""
-#  TODO: if node count is more than 1, do extra metrics checks for
-#   - kubernetes.controlplane.etcd.network.peer.received.failures.total.counter
-#   - kubernetes.controlplane.etcd.network.peer.sent.failures.total.counter
-#   - kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.bucket
-}
-
 
 function run_test() {
   local type=$1
   shift
   local checks=("$@")
   echo ""
-  green "Running test $type"
+  green "[$(date +%H:%M:%S)] Running test $type"
 
   setup_test $type
 
@@ -371,6 +383,10 @@ function run_test() {
     run_test_wavefront_metrics $type
   fi
 
+  if [[ " ${checks[*]} " =~ " test_control_plane_metrics " ]]; then
+    run_test_control_plane_metrics $type
+  fi
+
   if [[ " ${checks[*]} " =~ " logging " ]]; then
     run_logging_checks
   fi
@@ -379,19 +395,11 @@ function run_test() {
     run_logging_integration_checks
   fi
 
-  if [[ " ${checks[*]} " =~ " control-plane-with-etcd-certs " ]]; then
-    if [[ "${K8S_ENV}" == "Kind" ]]; then
-      run_control_plane_etcd_metrics_checks
-    else
-      echo "Not running control-plane-with-etcd-certs tests on env: ${K8S_ENV}"
-    fi
-  fi
-
 	if ! $NO_CLEANUP; then
 		clean_up_test $type
 	fi
 
-  green "Successfully ran $type test!"
+  green "[$(date +%H:%M:%S)] Successfully ran $type test!"
 }
 
 function print_usage_and_exit() {
@@ -456,7 +464,6 @@ function main() {
       "advanced"
       "logging-integration"
       "with-http-proxy"
-      "control-plane-with-etcd-certs"
     )
   fi
 
@@ -480,7 +487,7 @@ function main() {
     run_test "logging-integration" "logging-integration-checks"
   fi
   if [[ " ${tests_to_run[*]} " =~ " allow-legacy-install " ]]; then
-    run_test "allow-legacy-install" "healthy"
+    run_test "allow-legacy-install" "health"
   fi
   if [[ " ${tests_to_run[*]} " =~ " basic " ]]; then
     run_test "basic" "health" "static_analysis"
@@ -491,8 +498,9 @@ function main() {
   if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
   fi
-  if [[ " ${tests_to_run[*]} " =~ " control-plane-with-etcd-certs " ]]; then
-    run_test "control-plane-with-etcd-certs"
+  if [[ " ${tests_to_run[*]} " =~ " with-etcd-certs " ]]; then
+    run_test "with-etcd-certs" "test_control_plane_metrics"
+    #TODO: run_test "control-plane" "health" "test_wavefront_metrics"
   fi
 }
 

@@ -36,7 +36,7 @@ spec:
         args:
         - /bin/sh
         - -c
-        - 'cd /host/etc/kubernetes/pki/etcd; cat ca.crt; echo "---"; cat server.crt; echo "---"; cat server.key'
+        - 'cd /host/etc/kubernetes/pki/etcd; cat ca.crt; cat server.crt; cat server.key'
         volumeMounts:
         - mountPath: /host/etc/kubernetes/pki/etcd
           name: etcd-certs
