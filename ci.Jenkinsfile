@@ -162,9 +162,9 @@ pipeline {
               lock("integration-test-eks") {
                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
                 sh 'cd collector && make target-eks'
-                sh 'cd collector && make clean-cluster'
-                sh 'cd collector && make integration-test'
-                sh 'cd collector && make clean-cluster'
+                sh 'cd collector && make target-eks clean-cluster'
+                sh 'cd collector && make target-eks integration-test'
+                sh 'cd collector && make target-eks clean-cluster'
               }
             }
           }
