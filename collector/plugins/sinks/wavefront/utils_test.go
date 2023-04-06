@@ -199,7 +199,7 @@ func TestCleanTags(t *testing.T) {
 				"test":                                   "tester",
 				"czar":                                   "aljkssljfdk",
 				"car":                                    "aljkfdk",
-				"label.alpha.eksctl.io/cluster-name":     "k8s-saas-team-dev",
+				"label.alpha.eksctl.io/cluster-name":     "k8s-saas-team-ci",
 				"label.alpha.eksctl.io/instance-id":      "i-00ba63d14a98f141d",
 				"label.alpha.eksctl.io/nodegroup-name":   "arm-group",
 				"label.beta.kubernetes.io/arch":          "arm64",
