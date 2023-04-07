@@ -21,7 +21,6 @@ ifeq ($(origin VERSION_POSTFIX), undefined)
 VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
 
-#COLLECTOR_VERSION?=
 NEXT_RELEASE_VERSION?=$(shell ../scripts/get-next-operator-version.sh)
 VERSION?=$(NEXT_RELEASE_VERSION)$(VERSION_POSTFIX)
 IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
