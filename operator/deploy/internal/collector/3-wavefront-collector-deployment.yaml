@@ -41,7 +41,7 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
           image: {{ .ImageRegistry }}/kubernetes-collector:{{ .DataCollection.Metrics.CollectorVersion }}
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command:
             - /wavefront-collector
             - --agent=cluster
