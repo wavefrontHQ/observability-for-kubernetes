@@ -1,61 +1,3 @@
-#apiVersion: apps/v1
-#kind: Deployment
-#metadata:
-#  name: test-proxy
-#  namespace: YOUR_NAMESPACE
-#  labels:
-#    app: test-proxy
-#    name: test-proxy
-#spec:
-#  replicas: 1
-#  selector:
-#    matchLabels:
-#      app: test-proxy
-#  template:
-#    metadata:
-#      labels:
-#        app: test-proxy
-#    spec:
-#      affinity:
-#        nodeAffinity:
-#          preferredDuringSchedulingIgnoredDuringExecution:
-#          - weight: 1
-#            preference:
-#              matchExpressions:
-#              - key: kubernetes.io/arch
-#                operator: In
-#                values:
-#                - amd64
-#      containers:
-#      - name: test-proxy
-#        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:2.3.0
-#        imagePullPolicy: Always
-#        command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info" ]
-#        ports:
-#        - name: proxy-metrics
-#          containerPort: 2878
-#          protocol: TCP
-#        - name: control
-#          containerPort: 8888
-#          protocol: TCP
-#        securityContext:
-#          privileged: false
-#---
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  name: test-proxy
-#  namespace: YOUR_NAMESPACE
-#  labels:
-#    app: test-proxy
-#spec:
-#  ports:
-#  - name: wavefront
-#    port: 2878
-#    protocol: TCP
-#  selector:
-#    app: test-proxy
-#---
 apiVersion: wavefront.com/v1alpha1
 kind: Wavefront
 metadata:
@@ -72,5 +14,3 @@ spec:
   dataExport:
     wavefrontProxy:
       enable: true
-#    externalWavefrontProxy:
-#      url: test-proxy:2878

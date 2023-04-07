@@ -44,9 +44,9 @@ function setup_test() {
       echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
       echo "${OPERATOR_YAML_CONTENT}" >> hack/test/_v1alpha1_wavefront_test.yaml
       echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
-      yq eval '.stringData.ca_crt = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/ca.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml" \
-        | yq eval '.stringData.server_crt = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/server.crt)"'"' - \
-        | yq eval '.stringData.server_key = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/control-plane/server.key)"'"' - \
+      yq eval '.stringData.ca_crt = "'"$(< ${OPERATOR_REPO_ROOT}/build/ca.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml" \
+        | yq eval '.stringData.server_crt = "'"$(< ${OPERATOR_REPO_ROOT}/build/server.crt)"'"' - \
+        | yq eval '.stringData.server_key = "'"$(< ${OPERATOR_REPO_ROOT}/build/server.key)"'"' - \
         >> hack/test/_v1alpha1_wavefront_test.yaml
     fi
   fi

@@ -24,9 +24,9 @@ function deploy_etcd_cert_printer() {
 function delete_etcd_cert_printer() {
   kubectl delete -f ${OPERATOR_DIR}/hack/test/control-plane/etcd-cert-printer.yaml > /dev/null 2>&1 || true
   kubectl delete -f ${OPERATOR_DIR}/hack/test/control-plane/etcd-certs-secret.yaml > /dev/null 2>&1 || true
-  rm ${OPERATOR_DIR}/hack/test/control-plane/ca.crt > /dev/null 2>&1 || true
-  rm ${OPERATOR_DIR}/hack/test/control-plane/server.crt > /dev/null 2>&1 || true
-  rm ${OPERATOR_DIR}/hack/test/control-plane/server.key > /dev/null 2>&1 || true
+  rm "${OPERATOR_DIR}/build/ca.crt" > /dev/null 2>&1 || true
+  rm "${OPERATOR_DIR}/build/server.crt" > /dev/null 2>&1 || true
+  rm "${OPERATOR_DIR}/build/server.key" > /dev/null 2>&1 || true
 }
 
 function create_etcd_cert_files() {
@@ -37,13 +37,13 @@ function create_etcd_cert_files() {
   kubectl wait --for=condition=Ready pod/$POD_NAME -n "${NS}" --timeout=5s &>/dev/null
 
   # get the control plane etcd certs
-  kubectl logs ${POD_NAME} -n "${NS}" > "${OPERATOR_DIR}/hack/test/control-plane/all_certs.txt"
+  kubectl logs ${POD_NAME} -n "${NS}" > "${OPERATOR_DIR}/build/all_certs.txt"
   kubectl delete -f ${OPERATOR_DIR}/hack/test/control-plane/etcd-cert-printer.yaml &>/dev/null || true
 
-  csplit "${OPERATOR_DIR}/hack/test/control-plane/all_certs.txt" \
+  csplit "${OPERATOR_DIR}/build/all_certs.txt" \
     '/^-----BEGIN CERTIFICATE-----$/' '/^-----BEGIN RSA PRIVATE KEY-----$/' &>/dev/null
-  mv xx00 ${OPERATOR_DIR}/hack/test/control-plane/ca.crt
-  mv xx01 ${OPERATOR_DIR}/hack/test/control-plane/server.crt
-  mv xx02 ${OPERATOR_DIR}/hack/test/control-plane/server.key
-  rm "${OPERATOR_DIR}/hack/test/control-plane/all_certs.txt" || true
+  mv xx00 "${OPERATOR_DIR}/build/ca.crt"
+  mv xx01 "${OPERATOR_DIR}/build/server.crt"
+  mv xx02 "${OPERATOR_DIR}/build/server.key"
+  rm "${OPERATOR_DIR}/build/all_certs.txt" || true
 }
