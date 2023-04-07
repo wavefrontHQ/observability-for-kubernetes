@@ -21,7 +21,7 @@ spec:
       containers:
       - name: wavefront-collector
         image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector:1.14.0
-        imagePullPolicy: Always # TODO should we change all "Always"'s to "IfNotPresent"?
+        imagePullPolicy: Always
         command:
         - /wavefront-collector
         - --agent=all
