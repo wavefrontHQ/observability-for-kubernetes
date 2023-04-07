@@ -1,0 +1,6 @@
+2023-04-07T20:54:43Z	INFO	setup	Versions {OperatorVersion:2.5.0 CollectorVersion:1.16.0 ProxyVersion:12.1 LoggingVersion:2.0.10}
+2023-04-07T20:54:43Z	INFO	setup	starting manager
+2023-04-07T20:54:43Z	INFO	Starting server	{"kind": "health probe", "addr": "[::]:8081"}
+2023-04-07T20:54:43Z	INFO	controller.wavefront	Starting EventSource	{"reconciler group": "wavefront.com", "reconciler kind": "Wavefront", "source": "kind source: *v1alpha1.Wavefront"}
+2023-04-07T20:54:43Z	INFO	controller.wavefront	Starting Controller	{"reconciler group": "wavefront.com", "reconciler kind": "Wavefront"}
+2023-04-07T20:54:43Z	INFO	controller.wavefront	Starting workers	{"reconciler group": "wavefront.com", "reconciler kind": "Wavefront", "worker count": 1}

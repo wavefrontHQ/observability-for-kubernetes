@@ -36,7 +36,7 @@ function setup_test() {
     yq eval '.stringData.tls-root-ca-bundle = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/mitmproxy-ca-cert.pem)"'"' "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/https-proxy-secret.yaml" >> hack/test/_v1alpha1_wavefront_test.yaml
   fi
 
-  if [[ "$type" == "with-etcd-certs" || "$type" == "control-plane" ]]; then
+  if [[ "$type" == "control-plane" ]]; then
     if [[ "${K8S_ENV}" == "Kind" ]]; then
       deploy_etcd_cert_printer
       create_etcd_cert_files
@@ -64,58 +64,15 @@ function run_test_wavefront_metrics() {
 }
 
 function run_test_control_plane_metrics() {
-  local type=$1
-
+  local type='control-plane'
   if [[ "${K8S_ENV}" != "Kind" ]]; then
     echo "Not running control plane metrics tests on env: ${K8S_ENV}"
-    exit 1
+    return
   fi
 
+  local cluster_name=${CONFIG_CLUSTER_NAME}-$type
   echo "Running test control plane metrics '$type' ..."
-#  TODO: if node count is more than 1, do extra metrics checks for
-#   - kubernetes.controlplane.etcd.network.peer.received.failures.total.counter
-#   - kubernetes.controlplane.etcd.network.peer.sent.failures.total.counter
-#   - kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.bucket
-
-  local PROXY_NAME="test-proxy"
-  local SLEEP_TIME=70
-  local METRICS_FILE_DIR="${OPERATOR_REPO_ROOT}/hack/test/control-plane"
-  local METRICS_FILE_NAME=etcd-metrics
-
-  source "${REPO_ROOT}/scripts/compare-test-proxy-metrics.sh"
-
-#  TODO refactor the compare script to use function-based trap
-#  function clean_up_jobs() {
-#    if jobs -p &>/dev/null; then
-#      kill $(jobs -p) &>/dev/null || true
-#      sleep 3
-#    fi
-#  }
-#
-#  clean_up_jobs
-#  trap clean_up_jobs EXIT ERR SIGINT
-
-  # send request to the fake proxy control endpoint and check status code for success
-#  kill $(jobs -p) &>/dev/null || true
-#  kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &
-#  trap 'kill $(jobs -p) &>/dev/null || true' EXIT
-#
-#  echo "Waiting for logs ..."
-#  sleep ${SLEEP_TIME}
-#
-#  RES=$(mktemp)
-#
-#  for _ in {1..10}; do
-#    RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" \
-#      --data-binary "@$OPERATOR_REPO_ROOT/hack/test/control-plane/etcd-metrics.jsonl" \
-#      "http://localhost:8888/metrics/diff")
-#    if [[ $RES_CODE -eq 200 ]]; then
-#      break
-#    fi
-#    sleep 1
-#  done
-
-#  ${OPERATOR_REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t "${WAVEFRONT_TOKEN}" -n "${cluster_name}" -e "$type-test.sh" -o "${VERSION}"
+  ${OPERATOR_REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t "${WAVEFRONT_TOKEN}" -n "${cluster_name}" -e "$type-test.sh" -o "${VERSION}"
 }
 
 function run_health_checks() {
@@ -178,7 +135,7 @@ function clean_up_test() {
     delete_egress_proxy
   fi
 
-  if [[ "$type" == "with-etcd-certs" ]]; then
+  if [[ "$type" == "control-plane" ]]; then
     delete_etcd_cert_printer
   fi
 
@@ -429,8 +386,7 @@ function run_test() {
   fi
 
   if [[ " ${checks[*]} " =~ " test_control_plane_metrics " ]]; then
-#    run_test_wavefront_metrics "control-plane"
-    run_test_control_plane_metrics $type
+    run_test_control_plane_metrics
   fi
 
   if [[ " ${checks[*]} " =~ " logging " ]]; then
@@ -549,9 +505,8 @@ function main() {
   if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
   fi
-  if [[ " ${tests_to_run[*]} " =~ " with-etcd-certs " ]]; then
-#    run_test "with-etcd-certs" "test_control_plane_metrics"
-    run_test "control-plane" "test_wavefront_metrics"
+  if [[ " ${tests_to_run[*]} " =~ " control-plane " ]]; then
+    run_test "control-plane" "test_control_plane_metrics"
   fi
 }
 
