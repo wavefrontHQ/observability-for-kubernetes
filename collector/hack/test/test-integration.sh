@@ -214,7 +214,7 @@ function main() {
     echo "==================== Running real-proxy-metrics test ===================="
     run_real_proxy_metrics_test
   fi
-  if [[ "${tests_to_run[*]}" =~ "real-proxy" ]]; then
+  if [[ " ${tests_to_run[*]} " =~ " real-proxy " ]]; then
     echo "==================== Starting real proxy ===================="
     run_real_proxy
   fi
