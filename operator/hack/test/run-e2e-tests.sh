@@ -494,7 +494,7 @@ function main() {
     run_test "logging-integration" "logging-integration-checks"
   fi
   if [[ " ${tests_to_run[*]} " =~ " allow-legacy-install " ]]; then
-    run_test "allow-legacy-install" "health"
+    run_test "allow-legacy-install" "healthy"
   fi
   if [[ " ${tests_to_run[*]} " =~ " basic " ]]; then
     run_test "basic" "health" "static_analysis"
