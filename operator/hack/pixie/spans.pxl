@@ -15,6 +15,9 @@ def exclude_known_namespaces(df):
     # core-dns, aws-node, etc)
     df = df[df.ctx['namespace'] != 'kube-system']
     df = df[df.ctx['namespace'] != 'observability-system']
+    df = df[df.ctx['namespace'] != 'olm']
+    df = df[df.ctx['namespace'] != 'pl']
+    df = df[df.ctx['namespace'] != 'px-operator']
 
     # Exclude DataFrames from aria-k8s
     #
@@ -64,7 +67,8 @@ def exclude_ingress_traffic(df):
     df.pod_id = df.ctx['pod_id']
     df.node = df.ctx['node']
 
-    # TODO: Modify to make sure this function filters ingress correctly
+    # If remote_addr doesn't correspond to a pod, then it returns an empty string per
+    # https://docs.px.dev/reference/pxl/udf/ip_to_pod_id/#name
     df = df[px.ip_to_pod_id(df.remote_addr) != '']
 
     return df
@@ -126,10 +130,6 @@ def add_error_tag(df):
 
     return df
 
-def exclude_unknown_source(df):
-    df = df[df.source_pod != '']
-    return df
-
 df = px.DataFrame('http_events', start_time=px.plugin.start_time, end_time=px.plugin.end_time)
 
 df = exclude_known_namespaces(df)
@@ -138,13 +138,8 @@ df = exclude_egress_traffic(df)
 df = exclude_ingress_traffic(df)
 df = add_source_dest_columns(df)
 df = add_trace_headers(df)
-
 df = add_error_tag(df)
-
-df = exclude_unknown_source(df)
-
 df = df.head(15000)
-# TODO: Figure out whether "df.time_" reflects the end time of the span?
 df.start_time = df.time_ - df.latency
 
 host_header = px.pluck(df.req_headers, 'Host')
