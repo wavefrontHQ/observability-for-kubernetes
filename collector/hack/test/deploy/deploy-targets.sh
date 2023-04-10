@@ -1,4 +1,5 @@
-#! /bin/bash -e
+#!/usr/bin/env bash
+set -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
@@ -28,8 +29,12 @@ kubectl apply -f running-pod-small-init-container.yaml >/dev/null
 kubectl delete -f jobs.yaml &>/dev/null || true
 kubectl apply -f jobs.yaml >/dev/null
 
-helm repo add bitnami https://charts.bitnami.com/bitnami &>/dev/null || true
+MEMCACHED_CHART_VERSION='6.3.14'
+
+helm repo add bitnami https://charts.bitnami.com/bitnami >/dev/null || true
+helm repo update >/dev/null || true
 helm upgrade --install memcached-release bitnami/memcached \
+--version ${MEMCACHED_CHART_VERSION} \
 --set resources.requests.memory="100Mi",resources.requests.cpu="100m" \
 --set persistence.size=200Mi \
 --namespace collector-targets >/dev/null
