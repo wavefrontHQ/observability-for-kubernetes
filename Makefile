@@ -87,6 +87,7 @@ aks-connect-to-cluster: aks-subscription-id-check aks-login-check
 #----- EKS -----#
 ECR_REPO_PREFIX=tobs/k8s/saas
 WAVEFRONT_DEV_AWS_ACC_ID=095415062695
+AWS_PROFILE=wavefront-dev
 AWS_REGION=us-west-2
 ECR_ENDPOINT=$(WAVEFRONT_DEV_AWS_ACC_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 COLLECTOR_ECR_REPO=$(ECR_REPO_PREFIX)/wavefront-kubernetes-collector
@@ -96,7 +97,7 @@ ecr-host:
 	echo $(ECR_ENDPOINT)/$(ECR_REPO_PREFIX)/wavefront-kubernetes-collector
 
 docker-login-eks:
-	@aws ecr get-login-password --region $(AWS_REGION) |  docker login --username AWS --password-stdin $(ECR_ENDPOINT)
+	@aws ecr get-login-password --region $(AWS_REGION) --profile $(AWS_PROFILE) |  docker login --username AWS --password-stdin $(ECR_ENDPOINT)
 
 target-eks: docker-login-eks
-	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-ci
+	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-ci --profile $(AWS_PROFILE)
