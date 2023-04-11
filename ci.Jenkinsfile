@@ -224,10 +224,11 @@ pipeline {
             INTEGRATION_TEST_ARGS = "-r control-plane"
           }
           steps {
-            withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"])
-            lock("integration-test-kind") {
-              sh 'cd operator && make clean-cluster'
-              sh 'gcloud compute ssh --zone "us-central1-a" "k8po-ci-gcp-kind" --project "wavefront-gcp-dev" --command "whoami; cd workspace/observability-for-kubernetes/operator && make clean-cluster integration-test"'
+            withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
+              lock("integration-test-kind") {
+                sh 'cd operator && make clean-cluster'
+                sh 'gcloud compute ssh --zone "us-central1-a" "k8po-ci-gcp-kind" --project "wavefront-gcp-dev" --command "whoami; cd workspace/observability-for-kubernetes/operator && make clean-cluster integration-test"'
+              }
             }
           }
         }
