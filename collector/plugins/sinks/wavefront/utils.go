@@ -19,7 +19,7 @@ const (
 )
 
 var alphaBetaRegex = regexp.MustCompile("^label.*beta|alpha*")
-var iaasNameRegex = regexp.MustCompile("^label.*gke|azure*")
+var iaasNameRegex = regexp.MustCompile("^label.*gke|azure|eks*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
 // that lists removed tag names by their reason for removal

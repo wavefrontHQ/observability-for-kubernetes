@@ -198,7 +198,6 @@ func TestCleanTags(t *testing.T) {
 				"foo":                                    "bar",
 				"test":                                   "tester",
 				"czar":                                   "aljkssljfdk",
-				"car":                                    "aljkfdk",
 				"label.alpha.eksctl.io/cluster-name":     "k8s-saas-team-ci",
 				"label.alpha.eksctl.io/instance-id":      "i-00ba63d14a98f141d",
 				"label.alpha.eksctl.io/nodegroup-name":   "arm-group",
@@ -227,7 +226,7 @@ func TestCleanTags(t *testing.T) {
 				"foo":                                    "bar",
 				"test":                                   "tester",
 				"czar":                                   "aljkssljfdk",
-				"car":                                    "aljkfdk",
+				"label.alpha.eksctl.io/cluster-name":     "k8s-saas-team-ci",
 				"label.alpha.eksctl.io/instance-id":      "i-00ba63d14a98f141d",
 				"label.alpha.eksctl.io/nodegroup-name":   "arm-group",
 				"label.kubernetes.io/arch":               "arm64",
@@ -236,6 +235,68 @@ func TestCleanTags(t *testing.T) {
 				"label.node.kubernetes.io/instance-type": "m6g.medium",
 				"label.topology.kubernetes.io/region":    "us-west-2",
 				"label.topology.kubernetes.io/zone":      "us-west-2c",
+			}
+
+			cleanTags(actual, []string{}, maxWavefrontTags)
+			require.Equal(t, maxWavefrontTags, len(actual))
+			assert.Equal(t, expected, actual)
+		})
+
+		t.Run("EKS example v1.25", func(t *testing.T) {
+			actual := map[string]string{
+				"cluster":                                "bjerry-eks-230411",
+				"node_role":                              "worker",
+				"nodename":                               "ip-10-10-0-1.us-west-2.compute.internal",
+				"type":                                   "node",
+				"pod_cidr":                               "10.96.2.0/24",
+				"internal_ip":                            "10.10.0.1",
+				"kernel_version":                         "5.10.123-123.333.amzn2.aarch64",
+				"foo":                                    "bar",
+				"test":                                   "tester",
+				"czar":                                   "aljkssljfdk",
+				"car":                                    "aljkfdk",
+				"sometag":                                "somevalue",
+				"label.alpha.eksctl.io/cluster-name":     "k8s-saas-team-ci",
+				"label.alpha.eksctl.io/nodegroup-name":   "x86-nodes",
+				"label.beta.kubernetes.io/arch":          "amd64",
+				"label.beta.kubernetes.io/instance-type": "t3.medium",
+				"label.beta.kubernetes.io/os":            "linux",
+				"label.eks.amazonaws.com/capacityType":   "ON_DEMAND",
+				"label.eks.amazonaws.com/nodegroup":      "x86-nodes",
+				"label.eks.amazonaws.com/nodegroup-image":             "ami-07d047ed27809c968",
+				"label.eks.amazonaws.com/sourceLaunchTemplateId":      "lt-05481b0402ded0449",
+				"label.eks.amazonaws.com/sourceLaunchTemplateVersion": "1",
+				"label.failure-domain.beta.kubernetes.io/region":      "us-west-2",
+				"label.failure-domain.beta.kubernetes.io/zone":        "us-west-2c",
+				"label.k8s.io/cloud-provider-aws":                     "abcdefg123456789abcdefg123456789",
+				"label.kubernetes.io/arch":                            "amd64",
+				"label.kubernetes.io/hostname":                        "ip-10-10-0-2.us-west-2.compute.internal",
+				"label.kubernetes.io/os":                              "linux",
+				"label.node.kubernetes.io/instance-type":              "t3.medium",
+				"label.topology.kubernetes.io/region":                 "us-west-2",
+				"label.topology.kubernetes.io/zone":                   "us-west-2c",
+			}
+
+			expected := map[string]string{
+				"cluster":                                "bjerry-eks-230411",
+				"node_role":                              "worker",
+				"nodename":                               "ip-10-10-0-1.us-west-2.compute.internal",
+				"type":                                   "node",
+				"pod_cidr":                               "10.96.2.0/24",
+				"internal_ip":                            "10.10.0.1",
+				"kernel_version":                         "5.10.123-123.333.amzn2.aarch64",
+				"foo":                                    "bar",
+				"test":                                   "tester",
+				"czar":                                   "aljkssljfdk",
+				"car":                                    "aljkfdk",
+				"sometag":                                "somevalue",
+				"label.kubernetes.io/arch":               "amd64",
+				"label.kubernetes.io/os":                 "linux",
+				"label.kubernetes.io/hostname":           "ip-10-10-0-2.us-west-2.compute.internal",
+				"label.node.kubernetes.io/instance-type": "t3.medium",
+				"label.topology.kubernetes.io/region":    "us-west-2",
+				"label.topology.kubernetes.io/zone":      "us-west-2c",
+				"label.k8s.io/cloud-provider-aws":        "abcdefg123456789abcdefg123456789",
 			}
 
 			cleanTags(actual, []string{}, maxWavefrontTags)
