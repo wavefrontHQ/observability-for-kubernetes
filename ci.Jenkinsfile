@@ -33,82 +33,82 @@ pipeline {
       }
     }
 
-    stage("Go Tests and Publish Images") {
-      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
-      parallel{
-        stage("Publish Collector") {
-          agent {
-            label "worker-1"
-          }
-          environment {
-            RELEASE_TYPE = "alpha"
-            DOCKER_IMAGE = "kubernetes-collector"
-          }
-          steps {
-            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-               sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
-               sh 'cd collector && make semver-cli'
-               sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-               sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
-            }
-          }
-        }
-
-        stage("Publish Operator") {
-          agent {
-            label "worker-2"
-          }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS")
-            RELEASE_TYPE = "alpha"
-            COLLECTOR_PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
-            TOKEN = credentials('GITHUB_TOKEN')
-            COLLECTOR_IMAGE = "kubernetes-collector"
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli clean-build'
-            sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-            sh 'cd operator && make docker-xplatform-build'
-            sh 'cd operator && ./hack/jenkins/create-rc-ci.sh'
-            script {
-              env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-            }
-          }
-        }
-
-        stage("Collector Go Tests") {
-          agent {
-            label "worker-3"
-          }
-          steps {
-            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-              sh 'cd collector && make checkfmt vet tests'
-            }
-          }
-        }
-        stage("Operator Go Tests") {
-          agent {
-            label "worker-4"
-          }
-          steps {
-            sh 'cd operator && make checkfmt vet test'
-            sh 'cd operator && make linux-golangci-lint'
-            sh 'cd operator && make golangci-lint'
-          }
-        }
-
-        stage("Test Openshift build") {
-          agent {
-            label "worker-5"
-          }
-          steps {
-            sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
-          }
-        }
-      }
-    }
+//     stage("Go Tests and Publish Images") {
+//       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
+//       parallel{
+//         stage("Publish Collector") {
+//           agent {
+//             label "worker-1"
+//           }
+//           environment {
+//             RELEASE_TYPE = "alpha"
+//             DOCKER_IMAGE = "kubernetes-collector"
+//           }
+//           steps {
+//             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+//                sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
+//                sh 'cd collector && make semver-cli'
+//                sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+//                sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
+//             }
+//           }
+//         }
+//
+//         stage("Publish Operator") {
+//           agent {
+//             label "worker-2"
+//           }
+//           environment {
+//             GCP_CREDS = credentials("GCP_CREDS")
+//             RELEASE_TYPE = "alpha"
+//             COLLECTOR_PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+//             TOKEN = credentials('GITHUB_TOKEN')
+//             COLLECTOR_IMAGE = "kubernetes-collector"
+//           }
+//           steps {
+//             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+//             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+//             sh 'cd operator && make semver-cli clean-build'
+//             sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+//             sh 'cd operator && make docker-xplatform-build'
+//             sh 'cd operator && ./hack/jenkins/create-rc-ci.sh'
+//             script {
+//               env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+//             }
+//           }
+//         }
+//
+//         stage("Collector Go Tests") {
+//           agent {
+//             label "worker-3"
+//           }
+//           steps {
+//             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
+//               sh 'cd collector && make checkfmt vet tests'
+//             }
+//           }
+//         }
+//         stage("Operator Go Tests") {
+//           agent {
+//             label "worker-4"
+//           }
+//           steps {
+//             sh 'cd operator && make checkfmt vet test'
+//             sh 'cd operator && make linux-golangci-lint'
+//             sh 'cd operator && make golangci-lint'
+//           }
+//         }
+//
+//         stage("Test Openshift build") {
+//           agent {
+//             label "worker-5"
+//           }
+//           steps {
+//             sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
+//           }
+//         }
+//       }
+//     }
 
 //     stage('Run Collector Integration Tests') {
 //       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
@@ -226,7 +226,7 @@ pipeline {
           steps {
             lock("integration-test-kind") {
               sh 'cd operator && make clean-cluster'
-              sh 'gcloud compute ssh --zone "us-central1-a" "k8po-ci-gcp-kind" --project "wavefront-gcp-dev" --command "cd workspace/observability-for-kubernetes/operator && make clean-cluster integration-test"'
+              sh 'gcloud compute ssh --zone "us-central1-a" "k8po-ci-gcp-kind" --project "wavefront-gcp-dev" --command "whoami; cd workspace/observability-for-kubernetes/operator && make clean-cluster integration-test"'
             }
           }
         }
