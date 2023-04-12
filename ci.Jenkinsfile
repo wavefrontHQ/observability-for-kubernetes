@@ -227,8 +227,8 @@ pipeline {
             withEnv(["PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
               lock("integration-test-kind") {
-                sh 'cd operator && make clean-cluster'
-                sh 'yes | gcloud compute ssh --zone "us-central1-a" "k8po-ci-gcp-kind" --project "wavefront-gcp-dev" --command "whoami; cd workspace/observability-for-kubernetes/operator && make clean-cluster integration-test"'
+                sh 'yes | gcloud compute ssh --zone "us-central1-a" "k8po-ci-gcp-kind" --project "wavefront-gcp-dev" --impersonate-service-account=k8po-jenkins-ci-496@wavefront-gcp-dev.iam.gserviceaccount.com --command "whoami; cd workspace/observability-for-kubernetes/operator && make clean-cluster integration-test"'
+//                 sshpass to run script as user on remote machine if above doesn't work
               }
             }
           }
