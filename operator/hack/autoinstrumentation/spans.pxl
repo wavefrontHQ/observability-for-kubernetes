@@ -1,142 +1,249 @@
-#px:set max_output_rows_per_table=1500
+# px:set max_output_rows_per_table=1500
 import px
 
+
 def exclude_known_namespaces(df):
-  '''Exclude namespaces which are known to be noise.
+    '''Exclude namespaces which are known to be noise.
 
-  Args:
-    @df: The DataFrames to filter.
-  '''
+    Args:
+      @df: The DataFrames to filter.
+    '''
 
-  # Exclude DataFrames from kube-system
-  #
-  # It is not useful to see metrics related to the functioning of Kubernete's system-components (such as the CNI,
-  # core-dns, aws-node, etc)
-  df = df[df.ctx['namespace'] != 'kube-system']
-  df = df[df.ctx['namespace'] != 'observability-system']
-  df = df[df.ctx['namespace'] != 'olm']
-  df = df[df.ctx['namespace'] != 'px-operator']
+    # Exclude DataFrames from kube-system
+    #
+    # It is not useful to see metrics related to the functioning of Kubernete's system-components (such as the CNI,
+    # core-dns, aws-node, etc)
+    df = df[df.ctx['namespace'] != 'kube-system']
+    df = df[df.ctx['namespace'] != 'observability-system']
+    df = df[df.ctx['namespace'] != 'olm']
+    df = df[df.ctx['namespace'] != 'pl']
+    df = df[df.ctx['namespace'] != 'px-operator']
 
-  return df
+    # Exclude DataFrames from aria-k8s
+    #
+    # This namespace is where the k8s-collector and telegraf-collector live. Excluding this namespace ensures that data
+    # sent to Lemans from telegraf will not be re-reported by Pixie (since sending to Lemans happens over HTTP(s)
+    df = df[df.ctx['namespace'] != 'aria-k8s']
+
+    return df
+
 
 def exclude_known_req_path(df):
-  '''Exclude req_path values which are known to be noise.
+    '''Exclude req_path values which are known to be noise.
 
-  Args:
-    @df: The DataFrames to filter.
-  '''
-  # Exclude DataFrames from liveness checks
-  #
-  # This endpoint is common in Kubernetes pods for checking liveness of a Pod.
-  df = df[df.req_path != '/healthz']
-  df = df[df.req_path != '/health']
+    Args:
+      @df: The DataFrames to filter.
+    '''
+    # Exclude DataFrames from liveness checks
+    #
+    # This endpoint is common in Kubernetes pods for checking liveness of a Pod.
+    df = df[df.req_path != '/healthz']
+    df = df[df.req_path != '/health']
 
-  # Exclude DataFrames from readiness checks
-  #
-  # This endpoint is common in Kubernetes pods for checking readiness of a Pod.
-  df = df[df.req_path != '/readyz']
-  df = df[df.req_path != '/ready']
+    # Exclude DataFrames from readiness checks
+    #
+    # This endpoint is common in Kubernetes pods for checking readiness of a Pod.
+    df = df[df.req_path != '/readyz']
+    df = df[df.req_path != '/ready']
 
-  return df
+    return df
+
+def exclude_egress_traffic(df):
+    '''Exclude egress traffic i.e with trace_role=1.
+
+    Args:
+      @df: The DataFrames to filter.
+    '''
+    df = df[df['trace_role'] != 1]
+    return df
+
+def exclude_ingress_traffic(df):
+    '''Exclude ingress traffic i.e we don't expect remote_addr to resolve to a pod_id and hence it would be empty)
+
+    Args:
+      @df: The DataFrames to filter.
+    '''
+    df.pod = df.ctx['pod']
+    df.pod_id = df.ctx['pod_id']
+    df.node = df.ctx['node']
+
+    # If remote_addr doesn't correspond to a pod, then it returns an empty string per
+    # https://docs.px.dev/reference/pxl/udf/ip_to_pod_id/#name
+    df = df[px.ip_to_pod_id(df.remote_addr) != '']
+
+    return df
 
 def remove_ns_prefix(column):
-  return px.replace('[a-z0-9\-]*/', column, '')
+    return px.replace('[a-z0-9\-]*/', column, '')
+
+
+def parse_host_name(host_header):
+    index = px.find(host_header, ':')
+    return px.select(index > -1, px.substring(host_header, 0, index), host_header)
+
+def xor(a, b):
+    return a + b - 2 * a * b
+
+def add_trace_headers(df):
+    df.span_id = px.substring(df.destination_pod_id, 19, 4) + px.substring(df.destination_pod_id, 24, 12)
+    df.parent_span_id = px.substring(df.source_pod_id, 19, 4) + px.substring(df.source_pod_id, 24, 12)
+
+    # If we have 16 decimal places of nanoseconds, then we will potentially have collisions about every 115 days.
+    # Because of that, we are xor'ing the time and latency with the intention of generating a more unique trace id.
+    trace_id_time_part = "0000000000000000" + px.itoa(xor(px.time_to_int64(df.time_), df.latency))
+    df.trace_id = px.substring(df.span_id, 8, 8) + px.substring(df.parent_span_id, 8, 8) + px.substring(trace_id_time_part, px.length(trace_id_time_part)-16, 16)
+    return df
+
+def default_none(value):
+    return px.select(value != '', value, 'none')
+
+# Assumes only server side http events (i.e. trace_role=2)
 def add_source_dest_columns(df):
-  df.pod = df.ctx['pod']
-  df.node = df.ctx['node']
-  df.container = df.ctx['container']
-  df.deployment = df.ctx['deployment']
-  # If remote_addr is a pod, get its name. If not, use IP address.
-  df.ra_pod = px.pod_id_to_pod_name(px.ip_to_pod_id(df.remote_addr))
-  df.ra_name = px.select(df.ra_pod != '', df.ra_pod, px.nslookup(df.remote_addr))
-  df.ra_node = px.pod_id_to_node_name(px.ip_to_pod_id(df.remote_addr))
-  df.ra_deployment = px.pod_id_to_deployment_name(px.ip_to_pod_id(df.remote_addr))
-  df.is_server_tracing = df.trace_role == 2
-  # Set client and server based on trace_role.
-  df.source_pod = px.select(df.is_server_tracing, df.ra_name, df.pod)
-  df.destination_pod = px.select(df.is_server_tracing, df.pod, df.ra_name)
-  df.destination_node = px.select(df.is_server_tracing, df.node, df.ra_node)
-  df.destination_deployment = px.select(df.is_server_tracing, df.deployment, df.ra_deployment)
-  df.source_service = px.pod_name_to_service_name(df.source_pod)
-  df.destination_service = px.pod_name_to_service_name(df.destination_pod)
-  df.destination_namespace = px.pod_name_to_namespace(df.destination_pod)
-  df.source_namespace = px.pod_name_to_namespace(df.source_pod)
-  df.source_node = px.pod_id_to_node_name(px.pod_name_to_pod_id(df.source_pod))
-  df.source_deployment = px.pod_name_to_deployment_name(df.source_pod)
-  df.source_deployment = remove_ns_prefix(df.source_deployment)
-  df.source_service = remove_ns_prefix(df.source_service)
-  df.destination_service = remove_ns_prefix(df.destination_service)
-  df.source_container = px.select(df.is_server_tracing, '', df.container)
-  df.source_pod = remove_ns_prefix(df.source_pod)
-  df.destination_pod = remove_ns_prefix(df.destination_pod)
-  return df
+    df.destination_pod_id = df.pod_id
+    df.destination_pod = remove_ns_prefix(df.pod)
+    df.destination_deployment = remove_ns_prefix(default_none(px.pod_id_to_deployment_name(df.destination_pod_id)))
+    df.destination_service = remove_ns_prefix(default_none(px.pod_id_to_service_name(df.destination_pod_id)))
+    df.destination_namespace = px.pod_id_to_namespace(df.destination_pod_id)
+    df.destination_node = df.node
+
+    # After excluding ingress and egress traffic, remote_addr is guaranteed to be a pod. So pod_id can't be empty.
+    df.source_pod_id = px.ip_to_pod_id(df.remote_addr)
+    df.source_pod = remove_ns_prefix(px.pod_id_to_pod_name(df.source_pod_id))
+    df.source_deployment = remove_ns_prefix(default_none(px.pod_id_to_deployment_name(df.source_pod_id)))
+
+    # order of precedence: service = service_name > deployment_name > unknown_ingress
+    df.source_service = remove_ns_prefix(px.pod_id_to_service_name(df.source_pod_id))
+    df.source_service = px.select(df.source_service == '', df.source_deployment, df.source_service)
+    df.source_service = px.select(df.source_service == '', 'unknown_ingress', df.source_service)
+    df.source_node = px.pod_id_to_node_name(df.source_pod_id)
+    df.source_namespace = px.pod_id_to_namespace(df.source_pod_id)
+
+    return df
+
+def add_error_tag(df):
+    # We are following pixie's error convention that does not handle errors in 3xx and network errors in response body
+    # as defined in the otel spec below:
+    # https://opentelemetry.io/docs/reference/specification/trace/semantic_conventions/http/#status
+    # Pixie reference:
+    # https://github.com/pixie-io/pixie/blob/ce44943ecc3dc2f029464927534786d968b97558/src/pxl_scripts/px/namespace/namespace.pxl#L200
+    df.error = px.select((df.resp_status >= 400), "true", "false")
+
+    return df
 
 df = px.DataFrame('http_events', start_time=px.plugin.start_time, end_time=px.plugin.end_time)
 
 df = exclude_known_namespaces(df)
 df = exclude_known_req_path(df)
-
+df = exclude_egress_traffic(df)
+df = exclude_ingress_traffic(df)
 df = add_source_dest_columns(df)
+df = add_trace_headers(df)
+df = add_error_tag(df)
 df = df.head(15000)
 df.start_time = df.time_ - df.latency
-df.host = px.pluck(df.req_headers, 'Host')
-df.host = px.select(df.host != '', df.host, 'none')
-df.req_url = df.host + df.req_path
+
+host_header = px.pluck(df.req_headers, 'Host')
+host_header = px.select(host_header != '', host_header, 'none')
+df.host_name = parse_host_name(host_header)
+
+scheme = px.select(df.remote_port == 443, "https://", "http://")
+df.req_url = scheme + host_header + df.req_path
+
 df.user_agent = px.pluck(df.req_headers, 'User-Agent')
 df.user_agent = px.select(df.user_agent != '', df.user_agent, 'none')
-df.trace_id = px.pluck(df.req_headers, 'X-B3-TraceId')
-df.span_id = px.pluck(df.req_headers, 'X-B3-SpanId')
-df.parent_span_id = px.pluck(df.req_headers, 'X-B3-ParentSpanId')
+
 # Strip out all but the actual path value from req_path
 df.req_path = px.uri_recompose('', '', '', 0, px.pluck(px.uri_parse(df.req_path), 'path'), '', '')
 # Replace any Hex IDS from the path with <id>
 df.req_path = px.replace('/[a-fA-F0-9\-:]{6,}(/?)', df.req_path, '/<id>\\1')
 df.cluster_name = px.vizier_name()
-df.cluster_id = px.vizier_id()
-df.pixie = 'pixie'
+
 px.export(
-  df, px.otel.Data(
-    resource={
-      # While other Pixie entities use `service.name=source_service`,
-      # the Services-OpenTelemetry entity is set up to only show clients so we use `service.name=destination_service`.
-      'service.name': df.destination_service,
-      'service.instance.id': df.destination_pod,
-      'k8s.pod.name': df.destination_pod,
-      'k8s.deployment.name': df.destination_deployment,
-      'k8s.namespace.name': df.destination_namespace,
-      'k8s.node.name': df.destination_node,
-      'px.cluster.id': df.cluster_id,
-      'k8s.cluster.name': df.cluster_name,
-      'instrumentation.provider': df.pixie,
-      'source': df.source_pod,
-      'application': df.destination_namespace
-    },
-    data=[
-      px.otel.trace.Span(
-        name=df.req_path,
-        start_time=df.start_time,
-        end_time=df.time_,
-        trace_id=df.trace_id,
-        span_id=df.span_id,
-        parent_span_id=df.parent_span_id,
-        kind=px.otel.trace.SPAN_KIND_SERVER,
-        attributes={
-          # NOTE: the integration handles splitting of services.
-          'parent.namespace.name': df.source_namespace,
-          'parent.service.name': df.source_service,
-          'parent.deployment.name': df.source_deployment,
-          'parent.node.name': df.source_node,
-          'parent.k8s.pod.name': df.source_pod,
-          'http.method': df.req_method,
-          'http.url': df.req_url,
-          'http.target': df.req_path,
-          'http.host': df.host,
-          'http.status_code': df.resp_status,
-          'http.user_agent': df.user_agent,
-          'http.req_headers': df.req_headers,
-          'http.resp_headers': df.resp_headers,
+    df, px.otel.Data(
+        resource={
+            # While other Pixie entities use `service.name=source_service`,
+            # the Services-OpenTelemetry entity is set up to only show clients so we use `service.name=destination_service`.
+
+            # OTEL Resource Conventions
+            'service.name': df.destination_service,
+            'service.instance.id': df.destination_pod,
+
+            'k8s.cluster.name': df.cluster_name,
+
+            # OTEL Scope Exporter Conventions
+            'otel.scope.name': 'pixie',
+
         },
-      ),
-    ],
-  ),
+        data=[
+            px.otel.trace.Span(
+                name=df.req_path,
+                start_time=df.start_time,
+                end_time=df.time_,
+                trace_id=df.trace_id,
+                span_id=df.span_id,
+                parent_span_id=df.parent_span_id,
+                kind=px.otel.trace.SPAN_KIND_SERVER,
+                attributes={
+                    # NOTE: the integration handles splitting of services.
+
+                    # OTEL K8s Resource Conventions
+                    'k8s.pod.name': df.destination_pod,
+                    'k8s.node.name': df.destination_node,
+                    'k8s.deployment.name': df.destination_deployment,
+                    'k8s.namespace.name': df.destination_namespace,
+
+                    # Wavefront Conventions
+                    'service': df.destination_service,
+                    'source': df.destination_pod,
+                    'application': df.destination_namespace,
+                    # We follow pixie's convention of setting an error tag only for a server span.
+                    'error': df.error,
+
+                    # OTEL HTTP Conventions
+                    'http.status_code': df.resp_status,
+                    'http.request_content_length': df.req_body_size,
+                    'http.response_content_length': df.req_body_size,
+                    'http.method': df.req_method,
+                    'http.url': df.req_url,
+                    'http.target': df.req_path,
+                    'net.host.name': df.host_name,
+                    'net.host.port': df.remote_port,
+                    'user_agent.original': df.user_agent,
+                },
+            ),
+            px.otel.trace.Span(
+                name=df.req_path,
+                start_time=df.start_time,
+                end_time=df.time_,
+                trace_id=df.trace_id,
+                span_id=df.parent_span_id,
+                kind=px.otel.trace.SPAN_KIND_CLIENT,
+                attributes={
+                    # NOTE: the integration handles splitting of services.
+
+                    # OTEL K8s Resource Conventions
+                    'k8s.pod.name': df.source_pod,
+                    'k8s.node.name': df.source_node,
+                    'k8s.deployment.name': df.source_deployment,
+                    'k8s.namespace.name': df.source_namespace,
+
+                    # Wavefront Conventions
+                    'service': df.source_service,
+                    'source': df.source_pod,
+                    'application': df.source_namespace,
+
+                    # OTEL HTTP Conventions
+                    'http.status_code': df.resp_status,
+                    'http.request_content_length': df.req_body_size,
+                    'http.response_content_length': df.req_body_size,
+                    'http.method': df.req_method,
+                    'http.url': df.req_url,
+                    'http.target': df.req_path,
+                    'net.host.name': df.host_name,
+                    'net.host.port': df.remote_port,
+                    'user_agent.original': df.user_agent,
+                },
+            ),
+        ],
+    ),
 )
