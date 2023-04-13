@@ -66,7 +66,6 @@ type WavefrontSink interface {
 type wavefrontSink struct {
 	WavefrontClient senders.Sender
 	ClusterName     string
-	ClusterUUID     string
 	Prefix          string
 	globalTags      map[string]string
 	filters         filter.Filter
@@ -91,7 +90,6 @@ func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.C
 func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, error) {
 	storage := &wavefrontSink{
 		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
-		ClusterUUID: cfg.ClusterUUID,
 		logPercent:  0.01,
 	}
 
@@ -196,7 +194,6 @@ func (sink *wavefrontSink) Export(batch *metrics.Batch) {
 			continue
 		}
 		point.OverrideTag(metrics.LabelCluster.Key, sink.ClusterName)
-		point.OverrideTag(metrics.LabelClusterUUID.Key, sink.ClusterUUID)
 		point.AddTags(sink.globalTags)
 		point = wf.Filter(sink.filters, filteredPoints, point)
 		if point == nil {
@@ -268,7 +265,6 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 	source := getDefault(util.GetNodeName(), "wavefront-collector-for-kubernetes")
 	tags := map[string]string{
 		"cluster":             cfg.ClusterName,
-		"cluster_uuid":        cfg.ClusterUUID,
 		"stats_prefix":        configuration.GetStringValue(cfg.Prefix, "kubernetes."),
 		"installation_method": util.GetInstallationMethod(),
 	}

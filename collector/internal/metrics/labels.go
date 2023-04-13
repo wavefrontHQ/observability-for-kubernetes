@@ -35,10 +35,6 @@ var (
 		Key:         "cluster",
 		Description: "The name of the kubernetes cluster",
 	}
-	LabelClusterUUID = LabelDescriptor{
-		Key:         "cluster_uuid",
-		Description: "The UUID of the default namespace of the kubernetes cluster",
-	}
 	LabelPodId = LabelDescriptor{
 		Key:         "pod_id",
 		Description: "The unique ID of the pod",
