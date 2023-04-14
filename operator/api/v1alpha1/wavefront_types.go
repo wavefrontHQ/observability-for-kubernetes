@@ -184,6 +184,9 @@ type WavefrontProxy struct {
 
 	// ProxyVersion is for internal use only
 	ProxyVersion string `json:"-"`
+
+	// Cluster UUID is for internal use only
+	ClusterUUID string `json:"-"`
 }
 
 type Tracing struct {

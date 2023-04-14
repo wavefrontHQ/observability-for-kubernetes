@@ -30,7 +30,6 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
-
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
@@ -76,6 +75,7 @@ type WavefrontReconciler struct {
 	MetricConnection  *metric.Connection
 	Versions          Versions
 	namespace         string
+	cluster_uuid      string
 }
 
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts,verbs=get;list;watch;create;update;patch;delete
@@ -92,6 +92,7 @@ type WavefrontReconciler struct {
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=configmaps,verbs=get;create;update;patch;delete
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=secrets,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",namespace="",resources=namespaces,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -128,7 +129,6 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	} else {
 		_ = r.readAndDeleteResources()
 	}
-
 	wavefrontStatus, err := r.reportHealthStatus(ctx, wavefront, validationResult)
 	if err != nil {
 		return errorCRTLResult(err)
@@ -162,13 +162,14 @@ type Versions struct {
 	LoggingVersion   string
 }
 
-func NewWavefrontReconciler(versions Versions, client client.Client) (operator *WavefrontReconciler, err error) {
+func NewWavefrontReconciler(versions Versions, client client.Client, cluster_uuid string) (operator *WavefrontReconciler, err error) {
 	return &WavefrontReconciler{
 		Versions:          versions,
 		Client:            client,
 		FS:                os.DirFS(DeployDir),
 		KubernetesManager: kubernetes_manager.NewKubernetesManager(client),
 		MetricConnection:  metric.NewConnection(metric.WavefrontSenderFactory()),
+		cluster_uuid:      cluster_uuid,
 	}, nil
 }
 
@@ -286,7 +287,6 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 	}
 	return nil
 }
-
 func (r *WavefrontReconciler) deployment(name string) (*appsv1.Deployment, error) {
 	var deployment appsv1.Deployment
 	err := r.Client.Get(context.Background(), util.ObjKey(r.namespace, name), &deployment)
@@ -397,6 +397,9 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 			log.Log.Info(errInfo)
 			return err
 		}
+
+		wavefront.Spec.DataExport.WavefrontProxy.ClusterUUID = r.cluster_uuid
+		wavefront.Spec.DataExport.WavefrontProxy.Preprocessor = "default-proxy-preprocessor-rules-config"
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
 		wavefront.Spec.CanExportData = true
 		wavefront.Spec.DataCollection.Metrics.ProxyAddress = wavefront.Spec.DataExport.ExternalWavefrontProxy.Url
