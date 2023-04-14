@@ -30,6 +30,8 @@ import (
 	"net/http"
 	"strings"
 
+	kube_api "k8s.io/api/core/v1"
+
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/kubernetes"
 
 	cadvisor "github.com/google/cadvisor/info/v1"
@@ -58,8 +60,8 @@ func sampleContainerStats(stats []*cadvisor.ContainerStats) []*cadvisor.Containe
 	return []*cadvisor.ContainerStats{stats[len(stats)-1]}
 }
 
-func (kc *KubeletClient) postRequestAndGetValue(client *http.Client, req *http.Request, value interface{}) error {
-	response, err := client.Do(req)
+func (kc *KubeletClient) postRequestAndGetValue(req *http.Request, value interface{}) error {
+	response, err := kc.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -111,19 +113,37 @@ func (kc *KubeletClient) parseStat(containerInfo *cadvisor.ContainerInfo) *cadvi
 }
 
 func (kc *KubeletClient) GetSummary(ip net.IP) (*stats.Summary, error) {
-	u := kc.config.BaseURL(ip, "/stats/summary/").String()
+	u := kc.config.BaseURL(ip, "/stats/summary").String()
 
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
+
 	summary := &stats.Summary{}
-	client := kc.client
-	if client == nil {
-		client = http.DefaultClient
+	err = kc.postRequestAndGetValue(req, summary)
+	if err != nil {
+		return nil, err
 	}
-	err = kc.postRequestAndGetValue(client, req, summary)
-	return summary, err
+
+	return summary, nil
+}
+
+func (kc *KubeletClient) GetPodList(ip net.IP) (*kube_api.PodList, error) {
+	u := kc.config.BaseURL(ip, "/pods").String()
+
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+	podList := &kube_api.PodList{}
+
+	err = kc.postRequestAndGetValue(req, podList)
+	if err != nil {
+		return nil, err
+	}
+
+	return podList, nil
 }
 
 func (kc *KubeletClient) GetPort() uint {
@@ -135,12 +155,12 @@ func NewKubeletClient(kubeletConfig *KubeletClientConfig) (*KubeletClient, error
 	if err != nil {
 		return nil, err
 	}
-	c := &http.Client{
-		Transport: transport,
-		Timeout:   kubeletConfig.HTTPTimeout,
-	}
+
 	return &KubeletClient{
 		config: kubeletConfig,
-		client: c,
+		client: &http.Client{
+			Transport: transport,
+			Timeout:   kubeletConfig.HTTPTimeout,
+		},
 	}, nil
 }

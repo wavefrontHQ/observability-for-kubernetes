@@ -9,10 +9,13 @@ NS=wavefront-collector
 
 function curl_query_to_wf_dashboard() {
   local query=$1
+  local AFTER_UNIX_TS="$(date '+%s')000"
+
   # NOTE: any output inside this function is concatenated and used as the return value;
   # otherwise we would love to put a log such as this in here to give us more information:
   # echo "=============== Querying '$WF_CLUSTER' for query '${query}'"
-  curl -X GET --header "Accept: application/json" \
+  curl --silent --show-error -X GET \
+    --header "Accept: application/json" \
     --header "Authorization: Bearer $WAVEFRONT_TOKEN" \
     "https://$WF_CLUSTER.wavefront.com/api/v2/chart/api?q=${query}&queryType=WQL&s=$AFTER_UNIX_TS&g=s&view=METRIC&sorted=false&cached=true&useRawQK=false" |
     jq '.timeseries[0].data[0][1]'
@@ -87,7 +90,6 @@ function exit_on_fail() {
 function main() {
   cd "${SCRIPT_DIR}" # hack/test
 
-  local AFTER_UNIX_TS="$(date '+%s')000"
   local MAX_QUERY_TIMES=30
   local CURL_WAIT=15
 
@@ -122,6 +124,32 @@ function main() {
   exit_on_fail wait_for_query_match_exact "ts(kubernetes.collector.version%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22%20AND%20installation_method%3D%22manual%22)" "${VERSION_IN_DECIMAL}"
   exit_on_fail wait_for_query_non_zero "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22)"
   exit_on_fail wait_for_query_non_zero "ts(mysql.connections%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22)"
+
+  # We aren't currently checking for units here (eg. 1250 MiB vs 1.25 GiB), so there's a possibility that the following check could fail
+  # We don't believe that is likely to happen due to the size of our environments but we can modify this in the future if that is a problem.
+  local NODE_NAME="$(kubectl get nodes -o json | jq -r '.items[] | objects | .metadata.name')"
+
+  while IFS= read -r node; do
+    echo "Checking node metrics for: ${node}"
+
+    local EXPECTED_NODE_CPU_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "cpu" | awk '{print $2}' | tr -dc '0-9\n')"
+    exit_on_fail wait_for_query_match_exact "ts(kubernetes.node.cpu.request%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22)" "${EXPECTED_NODE_CPU_REQUEST}.000"
+
+    local EXPECTED_NODE_CPU_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "cpu" | awk '{print $4}' | tr -dc '0-9\n')"
+    exit_on_fail wait_for_query_match_exact "ts(kubernetes.node.cpu.limit%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22)" "${EXPECTED_NODE_CPU_LIMIT}.000"
+
+    local EXPECTED_NODE_MEMORY_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "memory" | awk '{print $2}' | numfmt --from=auto)"
+    exit_on_fail wait_for_query_match_exact "ts(kubernetes.node.memory.request%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22)" "${EXPECTED_NODE_MEMORY_REQUEST}.000"
+
+    local EXPECTED_NODE_MEMORY_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "memory" | awk '{print $4}' | numfmt --from=auto)"
+    exit_on_fail wait_for_query_match_exact "ts(kubernetes.node.memory.limit%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22)" "${EXPECTED_NODE_MEMORY_LIMIT}.000"
+
+    local EXPECTED_NODE_EPHERMERAL_STORAGE_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "ephemeral-storage" | awk '{print $2}' | numfmt --from=auto)"
+    exit_on_fail wait_for_query_match_exact "ts(kubernetes.node.ephemeral_storage.request%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22)" "${EXPECTED_NODE_EPHERMERAL_STORAGE_REQUEST}.000"
+
+    local EXPECTED_NODE_EPHERMERAL_STORAGE_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "ephemeral-storage" | awk '{print $4}' | numfmt --from=auto)"
+    exit_on_fail wait_for_query_match_exact "ts(kubernetes.node.ephemeral_storage.limit%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22)" "${EXPECTED_NODE_EPHERMERAL_STORAGE_LIMIT}.000"
+  done <<< "${NODE_NAME}"
 
   local PROM_EXAMPLE_EXPECTED_COUNT="3"
   exit_on_fail wait_for_query_match_exact "ts(prom-example.schedule.activity.decision.counter%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22)" "${PROM_EXAMPLE_EXPECTED_COUNT}"

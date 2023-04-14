@@ -137,3 +137,63 @@ func TestPodAggregator(t *testing.T) {
 	assert.Equal(t, int64(20), m2.IntValue)
 
 }
+
+func TestPodAggregatorSkipsProvidedMetrics(t *testing.T) {
+	batch := metrics.Batch{
+		Timestamp: time.Now(),
+		Sets: map[metrics.ResourceKey]*metrics.Set{
+			metrics.PodContainerKey("ns1", "pod1", "c1"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
+					metrics.LabelPodName.Key:       "pod1",
+					metrics.LabelNamespaceName.Key: "ns1",
+				},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  10,
+					},
+					"m2": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  222,
+					},
+				},
+			},
+
+			metrics.PodContainerKey("ns1", "pod1", "c2"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
+					metrics.LabelPodName.Key:       "pod1",
+					metrics.LabelNamespaceName.Key: "ns1",
+				},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  100,
+					},
+					"m3": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  30,
+					},
+				},
+			},
+		},
+	}
+	processor := PodAggregator{
+		map[string]struct{}{
+			"m1": {},
+		},
+	}
+	result, err := processor.Process(&batch)
+	assert.NoError(t, err)
+	pod, found := result.Sets[metrics.PodKey("ns1", "pod1")]
+	assert.True(t, found)
+
+	_, found = pod.Values["m1"]
+	assert.False(t, found)
+
+	m2, found := pod.Values["m2"]
+	assert.True(t, found)
+	assert.Equal(t, int64(222), m2.IntValue)
+
+}

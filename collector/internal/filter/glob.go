@@ -12,6 +12,7 @@ import (
 type Filter interface {
 	MatchMetric(name string, tags map[string]string) bool
 	MatchTag(tagName string) bool
+	GetTagGuaranteeList() []string
 }
 
 type globFilter struct {
@@ -21,6 +22,7 @@ type globFilter struct {
 	metricTagDenyList  map[string]glob.Glob
 	tagInclude         glob.Glob
 	tagExclude         glob.Glob
+	tagGuaranteeList   []string
 }
 
 func NewGlobFilter(cfg Config) Filter {
@@ -31,6 +33,7 @@ func NewGlobFilter(cfg Config) Filter {
 		metricTagDenyList:  MultiCompile(cfg.MetricTagDenyList),
 		tagInclude:         Compile(cfg.TagInclude),
 		tagExclude:         Compile(cfg.TagExclude),
+		tagGuaranteeList:   cfg.TagGuaranteeList,
 	}
 }
 
@@ -90,6 +93,11 @@ func (gf *globFilter) MatchMetric(name string, tags map[string]string) bool {
 }
 
 func (gf *globFilter) MatchTag(tagName string) bool {
+	for _, tagGuaranteeKey := range gf.tagGuaranteeList {
+		if tagGuaranteeKey == tagName {
+			return true
+		}
+	}
 	matches := true
 	if gf.tagInclude != nil {
 		matches = matches && gf.tagInclude.Match(tagName)
@@ -98,6 +106,10 @@ func (gf *globFilter) MatchTag(tagName string) bool {
 		matches = matches && !gf.tagExclude.Match(tagName)
 	}
 	return matches
+}
+
+func (gf *globFilter) GetTagGuaranteeList() []string {
+	return gf.tagGuaranteeList
 }
 
 func MatchesTags(matchers map[string]glob.Glob, tags map[string]string) bool {

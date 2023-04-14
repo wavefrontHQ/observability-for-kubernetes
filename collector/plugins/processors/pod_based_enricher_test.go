@@ -40,35 +40,200 @@ type enricherTestContext struct {
 	collectionInterval time.Duration
 }
 
-func TestPodEnricher(t *testing.T) {
+func TestPodEnricherHandlesContainerBatches(t *testing.T) {
 	tc := setup()
 	podBasedEnricher := createEnricher(t, tc)
 
-	var batches = []*metrics.Batch{
-		createContainerBatch(),
-		createContainerBatch(),
-		createPodBatch(),
+	batch, err := podBasedEnricher.Process(createContainerBatch())
+	assert.NoError(t, err)
+
+	// Updates the pod container metric set with information from the kube_api
+	containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	assert.True(t, found)
+
+	expectedContainerLabels := map[string]string{
+		"container_base_image": "k8s.gcr.io/pause:2.0",
+		"container_name":       "c1",
+		"labels":               "",
+		"namespace_name":       "ns1",
+		"pod_id":               "",
+		"pod_name":             "pod1",
+		"type":                 "pod_container",
 	}
 
-	var err error
-	for _, batch := range batches {
-		batch, err = podBasedEnricher.Process(batch)
-		assert.NoError(t, err)
+	assert.Equal(t, expectedContainerLabels, containerMs.Labels)
 
-		podAggregator := PodAggregator{}
-		batch, err = podAggregator.Process(batch)
-		assert.NoError(t, err)
-
-		podMs, found := batch.Sets[metrics.PodKey("ns1", "pod1")]
-		assert.True(t, found)
-		checkRequests(t, podMs, 433, 1555, 3000, 2)
-		checkLimits(t, podMs, 2222, 3333, 5000)
-
-		containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
-		assert.True(t, found)
-		checkRequests(t, containerMs, 100, 555, 1000, -1)
-		checkLimits(t, containerMs, 0, 0, 0)
+	expectedContainerValues := map[string]metrics.Value{
+		"cpu/limit":                 {IntValue: 0},
+		"cpu/request":               {IntValue: 100},
+		"ephemeral_storage/limit":   {IntValue: 0},
+		"ephemeral_storage/request": {IntValue: 1000},
+		"memory/limit":              {IntValue: 0},
+		"memory/request":            {IntValue: 555},
 	}
+	assert.Equal(t, expectedContainerValues, containerMs.Values)
+
+	assert.Empty(t, containerMs.LabeledValues)
+
+	// Creates a second pod container metric set after finding the second container from the kube_api
+	containerMs, found = batch.Sets[metrics.PodContainerKey("ns1", "pod1", "nginx")]
+	assert.True(t, found)
+
+	expectedContainerLabels = map[string]string{
+		"container_base_image": "k8s.gcr.io/pause:2.0",
+		"container_name":       "nginx",
+		"host_id":              "",
+		"hostname":             "",
+		"labels":               "",
+		"namespace_name":       "ns1",
+		"nodename":             "",
+		"pod_id":               "",
+		"pod_name":             "pod1",
+		"type":                 "pod_container",
+	}
+
+	assert.Equal(t, expectedContainerLabels, containerMs.Labels)
+
+	expectedContainerValues = map[string]metrics.Value{
+		"cpu/limit":                     {IntValue: 2222},
+		"cpu/request":                   {IntValue: 333},
+		"ephemeral_storage/limit":       {IntValue: 5000},
+		"ephemeral_storage/request":     {IntValue: 2000},
+		"example.com/resource1/request": {IntValue: 2},
+		"memory/limit":                  {IntValue: 3333},
+		"memory/request":                {IntValue: 1000},
+	}
+	assert.Equal(t, expectedContainerValues, containerMs.Values)
+
+	assert.Empty(t, containerMs.LabeledValues)
+
+	// Creates a pod metric set placeholder with some information
+	podMs, found := batch.Sets[metrics.PodKey("ns1", "pod1")]
+	assert.True(t, found)
+
+	expectedPodLabels := map[string]string{
+		"host_id":        "",
+		"hostname":       "",
+		"labels":         "",
+		"namespace_name": "ns1",
+		"nodename":       "",
+		"pod_id":         "",
+		"pod_name":       "pod1",
+		"type":           "pod",
+	}
+
+	assert.Equal(t, expectedPodLabels, podMs.Labels)
+	assert.Empty(t, podMs.Values)
+
+	expectedPodLabelValue := metrics.LabeledValue{
+		Name: "status/phase",
+		Labels: map[string]string{
+			"phase": "Running",
+		},
+		Value: metrics.Value{
+			IntValue: 2,
+		},
+	}
+	assert.Len(t, podMs.LabeledValues, 1)
+	assert.Equal(t, expectedPodLabelValue, podMs.LabeledValues[0])
+}
+
+func TestPodEnricherHandlesPodBatches(t *testing.T) {
+	tc := setup()
+	podBasedEnricher := createEnricher(t, tc)
+
+	batch, err := podBasedEnricher.Process(createPodBatch())
+	assert.NoError(t, err)
+
+	// Updates the pod metric set placeholder with some information
+	podMs, found := batch.Sets[metrics.PodKey("ns1", "pod1")]
+	assert.True(t, found)
+
+	expectedPodLabels := map[string]string{
+		"labels":         "",
+		"namespace_name": "ns1",
+		"pod_id":         "",
+		"pod_name":       "pod1",
+		"type":           "pod",
+	}
+
+	assert.Equal(t, expectedPodLabels, podMs.Labels)
+	assert.Empty(t, podMs.Values)
+
+	expectedPodLabelValue := metrics.LabeledValue{
+		Name: "status/phase",
+		Labels: map[string]string{
+			"phase": "Running",
+		},
+		Value: metrics.Value{
+			IntValue: 2,
+		},
+	}
+	assert.Len(t, podMs.LabeledValues, 1)
+	assert.Equal(t, expectedPodLabelValue, podMs.LabeledValues[0])
+
+	// Creates a pod container metric set with information from the kube_api
+	containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	assert.True(t, found)
+
+	expectedContainerLabels := map[string]string{
+		"container_base_image": "k8s.gcr.io/pause:2.0",
+		"container_name":       "c1",
+		"host_id":              "",
+		"hostname":             "",
+		"labels":               "",
+		"namespace_name":       "ns1",
+		"nodename":             "",
+		"pod_id":               "",
+		"pod_name":             "pod1",
+		"type":                 "pod_container",
+	}
+
+	assert.Equal(t, expectedContainerLabels, containerMs.Labels)
+
+	expectedContainerValues := map[string]metrics.Value{
+		"cpu/limit":                 {IntValue: 0},
+		"cpu/request":               {IntValue: 100},
+		"ephemeral_storage/limit":   {IntValue: 0},
+		"ephemeral_storage/request": {IntValue: 1000},
+		"memory/limit":              {IntValue: 0},
+		"memory/request":            {IntValue: 555},
+	}
+	assert.Equal(t, expectedContainerValues, containerMs.Values)
+
+	assert.Empty(t, containerMs.LabeledValues)
+
+	// Creates a second pod container metric set after finding the second container from the kube_api
+	containerMs, found = batch.Sets[metrics.PodContainerKey("ns1", "pod1", "nginx")]
+	assert.True(t, found)
+
+	expectedContainerLabels = map[string]string{
+		"container_base_image": "k8s.gcr.io/pause:2.0",
+		"container_name":       "nginx",
+		"host_id":              "",
+		"hostname":             "",
+		"labels":               "",
+		"namespace_name":       "ns1",
+		"nodename":             "",
+		"pod_id":               "",
+		"pod_name":             "pod1",
+		"type":                 "pod_container",
+	}
+
+	assert.Equal(t, expectedContainerLabels, containerMs.Labels)
+
+	expectedContainerValues = map[string]metrics.Value{
+		"cpu/limit":                     {IntValue: 2222},
+		"cpu/request":                   {IntValue: 333},
+		"ephemeral_storage/limit":       {IntValue: 5000},
+		"ephemeral_storage/request":     {IntValue: 2000},
+		"example.com/resource1/request": {IntValue: 2},
+		"memory/limit":                  {IntValue: 3333},
+		"memory/request":                {IntValue: 1000},
+	}
+	assert.Equal(t, expectedContainerValues, containerMs.Values)
+
+	assert.Empty(t, containerMs.LabeledValues)
 }
 
 func TestDropsContainerMetricWhenPodMissing(t *testing.T) {
@@ -307,33 +472,12 @@ func createEnricher(t *testing.T, tc *enricherTestContext) *PodBasedEnricher {
 	if tc.pod != nil {
 		err := store.Add(tc.pod)
 		assert.NoError(t, err)
-
 	}
 
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	assert.NoError(t, err)
 
 	return NewPodBasedEnricher(podLister, labelCopier, tc.collectionInterval)
-}
-
-func checkRequests(t *testing.T, ms *metrics.Set, cpu, mem, storage, other int64) {
-	cpuVal, found := ms.Values[metrics.MetricCpuRequest.Name]
-	assert.True(t, found)
-	assert.Equal(t, cpu, cpuVal.IntValue)
-
-	memVal, found := ms.Values[metrics.MetricMemoryRequest.Name]
-	assert.True(t, found)
-	assert.Equal(t, mem, memVal.IntValue)
-
-	storageVal, found := ms.Values[metrics.MetricEphemeralStorageRequest.Name]
-	assert.True(t, found)
-	assert.Equal(t, storage, storageVal.IntValue)
-
-	if other > 0 {
-		val, found := ms.Values[otherResource+"/request"]
-		assert.True(t, found)
-		assert.Equal(t, other, val.IntValue)
-	}
 }
 
 func setup() *enricherTestContext {
@@ -384,20 +528,6 @@ func setup() *enricherTestContext {
 			},
 		},
 	}
-}
-
-func checkLimits(t *testing.T, ms *metrics.Set, cpu, mem int64, storage int64) {
-	cpuVal, found := ms.Values[metrics.MetricCpuLimit.Name]
-	assert.True(t, found)
-	assert.Equal(t, cpu, cpuVal.IntValue)
-
-	memVal, found := ms.Values[metrics.MetricMemoryLimit.Name]
-	assert.True(t, found)
-	assert.Equal(t, mem, memVal.IntValue)
-
-	storageVal, found := ms.Values[metrics.MetricEphemeralStorageLimit.Name]
-	assert.True(t, found)
-	assert.Equal(t, storage, storageVal.IntValue)
 }
 
 func createContainerBatch() *metrics.Batch {

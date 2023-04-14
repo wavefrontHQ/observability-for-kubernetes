@@ -75,6 +75,24 @@ func TestFilter(t *testing.T) {
 		}
 	})
 
+	t.Run("filter preserves guaranteed tags", func(t *testing.T) {
+		expectedPoint := NewPoint("some.metric", 1.0, 2, "pod-123", map[string]string{"foo": "bar", "bar": "foo"})
+		incrementer := fakeCounter(0)
+		filters := filter.NewGlobFilter(filter.Config{
+			MetricDenyList:   []string{"other*"},
+			TagExclude:       []string{"foo*"},
+			TagGuaranteeList: []string{"foo"},
+		})
+
+		actualPoint := Filter(filters, &incrementer, expectedPoint)
+
+		assert.Equal(t, fakeCounter(0), incrementer, "does not increment filtered")
+		if assert.Equal(t, actualPoint, expectedPoint, "returns the point") &&
+			assert.Equal(t, 2, len(actualPoint.Tags()), "filters correct tags") {
+			assert.Equal(t, "bar", actualPoint.Tags()["foo"], "preserves foo tag")
+		}
+	})
+
 	t.Run("Does not try to filter on nil point", func(t *testing.T) {
 		incrementer := fakeCounter(0)
 		filters := filter.NewGlobFilter(filter.Config{

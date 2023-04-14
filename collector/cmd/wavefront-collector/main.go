@@ -313,7 +313,6 @@ func createKubeClientOrDie(cfg configuration.SummarySourceConfig) *kube_client.C
 }
 
 func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister, cfg *configuration.Config) []metrics.Processor {
-
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	if err != nil {
 		log.Fatalf("Failed to initialize label copier: %v", err)
@@ -353,8 +352,10 @@ func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string
 		metrics.MetricEphemeralStorageLimit.Name,
 	}
 
+	metricsToSkip := metricsToAggregate
 	dataProcessors = append(dataProcessors,
-		processors.NewPodAggregator(),
+		processors.NewPodResourceAggregator(podLister),
+		processors.NewPodAggregator(metricsToSkip),
 		processors.NewNamespaceAggregator(metricsToAggregate),
 		processors.NewNodeAggregator(metricsToAggregateForNode),
 		processors.NewClusterAggregator(metricsToAggregate),

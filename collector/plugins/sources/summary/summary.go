@@ -106,6 +106,17 @@ func (src *summaryMetricsSource) Scrape() (*Batch, error) {
 
 	src.addSummaryMetricSets(result, summary)
 
+	podList, err := func() (*kube_api.PodList, error) {
+		return src.kubeletClient.GetPodList(src.node.IP)
+	}()
+
+	if err != nil {
+		collectErrors.Inc(1)
+		return nil, err
+	}
+	src.addMissingRunningPodMetricSets(result, podList)
+	src.addMissingPendingScheduledPodMetricSets(result, podList)
+
 	return result, nil
 }
 
@@ -122,19 +133,103 @@ var systemNameMap = map[string]string{
 	stats.SystemContainerMisc:    "system",
 }
 
-// decodeSummary translates the kubelet statsSummary API into the flattened Set API.
-func (src *summaryMetricsSource) addSummaryMetricSets(dataBatch *Batch, summary *stats.Summary) {
+// addMissingPendingScheduledPodMetricSets makes sure that all pending pods that are scheduled (and in the kube api),
+// but are unable to start up are included in the batch even if they aren't in stats/summary (ex: image not found errors)
+func (src *summaryMetricsSource) addMissingPendingScheduledPodMetricSets(dataBatch *Batch, podList *kube_api.PodList) {
+	nodeLabels := map[string]string{
+		LabelNodename.Key: src.node.NodeName,
+		LabelHostname.Key: src.node.HostName,
+		LabelHostID.Key:   src.node.HostID,
+	}
+	for _, pod := range podList.Items {
+		if pod.Status.Phase != kube_api.PodPending {
+			continue
+		}
 
-	labels := map[string]string{
+		if podIsNotScheduled(pod) {
+			continue
+		}
+
+		podKey := PodKey(pod.Namespace, pod.Name)
+		if dataBatch.Sets[podKey] != nil {
+			continue
+		}
+
+		podMetrics := &Set{
+			Labels:              src.cloneLabels(nodeLabels),
+			Values:              map[string]Value{},
+			LabeledValues:       []LabeledValue{},
+			CollectionStartTime: pod.Status.StartTime.Time,
+			ScrapeTime:          dataBatch.Timestamp,
+		}
+
+		podMetrics.Labels[LabelMetricSetType.Key] = MetricSetTypePod
+		podMetrics.Labels[LabelPodId.Key] = string(pod.UID)
+		podMetrics.Labels[LabelPodName.Key] = pod.Name
+		podMetrics.Labels[LabelNamespaceName.Key] = pod.Namespace
+
+		dataBatch.Sets[podKey] = podMetrics
+		log.Debugf("Added Set for key: %s", podKey)
+	}
+}
+
+func podIsNotScheduled(pod kube_api.Pod) bool {
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == kube_api.PodScheduled && condition.Status == "True" {
+			return false
+		}
+	}
+	return true
+}
+
+// addMissingRunningPodMetricSets makes sure that all running pods from the kubelet api are included in the batch
+// even if they aren't in stats/summary (ex: crashloopbackoff)
+func (src *summaryMetricsSource) addMissingRunningPodMetricSets(dataBatch *Batch, podList *kube_api.PodList) {
+	nodeLabels := map[string]string{
+		LabelNodename.Key: src.node.NodeName,
+		LabelHostname.Key: src.node.HostName,
+		LabelHostID.Key:   src.node.HostID,
+	}
+	for _, pod := range podList.Items {
+		if pod.Status.Phase != kube_api.PodRunning {
+			continue
+		}
+
+		podKey := PodKey(pod.Namespace, pod.Name)
+		if dataBatch.Sets[podKey] != nil {
+			continue
+		}
+
+		podMetrics := &Set{
+			Labels:              src.cloneLabels(nodeLabels),
+			Values:              map[string]Value{},
+			LabeledValues:       []LabeledValue{},
+			CollectionStartTime: pod.Status.StartTime.Time,
+			ScrapeTime:          dataBatch.Timestamp,
+		}
+
+		podMetrics.Labels[LabelMetricSetType.Key] = MetricSetTypePod
+		podMetrics.Labels[LabelPodId.Key] = string(pod.UID)
+		podMetrics.Labels[LabelPodName.Key] = pod.Name
+		podMetrics.Labels[LabelNamespaceName.Key] = pod.Namespace
+
+		dataBatch.Sets[podKey] = podMetrics
+		log.Debugf("Added Set for key: %s", podKey)
+	}
+}
+
+// addSummaryMetricSets translates the kubelet statsSummary API into the flattened Set API.
+func (src *summaryMetricsSource) addSummaryMetricSets(dataBatch *Batch, summary *stats.Summary) {
+	NodeLabels := map[string]string{
 		LabelNodename.Key: src.node.NodeName,
 		LabelHostname.Key: src.node.HostName,
 		LabelHostID.Key:   src.node.HostID,
 	}
 
-	src.decodeNodeStats(dataBatch.Sets, labels, &summary.Node)
+	src.decodeNodeStats(dataBatch.Sets, NodeLabels, &summary.Node)
 	for _, pod := range summary.Pods {
 
-		src.decodePodStats(dataBatch.Sets, labels, &pod)
+		src.decodePodStats(dataBatch.Sets, NodeLabels, &pod)
 	}
 	log.Debugf("End summary decode")
 }
@@ -427,12 +522,13 @@ func (sp *summaryProvider) GetMetricsSources() []Source {
 	}
 
 	for _, node := range nodes {
-		info, err := sp.getNodeInfo(node)
+		nodeInfo, err := sp.getNodeInfo(node)
 		if err != nil {
 			log.Errorf("%v", err)
 			continue
 		}
-		sources = append(sources, NewSummaryMetricsSource(info, sp.kubeletClient))
+
+		sources = append(sources, NewSummaryMetricsSource(nodeInfo, sp.kubeletClient))
 	}
 	return sources
 }
@@ -487,7 +583,10 @@ func NewSummaryProvider(cfg configuration.SummarySourceConfig) (SourceProvider, 
 		return nil, err
 	}
 	// watch nodes
-	nodeLister, reflector, _ := util.GetNodeLister(kubeClient)
+	nodeLister, reflector, err := util.GetNodeLister(kubeClient)
+	if err != nil {
+		return nil, err
+	}
 
 	return &summaryProvider{
 		nodeLister:       nodeLister,

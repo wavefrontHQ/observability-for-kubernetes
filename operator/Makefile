@@ -10,6 +10,7 @@ GO_IMPORTS_BIN:=$(if $(shell which goimports),$(shell which goimports),$(GOPATH)
 
 OS := $(shell uname -s | tr A-Z a-z)
 
+GOLANGCI_LINT_VERSION:="1.52.2"
 ifeq ($(OS), darwin)
 DARWIN_GOLANGCI_LINT_BIN:=$(or $(shell which golangci-lint),"/usr/local/bin/golangci-lint")
 else
@@ -31,6 +32,7 @@ ifneq ($(TOKEN),)
 OBSERVABILITY_FOR_KUBERNETES_HEADER=-H "Authorization: token $(TOKEN)"
 endif
 
+MONOREPO_DIR=$(shell git rev-parse --show-toplevel)
 REPO_DIR=$(shell git rev-parse --show-toplevel)/operator
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
@@ -98,6 +100,16 @@ checkfmt: $(GO_IMPORTS_BIN)
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: delete-old-linter
+delete-old-linter: ## Add as a prerequisite for linux-golangci-lint if you bump GOLANGCI_LINT_VERSION
+	$(eval LINT_VERSION := $(if $(shell command -v golangci-lint),$(shell golangci-lint version | awk '{print $$4}'),))
+	if [ ${GOLANGCI_LINT_VERSION} != "$(LINT_VERSION)" ]; then \
+		if which golangci-lint; then \
+			echo "Deleting golangci-lint version: $(LINT_VERSION)"; \
+			sudo rm -f "$(shell which golangci-lint)" || true; \
+		fi; \
+	fi
+
 .PHONY: golangci-lint
 golangci-lint: $(OS)-golangci-lint
 	golangci-lint run
@@ -112,7 +124,7 @@ $(DARWIN_GOLANGCI_LINT_BIN):
 linux-golangci-lint: $(LINUX_GOLANGCI_LINT_BIN)
 
 $(LINUX_GOLANGCI_LINT_BIN):
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v1.50.1
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v${GOLANGCI_LINT_VERSION}
 
 .PHONY: test
 test: manifests generate fmt vet ## Run tests.
@@ -207,7 +219,12 @@ endef
 
 OPERATOR_BUILD_DIR:=$(REPO_DIR)/build/operator
 
+ifeq (Kind,$(shell $(MONOREPO_DIR)/scripts/get-k8s-cluster-env.sh))
 OPERATOR_YAML_TYPE?=kind
+else
+OPERATOR_YAML_TYPE?=xplatform
+endif
+
 KUBERNETES_YAML:=$(OPERATOR_BUILD_DIR)/wavefront-operator.yaml
 
 KUSTOMIZATION_TYPE?=base
@@ -272,31 +289,6 @@ integration-test: install-kube-score install-kube-linter undeploy deploy
 .PHONY: clean-cluster
 clean-cluster:
 	(cd $(REPO_DIR)/hack/test && ./clean-cluster.sh)
-
-#----- AKS -----#
-aks-subscription-id-check:
-	@if [ -z ${AKS_SUBSCRIPTION_ID} ]; then echo "Need to set AKS_SUBSCRIPTION_ID" && exit 1; fi
-
-aks-connect-to-cluster: aks-subscription-id-check
-	az account set --subscription
-
-#----- EKS -----#
-ECR_REPO_PREFIX=tobs/k8s/saas
-WAVEFRONT_DEV_AWS_ACC_ID=095415062695
-AWS_PROFILE=wavefront-dev
-AWS_REGION=us-west-2
-ECR_ENDPOINT=$(WAVEFRONT_DEV_AWS_ACC_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
-COLLECTOR_ECR_REPO=$(ECR_REPO_PREFIX)/wavefront-kubernetes-collector
-TEST_PROXY_ECR_REPO=$(ECR_REPO_PREFIX)/test-proxy
-
-ecr-host:
-	echo $(ECR_ENDPOINT)/$(ECR_REPO_PREFIX)/wavefront-kubernetes-collector
-
-docker-login-eks:
-	@aws ecr get-login-password --region $(AWS_REGION) --profile $(AWS_PROFILE) |  docker login --username AWS --password-stdin $(ECR_ENDPOINT)
-
-target-eks: docker-login-eks
-	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
 
 # create a new branch from main
 # usage: make branch JIRA=XXXX OR make branch NAME=YYYY

@@ -4,7 +4,7 @@ pipeline {
   }
 
   tools {
-    go 'Go 1.18'
+    go 'Go 1.20'
   }
 
   environment {
@@ -22,7 +22,19 @@ pipeline {
   }
 
   stages {
+    stage("Set RUN_CI") {
+      steps {
+        script {
+          env.RUN_CI = sh(
+            script: 'if [[ "$(git rev-parse origin/main)" == "${GIT_COMMIT}" ]]; then git diff --quiet --name-only --diff-filter=ADMR ${GIT_COMMIT}~..${GIT_COMMIT} -- operator scripts collector ci.Jenkinsfile && echo false || echo true; else git diff --quiet --name-only --diff-filter=ADMR origin/main..${GIT_COMMIT} -- operator scripts collector ci.Jenkinsfile && echo false || echo true; fi',
+            returnStdout: true
+          ).trim()
+        }
+      }
+    }
+
     stage("Go Tests and Publish Images") {
+      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       parallel{
         stage("Publish Collector") {
           agent {
@@ -99,6 +111,7 @@ pipeline {
     }
 
     stage('Run Collector Integration Tests') {
+      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
@@ -137,7 +150,7 @@ pipeline {
 //             timeout(time: 30, unit: 'MINUTES')
 //           }
 //           tools {
-//             go 'Go 1.18'
+//             go 'Go 1.20'
 //           }
 //           environment {
 //             DOCKER_IMAGE = "kubernetes-collector"
@@ -189,6 +202,7 @@ pipeline {
     }
 
     stage("Run Operator Integration Tests") {
+      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       environment {
         OPERATOR_YAML_TYPE="rc"
         TOKEN = credentials('GITHUB_TOKEN')

@@ -23,9 +23,10 @@ func FromQuery(vals map[string][]string) Config {
 	metricTagBlacklist := parseFilters(vals[MetricTagBlacklist])
 	tagInclude := vals[TagInclude]
 	tagExclude := vals[TagExclude]
+	tagGuaranteeList := vals[TagGuaranteeList]
 
 	if len(metricWhitelist) == 0 && len(metricBlacklist) == 0 && len(metricTagWhitelist) == 0 &&
-		len(metricTagBlacklist) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 {
+		len(metricTagBlacklist) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 && len(tagGuaranteeList) == 0 {
 		return Config{}
 	}
 
@@ -36,6 +37,7 @@ func FromQuery(vals map[string][]string) Config {
 		MetricTagBlacklist: metricTagBlacklist,
 		TagInclude:         tagInclude,
 		TagExclude:         tagExclude,
+		TagGuaranteeList:   tagGuaranteeList,
 	}
 }
 
@@ -62,9 +64,10 @@ func FromConfig(cfg Config) Filter {
 	}
 	tagInclude := cfg.TagInclude
 	tagExclude := cfg.TagExclude
+	tagGuaranteeList := cfg.TagGuaranteeList
 
 	if len(metricAllowList) == 0 && len(metricDenyList) == 0 && len(metricTagAllowList) == 0 &&
-		len(metricTagDenyList) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 {
+		len(metricTagDenyList) == 0 && len(tagInclude) == 0 && len(tagExclude) == 0 && len(tagGuaranteeList) == 0 {
 		return nil
 	}
 
@@ -75,6 +78,7 @@ func FromConfig(cfg Config) Filter {
 		MetricTagDenyList:  metricTagDenyList,
 		TagInclude:         tagInclude,
 		TagExclude:         tagExclude,
+		TagGuaranteeList:   tagGuaranteeList,
 	})
 }
 
