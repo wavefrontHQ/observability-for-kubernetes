@@ -9,16 +9,16 @@ data:
       - rule: metrics-add-cluster-uuid
         action: addTagIfNotExists
         tag: cluster_uuid
-        value: "3ee85802-82b7-4c16-b5d7-a2d18a8d75b0"
+        value: "{{ .DataExport.WavefrontProxy.ClusterUUID }}"
       - rule: metrics-add-cluster-name
         action: addTagIfNotExists
         tag: cluster
-        value: "akodali-kind-041323"
+        value: "{{ .ClusterName }}"
       - rule: span-add-cluster-uuid
         action: spanAddTagIfNotExists
         tag: cluster_uuid
-        value: "3ee85802-82b7-4c16-b5d7-a2d18a8d75b0"
+        value: "{{ .DataExport.WavefrontProxy.ClusterUUID }}"
       - rule: span-add-cluster-name
         action: spanAddTagIfNotExists
         tag: cluster
-        value: "akodali-kind-041323"
+        value: "{{ .ClusterName }}"
