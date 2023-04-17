@@ -456,6 +456,9 @@ function main() {
   if [[ " ${tests_to_run[*]} " =~ " advanced " ]]; then
     run_test "advanced" "health" "test_wavefront_metrics" "logging"
   fi
+  if [[ " ${tests_to_run[*]} " =~ " proxy-preprocessor " ]]; then
+    run_test "basic" "test_wavefront_metrics"
+  fi
   if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
   fi
