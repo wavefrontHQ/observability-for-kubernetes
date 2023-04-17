@@ -37,7 +37,6 @@ pipeline {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       parallel{
         stage("Publish Collector") {
-
           environment {
             RELEASE_TYPE = "alpha"
             DOCKER_IMAGE = "kubernetes-collector"
@@ -53,7 +52,6 @@ pipeline {
         }
 
         stage("Publish Operator") {
-
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
             RELEASE_TYPE = "alpha"
@@ -75,7 +73,6 @@ pipeline {
         }
 
         stage("Collector Go Tests") {
-
           steps {
             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
               sh 'cd collector && make checkfmt vet tests'
@@ -83,7 +80,6 @@ pipeline {
           }
         }
         stage("Operator Go Tests") {
-
           steps {
             sh 'cd operator && make checkfmt vet test'
             sh 'cd operator && make linux-golangci-lint'
@@ -92,7 +88,6 @@ pipeline {
         }
 
         stage("Test Openshift build") {
-
           steps {
             sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
           }
@@ -106,7 +101,6 @@ pipeline {
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
         stage("GKE Integration Test") {
-
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -131,7 +125,6 @@ pipeline {
           }
         }
 //         stage("EKS Integration Test") {
-
 //           options {
 //             timeout(time: 30, unit: 'MINUTES')
 //           }
@@ -158,7 +151,6 @@ pipeline {
 //           }
 //         }
         stage("AKS Integration Test") {
-
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -194,7 +186,6 @@ pipeline {
 
       parallel {
         stage("GKE") {
-
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -218,7 +209,6 @@ pipeline {
         }
 
 //         stage("GKE with customization") {
-
 //           options {
 //             timeout(time: 30, unit: 'MINUTES')
 //           }
@@ -250,7 +240,6 @@ pipeline {
 //         }
 
 //         stage("EKS") {
-
 //           options {
 //             timeout(time: 30, unit: 'MINUTES')
 //           }
@@ -274,7 +263,6 @@ pipeline {
 //         }
 
         stage("AKS") {
-
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
