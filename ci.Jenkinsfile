@@ -8,7 +8,7 @@ pipeline {
   }
 
   environment {
-    PATH = "${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
+    PATH = "${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
     GITHUB_TOKEN = credentials("GITHUB_TOKEN")
     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
