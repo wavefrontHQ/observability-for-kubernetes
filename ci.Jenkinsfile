@@ -37,9 +37,7 @@ pipeline {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       parallel{
         stage("Publish Collector") {
-          agent {
-            label "worker-1"
-          }
+
           environment {
             RELEASE_TYPE = "alpha"
             DOCKER_IMAGE = "kubernetes-collector"
@@ -55,9 +53,7 @@ pipeline {
         }
 
         stage("Publish Operator") {
-          agent {
-            label "worker-2"
-          }
+
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
             RELEASE_TYPE = "alpha"
@@ -79,9 +75,7 @@ pipeline {
         }
 
         stage("Collector Go Tests") {
-          agent {
-            label "worker-3"
-          }
+
           steps {
             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
               sh 'cd collector && make checkfmt vet tests'
@@ -89,9 +83,7 @@ pipeline {
           }
         }
         stage("Operator Go Tests") {
-          agent {
-            label "worker-4"
-          }
+
           steps {
             sh 'cd operator && make checkfmt vet test'
             sh 'cd operator && make linux-golangci-lint'
@@ -100,9 +92,7 @@ pipeline {
         }
 
         stage("Test Openshift build") {
-          agent {
-            label "worker-5"
-          }
+
           steps {
             sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
           }
@@ -116,9 +106,7 @@ pipeline {
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
         stage("GKE Integration Test") {
-          agent {
-            label "worker-1"
-          }
+
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -143,9 +131,7 @@ pipeline {
           }
         }
 //         stage("EKS Integration Test") {
-//           agent {
-//             label "worker-2"
-//           }
+
 //           options {
 //             timeout(time: 30, unit: 'MINUTES')
 //           }
@@ -172,9 +158,7 @@ pipeline {
 //           }
 //         }
         stage("AKS Integration Test") {
-          agent {
-            label "worker-3"
-          }
+
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -210,9 +194,7 @@ pipeline {
 
       parallel {
         stage("GKE") {
-          agent {
-            label "worker-1"
-          }
+
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
@@ -236,9 +218,7 @@ pipeline {
         }
 
 //         stage("GKE with customization") {
-//           agent {
-//             label "worker-2"
-//           }
+
 //           options {
 //             timeout(time: 30, unit: 'MINUTES')
 //           }
@@ -270,9 +250,7 @@ pipeline {
 //         }
 
 //         stage("EKS") {
-//           agent {
-//             label "worker-3"
-//           }
+
 //           options {
 //             timeout(time: 30, unit: 'MINUTES')
 //           }
@@ -296,9 +274,7 @@ pipeline {
 //         }
 
         stage("AKS") {
-          agent {
-            label "worker-4"
-          }
+
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
