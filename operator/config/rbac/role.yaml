@@ -100,3 +100,11 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  resourceNames:
+  - wavefront-controller-manager-scc
+  verbs:
+  - use

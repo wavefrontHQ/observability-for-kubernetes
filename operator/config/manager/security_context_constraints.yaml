@@ -1,0 +1,21 @@
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: controller-manager-scc
+  namespace: system
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: controller-manager
+allowHostDirVolumePlugin: true
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegedContainer: false
+readOnlyRootFilesystem: false
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+users:
+- system:serviceaccount:observability-system:wavefront-controller-manager
