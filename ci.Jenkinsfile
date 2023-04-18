@@ -76,7 +76,7 @@ pipeline {
               env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
             }
           }
-        }
+        } // riscuit for the biscuit
 
         stage("Collector Go Tests") {
           agent {
