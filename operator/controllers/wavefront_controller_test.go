@@ -704,6 +704,27 @@ func TestReconcileProxy(t *testing.T) {
 		containsProxyArg(t, "--customSourceTags mySource", *mockKM)
 	})
 
+	t.Run("can create proxy with the default cluster_uuid and cluster preprocessor rules", func(t *testing.T) {
+		clusterName := "my_cluster_name"
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) { w.Spec.ClusterName = clusterName }))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		containsProxyArg(t, "--preprocessorConfigFile /etc/wavefront/preprocessor/rules.yaml", *mockKM)
+
+		deployment, err := mockKM.GetAppliedDeployment("proxy", util.ProxyName)
+		require.NoError(t, err)
+
+		volumeMountHasPath(t, deployment, "preprocessor", "/etc/wavefront/preprocessor")
+		volumeHasConfigMap(t, deployment, "preprocessor", "default-proxy-preprocessor-rules-config")
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("2878", wftest.DefaultNamespace, "ownerReferences"))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-uuid\n        action: addTagIfNotExists\n        tag: cluster_uuid\n        value: \"%s\"", r.ClusterUUID)))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-name\n        action: addTagIfNotExists\n        tag: cluster\n        value: \"%s\"", clusterName)))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-add-cluster-uuid\n        action: spanAddTagIfNotExists\n        key: cluster_uuid\n        value: \"%s\"", r.ClusterUUID)))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-add-cluster-name\n        action: spanAddTagIfNotExists\n        key: cluster\n        value: \"%s\"", clusterName)))
+	})
+
 	//TODO: we need to fix this test and make sure that can combine the users custom preprocessor rules with the default rules
 	//t.Run("can create proxy with preprocessor rules", func(t *testing.T) {
 	//	r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
@@ -1208,6 +1229,7 @@ func emptyScenario(wfCR *wf.Wavefront, initObjs ...runtime.Object) (*controllers
 		FS:                os.DirFS(controllers.DeployDir),
 		KubernetesManager: mockKM,
 		MetricConnection:  metric.NewConnection(testhelper.StubSenderFactory(nil, nil)),
+		ClusterUUID:       "1234-56-1",
 	}
 
 	return r, mockKM

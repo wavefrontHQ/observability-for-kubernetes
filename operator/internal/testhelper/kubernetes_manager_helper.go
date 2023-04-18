@@ -272,6 +272,18 @@ func (skm MockKubernetesManager) CollectorConfigMapContains(checks ...string) bo
 	)
 }
 
+func (skm MockKubernetesManager) ProxyPreprocessorRulesConfigMapContains(checks ...string) bool {
+	return contains(
+		skm.appliedYAMLs,
+		"v1",
+		"ConfigMap",
+		"wavefront",
+		"proxy",
+		"default-proxy-preprocessor-rules-config",
+		checks...,
+	)
+}
+
 func (skm MockKubernetesManager) NodeCollectorDaemonSetContains(checks ...string) bool {
 	return contains(
 		skm.appliedYAMLs,

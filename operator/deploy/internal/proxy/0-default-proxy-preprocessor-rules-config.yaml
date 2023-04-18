@@ -2,7 +2,15 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: default-proxy-preprocessor-rules-config
-  namespace: observability-system
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: proxy
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: wavefront-controller-manager
+    uid: {{ .ControllerManagerUID }}
 data:
   rules.yaml: |
     '{{ .DataExport.WavefrontProxy.MetricPort }}':
@@ -72,7 +80,7 @@ data:
       - rule: metrics-add-cluster-uuid
         action: addTagIfNotExists
         tag: cluster_uuid
-        value: "{{ .DataExport.WavefrontProxy.ClusterUUID }}"
+        value: "{{ .ClusterUUID }}"
       - rule: metrics-add-cluster-name
         action: addTagIfNotExists
         tag: cluster
@@ -80,7 +88,7 @@ data:
       - rule: span-add-cluster-uuid
         action: spanAddTagIfNotExists
         key: cluster_uuid
-        value: "{{ .DataExport.WavefrontProxy.ClusterUUID }}"
+        value: "{{ .ClusterUUID }}"
       - rule: span-add-cluster-name
         action: spanAddTagIfNotExists
         key: cluster

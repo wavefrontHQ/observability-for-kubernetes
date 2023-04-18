@@ -75,7 +75,7 @@ type WavefrontReconciler struct {
 	MetricConnection  *metric.Connection
 	Versions          Versions
 	namespace         string
-	cluster_uuid      string
+	ClusterUUID       string
 }
 
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts,verbs=get;list;watch;create;update;patch;delete
@@ -162,14 +162,14 @@ type Versions struct {
 	LoggingVersion   string
 }
 
-func NewWavefrontReconciler(versions Versions, client client.Client, cluster_uuid string) (operator *WavefrontReconciler, err error) {
+func NewWavefrontReconciler(versions Versions, client client.Client, clusterUUID string) (operator *WavefrontReconciler, err error) {
 	return &WavefrontReconciler{
 		Versions:          versions,
 		Client:            client,
 		FS:                os.DirFS(DeployDir),
 		KubernetesManager: kubernetes_manager.NewKubernetesManager(client),
 		MetricConnection:  metric.NewConnection(metric.WavefrontSenderFactory()),
-		cluster_uuid:      cluster_uuid,
+		ClusterUUID:       clusterUUID,
 	}, nil
 }
 
@@ -398,7 +398,7 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 			return err
 		}
 
-		wavefront.Spec.DataExport.WavefrontProxy.ClusterUUID = r.cluster_uuid
+		wavefront.Spec.ClusterUUID = r.ClusterUUID
 		wavefront.Spec.DataExport.WavefrontProxy.Preprocessor = "default-proxy-preprocessor-rules-config"
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
 		wavefront.Spec.CanExportData = true

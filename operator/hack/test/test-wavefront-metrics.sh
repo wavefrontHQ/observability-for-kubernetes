@@ -189,14 +189,14 @@ function main() {
 
   wait_for_cluster_ready "$NS"
 
-  local DEFAULT_CLUSTER_UUID=$(kubectl get ns default -o json | jq  '.metadata.uid' |  tr -d '"')
+  local CLUSTER_UUID=$(kubectl get ns default -o json | jq  '.metadata.uid' |  tr -d '"')
   local EXPECTED_TAGS_JSON=$(mktemp)
   jq -S -n --arg status Healthy \
      --arg proxy Healthy \
      --arg metrics Healthy \
      --arg logging Healthy \
      --arg version "$EXPECTED_OPERATOR_VERSION" \
-     --arg cluster_uuid "$DEFAULT_CLUSTER_UUID" \
+     --arg cluster_uuid "$CLUSTER_UUID" \
      --arg cluster "$CONFIG_CLUSTER_NAME" \
      '$ARGS.named' | \
      sort | sed 's/,//g' > "$EXPECTED_TAGS_JSON"
@@ -206,7 +206,7 @@ function main() {
   exit_on_fail wait_for_query_match_tags "at(%22end%22%2C%202m%2C%20ts(%22kubernetes.observability.status%22%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22))" "${EXPECTED_TAGS_JSON}"
 
   jq -S -n \
-     --arg cluster_uuid "$DEFAULT_CLUSTER_UUID" \
+     --arg cluster_uuid "$CLUSTER_UUID" \
      --arg cluster "$CONFIG_CLUSTER_NAME" \
      '$ARGS.named' | \
      sort | sed 's/,//g' > "$EXPECTED_TAGS_JSON"
