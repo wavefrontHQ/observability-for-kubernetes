@@ -190,7 +190,6 @@ function main() {
   wait_for_cluster_ready "$NS"
 
   local DEFAULT_CLUSTER_UUID=$(kubectl get ns default -o json | jq  '.metadata.uid' |  tr -d '"')
-  echo $DEFAULT_CLUSTER_UUID
   local EXPECTED_TAGS_JSON=$(mktemp)
   jq -S -n --arg status Healthy \
      --arg proxy Healthy \
@@ -205,7 +204,13 @@ function main() {
   echo Expected kubernetes.observability.status tags
   cat $EXPECTED_TAGS_JSON
   exit_on_fail wait_for_query_match_tags "at(%22end%22%2C%202m%2C%20ts(%22kubernetes.observability.status%22%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22))" "${EXPECTED_TAGS_JSON}"
-  exit_on_fail wait_for_query_match_tags "at(%22end%22%2C%202m%2C%20ts(%22ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22))" "${EXPECTED_TAGS_JSON}"
+
+  jq -S -n \
+     --arg cluster_uuid "$DEFAULT_CLUSTER_UUID" \
+     --arg cluster "$CONFIG_CLUSTER_NAME" \
+     '$ARGS.named' | \
+     sort | sed 's/,//g' > "$EXPECTED_TAGS_JSON"
+  exit_on_fail wait_for_query_match_tags "at(%22end%22%2C%202m%2C%20ts(%22kubernetes.cluster.pod.count%22%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22))" "${EXPECTED_TAGS_JSON}"
   echo Expected collector version: $COLLECTOR_VERSION_IN_DECIMAL
   exit_on_fail wait_for_query_match_exact "ts(kubernetes.collector.version%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22%20AND%20installation_method%3D%22operator%22)" "${COLLECTOR_VERSION_IN_DECIMAL}"
   exit_on_fail wait_for_query_non_zero "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22)"
