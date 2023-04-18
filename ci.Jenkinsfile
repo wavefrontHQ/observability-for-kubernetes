@@ -35,7 +35,7 @@ pipeline {
 
     stage("Go Tests and Publish Images") {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
-      parallel{
+//       parallel{
         stage("Publish Collector") {
           environment {
             RELEASE_TYPE = "alpha"
@@ -92,7 +92,7 @@ pipeline {
             sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
           }
         }
-      }
+//       }
     }
 
     stage('Run Collector Integration Tests') {
