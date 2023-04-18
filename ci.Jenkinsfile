@@ -35,7 +35,7 @@ pipeline {
 
     stage("Go Tests and Publish Images") {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
-      steps {
+      stages {
         stage("Publish Collector") {
           environment {
             RELEASE_TYPE = "alpha"
