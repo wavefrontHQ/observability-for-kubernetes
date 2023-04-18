@@ -156,7 +156,6 @@ df.user_agent = px.select(df.user_agent != '', df.user_agent, 'none')
 df.req_path = px.uri_recompose('', '', '', 0, px.pluck(px.uri_parse(df.req_path), 'path'), '', '')
 # Replace any Hex IDS from the path with <id>
 df.req_path = px.replace('/[a-fA-F0-9\-:]{6,}(/?)', df.req_path, '/<id>\\1')
-df.cluster_name = px.vizier_name()
 
 px.export(
     df, px.otel.Data(
@@ -167,8 +166,6 @@ px.export(
             # OTEL Resource Conventions
             'service.name': df.destination_service,
             'service.instance.id': df.destination_pod,
-
-            'k8s.cluster.name': df.cluster_name,
 
             # OTEL Scope Exporter Conventions
             'otel.scope.name': 'pixie',
