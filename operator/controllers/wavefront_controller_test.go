@@ -741,21 +741,6 @@ func TestReconcileProxy(t *testing.T) {
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("4317", "4318"))
 	})
 
-	t.Run("can create proxy with the default cluster_uuid and cluster preprocessor rules with metrics disabled", func(t *testing.T) {
-		clusterName := "my_cluster_name"
-		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
-			w.Spec.ClusterName = clusterName
-			w.Spec.DataCollection.Metrics.Enable = false
-		}))
-
-		_, err := r.Reconcile(context.Background(), defaultRequest())
-		require.NoError(t, err)
-
-		containsProxyArg(t, "--preprocessorConfigFile /etc/wavefront/preprocessor/rules.yaml", *mockKM)
-
-		require.False(t, mockKM.ProxyPreprocessorRulesConfigMapContains("2878"))
-	})
-
 	//TODO: we need to fix this test and make sure that can combine the users custom preprocessor rules with the default rules
 	//t.Run("can create proxy with preprocessor rules", func(t *testing.T) {
 	//	r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {

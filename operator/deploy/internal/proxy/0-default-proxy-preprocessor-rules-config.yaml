@@ -13,11 +13,9 @@ metadata:
     uid: {{ .ControllerManagerUID }}
 data:
   rules.yaml: |
-    {{- if .DataCollection.Metrics.Enable }}
     '{{ .DataExport.WavefrontProxy.MetricPort }}':
       - rule: noop-rule
         action: count
-    {{- end }}
     {{- if .DataExport.WavefrontProxy.OTLP.GrpcPort }}
     '{{ .DataExport.WavefrontProxy.OTLP.GrpcPort }}':
       - rule: noop-rule
