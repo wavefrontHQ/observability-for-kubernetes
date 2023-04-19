@@ -291,14 +291,6 @@ spec:
                             items:
                               type: string
                             type: array
-                          tagGuaranteeList:
-                            description: List of tags guaranteed to not be removed
-                              during kubernetes metrics collection. Supersedes all
-                              other collection filters. These tags are given priority
-                              if you hit the 20 tag limit.
-                            items:
-                              type: string
-                            type: array
                         type: object
                       nodeCollector:
                         default:
@@ -948,8 +940,8 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.17.0
-  logging: 2.0.10
+  collector: 1.16.0
+  logging: 2.0.8
   proxy: "12.3"
 kind: ConfigMap
 metadata:
@@ -1020,7 +1012,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.5.0
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.4.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
