@@ -1,9 +1,9 @@
-# Kubernetes Metrics Collector
+# Wavefront Collector for Kubernetes
 [![Go Report Card][go-report-img]][go-report] [![Docker Pulls][docker-pull-img]][docker-img]
 
-[VMware Aria Operations for Applications (formerly known as Tanzu Observability by Wavefront)](https://docs.wavefront.com) is a high-performance streaming analytics platform for monitoring and optimizing your environment and applications.
+[Wavefront](https://docs.wavefront.com) is a high-performance streaming analytics platform for monitoring and optimizing your environment and applications.
 
-The Kubernetes Metrics Collector is an agent that runs as a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) on each node within a Kubernetes cluster. It collects metrics and events about the cluster and sends them to the Operations for Applications service.
+The Wavefront Collector for Kubernetes is an agent that runs as a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) on each node within a Kubernetes cluster. It collects metrics and events about the cluster and sends them to the Wavefront SaaS service.
 
 ## Features
 * Collects real-time data from all layers of a Kubernetes environment
@@ -39,8 +39,8 @@ Commonly used `make` options include:
 
 ## Troubleshooting Dropped Metrics
 
-Formerly, we would see the following error in the Wavefront proxy logs when a metric has too many tags: `Too many point tags`.
-However, logic has been added to the Collector to automatically drop tags in priority order
+Formerly, we would see the following error in the proxy logs when a metric has too many tags: `Too many point tags`.
+However, logic has been added to the collector to automatically drop tags in priority order
 to ensure that metrics make it through to the proxy and no longer cause this error.
 This is the order of the logic used to drop tags:
 1. Explicitly excluded tags (from `tagExclude` config).
