@@ -433,7 +433,25 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
 	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
 
+	if r.isAnOpenshiftEnvironment(ctx) {
+		wavefront.Spec.Openshift = true
+	}
+
 	return nil
+}
+
+func (r *WavefrontReconciler) isAnOpenshiftEnvironment(ctx context.Context) bool {
+	// only deploy openshift-specific resources if we are deployed on an openshift environment
+	scc := &unstructured.UnstructuredList{}
+	scc.SetAPIVersion("security.openshift.io/v1")
+	scc.SetKind("SecurityContextConstraints")
+
+	err := r.Client.List(ctx, scc)
+	if err != nil {
+		return false
+	}
+
+	return len(scc.Items) > 0
 }
 
 func (r *WavefrontReconciler) parseHttpProxyConfigs(wavefront *wf.Wavefront, ctx context.Context) error {

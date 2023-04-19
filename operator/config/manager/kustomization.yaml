@@ -1,7 +1,6 @@
 resources:
 - manager.yaml
 - component_versions.yaml
-- security_context_constraints.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

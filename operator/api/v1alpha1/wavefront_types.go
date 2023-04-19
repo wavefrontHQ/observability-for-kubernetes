@@ -62,6 +62,9 @@ type WavefrontSpec struct {
 
 	// Namespace is for internal use
 	Namespace string `json:"-"`
+
+	// Openshift is for internal use
+	Openshift bool `json:"-"`
 }
 
 type Metrics struct {

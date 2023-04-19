@@ -18,6 +18,5 @@ runAsUser:
 seLinuxContext:
   type: RunAsAny
 users:
-- system:serviceaccount:observability-system:wavefront-controller-manager
 - system:serviceaccount:observability-system:wavefront-proxy
 - system:serviceaccount:observability-system:wavefront-collector
