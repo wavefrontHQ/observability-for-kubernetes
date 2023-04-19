@@ -1,5 +1,5 @@
-# Installation and Configuration of the Observability for Kubernetes Operator on OpenShift
-This page contains the Installation and Configuration steps to monitor OpenShift using the Observability for Kubernetes Operator.
+# Installation and configuration of Wavefront Collector Operator on OpenShift
+This page contains the Installation and Configuration steps to monitor Openshift using Wavefront Collector Operator.
 
 **Supported Versions**: Openshift Enterprise 3.11
 
@@ -26,7 +26,7 @@ oc create -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kub
 curl -O https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/collector/deploy/openshift/openshift-operator/deploy/crds/wavefront-collector-operator_v1beta1_cr.yaml
 ```
 
-7. Configure Wavefront proxy:
+7. Configure Wavefront Proxy:
 
 * Set `collector.useProxy: true` in `wavefront-collector-operator_v1beta1_cr.yaml`
 
@@ -41,11 +41,11 @@ oc create -f wavefront-collector-operator_v1beta1_cr.yaml -n wavefront-collector
 ``` 
 
 
-### Option 1. Using external Wavefront Proxy 
+### Option 1. Using external Wavefront proxy 
 
 * Uncomment the property `collector.proxyAddress` and provide the external Wavefront proxy IP address with port and set `proxy.enabled: false` in `wavefront-collector-operator_v1beta1_cr.yaml`. 
 
-### Option 2. Using internal Wavefront Proxy
+### Option 2. Using internal Wavefront proxy
 
 * Create a file `pvc.yaml` with below content and replace `<storage_class_name>` with available storage class in the cluster.
 
