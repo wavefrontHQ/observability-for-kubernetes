@@ -19,8 +19,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"k8s.io/client-go/discovery"
 	"os"
+
+	"k8s.io/client-go/discovery"
 
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"

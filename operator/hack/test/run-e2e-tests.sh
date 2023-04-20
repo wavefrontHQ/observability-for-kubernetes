@@ -145,6 +145,8 @@ function run_static_analysis() {
   checks_to_remove "$kube_lint_check_errors" "wavefront-logging" "run-as-non-root,no-read-only-root-fs"
   #sensitive-host-mounts checks for the collector
   checks_to_remove "$kube_lint_check_errors" "collector" "sensitive-host-mounts"
+  #non root checks for the controller manager to support openshift
+  checks_to_remove "$kube_lint_check_errors" "wavefront-controller-manager" "run-as-non-root"
 
   current_lint_errors=$(cat "$kube_lint_check_errors" | wc -l)
   yellow "Kube linter error count (with known errors removed): ${current_lint_errors}"
@@ -170,6 +172,8 @@ function run_static_analysis() {
   if [[ "$k8s_env" == "Kind" ]]; then
     checks_to_remove "$kube_score_critical_errors" "wavefront-controller-manager" "ImagePullPolicy"
   fi
+  #non root checks for the controller manager to support openshift
+  checks_to_remove "$kube_score_critical_errors" "wavefront-controller-manager" "security:context,low:user:ID,low:group:ID"
 
   current_score_errors=$(cat "$kube_score_critical_errors" | wc -l)
   yellow "Kube score error count (with known errors removed): ${current_score_errors}"

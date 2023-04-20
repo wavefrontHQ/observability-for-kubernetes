@@ -22,13 +22,14 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io/fs"
-	"k8s.io/client-go/discovery"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
+
+	"k8s.io/client-go/discovery"
 
 	appsv1 "k8s.io/api/apps/v1"
 
