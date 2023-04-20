@@ -1,22 +1,23 @@
+{{- if .Openshift }}
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
-  name: controller-manager-scc
+  name: wavefront-proxy-scc
   namespace: system
   labels:
     app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: controller-manager
-allowHostDirVolumePlugin: true
+    app.kubernetes.io/component: proxy
+allowHostDirVolumePlugin: false
 allowHostIPC: false
 allowHostNetwork: false
 allowHostPID: false
 allowHostPorts: false
 allowPrivilegedContainer: false
-readOnlyRootFilesystem: false
+readOnlyRootFilesystem: true
 runAsUser:
   type: RunAsAny
 seLinuxContext:
-  type: RunAsAny
+  type: MustRunAs
 users:
 - system:serviceaccount:observability-system:wavefront-proxy
-- system:serviceaccount:observability-system:wavefront-collector
+{{- end }}

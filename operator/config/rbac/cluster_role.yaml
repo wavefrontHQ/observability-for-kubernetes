@@ -8,5 +8,8 @@ rules:
   resources:
   - securitycontextconstraints
   verbs:
-  - list
-
+  - create
+  - delete
+  - get
+  - patch
+  - update

@@ -22,6 +22,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io/fs"
+	"k8s.io/client-go/discovery"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -73,6 +74,7 @@ type WavefrontReconciler struct {
 
 	FS                fs.FS
 	KubernetesManager KubernetesManager
+	DiscoveryClient   discovery.ServerGroupsInterface
 	MetricConnection  *metric.Connection
 	Versions          Versions
 	namespace         string
@@ -162,12 +164,13 @@ type Versions struct {
 	LoggingVersion   string
 }
 
-func NewWavefrontReconciler(versions Versions, client client.Client) (operator *WavefrontReconciler, err error) {
+func NewWavefrontReconciler(versions Versions, client client.Client, discoveryClient discovery.ServerGroupsInterface) (operator *WavefrontReconciler, err error) {
 	return &WavefrontReconciler{
 		Versions:          versions,
 		Client:            client,
 		FS:                os.DirFS(DeployDir),
 		KubernetesManager: kubernetes_manager.NewKubernetesManager(client),
+		DiscoveryClient:   discoveryClient,
 		MetricConnection:  metric.NewConnection(metric.WavefrontSenderFactory()),
 	}, nil
 }
@@ -218,7 +221,10 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec,
 		if err != nil {
 			return nil, err
 		}
-		resources = append(resources, buffer.String())
+
+		if buffer.Len() != 0 {
+			resources = append(resources, buffer.String())
+		}
 	}
 	return resources, nil
 }
@@ -433,25 +439,26 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
 	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
 
-	if r.isAnOpenshiftEnvironment(ctx) {
+	if r.isAnOpenshiftEnvironment() {
 		wavefront.Spec.Openshift = true
 	}
 
 	return nil
 }
 
-func (r *WavefrontReconciler) isAnOpenshiftEnvironment(ctx context.Context) bool {
-	// only deploy openshift-specific resources if we are deployed on an openshift environment
-	scc := &unstructured.UnstructuredList{}
-	scc.SetAPIVersion("security.openshift.io/v1")
-	scc.SetKind("SecurityContextConstraints")
-
-	err := r.Client.List(ctx, scc)
+func (r *WavefrontReconciler) isAnOpenshiftEnvironment() bool {
+	serverGroups, err := r.DiscoveryClient.ServerGroups()
 	if err != nil {
 		return false
 	}
 
-	return len(scc.Items) > 0
+	for _, group := range serverGroups.Groups {
+		if strings.Contains(group.Name, "openshift") {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (r *WavefrontReconciler) parseHttpProxyConfigs(wavefront *wf.Wavefront, ctx context.Context) error {
