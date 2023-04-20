@@ -1,20 +1,19 @@
-# Deploy the Observability for Kubernetes Operator with a custom registry
+# Deploy the Wavefront Operator with a custom registry
 
-Install the Observability for Kubernetes Operator into `observability-system` namespace.
+Install the Wavefront Operator into `observability-system` namespace.
 
-**Note**: All the integration components use the same image registry in the Operator.
+**Note**: All the integration components use the same image registry in the operator.
 
 1. Copy the following images over to `YOUR_IMAGE_REGISTRY`, keeping the same repos and tags.
 
+| Component | From | To |
+|-----------|------|----|
+| Observability for Kubernetes Operator | `projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.5.0` | `YOUR_IMAGE_REGISTRY/kubernetes-operator:2.5.0` |
+| Kubernetes Metrics Collector | `projects.registry.vmware.com/tanzu_observability/kubernetes-collector:1.17.0` | `YOUR_IMAGE_REGISTRY/kubernetes-collector:1.17.0` |
+| Wavefront Proxy | `projects.registry.vmware.com/tanzu_observability/proxy:12.3` | `YOUR_IMAGE_REGISTRY/proxy:12.3` |
+| Operations for Applications logging | `projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit:2.0.10` | `YOUR_IMAGE_REGISTRY/kubernetes-operator-fluentbit:2.0.10` |
 
-| Component                             | From                                                                                   | To                                                        |
-|---------------------------------------|----------------------------------------------------------------------------------------|-----------------------------------------------------------|
-| Observability for Kubernetes Operator | `projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.4.0`           | `YOUR_IMAGE_REGISTRY/kubernetes-operator:2.4.0`           |
-| Kubernetes Metrics Collector          | `projects.registry.vmware.com/tanzu_observability/kubernetes-collector:1.16.0`         | `YOUR_IMAGE_REGISTRY/kubernetes-collector:1.16.0`         |
-| Wavefront Proxy                       | `projects.registry.vmware.com/tanzu_observability/proxy:12.3`                          | `YOUR_IMAGE_REGISTRY/proxy:12.3`                          |
-| Operations for Applications logging   | `projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit:2.0.8` | `YOUR_IMAGE_REGISTRY/kubernetes-operator-fluentbit:2.0.8` |
-
-2. Create a local directory called `observability`.
+2. Create a local directory called `observability`
 3. Download [wavefront-operator.yaml](https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml) into the `observability` directory.
 4. Create a `kustomization.yaml` file in the `observability` directory.
   ```yaml
@@ -29,15 +28,15 @@ Install the Observability for Kubernetes Operator into `observability-system` na
   - name: projects.registry.vmware.com/tanzu_observability/kubernetes-operator
     newName: YOUR_IMAGE_REGISTRY/kubernetes-operator
   ```
-5. Deploy the Observability for Kubernetes Operator
+5. Deploy the wavefront operator 
   ```
   kubectl apply -k observability
   ```
-6. Now follow the steps starting from step 2 in [Deploy the Kubernetes Metrics Collector and Wavefront Proxy with the Operator](../../README.md#Deploy-the-Kubernetes-Metrics-Collector-and-Wavefront-Proxy-with-the-Observability-for-Kubernetes-Operator)
+6. Now follow from step 2 in [Deploy the Wavefront Collector and Proxy with the Operator](../../README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator)
 
-# Deploy the Observability for Kubernetes Operator into a Custom Namespace
+# Deploy the Wavefront Operator into a custom namespace
 
-1. Create a local directory called `observability`.
+1. Create a local directory called `observability`
 2. Download [wavefront-operator.yaml](https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml) into the `observability` directory.
 3. Create a `kustomization.yaml` file in the `observability` directory.
   ```yaml
@@ -63,9 +62,9 @@ Install the Observability for Kubernetes Operator into `observability-system` na
          path: /subjects/0/namespace
          value: YOUR_NAMESPACE
   ```
-4. Deploy the Observability for Kubernetes Operator
+4. Deploy the wavefront operator
   ```
   kubectl apply -k observability
   ```
-5. Now follow the steps starting from step 2 in [Deploy the Kubernetes Metrics Collector and Wavefront Proxy with the Operator](../../README.md#Deploy-the-Kubernetes-Metrics-Collector-and-Wavefront-Proxy-with-the-Observability-for-Kubernetes-Operator),
+5. Now follow from step 2 in [Deploy the Wavefront Collector and Proxy with the Operator](../../README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator),
    replacing `observability-system` with `YOUR_NAMESPACE`.
