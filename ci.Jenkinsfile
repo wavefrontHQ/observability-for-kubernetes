@@ -303,6 +303,7 @@ pipeline {
             timeout(time: 30, unit: 'MINUTES')
           }
           environment {
+            GCP_CREDS = credentials("GCP_CREDS")
             AKS_CLUSTER_NAME = "k8po-ci"
           }
           steps {
