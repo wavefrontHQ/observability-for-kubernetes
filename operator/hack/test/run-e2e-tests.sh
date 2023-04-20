@@ -231,7 +231,6 @@ function run_logging_integration_checks() {
 
   # send request to the fake proxy control endpoint and check status code for success
   kill $(jobs -p) &>/dev/null || true
-  printf "TEST: portforward ..."
   sleep 3
   kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &
   trap 'kill $(jobs -p) &>/dev/null || true' EXIT
