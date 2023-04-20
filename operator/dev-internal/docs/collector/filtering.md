@@ -6,11 +6,11 @@
 * [Events Filtering](#events-filtering)
 
 ## Introduction
-The Wavefront Collector supports filtering metrics and events. Filters are based on [glob patterns](https://github.com/gobwas/glob#syntax) (similar to standard wildcards).
+The Kubernetes Metrics Collector supports filtering metrics and events. Filters are based on [glob patterns](https://github.com/gobwas/glob#syntax) (similar to standard wildcards).
 
 ## Metrics Filtering
 
-The Wavefront Collector for Kubernetes supports filtering metrics before they are reported to Wavefront. The following filtering options are supported for metrics:
+The Kubernetes Metrics Collector supports filtering metrics before they are reported to the Operations for Applications service. The following filtering options are supported for metrics:
 
   * **metricAllowList**: List of glob patterns. Only metrics with names matching this list are reported.
   * **metricDenyList**: List of glob patterns. Metrics with names matching this list are dropped.
@@ -18,6 +18,7 @@ The Wavefront Collector for Kubernetes supports filtering metrics before they ar
   * **metricTagDenyList**: Map of tag names to list of glob patterns. Metrics containing these tag keys and values will be dropped.
   * **tagInclude**: List of glob patterns. Tags with matching keys will be included. All other tags will be excluded.
   * **tagExclude**: List of glob patterns. Tags with matching keys will be excluded.
+  * **tagGuaranteeList**: List of tag keys. Tags that are guaranteed to not be removed as part of limiting the point tags to the 20 tag limit. This list of tags keys will not be considered for filtering using `tagInclude` and `tagExclude` lists.
 
 Filtering can be enabled on the sink or sources. Where it is applied controls the scope of metrics towards which the filtering applies.
 
@@ -34,7 +35,7 @@ sinks:
     - 'kube.dns.go.*'
     - 'kube.apiserver.go.*'
 
-    # Allow metrics that have an environment tag of production or staging
+    # Allow metrics that have an environment tag of production or staging.
     metricTagAllowList:
       env:
       - 'prod*'
@@ -44,6 +45,10 @@ sinks:
     metricTagDenyList:
       env:
       - 'test*'
+
+    # Guarantees that if metrics have a point tag key "prod", the tag key will not be filtered out.
+    tagGuaranteeList:
+    - 'prod'
 ```
 
 Filtering applied on a source applies only to metrics collected by that source:
@@ -96,7 +101,7 @@ discovery_configs:
 
 ## Events Filtering
 
-The Wavefront Collector for Kubernetes also supports filtering events before they are reported to Wavefront. The following filtering options are supported for events:
+The Kubernetes Metrics Collector also supports filtering events before they are reported to the Operations for Applications service. The following filtering options are supported for events:
 
 * **tagAllowList**: Map of tag names to list of glob patterns. Only events containing tag keys and values matching the list will be reported.
 * **tagDenyList**: Map of tag names to list of glob patterns. Events containing these tag keys and values will be dropped.
