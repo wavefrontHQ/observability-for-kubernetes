@@ -9,6 +9,10 @@ if ! [ -x "$(command -v gcloud)" ]; then
   sudo PREFIX=$HOME ./install.sh --disable-prompts >/dev/null;
 fi
 
+sudo /home/worker/google-cloud-sdk/bin/gcloud components install gke-gcloud-auth-plugin >/dev/null || gcloud components install gke-gcloud-auth-plugin || true
+gcloud auth activate-service-account --key-file "$GCP_CREDS"
+gcloud config set project wavefront-gcp-dev
+
 #
 # aws
 #
