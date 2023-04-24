@@ -218,7 +218,10 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec,
 		if err != nil {
 			return nil, err
 		}
-		resources = append(resources, buffer.String())
+
+		if buffer.Len() != 0 {
+			resources = append(resources, buffer.String())
+		}
 	}
 	return resources, nil
 }
@@ -419,6 +422,10 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		wavefront.Spec.DataCollection.Logging.ConfigHash = hashValue(configHashBytes)
 	}
 
+	if r.shouldEnableEtcdCollection(wavefront, ctx) {
+		wavefront.Spec.DataCollection.Metrics.ControlPlane.EnableEtcd = true
+	}
+
 	wavefront.Spec.DataExport.WavefrontProxy.Args = strings.ReplaceAll(wavefront.Spec.DataExport.WavefrontProxy.Args, "\r", "")
 	wavefront.Spec.DataExport.WavefrontProxy.Args = strings.ReplaceAll(wavefront.Spec.DataExport.WavefrontProxy.Args, "\n", "")
 
@@ -434,6 +441,21 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
 
 	return nil
+}
+
+func (r *WavefrontReconciler) shouldEnableEtcdCollection(wavefront *wf.Wavefront, ctx context.Context) bool {
+	// never collect etcd if control plane metrics are disabled
+	if !wavefront.Spec.DataCollection.Metrics.ControlPlane.Enable {
+		return false
+	}
+
+	// only enable collection from etcd if the certs are supplied as a Secret
+	key := client.ObjectKey{
+		Namespace: r.namespace,
+		Name:      "etcd-certs",
+	}
+	err := r.Client.Get(ctx, key, &corev1.Secret{})
+	return err == nil
 }
 
 func (r *WavefrontReconciler) parseHttpProxyConfigs(wavefront *wf.Wavefront, ctx context.Context) error {

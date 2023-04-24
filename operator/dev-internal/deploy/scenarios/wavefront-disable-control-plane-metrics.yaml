@@ -1,4 +1,5 @@
-# Need to change YOUR_CLUSTER_NAME, YOUR_WAVEFRONT_URL accordingly
+# Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
+# See https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/docs/collector/metrics.md#control-plane-metrics for more details
 apiVersion: wavefront.com/v1alpha1
 kind: Wavefront
 metadata:
