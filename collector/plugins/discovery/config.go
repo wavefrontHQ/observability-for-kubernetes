@@ -245,10 +245,6 @@ func combine(wiredCfg discovery.Config, runtimeCfgs map[string]discovery.Config,
 		}
 	}
 
-	if internalPluginProvider != nil {
-		runCfg.PluginConfigs = append(runCfg.PluginConfigs, internalPluginProvider.DiscoveryPluginConfigs()...)
-	}
-
 	log.Debugf("total plugin configs: %d", len(runCfg.PluginConfigs))
 	return *runCfg
 }

@@ -219,9 +219,3 @@ func makeSecret(name string, data map[string]string) *v1.Secret {
 		StringData: data,
 	}
 }
-
-type FakePluginProvider []discovery.PluginConfig
-
-func (f FakePluginProvider) DiscoveryPluginConfigs() []discovery.PluginConfig {
-	return f
-}

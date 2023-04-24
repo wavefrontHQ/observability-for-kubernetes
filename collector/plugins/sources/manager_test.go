@@ -21,8 +21,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
-
 	log "github.com/sirupsen/logrus"
 
 	"github.com/stretchr/testify/assert"
@@ -195,12 +193,6 @@ func TestPluginConfigProvider(t *testing.T) {
 		Manager().AddProvider(pluginConfigProvider)
 		Manager().AddProvider(regularProvider)
 
-		discoveryConfigs := Manager().DiscoveryPluginConfigs()
-
-		if assert.Equal(t, 1, len(discoveryConfigs)) {
-			assert.Equal(t, "testDiscoveryConfig", discoveryConfigs[0].Name)
-		}
-
 		Manager().DeleteProvider("testPluginProvider")
 		Manager().DeleteProvider("testProvider")
 	})
@@ -220,10 +212,6 @@ func (p *testProvider) Name() string {
 
 type testPluginProvider struct {
 	metrics.DefaultSourceProvider
-}
-
-func (p *testPluginProvider) DiscoveryPluginConfigs() []discovery.PluginConfig {
-	return []discovery.PluginConfig{{Name: "testDiscoveryConfig"}}
 }
 
 func (p *testPluginProvider) GetMetricsSources() []metrics.Source {

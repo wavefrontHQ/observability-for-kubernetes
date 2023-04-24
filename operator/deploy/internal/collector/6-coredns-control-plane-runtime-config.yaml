@@ -1,8 +1,7 @@
-{{- if .DataCollection.Metrics.ControlPlane.EnableEtcd }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: etcd-control-plane-config
+  name: coredns-control-plane-config
   namespace: {{ .Namespace }}
   ownerReferences:
   - apiVersion: apps/v1
@@ -13,7 +12,7 @@ metadata:
     wavefront.com/discovery-config: 'true'
   labels:
     app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: collector
+    app.kubernetes.io/coØmponent: collector
 data:
   collector.yaml: |
     plugins:
@@ -21,20 +20,16 @@ data:
       type: prometheus
       selectors:
         images:
-        - '*etcd:*'
+        - '*coredns:*'
         labels:
-          component:
-          - etcd
-          tier:
-          - control-plane
-      port: 2379
+          k8s-app:
+          - kube-dns
+      port: 9153
       path: /metrics
-      scheme: https
+      scheme: http
       prefix: kubernetes.controlplane.
       convertHistograms: true
-      conf: |
-        tls_config:
-          ca_file: '/etc/etcd-certs/ca_crt'
-          cert_file: '/etc/etcd-certs/server_crt'
-          key_file: '/etc/etcd-certs/server_key'
-{{- end }}
+      filters:
+        metricAllowList:
+        - 'kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket'
+        - 'kubernetes.controlplane.coredns.dns.responses.total.counter'
