@@ -532,6 +532,7 @@ func TestReconcileCollector(t *testing.T) {
 	t.Run("adds the etcd secrets as a volume for the node collector when there is an etcd-certs secret in the same namespace", func(t *testing.T) {
 		r, mockKM := componentScenario(
 			wftest.CR(),
+			nil,
 			&v1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "etcd-certs",
@@ -556,7 +557,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("does not add the etcd secrets as a volume for the node collector when there is no etcd-certs secret in the same namespace", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR())
+		r, mockKM := componentScenario(wftest.CR(), nil)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -569,6 +570,7 @@ func TestReconcileCollector(t *testing.T) {
 			wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataCollection.Metrics.ControlPlane.Enable = false
 			}),
+			nil,
 			&v1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "etcd-certs",
