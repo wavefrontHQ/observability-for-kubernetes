@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
-	"k8s.io/api/autoscaling/v2beta2"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 
 	log "github.com/sirupsen/logrus"
 
@@ -16,7 +16,7 @@ import (
 )
 
 func pointsForHPA(item interface{}, transforms configuration.Transforms) []wf.Metric {
-	hpa, ok := item.(*v2beta2.HorizontalPodAutoscaler)
+	hpa, ok := item.(*autoscalingv2.HorizontalPodAutoscaler)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
 		return nil
