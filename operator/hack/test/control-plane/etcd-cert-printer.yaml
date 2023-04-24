@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: etcd-cert-printer
+  labels:
+    service: etcd-cert-printer-test-service
+    application: etcd-cert-printer-test-application
+spec:
+  selector:
+    matchLabels:
+      service: etcd-cert-printer-test-service
+      application: etcd-cert-printer-test-application
+  template:
+    metadata:
+      labels:
+        service: etcd-cert-printer-test-service
+        application: etcd-cert-printer-test-application
+    spec:
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
+        operator: Exists
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+        operator: Exists
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+      containers:
+      - name: etcd-cert-printer
+        image: busybox
+        args:
+        - /bin/sh
+        - -c
+        - 'cd /host/etc/kubernetes/pki/etcd; cat ca.crt; cat server.crt; cat server.key; while true; do sleep 5; done'
+        volumeMounts:
+        - mountPath: /host/etc/kubernetes/pki/etcd
+          name: etcd-certs
+      volumes:
+      - name: etcd-certs
+        hostPath:
+          path: /etc/kubernetes/pki/etcd

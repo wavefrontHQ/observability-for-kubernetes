@@ -141,6 +141,7 @@ We have templates for common scenarios. See the comments in each file for usage 
  * [With plugin configuration in a secret](deploy/scenarios/wavefront-collector-with-plugin-secret.yaml)
  * [Filtering metrics upon collection](deploy/scenarios/wavefront-collector-filtering.yaml)
  * [Disabling control plane metrics](deploy/scenarios/wavefront-disable-control-plane-metrics.yaml)
+ * [Collecting metrics from ETCD](deploy/scenarios/wavefront-control-plane-with-etcd-certs.yaml)
  * [Defining Kubernetes resource limits](deploy/scenarios/wavefront-pod-resources.yaml)
  * [Defining data collection pod tolerations](deploy/scenarios/wavefront-daemonset-pod-tolerations.yaml)
  * [Defining proxy pre-processor rules](deploy/scenarios/wavefront-proxy-preprocessor-rules.yaml)

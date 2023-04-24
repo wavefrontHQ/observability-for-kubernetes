@@ -4,7 +4,8 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 COLLECTOR_REPO_ROOT=$(git rev-parse --show-toplevel)/collector
-SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+SCRIPT_DIR="${COLLECTOR_REPO_ROOT}/hack/test"
+METRICS_FILE_DIR="${SCRIPT_DIR}/files"
 NS=wavefront-collector
 
 function run_fake_proxy_test() {
@@ -13,6 +14,7 @@ function run_fake_proxy_test() {
   local EXPERIMENTAL_FEATURES=$3
 
   local USE_TEST_PROXY="true"
+  local PROXY_NAME="wavefront-proxy"
   local SLEEP_TIME=70
 
   wait_for_cluster_resource_deleted namespace/$NS
@@ -44,60 +46,7 @@ function run_fake_proxy_test() {
 
   wait_for_cluster_ready
 
-  kill $(jobs -p) &>/dev/null || true
-  kubectl --namespace "$NS" port-forward deploy/wavefront-proxy 8888 &
-  trap 'kill $(jobs -p) &>/dev/null || true' EXIT
-
-  echo "waiting for logs..."
-  sleep ${SLEEP_TIME}
-
-  RES=$(mktemp)
-
-  if [ -f "overlays/test-$K8S_ENV/metrics/${METRICS_FILE_NAME}.jsonl" ]; then
-    cat "files/${METRICS_FILE_NAME}.jsonl" overlays/test-$K8S_ENV/metrics/${METRICS_FILE_NAME}.jsonl >files/combined-metrics.jsonl
-  else
-    cat "files/${METRICS_FILE_NAME}.jsonl" >files/combined-metrics.jsonl
-  fi
-
-  while true; do # wait until we get a good connection
-    RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@$SCRIPT_DIR/files/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
-    [[ $RES_CODE -lt 200 ]] || break
-  done
-
-  if [[ $RES_CODE -gt 399 ]]; then
-    red "INVALID METRICS"
-    jq -r '.[]' "${RES}"
-    exit 1
-  fi
-
-  DIFF_COUNT=$(jq "(.Missing | length) + (.Unwanted | length)" "$RES")
-  EXIT_CODE=0
-
-  jq -c '.Missing[]' "$RES" | sort >missing.jsonl
-  jq -c '.Extra[]' "$RES" | sort >extra.jsonl
-  jq -c '.Unwanted[]' "$RES" | sort >unwanted.jsonl
-
-  echo "$RES"
-  if [[ $DIFF_COUNT -gt 0 ]]; then
-    red "Missing: $(jq "(.Missing | length)" "$RES")"
-    if [[ $(jq "(.Missing | length)" "$RES") -le 10 ]]; then
-      cat missing.jsonl
-    fi
-    red "Unwanted: $(jq "(.Unwanted | length)" "$RES")"
-    if [[ $(jq "(.Unwanted | length)" "$RES") -le 10 ]]; then
-      cat unwanted.jsonl
-    fi
-    red "Extra: $(jq "(.Extra | length)" "$RES")"
-    red "FAILED: METRICS OUTPUT DID NOT MATCH"
-    if which pbcopy >/dev/null; then
-      echo "$RES" | pbcopy
-    fi
-    exit 1
-  else
-    green "SUCCEEDED"
-  fi
-
-  kill $(jobs -p) &>/dev/null || true
+  source "${REPO_ROOT}/scripts/compare-test-proxy-metrics.sh"
 }
 
 function run_real_proxy_metrics_test() {

@@ -27,11 +27,11 @@ nuke-kind:
 
 nuke-kind-ha:
 	kind delete cluster
-	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha.yml"
+	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha.yml" --image kindest/node:v1.24.7 #setting to 1.24.7 to avoid floating to 1.25 which we currently don't support
 
 nuke-kind-ha-workers:
 	kind delete cluster
-	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha-workers.yml"
+	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha-workers.yml" --image kindest/node:v1.24.7 #setting to 1.24.7 to avoid floating to 1.25 which we currently don't support
 
 kind-connect-to-cluster:
 	kubectl config use kind-kind

@@ -1,13 +1,19 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
-OPERATOR_REPO_ROOT=$(git rev-parse --show-toplevel)/operator
+OPERATOR_REPO_ROOT="${REPO_ROOT}/operator"
 source "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/egress-proxy-setup-functions.sh"
+source "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-cert-setup-functions.sh"
+
+SCRIPT_DIR="${OPERATOR_REPO_ROOT}/hack/test"
 
 NS=observability-system
 NO_CLEANUP=false
+
+OPERATOR_YAML_CONTENT=$(cat "${OPERATOR_REPO_ROOT}/build/operator/wavefront-operator.yaml")
 
 function setup_test() {
   local type=$1
@@ -30,6 +36,21 @@ function setup_test() {
     yq eval '.stringData.tls-root-ca-bundle = "'"$(< ${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/mitmproxy-ca-cert.pem)"'"' "${OPERATOR_REPO_ROOT}/hack/test/egress-http-proxy/https-proxy-secret.yaml" >> hack/test/_v1alpha1_wavefront_test.yaml
   fi
 
+  if [[ "$type" == "control-plane" ]]; then
+    if [[ "${K8S_ENV}" == "Kind" ]]; then
+      deploy_etcd_cert_printer
+      create_etcd_cert_files
+
+      echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
+      echo "${OPERATOR_YAML_CONTENT}" >> hack/test/_v1alpha1_wavefront_test.yaml
+      echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
+      yq eval '.stringData.ca_crt = "'"$(< ${OPERATOR_REPO_ROOT}/build/ca.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml" \
+        | yq eval '.stringData.server_crt = "'"$(< ${OPERATOR_REPO_ROOT}/build/server.crt)"'"' - \
+        | yq eval '.stringData.server_key = "'"$(< ${OPERATOR_REPO_ROOT}/build/server.key)"'"' - \
+        >> hack/test/_v1alpha1_wavefront_test.yaml
+    fi
+  fi
+
   kubectl apply -f hack/test/_v1alpha1_wavefront_test.yaml
 
   wait_for_cluster_ready "$NS"
@@ -39,6 +60,18 @@ function run_test_wavefront_metrics() {
   local type=$1
   local cluster_name=${CONFIG_CLUSTER_NAME}-$type
   echo "Running test wavefront metrics, cluster_name $cluster_name, version ${VERSION}..."
+  ${OPERATOR_REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t "${WAVEFRONT_TOKEN}" -n "${cluster_name}" -e "$type-test.sh" -o "${VERSION}"
+}
+
+function run_test_control_plane_metrics() {
+  local type='control-plane'
+  if [[ "${K8S_ENV}" != "Kind" ]]; then
+    echo "Not running control plane metrics tests on env: ${K8S_ENV}"
+    return
+  fi
+
+  local cluster_name=${CONFIG_CLUSTER_NAME}-$type
+  echo "Running test control plane metrics '$type' ..."
   ${OPERATOR_REPO_ROOT}/hack/test/test-wavefront-metrics.sh -t "${WAVEFRONT_TOKEN}" -n "${cluster_name}" -e "$type-test.sh" -o "${VERSION}"
 }
 
@@ -100,6 +133,10 @@ function clean_up_test() {
 
   if [[ "$type" == "with-http-proxy" ]]; then
     delete_egress_proxy
+  fi
+
+  if [[ "$type" == "control-plane" ]]; then
+    delete_etcd_cert_printer
   fi
 
   wait_for_proxy_termination "$NS"
@@ -326,7 +363,7 @@ function run_logging_integration_checks() {
     exit 1
   fi
 
-  echo "Integration test complete. ${receivedLogCount} logs were checked."
+  yellow "Integration test complete. ${receivedLogCount} logs were checked."
 }
 
 function run_test() {
@@ -334,7 +371,7 @@ function run_test() {
   shift
   local checks=("$@")
   echo ""
-  green "Running test $type"
+  green "[$(date +%H:%M:%S)] Running test $type"
 
   setup_test $type
 
@@ -352,6 +389,10 @@ function run_test() {
     run_test_wavefront_metrics $type
   fi
 
+  if [[ " ${checks[*]} " =~ " test_control_plane_metrics " ]]; then
+    run_test_control_plane_metrics
+  fi
+
   if [[ " ${checks[*]} " =~ " logging " ]]; then
     run_logging_checks
   fi
@@ -364,7 +405,7 @@ function run_test() {
 		clean_up_test $type
 	fi
 
-  green "Successfully ran $type test!"
+  green "[$(date +%H:%M:%S)] Successfully ran $type test!"
 }
 
 function print_usage_and_exit() {
@@ -377,6 +418,8 @@ function print_usage_and_exit() {
   echo -e "\t-r tests to run (runs all by default)"
   echo -e "\t-d namespace to create CR in (default: observability-system)"
   echo -e "\t-e no cl[e]anup after test to debug testing framework"
+  echo -e "\t-y operator YAML content command (default: 'cat \"\${OPERATOR_REPO_ROOT}/build/operator/wavefront-operator.yaml\")"
+  echo -e "\t\t example usage: -y 'curl https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/rc/operator/wavefront-operator-PR-116.yaml'"
   exit 1
 }
 
@@ -391,7 +434,7 @@ function main() {
   local CONFIG_CLUSTER_NAME=$(create_cluster_name)
   local tests_to_run=()
 
-  while getopts ":t:c:v:n:r:d:e" opt; do
+  while getopts ":t:c:v:n:r:d:y:e" opt; do
     case $opt in
     t)
       WAVEFRONT_TOKEN="$OPTARG"
@@ -411,6 +454,9 @@ function main() {
     d)
       NS="$OPTARG"
       ;;
+		y)
+			OPERATOR_YAML_CONTENT=$($OPTARG)
+			;;
 		e)
 			NO_CLEANUP=true
 			;;
@@ -462,6 +508,9 @@ function main() {
   fi
   if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
+  fi
+  if [[ " ${tests_to_run[*]} " =~ " control-plane " ]]; then
+    run_test "control-plane" "test_control_plane_metrics"
   fi
 }
 
