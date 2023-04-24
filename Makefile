@@ -101,3 +101,23 @@ docker-login-eks:
 
 target-eks: docker-login-eks
 	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
+
+# create a new branch from main
+# usage: make branch JIRA=XXXX OR make branch NAME=YYYY
+.PHONY: branch
+branch:
+	$(eval NAME := $(if $(JIRA),K8SSAAS-$(JIRA),$(NAME)))
+	@if [ -z "$(NAME)" ]; then \
+		echo "usage: make branch JIRA=XXXX OR make branch NAME=YYYY"; \
+		exit 1; \
+	fi
+	git stash
+	git checkout main
+	git pull
+	git checkout -b $(NAME)
+
+.PHONY: git-rebase
+git-rebase:
+	git fetch origin
+	git rebase origin/main
+	git log --oneline -n 10
