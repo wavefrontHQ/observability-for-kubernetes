@@ -31,10 +31,9 @@ type configHandler struct {
 	configMapInformer cache.SharedInformer
 	secretInformer    cache.SharedInformer
 
-	mtx                    sync.RWMutex
-	wiredCfg               discovery.Config            // wired configuration
-	runtimeCfgs            map[string]discovery.Config // dynamic runtime configurations
-	internalPluginProvider discovery.PluginProvider
+	mtx         sync.RWMutex
+	wiredCfg    discovery.Config            // wired configuration
+	runtimeCfgs map[string]discovery.Config // dynamic runtime configurations
 }
 
 type configResource struct {
@@ -42,11 +41,10 @@ type configResource struct {
 	data map[string]string
 }
 
-func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config, internalPluginProvider discovery.PluginProvider) *configHandler {
+func newConfigHandler(kubeClient kubernetes.Interface, cfg discovery.Config) *configHandler {
 	handler := &configHandler{
-		wiredCfg:               cfg,
-		runtimeCfgs:            make(map[string]discovery.Config),
-		internalPluginProvider: internalPluginProvider,
+		wiredCfg:    cfg,
+		runtimeCfgs: make(map[string]discovery.Config),
 	}
 
 	ns := util.GetNamespaceName()
@@ -165,7 +163,7 @@ func (handler *configHandler) Config() discovery.Config {
 	handler.mtx.Lock()
 	defer handler.mtx.Unlock()
 
-	return combine(handler.wiredCfg, handler.runtimeCfgs, handler.internalPluginProvider)
+	return combine(handler.wiredCfg, handler.runtimeCfgs)
 }
 
 func (handler *configHandler) updated(configResource *configResource) {
@@ -218,7 +216,7 @@ func load(data map[string]string) (discovery.Config, error) {
 	return *cfg, nil
 }
 
-func combine(wiredCfg discovery.Config, runtimeCfgs map[string]discovery.Config, internalPluginProvider discovery.PluginProvider) discovery.Config {
+func combine(wiredCfg discovery.Config, runtimeCfgs map[string]discovery.Config) discovery.Config {
 	runCfg := &discovery.Config{
 		DiscoveryInterval:          wiredCfg.DiscoveryInterval,
 		AnnotationPrefix:           wiredCfg.AnnotationPrefix,

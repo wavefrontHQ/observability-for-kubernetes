@@ -3,7 +3,6 @@ package controlplane
 import (
 	"testing"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -44,11 +43,4 @@ func TestProvider(t *testing.T) {
 		assert.Equal(t, "prometheus_source: https://127.0.0.1:6443/metrics", sources[2].Name())
 		assert.Equal(t, "prometheus_source: https://127.0.0.2:6443/metrics", sources[3].Name())
 	})
-
-	t.Run("implements discovery.PluginProvider", func(t *testing.T) {
-		provider, _ := NewProvider(configuration.ControlPlaneSourceConfig{}, configuration.SummarySourceConfig{URL: "https://kube", InClusterConfig: "false"}, fake.NewSimpleClientset().CoreV1())
-
-		assert.Implements(t, (*discovery.PluginProvider)(nil), provider)
-	})
-
 }

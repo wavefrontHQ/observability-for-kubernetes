@@ -11,9 +11,6 @@ metadata:
     uid: {{ .ControllerManagerUID }}
   annotations:
     wavefront.com/discovery-config: 'true'
-  labels:
-    app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: collector
 data:
   collector.yaml: |
     plugins:

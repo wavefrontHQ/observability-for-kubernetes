@@ -1,3 +1,4 @@
+{{- if .DataCollection.Metrics.ControlPlane.Enable }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,13 +11,10 @@ metadata:
     uid: {{ .ControllerManagerUID }}
   annotations:
     wavefront.com/discovery-config: 'true'
-  labels:
-    app.kubernetes.io/name: wavefront
-    app.kubernetes.io/coØmponent: collector
 data:
   collector.yaml: |
     plugins:
-    - name: etcd-discovery
+    - name: coredns-discovery
       type: prometheus
       selectors:
         images:
@@ -31,5 +29,6 @@ data:
       convertHistograms: true
       filters:
         metricAllowList:
-        - 'kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket'
+        - 'kubernetes.controlplane.coredns.dns.request.duration.seconds.m'
         - 'kubernetes.controlplane.coredns.dns.responses.total.counter'
+{{- end }}
