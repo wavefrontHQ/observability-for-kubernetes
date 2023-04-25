@@ -742,22 +742,58 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	//TODO: we need to fix this test and make sure that can combine the users custom preprocessor rules with the default rules
-	//t.Run("can create proxy with preprocessor rules", func(t *testing.T) {
-	//	r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
-	//		w.Spec.DataExport.WavefrontProxy.Preprocessor = "preprocessor-rules"
-	//	}))
-	//
-	//	_, err := r.Reconcile(context.Background(), defaultRequest())
-	//	require.NoError(t, err)
-	//
-	//	containsProxyArg(t, "--preprocessorConfigFile /etc/wavefront/preprocessor/rules.yaml", *mockKM)
-	//
-	//	deployment, err := mockKM.GetAppliedDeployment("proxy", util.ProxyName)
-	//	require.NoError(t, err)
-	//
-	//	volumeMountHasPath(t, deployment, "preprocessor", "/etc/wavefront/preprocessor")
-	//	volumeHasConfigMap(t, deployment, "preprocessor", "preprocessor-rules")
-	//})
+	t.Run("can create proxy with preprocessor rules", func(t *testing.T) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataExport.WavefrontProxy.Preprocessor = "preprocessor-rules"
+		}))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		containsProxyArg(t, "--preprocessorConfigFile /etc/wavefront/preprocessor/rules.yaml", *mockKM)
+
+		deployment, err := mockKM.GetAppliedDeployment("proxy", util.ProxyName)
+		require.NoError(t, err)
+
+		volumeMountHasPath(t, deployment, "preprocessor", "/etc/wavefront/preprocessor")
+		volumeHasConfigMap(t, deployment, "preprocessor", "preprocessor-rules")
+	})
+
+	// TODO: write a test for cluster, cluster_uuid, one with no conflicting,
+
+	t.Run("can't create proxy with preprocessor rules that include cluster", func(t *testing.T) {
+		r, mockKM := emptyScenario(
+			wftest.CR(func(w *wf.Wavefront) {
+				w.Spec.DataExport.WavefrontProxy.Preprocessor = "preprocessor-rules"
+			}),
+			&v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "preprocessor-rules",
+					Namespace: wftest.DefaultNamespace,
+				},
+				Data: map[string]string{
+					"rules.yaml": "'2878':\n      - rule: tag-all-metrics-processed\n        action: addTag\n        tag: cluster\n        value: \"my-cluster\"",
+				},
+			},
+		)
+
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		results, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.Error(t, err)
+		require.Equal(t, ctrl.Result{Requeue: false}, results)
+
+		require.False(t, mockKM.AppliedContains("v1", "ServiceAccount", "wavefront", "collector", "wavefront-collector"))
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "default-wavefront-collector-config"))
+		require.False(t, mockKM.AppliedContains("apps/v1", "DaemonSet", "wavefront", "collector", "wavefront-node-collector"))
+		require.False(t, mockKM.AppliedContains("apps/v1", "Deployment", "wavefront", "collector", "wavefront-cluster-collector"))
+		require.False(t, mockKM.AppliedContains("v1", "Service", "wavefront", "proxy", "wavefront-proxy"))
+		require.False(t, mockKM.AppliedContains("apps/v1", "Deployment", "wavefront", "proxy", "wavefront-proxy"))
+
+		require.Equal(t, 0, StatusMetricsSent(mockSender), "should not have sent status metrics")
+	})
 
 	t.Run("resources set for the proxy", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
