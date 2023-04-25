@@ -35,13 +35,10 @@
 {"Name":"kernel.entropy.avail","Tags":{"cluster":"","cluster_uuid":"","source":""}}
 {"Name":"kernel.interrupts","Tags":{"cluster":"","cluster_uuid":"","source":""}}
 {"Name":"kernel.processes.forked","Tags":{"cluster":"","cluster_uuid":"","source":""}}
-{"Name":"kubernetes.controlplane.apiserver.request.duration.seconds.bucket","Tags":{"cluster":"","cluster_uuid":"","le":"","resource":"","scope":"","source":"","verb":""}}
 {"Name":"kubernetes.controlplane.apiserver.request.duration.seconds","Tags":{"cluster":"","cluster_uuid":"","resource":"","scope":"","source":"","verb":""}}
 {"Name":"kubernetes.controlplane.apiserver.request.total.counter","Tags":{"cluster":"","cluster_uuid":"","code":"","group":"","resource":"","scope":"","source":"","verb":""}}
 {"Name":"kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge","Tags":{"cluster":"","cluster_uuid":"","endpoint":"","source":""}}
-{"Name":"kubernetes.controlplane.etcd.request.duration.seconds.bucket","Tags":{"cluster":"","cluster_uuid":"","operation":"","source":"","type":""}}
 {"Name":"kubernetes.controlplane.etcd.request.duration.seconds","Tags":{"cluster":"","cluster_uuid":"","operation":"","source":"","type":""}}
-{"Name":"kubernetes.controlplane.workqueue.queue.duration.seconds.bucket","Tags":{"cluster":"","cluster_uuid":"","le":"","name":"","source":""}}
 {"Name":"kubernetes.controlplane.workqueue.queue.duration.seconds","Tags":{"cluster":"","cluster_uuid":"","name":"","source":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","cluster_uuid":"","container":"","id":"","image":"","name":"","namespace":"collector-targets","pod":"","source":""}}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Tags":{"cluster":"","cluster_uuid":"","id":"","namespace":"","pod":"","source":""}}

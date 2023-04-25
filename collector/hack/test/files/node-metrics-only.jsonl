@@ -2,7 +2,7 @@
 {"Name":"disk.total"}
 {"Name":"diskio.io.time"}
 {"Name":"kernel.boot.time"}
-~{"Name":"kubernetes.controlplane.apiserver.request.duration.seconds.bucket"}
+~{"Name":"kubernetes.controlplane.apiserver.request.duration.seconds"}
 {"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"}
 {"Name":"kubernetes.cluster.cpu.limit"}
 {"Name":"kubernetes.collector.discovery.enabled"}
