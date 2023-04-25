@@ -27,11 +27,11 @@ nuke-kind:
 
 nuke-kind-ha:
 	kind delete cluster
-	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha.yml"
+	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha.yml" --image kindest/node:v1.24.7 #setting to 1.24.7 to avoid floating to 1.25 which we currently don't support
 
 nuke-kind-ha-workers:
 	kind delete cluster
-	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha-workers.yml"
+	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha-workers.yml" --image kindest/node:v1.24.7 #setting to 1.24.7 to avoid floating to 1.25 which we currently don't support
 
 kind-connect-to-cluster:
 	kubectl config use kind-kind
@@ -101,3 +101,23 @@ docker-login-eks:
 
 target-eks: docker-login-eks
 	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
+
+# create a new branch from main
+# usage: make branch JIRA=XXXX OR make branch NAME=YYYY
+.PHONY: branch
+branch:
+	$(eval NAME := $(if $(JIRA),K8SSAAS-$(JIRA),$(NAME)))
+	@if [ -z "$(NAME)" ]; then \
+		echo "usage: make branch JIRA=XXXX OR make branch NAME=YYYY"; \
+		exit 1; \
+	fi
+	git stash
+	git checkout main
+	git pull
+	git checkout -b $(NAME)
+
+.PHONY: git-rebase
+git-rebase:
+	git fetch origin
+	git rebase origin/main
+	git log --oneline -n 10

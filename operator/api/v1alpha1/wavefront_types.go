@@ -325,6 +325,9 @@ type ControlPlane struct {
 	// and whether to include kubernetes_control_plane_source
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable"`
+
+	// EnableEtcd is for internal use only
+	EnableEtcd bool `json:"-"`
 }
 
 type Filters struct {

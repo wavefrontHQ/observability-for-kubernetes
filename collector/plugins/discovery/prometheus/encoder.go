@@ -95,6 +95,8 @@ func (e prometheusEncoder) Encode(ip, kind string, meta metav1.ObjectMeta, cfg i
 	}
 	result.Discovered = discoveryType
 
+	result.ConvertHistograms = rule.ConvertHistograms
+
 	if kind == discovery.ServiceType.String() {
 		// always use leader election for cluster level resources
 		result.UseLeaderElection = true

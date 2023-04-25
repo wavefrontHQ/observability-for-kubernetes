@@ -132,7 +132,7 @@ These are Linux systemd metrics that can be collected by each Collector instance
 | kubernetes.systemd.unit.state | Unit state (active, inactive etc). |
 | kubernetes.systemd.unit.start.time.seconds | Start time of the unit since epoch in seconds. |
 | kubernetes.systemd.system.running | Whether the system is operational ( `systemctl is-system-running` ). |
-| kubernetes.systemd.units | Top level summary of systemd unit states (Number of active, inactive units etc). |
+| kubernetes.systemd.units | Top level summary of systemd unit states (# of active, inactive units etc). |
 | kubernetes.systemd.service.restart.total | Service unit count of Restart triggers. |
 | kubernetes.systemd.timer.last.trigger.seconds | Seconds since epoch of last trigger. |
 | kubernetes.systemd.socket.accepted.connections.total | Total number of accepted socket connections. |
@@ -181,7 +181,7 @@ Application metrics:
 
 ## Collector Health Metrics
 
-These are internal metrics about the health and configuration of the Kubernetes Metrics Collector.
+These are internal metrics about the health and configuration of the Wavefront Collector.
 
 | Metric Name | Description |
 |---|---|
@@ -208,7 +208,7 @@ These are internal metrics about the health and configuration of the Kubernetes 
 
 ## cAdvisor Metrics
 
-cAdvisor exposes a prometheus endpoint which the Kubernetes Metrics Collector can consume. See the [cAdvisor docs](https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md) for details on what metrics are available.
+cAdvisor exposes a prometheus endpoint which the collector can consume. See the [cAdvisor docs](https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md) for details on what metrics are available.
 
 ## Control Plane Metrics
 
