@@ -1,10 +1,10 @@
 # Installation and configuration on OpenShift
-This page contains the Installation and Configuration steps to monitor Openshift using the Wavefront Collector for Kubernetes.
+This page contains the Installation and Configuration steps to monitor OpenShift using the Kubernetes Metrics Collector.
 
-**Supported Versions**: Openshift Origin 3.9
+**Supported Versions**: OpenShift Origin 3.9
 
-1. Log in to the Openshift master node.
-2. Log in to the Openshift cluster:
+1. Log in to the OpenShift master node.
+2. Log in to the OpenShift cluster:
 ```
 oc login -u <ADMIN_USER>
 ```
@@ -14,9 +14,9 @@ oc login -u <ADMIN_USER>
 cd deploy/openshift
 oc create -f 0-collector-namespace.yaml
 ```
-**Note**: If you are planning to use the Wavefront proxy steps 5 and 6 are needed. if you're doing direct ingestion, go to step 7.
+**Note**: If you are planning to use the Wavefront proxy steps 5 and 6 are needed. if you're doing direct data ingestion, go to step 7.
 
-5. Log in to the Openshift web console and create storage under `wavefront-collector`:
+5. Log in to the OpenShift web console and create storage under `wavefront-collector`:
    * Select **Access Mode** as `RWX`
    * Set **Size** to `5 GiB`
    * Give a name to the storage and make a note of it.
@@ -40,7 +40,7 @@ oc create -f 2-kube-state.yaml
 ```
 --sink=wavefront:?server=https://<YOUR_INSTANCE>.wavefront.com&token=<YOUR_TOKEN>&clusterName=openshift-cluster&includeLabels=true
 ```
-9. Deploy the Wavefront Collector
+9. Deploy the Kubernetes Metrics Collector
 ```
 oc create -f collector
 ```
