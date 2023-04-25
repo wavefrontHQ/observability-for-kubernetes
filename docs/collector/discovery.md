@@ -40,8 +40,8 @@ discovery:
 
 ### Excluding annotation discovered resources
 
-The collector can exclude resources from being detected by annotation-based discovery. It can have multiple exclusion 
-selectors. The collector will exclude a resource if any of the exclusion selectors match.
+The Kubernetes Metrics Collector can exclude resources from being detected by annotation-based discovery. It can have multiple exclusion
+selectors. The Collector will exclude a resource if any of the exclusion selectors match.
 
 ```yaml
 discovery:
