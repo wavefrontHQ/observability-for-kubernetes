@@ -75,6 +75,7 @@ data:
 
       internal_stats_source:
         prefix: kubernetes.
+
       kubernetes_state_source:
         prefix: kubernetes.
 

@@ -57,6 +57,8 @@ spec:
         denyList:
           - kubernetes.sys_container.*
           - kubernetes.collector.runtime.*
+        tagGuaranteeList:
+          - label.env
       defaultCollectionInterval: 90s #defaults to 60s
       # Rules based and Prometheus endpoints auto-discovery.
       enableDiscovery: true #defaults to true
@@ -201,6 +203,7 @@ data:
 
       internal_stats_source:
         prefix: kubernetes.
+
       kubernetes_state_source:
         prefix: kubernetes.
 
@@ -271,6 +274,7 @@ data:
         tag: processed
         value: "true"
 ---
+# Need to change YOUR_HTTP_PROXY_URL, YOUR_HTTP_PROXY_BASIC_AUTH_USERNAME, YOUR_HTTP_PROXY_BASIC_AUTH_PASSWORD, and YOUR_HTTP_PROXY_CA_CERTIFICATE accordingly
 apiVersion: v1
 kind: Secret
 metadata:

@@ -1,12 +1,12 @@
 # Migration
-This is a migration doc for the Operator from the manual and Helm Collector and proxy installation.
+This is a migration doc for the Observability for Kubernetes Operator from the manual and Helm Collector and proxy installation.
 If you want to test the new Operator in parallel with your existing manual or Helm installation, use the [wavefront-allow-legacy-intall.yaml](../../deploy/scenarios/wavefront-allow-legacy-install.yaml) template.
 
 ## Migrate from Helm Installation
 
-### 1. Install the operator
+### 1. Install the Operator
 
-Follow [the operator installation instructions](../../README.md#deploy-the-wavefront-collector-and-proxy-with-the-operator).
+Follow [the Operator installation instructions](../../README.md#Deploy-the-Kubernetes-Metrics-Collector-and-Wavefront-Proxy-with-the-Observability-for-Kubernetes-Operator).
 
 In your `wavefront.yaml`,
  * set `spec.allowLegacyInstall` to `true`
@@ -14,8 +14,8 @@ In your `wavefront.yaml`,
 
 ### 2. Modify Your `wavefront.yaml`
 
-Modify your `wavefront.yaml` to match your helm installation based on the information below.
-The following table lists the mapping of configurable parameters of the Wavefront Helm chart to Wavefront Operator Custom Resource.
+Modify your `wavefront.yaml` to match your Helm installation based on the information below.
+The following table lists the mapping of configurable parameters of the Wavefront Helm chart to Observability for Kubernetes Operator Custom Resource.
 See [Custom Resource Scenarios](../../deploy/scenarios) for examples or refer to [wavefront.com_wavefronts.yaml](../../deploy/crd/wavefront.com_wavefronts.yaml) for information on all Custom Resource fields.
 
 | Helm Collector Parameter | Observability for Kubernetes Operator Custom Resource `spec`. | Description |
@@ -58,7 +58,7 @@ See [Custom Resource Scenarios](../../deploy/scenarios) for examples or refer to
 
 If you have a Collector configuration with parameters not covered above, please open an issue in this repository.
 
-### 3. Re-apply your `wavefront.yaml`
+### 3. Re-apply Your `wavefront.yaml` File
 
 ```shell
 kubectl apply -f <path_to_your_wavefront.yaml>
@@ -81,7 +81,7 @@ wavefront   Healthy   Running (1/1)   Running (1/1)       Running (3/3)         
 
 If `STATUS` is `Unhealthy`, check [troubleshooting](../troubleshooting.md).
 
-### 5. Check That You Are Receiving Metrics From The Operator
+### 5. Verify That You Are Receiving Metrics from the Operator
 
  * Go to the Kubernetes Summary Dashboard, set the cluster to `<YOUR HELM CLUSTER NAME>-operator`, and verify that you are receiving metrics. It may take some time for metrics to populate this dashboard.
  * Verify that other important metrics are present with a `cluster="<YOUR HELM CLUSTER NAME>-operator"` tag.
@@ -92,7 +92,7 @@ If `STATUS` is `Unhealthy`, check [troubleshooting](../troubleshooting.md).
 helm uninstall wavefront --namespace wavefront
 ```
 
-### 7. Cleanup `wavefront.yaml`
+### 7. Clean Up the `wavefront.yaml` File
 
 In your `wavefront.yaml`,
  * (Optional) Update `spec.clusterName` to `<YOUR HELM CLUSTER NAME>`
@@ -108,13 +108,13 @@ kubectl apply -f <path_to_your_wavefront.yaml>
 
 #### References:
 * See [Custom Resource Scenarios](../../deploy/scenarios) for proxy configuration examples.
-* Copy and save your existing collector configMaps and any other configurations.
-* Uninstall your currently deployed wavefront collector and proxy.
-* Make sure the wavefront operator is already installed.
-* Create a Kubernetes secret with your Wavefront Token `kubectl create -n observability-system secret generic wavefront-secret --from-literal token=YOUR_WAVEFRONT_TOKEN`
+* Copy and save your existing Collector configMaps and any other configurations.
+* Uninstall your currently deployed Collector and Wavefront proxy.
+* Make sure the Observability for Kubernetes Operator is already installed.
+* Create a Kubernetes secret with your Wavefront API Token `kubectl create -n observability-system secret generic wavefront-secret --from-literal token=YOUR_WAVEFRONT_TOKEN`
 
 Most of the proxy configurations could be set using environment variables for proxy container.
-Here are the different proxy environment variables and how they map to operator config.
+Here are the different proxy environment variables and how they map to the Operator config.
 
 | Proxy Environment Variables | Observability for Kubernetes Operator Custom Resource `spec` |
 |---|---|
@@ -149,10 +149,10 @@ Below are the proxy arguments that are specified in `WAVEFRONT_PROXY_ARGS`, whic
 
 Other supported Custom Resource configuration:
 * `dataExport.wavefrontProxy.args`: Used to set any `WAVEFRONT_PROXY_ARGS` configuration not mentioned in the above table. See [wavefront-proxy-args.yaml](../../deploy/scenarios/wavefront-proxy-args.yaml) for an example.
-* `dataExport.wavefrontProxy.resources`: Used to set container resource request or limits for Wavefront Proxy. See [wavefront-pod-resources.yaml](../../deploy/scenarios/wavefront-pod-resources.yaml) for an example.
-* `dataExport.externalWavefrontProxy.Url`: Used to set an external Wavefront Proxy. See [wavefront-collector-external-proxy.yaml](../../deploy/scenarios/wavefront-collector-external-proxy.yaml) for an example.
+* `dataExport.wavefrontProxy.resources`: Used to set container resource request or limits for Wavefront proxy. See [wavefront-pod-resources.yaml](../../deploy/scenarios/wavefront-pod-resources.yaml) for an example.
+* `dataExport.externalWavefrontProxy.Url`: Used to set an external Wavefront proxy. See [wavefront-collector-external-proxy.yaml](../../deploy/scenarios/wavefront-collector-external-proxy.yaml) for an example.
 
-### Wavefront Collector Configuration
+### Wavefront Collector to Kubernetes Metrics Collector Configuration
 
 Wavefront Collector `ConfigMap` changes:
 * Wavefront Collector ConfigMap changed from `wavefront-collector` to `wavefront` namespace.

@@ -1,4 +1,4 @@
-# Need to change YOUR_CLUSTER_NAME, YOUR_WAVEFRONT_URL accordingly
+# Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
 apiVersion: wavefront.com/v1alpha1
 kind: Wavefront
 metadata:
@@ -16,6 +16,8 @@ spec:
         denyList:
         - kubernetes.sys_container.*
         - kubernetes.collector.runtime.*
+        tagGuaranteeList:
+        - label.env
       defaultCollectionInterval: 90s #defaults to 60s
       enableDiscovery: false #defaults to true
   dataExport:
