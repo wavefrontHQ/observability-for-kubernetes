@@ -1,19 +1,25 @@
 package senders
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/wavefronthq/wavefront-sdk-go/internal"
 	"github.com/wavefronthq/wavefront-sdk-go/version"
 )
 
 const (
-	defaultTracesPort  = 30001
-	defaultMetricsPort = 2878
+	defaultTracesPort    = 30001
+	defaultMetricsPort   = 2878
+	defaultBatchSize     = 10000
+	defaultBufferSize    = 50000
+	defaultFlushInterval = 1
+	defaultTimeout       = 10 * time.Second
 )
 
 // Option Wavefront client configuration options
@@ -44,6 +50,11 @@ type configuration struct {
 	// together with batch size controls the max theoretical throughput of the sender.
 	FlushIntervalSeconds int
 	SDKMetricsTags       map[string]string
+	Path                 string
+
+	Timeout time.Duration
+
+	TLSConfig *tls.Config
 }
 
 func (c *configuration) Direct() bool {
@@ -81,6 +92,7 @@ func CreateConfig(wfURL string, setters ...Option) (*configuration, error) {
 		MaxBufferSize:        defaultBufferSize,
 		FlushIntervalSeconds: defaultFlushInterval,
 		SDKMetricsTags:       map[string]string{},
+		Timeout:              defaultTimeout,
 	}
 
 	u, err := url.Parse(wfURL)
@@ -106,6 +118,11 @@ func CreateConfig(wfURL string, setters ...Option) (*configuration, error) {
 		return nil, fmt.Errorf("invalid scheme '%s' in '%s', only 'http' is supported", u.Scheme, u)
 	}
 
+	if u.Path != "" {
+		cfg.Path = u.Path
+		u.Path = ""
+	}
+
 	if u.Port() != "" {
 		port, err := strconv.Atoi(u.Port())
 		if err != nil {
@@ -124,8 +141,9 @@ func CreateConfig(wfURL string, setters ...Option) (*configuration, error) {
 
 // newWavefrontClient creates a Wavefront sender
 func newWavefrontClient(cfg *configuration) (Sender, error) {
-	metricsReporter := internal.NewReporter(fmt.Sprintf("%s:%d", cfg.Server, cfg.MetricsPort), cfg.Token)
-	tracesReporter := internal.NewReporter(fmt.Sprintf("%s:%d", cfg.Server, cfg.TracesPort), cfg.Token)
+	client := internal.NewClient(cfg.Timeout, cfg.TLSConfig)
+	metricsReporter := internal.NewReporter(fmt.Sprintf("%s:%d", cfg.Server, cfg.MetricsPort), cfg.Token, client)
+	tracesReporter := internal.NewReporter(fmt.Sprintf("%s:%d", cfg.Server, cfg.TracesPort), cfg.Token, client)
 
 	sender := &wavefrontSender{
 		defaultSource: internal.GetHostname("wavefront_direct_sender"),
@@ -140,6 +158,14 @@ func newWavefrontClient(cfg *configuration) (Sender, error) {
 
 	sender.Start()
 	return sender, nil
+}
+
+func (cfg *configuration) TracesURL() string {
+	return fmt.Sprintf("%s:%d%s", cfg.Server, cfg.TracesPort, cfg.Path)
+}
+
+func (cfg *configuration) MetricsURL() string {
+	return fmt.Sprintf("%s:%d%s", cfg.Server, cfg.MetricsPort, cfg.Path)
 }
 
 func (sender *wavefrontSender) initializeInternalMetrics(cfg *configuration) {
@@ -210,6 +236,20 @@ func MetricsPort(port int) Option {
 func TracesPort(port int) Option {
 	return func(cfg *configuration) {
 		cfg.TracesPort = port
+	}
+}
+
+// Timeout sets the HTTP timeout (in seconds). Defaults to 10 seconds.
+func Timeout(timeout time.Duration) Option {
+	return func(cfg *configuration) {
+		cfg.Timeout = timeout
+	}
+}
+
+func TLSConfigOptions(tlsCfg *tls.Config) Option {
+	tlsCfgCopy := tlsCfg.Clone()
+	return func(cfg *configuration) {
+		cfg.TLSConfig = tlsCfgCopy
 	}
 }
 
