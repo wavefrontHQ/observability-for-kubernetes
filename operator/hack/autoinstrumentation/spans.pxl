@@ -168,7 +168,6 @@ px.export(
             'service.name': df.destination_service,
             'service.instance.id': df.destination_pod,
 
-            'k8s.cluster.name': df.cluster_name,
             'cluster': df.cluster_name,
 
             # OTEL Scope Exporter Conventions
