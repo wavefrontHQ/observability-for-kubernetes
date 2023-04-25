@@ -169,6 +169,7 @@ px.export(
             'service.instance.id': df.destination_pod,
 
             'k8s.cluster.name': df.cluster_name,
+            'cluster': df.cluster_name,
 
             # OTEL Scope Exporter Conventions
             'otel.scope.name': 'pixie',
