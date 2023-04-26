@@ -31,6 +31,7 @@ spec:
         configHash: "{{ .DataExport.WavefrontProxy.ConfigHash }}"
     spec:
       automountServiceAccountToken: false
+      serviceAccountName: wavefront-proxy
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534

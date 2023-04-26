@@ -1,0 +1,23 @@
+{{- if .Openshift }}
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: wavefront-collector-scc
+  namespace: system
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: collector
+allowHostDirVolumePlugin: true
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegedContainer: false
+readOnlyRootFilesystem: true
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: MustRunAs
+users:
+- system:serviceaccount:observability-system:wavefront-collector
+{{- end }}
