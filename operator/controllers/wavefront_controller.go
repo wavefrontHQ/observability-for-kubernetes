@@ -398,13 +398,6 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 			return err
 		}
 
-		err = r.processProxyPreprocessorRules(wavefront, ctx)
-		if err != nil {
-			errInfo := fmt.Sprintf("error setting up proxy preprocessor rules: %s", err.Error())
-			log.Log.Info(errInfo)
-			return err
-		}
-
 		wavefront.Spec.ClusterUUID = r.ClusterUUID
 		wavefront.Spec.DataExport.WavefrontProxy.Preprocessor = "operator-proxy-preprocessor-rules-config"
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
@@ -444,71 +437,6 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
 
 	return nil
-}
-
-//type Rule map[string]string
-
-type PreprocessorRule struct {
-	Rule   string
-	Action string
-	Key    string
-	Tag    string
-	Value  string
-}
-
-func (r *WavefrontReconciler) processProxyPreprocessorRules(wavefront *wf.Wavefront, ctx context.Context) error {
-	if len(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor) != 0 {
-		preprocessorConfigMap, err := r.findConfigMap(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor, ctx)
-		if err != nil {
-			return err
-		}
-		//println(fmt.Sprintf("Configmap:%v", preprocessorConfigMap.Data))
-		//
-		//println(fmt.Sprintf("String output:%s", preprocessorConfigMap.Data["rules.yaml"]))
-
-		out := make(map[string][]PreprocessorRule)
-		if err := baseYaml.Unmarshal([]byte(preprocessorConfigMap.Data["rules.yaml"]), &out); err != nil {
-			return err
-		}
-
-		for port, rules := range out {
-			fmt.Printf("port:%s rules:%+v\n", port, rules)
-			for _, rule := range rules {
-				fmt.Printf("value:%+v\n", rule)
-				//for key, value := range rule {
-				//	fmt.Printf("key:%s value:%+v\n", key, value)
-				//}
-				if rule.Tag == "cluster" {
-					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding metric tag 'cluster' is disallowed.")
-				}
-				if rule.Tag == "cluster_uuid" {
-					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding metric tag 'cluster_uuid' is disallowed.")
-				}
-				if rule.Key == "cluster" {
-					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding span key 'cluster' is disallowed.")
-				}
-				if rule.Key == "cluster_uuid" {
-					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding span key 'cluster_uuid' is disallowed.")
-				}
-			}
-		}
-
-		println(fmt.Sprintf("%+v", out))
-	}
-	return nil
-}
-
-func (r *WavefrontReconciler) findConfigMap(name string, ctx context.Context) (*corev1.ConfigMap, error) {
-	objectKey := client.ObjectKey{
-		Namespace: r.namespace,
-		Name:      name,
-	}
-	configMap := &corev1.ConfigMap{}
-	err := r.Client.Get(ctx, objectKey, configMap)
-	if err != nil {
-		return nil, err
-	}
-	return configMap, nil
 }
 
 func (r *WavefrontReconciler) parseHttpProxyConfigs(wavefront *wf.Wavefront, ctx context.Context) error {
