@@ -19,7 +19,7 @@ const (
 )
 
 var alphaBetaRegex = regexp.MustCompile("^label.*beta|alpha*")
-var iaasNameRegex = regexp.MustCompile("^label.*gke|azure*")
+var iaasNameRegex = regexp.MustCompile("^label.*gke|azure|eks*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
 // that lists removed tag names by their reason for removal
@@ -31,7 +31,7 @@ func cleanTags(tags map[string]string, tagGuaranteeList []string, maxCapacity in
 	tagsToGuarantee, tagsToGuaranteeSize := splitGuaranteedTags(tags, tagGuaranteeList)
 	adjustedMaxCapacity := maxCapacity - tagsToGuaranteeSize
 	if len(tags) > adjustedMaxCapacity {
-		removedReasons[dedupeReason] = dedupeTagValues(tags, []string{})
+		removedReasons[dedupeReason] = dedupeTagValues(tags, includeTagList)
 	}
 
 	// Exclude tags irrespective of annotation count as long as they are not in the guarantee list.
@@ -89,13 +89,17 @@ func dedupeTagValues(tags map[string]string, tagInclude []string) []string {
 			invertedTags[value] = name
 		} else if isWinningName(name, invertedTags[value]) {
 			// Do below only if not present in tagInclude
-			removedTags = append(removedTags, invertedTags[value])
-			delete(tags, invertedTags[value])
-			invertedTags[value] = name
+			if !includeTag(name) {
+				removedTags = append(removedTags, invertedTags[value])
+				delete(tags, invertedTags[value])
+				invertedTags[value] = name
+			}
 		} else {
 			// Do below only if not present in tagInclude
-			removedTags = append(removedTags, name)
-			delete(tags, name)
+			if !includeTag(name) {
+				removedTags = append(removedTags, name)
+				delete(tags, name)
+			}
 		}
 	}
 	return removedTags
@@ -161,6 +165,15 @@ func excludeTags(tags map[string]string) []string {
 func excludeTag(name string) bool {
 	for _, excludeName := range excludeTagList {
 		if excludeName == name {
+			return true
+		}
+	}
+	return false
+}
+
+func includeTag(name string) bool {
+	for _, includeName := range includeTagList {
+		if includeName == name {
 			return true
 		}
 	}

@@ -57,6 +57,12 @@ func TestCleanTags(t *testing.T) {
 			assert.Equal(t, map[string]string{"a-tag": tagEqualMinLen}, actual)
 		})
 
+		t.Run("when one of the duplicated values is in the tag include list", func(t *testing.T) {
+			actual := map[string]string{"nodename": "same-value", "hostname": "same-value"}
+			cleanTags(actual, []string{}, 1)
+			assert.Equal(t, map[string]string{"nodename": "same-value"}, actual)
+		})
+
 		t.Run("when under the max capacity", func(t *testing.T) {
 			actual := map[string]string{"a-tag": tagLessThanMinLen, "b-tag": tagLessThanMinLen}
 			cleanTags(actual, []string{}, 2)
