@@ -235,7 +235,7 @@ func TestCleanTags(t *testing.T) {
 				"test":                                   "tester",
 				"czar":                                   "aljkssljfdk",
 				"car":                                    "aljkfdk",
-				"label.alpha.eksctl.io/instance-id":      "i-00ba63d14a98f141d",
+				"label.kubernetes.io/hostname":           "ip-192-168-12-242.us-west-2.compute.internal",
 				"label.alpha.eksctl.io/nodegroup-name":   "arm-group",
 				"label.kubernetes.io/arch":               "arm64",
 				"label.kubernetes.io/os":                 "linux",

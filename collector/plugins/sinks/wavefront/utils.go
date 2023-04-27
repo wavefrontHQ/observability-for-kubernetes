@@ -133,13 +133,13 @@ func removeTagsLabelsMatching(tags map[string]string, regexp *regexp.Regexp, num
 	count := 0
 	tagNames := sortKeys(tags)
 	for _, name := range tagNames {
+		if count >= numberToRemove {
+			break
+		}
 		if regexp.MatchString(name) {
 			removed = append(removed, name)
 			delete(tags, name)
 			count++
-			if count >= numberToRemove {
-				break
-			}
 		}
 	}
 	return removed
