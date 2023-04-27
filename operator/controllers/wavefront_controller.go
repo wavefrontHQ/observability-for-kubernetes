@@ -406,7 +406,7 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		}
 
 		wavefront.Spec.ClusterUUID = r.ClusterUUID
-		wavefront.Spec.DataExport.WavefrontProxy.Preprocessor = "default-proxy-preprocessor-rules-config"
+		wavefront.Spec.DataExport.WavefrontProxy.Preprocessor = "operator-proxy-preprocessor-rules-config"
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
 		wavefront.Spec.CanExportData = true
 		wavefront.Spec.DataCollection.Metrics.ProxyAddress = wavefront.Spec.DataExport.ExternalWavefrontProxy.Url
@@ -462,9 +462,9 @@ func (r *WavefrontReconciler) processProxyPreprocessorRules(wavefront *wf.Wavefr
 		if err != nil {
 			return err
 		}
-		println(fmt.Sprintf("Configmap:%v", preprocessorConfigMap.Data))
-
-		println(fmt.Sprintf("String output:%s", preprocessorConfigMap.Data["rules.yaml"]))
+		//println(fmt.Sprintf("Configmap:%v", preprocessorConfigMap.Data))
+		//
+		//println(fmt.Sprintf("String output:%s", preprocessorConfigMap.Data["rules.yaml"]))
 
 		out := make(map[string][]PreprocessorRule)
 		if err := baseYaml.Unmarshal([]byte(preprocessorConfigMap.Data["rules.yaml"]), &out); err != nil {
@@ -479,7 +479,16 @@ func (r *WavefrontReconciler) processProxyPreprocessorRules(wavefront *wf.Wavefr
 				//	fmt.Printf("key:%s value:%+v\n", key, value)
 				//}
 				if rule.Tag == "cluster" {
-					return fmt.Errorf("cluster cannot be changed")
+					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding metric tag 'cluster' is disallowed.")
+				}
+				if rule.Tag == "cluster_uuid" {
+					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding metric tag 'cluster_uuid' is disallowed.")
+				}
+				if rule.Key == "cluster" {
+					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding span key 'cluster' is disallowed.")
+				}
+				if rule.Key == "cluster_uuid" {
+					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding span key 'cluster_uuid' is disallowed.")
 				}
 			}
 		}
@@ -580,6 +589,9 @@ func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, wavefront 
 
 	if wavefrontStatus.Status != wavefront.Status.Status {
 		log.Log.Info(fmt.Sprintf("Wavefront CR wavefrontStatus changed from %s --> %s", wavefront.Status.Status, wavefrontStatus.Status))
+		if !validationResult.IsValid() {
+			log.Log.Info(fmt.Sprintf("Wavefront CR wavefrontStatus Unhealthy reasons: %s", validationResult.Message()))
+		}
 	}
 	newWavefront := *wavefront
 	newWavefront.Status = wavefrontStatus

@@ -717,7 +717,7 @@ func TestReconcileProxy(t *testing.T) {
 		require.NoError(t, err)
 
 		volumeMountHasPath(t, deployment, "preprocessor", "/etc/wavefront/preprocessor")
-		volumeHasConfigMap(t, deployment, "preprocessor", "default-proxy-preprocessor-rules-config")
+		volumeHasConfigMap(t, deployment, "preprocessor", "operator-proxy-preprocessor-rules-config")
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("2878", wftest.DefaultNamespace, "ownerReferences"))
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-uuid\n        action: addTagIfNotExists\n        tag: cluster_uuid\n        value: \"%s\"", r.ClusterUUID)))
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-name\n        action: addTagIfNotExists\n        tag: cluster\n        value: \"%s\"", clusterName)))
@@ -742,10 +742,21 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	//TODO: we need to fix this test and make sure that can combine the users custom preprocessor rules with the default rules
-	t.Run("can create proxy with preprocessor rules", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
-			w.Spec.DataExport.WavefrontProxy.Preprocessor = "preprocessor-rules"
-		}))
+	t.Run("can merge user proxy rules with operator preprocessor rules", func(t *testing.T) {
+		r, mockKM := emptyScenario(
+			wftest.CR(func(w *wf.Wavefront) {
+				w.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+			}),
+			&v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "user-preprocessor-rules",
+					Namespace: wftest.DefaultNamespace,
+				},
+				Data: map[string]string{
+					"rules.yaml": "'2878':\n      - rule: user-rule\n        action: user-action\n        tag: user-tag\n        value: \"user-tag-value\"",
+				},
+			},
+		)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -756,12 +767,15 @@ func TestReconcileProxy(t *testing.T) {
 		require.NoError(t, err)
 
 		volumeMountHasPath(t, deployment, "preprocessor", "/etc/wavefront/preprocessor")
-		volumeHasConfigMap(t, deployment, "preprocessor", "preprocessor-rules")
+		volumeHasConfigMap(t, deployment, "preprocessor", "operator-proxy-preprocessor-rules-config")
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-uuid\n        action: addTagIfNotExists\n        tag: cluster_uuid\n        value: \"%s\"", r.ClusterUUID)))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: user-rule\n        action: addTag\n        tag: user-tag\n        value: \"user-tag-value\"")))
+
 	})
 
 	// TODO: write a test for cluster, cluster_uuid, one with no conflicting,
 
-	t.Run("can't create proxy with preprocessor rules that include cluster", func(t *testing.T) {
+	t.Run("can't create proxy if user preprocessor rules have a rule for cluster", func(t *testing.T) {
 		r, mockKM := emptyScenario(
 			wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataExport.WavefrontProxy.Preprocessor = "preprocessor-rules"
@@ -773,6 +787,40 @@ func TestReconcileProxy(t *testing.T) {
 				},
 				Data: map[string]string{
 					"rules.yaml": "'2878':\n      - rule: tag-all-metrics-processed\n        action: addTag\n        tag: cluster\n        value: \"my-cluster\"",
+				},
+			},
+		)
+
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		results, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.Error(t, err)
+		require.Equal(t, ctrl.Result{Requeue: false}, results)
+
+		require.False(t, mockKM.AppliedContains("v1", "ServiceAccount", "wavefront", "collector", "wavefront-collector"))
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "default-wavefront-collector-config"))
+		require.False(t, mockKM.AppliedContains("apps/v1", "DaemonSet", "wavefront", "collector", "wavefront-node-collector"))
+		require.False(t, mockKM.AppliedContains("apps/v1", "Deployment", "wavefront", "collector", "wavefront-cluster-collector"))
+		require.False(t, mockKM.AppliedContains("v1", "Service", "wavefront", "proxy", "wavefront-proxy"))
+		require.False(t, mockKM.AppliedContains("apps/v1", "Deployment", "wavefront", "proxy", "wavefront-proxy"))
+
+		require.Equal(t, 0, StatusMetricsSent(mockSender), "should not have sent status metrics")
+	})
+
+	t.Run("can't create proxy if user preprocessor rules have a rule for cluster_uuid", func(t *testing.T) {
+		r, mockKM := emptyScenario(
+			wftest.CR(func(w *wf.Wavefront) {
+				w.Spec.DataExport.WavefrontProxy.Preprocessor = "preprocessor-rules"
+			}),
+			&v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "preprocessor-rules",
+					Namespace: wftest.DefaultNamespace,
+				},
+				Data: map[string]string{
+					"rules.yaml": "'2878':\n      - rule: tag-all-metrics-processed\n        action: addTag\n        tag: cluster_uuid\n        value: \"my-cluster-uuid\"",
 				},
 			},
 		)

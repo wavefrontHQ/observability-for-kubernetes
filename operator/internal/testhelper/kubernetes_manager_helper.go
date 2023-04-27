@@ -279,7 +279,7 @@ func (skm MockKubernetesManager) ProxyPreprocessorRulesConfigMapContains(checks 
 		"ConfigMap",
 		"wavefront",
 		"proxy",
-		"default-proxy-preprocessor-rules-config",
+		"operator-proxy-preprocessor-rules-config",
 		checks...,
 	)
 }

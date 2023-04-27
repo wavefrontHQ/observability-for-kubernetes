@@ -1,7 +1,8 @@
+# User supplied preprocessor rules are merged into this configmap at runtime.
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: default-proxy-preprocessor-rules-config
+  name: operator-proxy-preprocessor-rules-config
   namespace: {{ .Namespace }}
   labels:
     app.kubernetes.io/name: wavefront
