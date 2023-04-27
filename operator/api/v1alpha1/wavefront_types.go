@@ -187,6 +187,14 @@ type WavefrontProxy struct {
 
 	// ProxyVersion is for internal use only
 	ProxyVersion string `json:"-"`
+
+	// PreprocessorRules is for internal use only
+	PreprocessorRules PreprocessorRules `json:"-"`
+}
+
+type PreprocessorRules struct {
+	EnabledPorts     string `json:"-"`
+	UserDefinedRules string `json:"-"`
 }
 
 type Tracing struct {

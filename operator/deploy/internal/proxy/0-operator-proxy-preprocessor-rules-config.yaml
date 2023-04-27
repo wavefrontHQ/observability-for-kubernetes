@@ -14,83 +14,33 @@ metadata:
     uid: {{ .ControllerManagerUID }}
 data:
   rules.yaml: |
-    '{{ .DataExport.WavefrontProxy.MetricPort }}':
+    '{{ .DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts }},9999':
       - rule: noop-rule
         action: count
-    {{- if .DataExport.WavefrontProxy.OTLP.GrpcPort }}
-    '{{ .DataExport.WavefrontProxy.OTLP.GrpcPort }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.OTLP.HttpPort }}
-    '{{ .DataExport.WavefrontProxy.OTLP.HttpPort }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.DeltaCounterPort }}
-    '{{ .DataExport.WavefrontProxy.DeltaCounterPort }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.Tracing.Wavefront.Port }}
-    '{{ .DataExport.WavefrontProxy.Tracing.Wavefront.Port }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.Tracing.Jaeger.Port }}
-    '{{ .DataExport.WavefrontProxy.Tracing.Jaeger.Port }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.Tracing.Jaeger.GrpcPort }}
-    '{{ .DataExport.WavefrontProxy.Tracing.Jaeger.GrpcPort }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.Tracing.Jaeger.HttpPort }}
-    '{{ .DataExport.WavefrontProxy.Tracing.Jaeger.HttpPort }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.Tracing.Zipkin.Port }}
-    '{{ .DataExport.WavefrontProxy.Tracing.Zipkin.Port }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.Histogram.Port }}
-    '{{ .DataExport.WavefrontProxy.Histogram.Port }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.Histogram.MinutePort }}
-    '{{ .DataExport.WavefrontProxy.Histogram.MinutePort }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.Histogram.HourPort }}
-    '{{ .DataExport.WavefrontProxy.Histogram.HourPort }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
-    {{- if .DataExport.WavefrontProxy.Histogram.DayPort }}
-    '{{ .DataExport.WavefrontProxy.Histogram.DayPort }}':
-      - rule: noop-rule
-        action: count
-    {{- end }}
+  {{- if .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules }}
+    {{ .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules }}
+  {{- end }}
+
     'global':
       - rule: metrics-add-cluster-uuid
-        action: addTagIfNotExists
+        action: addTag
         tag: cluster_uuid
         value: "{{ .ClusterUUID }}"
       - rule: metrics-add-cluster-name
-        action: addTagIfNotExists
+        action: addTag
         tag: cluster
         value: "{{ .ClusterName }}"
+      - rule: span-drop-cluster-uuid
+        action: spanDropTag
+        key: cluster_uuid
       - rule: span-add-cluster-uuid
-        action: spanAddTagIfNotExists
+        action: spanAddTag
         key: cluster_uuid
         value: "{{ .ClusterUUID }}"
+      - rule: span-drop-cluster-name
+        action: spanDropTag
+        key: cluster
       - rule: span-add-cluster-name
-        action: spanAddTagIfNotExists
+        action: spanAddTag
         key: cluster
         value: "{{ .ClusterName }}"

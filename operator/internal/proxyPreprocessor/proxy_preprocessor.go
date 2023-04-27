@@ -3,6 +3,8 @@ package proxyPreprocessor
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	baseYaml "gopkg.in/yaml.v2"
@@ -16,6 +18,46 @@ type PreprocessorRule struct {
 	Key    string
 	Tag    string
 	Value  string
+}
+
+func SetEnabledPorts(wavefront *wf.Wavefront) {
+	allPorts := []int{wavefront.Spec.DataExport.WavefrontProxy.MetricPort,
+		wavefront.Spec.DataExport.WavefrontProxy.DeltaCounterPort,
+		wavefront.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort,
+		wavefront.Spec.DataExport.WavefrontProxy.OTLP.HttpPort,
+		wavefront.Spec.DataExport.WavefrontProxy.Tracing.Wavefront.Port,
+		wavefront.Spec.DataExport.WavefrontProxy.Tracing.Jaeger.Port,
+		wavefront.Spec.DataExport.WavefrontProxy.Tracing.Jaeger.GrpcPort,
+		wavefront.Spec.DataExport.WavefrontProxy.Tracing.Jaeger.HttpPort,
+		wavefront.Spec.DataExport.WavefrontProxy.Tracing.Zipkin.Port,
+		wavefront.Spec.DataExport.WavefrontProxy.Histogram.Port,
+		wavefront.Spec.DataExport.WavefrontProxy.Histogram.MinutePort,
+		wavefront.Spec.DataExport.WavefrontProxy.Histogram.HourPort,
+		wavefront.Spec.DataExport.WavefrontProxy.Histogram.DayPort,
+	}
+
+	var enabledPorts []int
+	for _, value := range allPorts {
+		if value != 0 {
+			enabledPorts = append(enabledPorts, value)
+		}
+	}
+
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts = strings.Trim(strings.Join(strings.Fields(fmt.Sprint(enabledPorts)), ","), "[]")
+}
+
+func SetUserDefinedRules(client client.Client, wavefront *wf.Wavefront) error {
+	if len(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor) == 0 {
+		return nil
+	}
+
+	preprocessorConfigMap, err := findConfigMap(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor, wavefront.Spec.Namespace, client)
+	if err != nil {
+		return err
+	}
+
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules = preprocessorConfigMap.Data["rules.yaml"]
+	return nil
 }
 
 func ValidateRules(namespace string, client client.Client, wavefront *wf.Wavefront) error {

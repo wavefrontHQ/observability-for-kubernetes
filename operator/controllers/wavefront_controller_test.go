@@ -719,10 +719,12 @@ func TestReconcileProxy(t *testing.T) {
 		volumeMountHasPath(t, deployment, "preprocessor", "/etc/wavefront/preprocessor")
 		volumeHasConfigMap(t, deployment, "preprocessor", "operator-proxy-preprocessor-rules-config")
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("2878", wftest.DefaultNamespace, "ownerReferences"))
-		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-uuid\n        action: addTagIfNotExists\n        tag: cluster_uuid\n        value: \"%s\"", r.ClusterUUID)))
-		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-name\n        action: addTagIfNotExists\n        tag: cluster\n        value: \"%s\"", clusterName)))
-		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-add-cluster-uuid\n        action: spanAddTagIfNotExists\n        key: cluster_uuid\n        value: \"%s\"", r.ClusterUUID)))
-		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-add-cluster-name\n        action: spanAddTagIfNotExists\n        key: cluster\n        value: \"%s\"", clusterName)))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-uuid\n        action: addTag\n        tag: cluster_uuid\n        value: \"%s\"", r.ClusterUUID)))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-name\n        action: addTag\n        tag: cluster\n        value: \"%s\"", clusterName)))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-drop-cluster-uuid\n        action: spanDropTag\n        key: cluster_uuid")))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-add-cluster-uuid\n        action: spanAddTag\n        key: cluster_uuid\n        value: \"%s\"", r.ClusterUUID)))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-drop-cluster-name\n        action: spanDropTag\n        key: cluster")))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-add-cluster-name\n        action: spanAddTag\n        key: cluster\n        value: \"%s\"", clusterName)))
 	})
 
 	t.Run("can create proxy with the default cluster_uuid and cluster preprocessor rules for OTLP", func(t *testing.T) {
@@ -742,7 +744,11 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	//TODO: we need to fix this test and make sure that can combine the users custom preprocessor rules with the default rules
-	t.Run("can merge user proxy rules with operator preprocessor rules", func(t *testing.T) {
+	// TODO:
+	// - global rule via user
+	// - invalid yaml from configmap in ValidateRules
+	t.Run("can merge multiple user proxy rules with operator preprocessor rules", func(t *testing.T) {
+		rules := "    '2878':\n      - rule: tag1\n        action: addTag\n        tag: tag1\n        value: \"true\"\n      - rule: tag2\n        action: addTag\n        tag: tag2\n        value: \"true\"\n    '2878,2999':\n      - rule: tag3\n        action: addTag\n        tag: tag3\n        value: \"true\"\n"
 		r, mockKM := emptyScenario(
 			wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
@@ -753,7 +759,7 @@ func TestReconcileProxy(t *testing.T) {
 					Namespace: wftest.DefaultNamespace,
 				},
 				Data: map[string]string{
-					"rules.yaml": "'2878':\n      - rule: user-rule\n        action: user-action\n        tag: user-tag\n        value: \"user-tag-value\"",
+					"rules.yaml": rules,
 				},
 			},
 		)
@@ -768,9 +774,8 @@ func TestReconcileProxy(t *testing.T) {
 
 		volumeMountHasPath(t, deployment, "preprocessor", "/etc/wavefront/preprocessor")
 		volumeHasConfigMap(t, deployment, "preprocessor", "operator-proxy-preprocessor-rules-config")
-		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-uuid\n        action: addTagIfNotExists\n        tag: cluster_uuid\n        value: \"%s\"", r.ClusterUUID)))
-		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: user-rule\n        action: addTag\n        tag: user-tag\n        value: \"user-tag-value\"")))
-
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-uuid\n        action: addTag\n        tag: cluster_uuid\n        value: \"%s\"", r.ClusterUUID)))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(rules))
 	})
 
 	// TODO: write a test for cluster, cluster_uuid, one with no conflicting,
