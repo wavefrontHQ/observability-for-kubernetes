@@ -28,10 +28,10 @@ func cleanTags(tags map[string]string, tagGuaranteeList []string, maxCapacity in
 	removedReasons[emptyReason] = removeEmptyTags(tags)
 
 	// Split include tags and adjust maxCapacity
-	tagsToGuarantee, tagsToGuaranteeSize := splitGuaranteedTags(tags, tagGuaranteeList)
+	tagsToGuarantee, tagsToGuaranteeSize := splitGuaranteedTags(tags, append(tagGuaranteeList, includeTagList...))
 	adjustedMaxCapacity := maxCapacity - tagsToGuaranteeSize
 	if len(tags) > adjustedMaxCapacity {
-		removedReasons[dedupeReason] = dedupeTagValues(tags, includeTagList)
+		removedReasons[dedupeReason] = dedupeTagValues(tags)
 	}
 
 	// Exclude tags irrespective of annotation count as long as they are not in the guarantee list.
@@ -78,7 +78,7 @@ func logTagCleaningReasons(metricName string, reasons map[string][]string) {
 
 const minDedupeTagValueLen = 5
 
-func dedupeTagValues(tags map[string]string, tagInclude []string) []string {
+func dedupeTagValues(tags map[string]string) []string {
 	var removedTags []string
 	invertedTags := map[string]string{} // tag value -> tag name
 	for name, value := range tags {
@@ -88,18 +88,12 @@ func dedupeTagValues(tags map[string]string, tagInclude []string) []string {
 		if len(invertedTags[value]) == 0 {
 			invertedTags[value] = name
 		} else if isWinningName(name, invertedTags[value]) {
-			// Do below only if not present in tagInclude
-			if !includeTag(name) {
-				removedTags = append(removedTags, invertedTags[value])
-				delete(tags, invertedTags[value])
-				invertedTags[value] = name
-			}
+			removedTags = append(removedTags, invertedTags[value])
+			delete(tags, invertedTags[value])
+			invertedTags[value] = name
 		} else {
-			// Do below only if not present in tagInclude
-			if !includeTag(name) {
-				removedTags = append(removedTags, name)
-				delete(tags, name)
-			}
+			removedTags = append(removedTags, name)
+			delete(tags, name)
 		}
 	}
 	return removedTags
@@ -165,15 +159,6 @@ func excludeTags(tags map[string]string) []string {
 func excludeTag(name string) bool {
 	for _, excludeName := range excludeTagList {
 		if excludeName == name {
-			return true
-		}
-	}
-	return false
-}
-
-func includeTag(name string) bool {
-	for _, includeName := range includeTagList {
-		if includeName == name {
 			return true
 		}
 	}

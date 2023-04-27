@@ -132,6 +132,7 @@ func TestCleanTags(t *testing.T) {
 				"cluster":                                "mamichael-aks-221116",
 				"node_role":                              "worker",
 				"nodename":                               "aks-agentpool-33708643-vmss000000",
+				"hostname":                               "aks-agentpool-33708643-vmss000000",
 				"type":                                   "node",
 				"pod_cidr":                               "10.96.2.0/24",
 				"internal_ip":                            "10.40.56.17",
