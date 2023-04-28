@@ -18,6 +18,8 @@ elif grep -q "k8po-ci" <<< "$CURRENT_CONTEXT"; then
   echo "AKS"
 elif grep -q "eks" <<< "$CURRENT_CONTEXT"; then
   echo "EKS"
+elif grep -q "openshift" <<< "$CURRENT_CONTEXT"; then
+  echo "Openshift"
 else
   echo "No matching env for ${CURRENT_CONTEXT}"
 fi
