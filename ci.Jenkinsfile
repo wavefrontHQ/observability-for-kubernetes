@@ -108,8 +108,11 @@ pipeline {
           }
         }
       }
+    }
 
-      stage("Build Operator yaml") {
+    stage('Build wavefront-operator yaml') {
+      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
+      stage('Commit to dev-internal directory') {
         agent { label "worker-5" }
         environment {
           TOKEN = credentials('GITHUB_TOKEN')
