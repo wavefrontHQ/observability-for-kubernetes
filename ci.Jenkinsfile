@@ -112,15 +112,13 @@ pipeline {
 
     stage('Build wavefront-operator yaml') {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
-      stage('Commit to dev-internal directory') {
-        agent { label "worker-5" }
-        environment {
-          TOKEN = credentials('GITHUB_TOKEN')
-        }
-        steps {
-          sh 'make -C operator clean-build'
-          sh './ci/jenkins/build-dev-internal-operator-yaml.sh'
-        }
+      agent { label "worker-5" }
+      environment {
+        TOKEN = credentials('GITHUB_TOKEN')
+      }
+      steps {
+        sh 'make -C operator clean-build'
+        sh './ci/jenkins/build-dev-internal-operator-yaml.sh'
       }
     }
 
