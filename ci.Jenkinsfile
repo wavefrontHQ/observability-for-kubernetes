@@ -180,7 +180,7 @@ pipeline {
           environment {
             AKS_CLUSTER_NAME = "k8po-ci"
             DOCKER_IMAGE = "kubernetes-collector"
-            INTEGRATION_TEST_ARGS="real-proxy-metrics"
+            INTEGRATION_TEST_ARGS="-r real-proxy-metrics"
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
