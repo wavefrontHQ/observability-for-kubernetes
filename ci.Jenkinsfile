@@ -110,6 +110,18 @@ pipeline {
       }
     }
 
+    stage('Build wavefront-operator yaml') {
+      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
+      agent { label "worker-5" }
+      environment {
+        TOKEN = credentials('GITHUB_TOKEN')
+      }
+      steps {
+        sh 'make -C operator clean-build'
+        sh './ci/jenkins/build-dev-internal-operator-yaml.sh'
+      }
+    }
+
     stage('Run Collector Integration Tests') {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
