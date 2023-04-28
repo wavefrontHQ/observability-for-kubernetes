@@ -22,4 +22,5 @@ git remote set-url origin https://${TOKEN}@github.com/wavefronthq/observability-
 # Commit wavefront-operator.yaml to dev-internal/deploy directory
 git add "${DEV_INTERNAL_DIR}"/wavefront-operator.yaml
 git commit -m "Build dev-internal/deploy/wavefront-operator.yaml from ${GIT_COMMIT}" || exit 0
-git push -u origin HEAD || exit 0
+git push || exit 0
+git checkout .
