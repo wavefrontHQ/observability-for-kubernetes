@@ -3,6 +3,8 @@ set -e
 
 echo "Cleaning up cluster"
 
+kubectl get nodes > /dev/null # preflight: check for successful cluster connection
+
 CLUSTER_ROLES=$(kubectl get clusterroles | awk '/wavefront-collector|wavefront|wavefront-wavefront-collector|wavefront-wavefront-legacy-install-detection|wavefront-wavefront-logging/ {print $1}')
 if [[ ! -z "$CLUSTER_ROLES" ]] ; then
     echo "Found ClusterRoles: ${CLUSTER_ROLES}"

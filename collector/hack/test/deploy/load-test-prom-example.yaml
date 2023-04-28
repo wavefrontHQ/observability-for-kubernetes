@@ -30,14 +30,15 @@ spec:
       name: prom-example
       namespace: load-test
     spec:
-     containers:
-     - name: prom-example
-       image: projects.registry.vmware.com/tanzu_observability_keights_saas/prometheus-example-app:latest
-   #    image: jgeeatvmware/crash-loop:1
-       imagePullPolicy: Always
-       command:
-       - /bin/prometheus-example-app
-       - --num=10
-       ports:
-       - containerPort: 8443
-         protocol: TCP
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+      - name: prom-example
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/prometheus-example-app:latest
+        imagePullPolicy: Always
+        command:
+          - /bin/prometheus-example-app
+          - --num=10
+        ports:
+          - containerPort: 8443
+            protocol: TCP

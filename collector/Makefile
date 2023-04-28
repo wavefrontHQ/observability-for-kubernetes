@@ -8,7 +8,7 @@ REPO_ROOT=$(shell git rev-parse --show-toplevel)
 COLLECTOR_REPO_ROOT=$(shell git rev-parse --show-toplevel)/collector
 TEST_DIR=$(COLLECTOR_REPO_ROOT)/hack/test
 OUT_DIR?=$(COLLECTOR_REPO_ROOT)/_output
-INTEGRATION_TEST_ARGS?=default -r real-proxy
+INTEGRATION_TEST_ARGS?=-r default -r real-proxy
 
 BINARY_NAME=wavefront-collector
 
@@ -170,7 +170,7 @@ test-proxy-container: $(SEMVER_CLI_BIN)
 
 .PHONY: publish-test-proxy
 publish-test-proxy:  test-proxy-container
-	docker push $(PREFIX)/test-proxy:latest
+#	docker push $(PREFIX)/test-proxy:latest
 	docker push $(PREFIX)/test-proxy:$(VERSION)
 
 .PHONY: test-proxy
@@ -214,9 +214,9 @@ token-check:
 .PHONY: proxy-test
 proxy-test: token-check $(SEMVER_CLI_BIN)
 ifeq ($(INTEGRATION_TEST_ARGS),all)
-	$(eval INTEGRATION_TEST_ARGS := cluster-metrics-only -r node-metrics-only -r combined -r default -r real-proxy-metrics)
+	$(eval INTEGRATION_TEST_ARGS := -r cluster-metrics-only -r node-metrics-only -r combined -r default -r real-proxy-metrics)
 endif
-	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) -r $(INTEGRATION_TEST_ARGS))
+	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) $(INTEGRATION_TEST_ARGS))
 
 .PHONE: build-image
 build-image:

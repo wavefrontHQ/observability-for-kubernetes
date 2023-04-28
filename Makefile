@@ -100,7 +100,7 @@ docker-login-eks:
 	@aws ecr get-login-password --region $(AWS_REGION) --profile $(AWS_PROFILE) |  docker login --username AWS --password-stdin $(ECR_ENDPOINT)
 
 target-eks: docker-login-eks
-	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-dev --profile $(AWS_PROFILE)
+	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-ci --profile $(AWS_PROFILE) --alias k8s-saas-team-ci-eks
 
 # create a new branch from main
 # usage: make branch JIRA=XXXX OR make branch NAME=YYYY

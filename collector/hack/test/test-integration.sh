@@ -20,10 +20,8 @@ function run_fake_proxy_test() {
   wait_for_cluster_resource_deleted namespace/$NS
 
   kubectl create namespace $NS
-  kubectl config set-context --current --namespace="$NS"
-  kubectl apply -f ./deploy/mysql-config.yaml
-  kubectl apply -f ./deploy/memcached-config.yaml
-  kubectl config set-context --current --namespace=default
+  kubectl apply -f <(sed "s/wavefront-collector/$NS/g" ./deploy/mysql-config.yaml)
+  kubectl apply -f <(sed "s/wavefront-collector/$NS/g" ./deploy/memcached-config.yaml)
 
   echo "deploying collector $IMAGE_NAME $VERSION"
 
@@ -163,7 +161,7 @@ function main() {
     echo "==================== Running real-proxy-metrics test ===================="
     run_real_proxy_metrics_test
   fi
-  if [[ "${tests_to_run[*]}" =~ "real-proxy" ]]; then
+  if [[ " ${tests_to_run[*]} " =~ " real-proxy " ]]; then
     echo "==================== Starting real proxy ===================="
     run_real_proxy
   fi

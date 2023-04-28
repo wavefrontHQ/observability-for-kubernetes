@@ -142,35 +142,34 @@ pipeline {
             }
           }
         }
-//         stage("EKS Integration Test") {
-//           agent {
-//             label "worker-2"
-//           }
-//           options {
-//             timeout(time: 30, unit: 'MINUTES')
-//           }
-//           tools {
-//             go 'Go 1.20'
-//           }
-//           environment {
-//             DOCKER_IMAGE = "kubernetes-collector"
-//             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
-//             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-//             INTEGRATION_TEST_ARGS="all"
-//             INTEGRATION_TEST_BUILD="ci"
-//           }
-//           steps {
-//             withEnv(["PATH+GO=${HOME}/go/bin"]) {
-//               lock("integration-test-eks") {
-//                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-//                 sh 'cd collector && make target-eks'
-//                 sh 'cd collector && make clean-cluster'
-//                 sh 'cd collector && make integration-test'
-//                 sh 'cd collector && make clean-cluster'
-//               }
-//             }
-//           }
-//         }
+
+        stage("EKS Integration Test") {
+          agent {
+            label "worker-2"
+          }
+          options {
+            timeout(time: 30, unit: 'MINUTES')
+          }
+          environment {
+            DOCKER_IMAGE = "kubernetes-collector"
+            AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
+            AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+            INTEGRATION_TEST_ARGS = "all"
+            INTEGRATION_TEST_BUILD = "ci"
+          }
+          steps {
+            withEnv(["PATH+GO=${HOME}/go/bin"]) {
+              lock("integration-test-eks") {
+                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+                sh 'cd collector && make target-eks'
+                sh 'cd collector && make clean-cluster'
+                sh 'cd collector && make integration-test'
+                sh 'cd collector && make clean-cluster'
+              }
+            }
+          }
+        }
+
         stage("AKS Integration Test") {
           agent {
             label "worker-3"
@@ -181,7 +180,7 @@ pipeline {
           environment {
             AKS_CLUSTER_NAME = "k8po-ci"
             DOCKER_IMAGE = "kubernetes-collector"
-            INTEGRATION_TEST_ARGS="real-proxy-metrics"
+            INTEGRATION_TEST_ARGS="-r real-proxy-metrics"
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
@@ -269,39 +268,35 @@ pipeline {
 //           }
 //         }
 
-//         stage("EKS") {
-//           agent {
-//             label "worker-3"
-//           }
-//           options {
-//             timeout(time: 30, unit: 'MINUTES')
-//           }
-//           environment {
-//             GCP_CREDS = credentials("GCP_CREDS")
-//             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
-//             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-//             INTEGRATION_TEST_ARGS="-r advanced"
-//           }
-//           steps {
-//             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-//             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-//             sh 'cd operator && make semver-cli'
-//             lock("integration-test-eks") {
-//               sh 'cd operator && make target-eks'
-//               sh 'cd operator && make clean-cluster'
-//               sh 'cd operator && make integration-test'
-//               sh 'cd operator && make clean-cluster'
-//             }
-//           }
-//         }
-
-        stage("AKS") {
+        stage("EKS") {
           agent {
             label "worker-4"
           }
           options {
             timeout(time: 30, unit: 'MINUTES')
           }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
+            AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+            INTEGRATION_TEST_ARGS="-r advanced"
+          }
+          steps {
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+            sh 'cd operator && make semver-cli'
+            lock("integration-test-eks") {
+              sh 'cd operator && make target-eks'
+              sh 'cd operator && make clean-cluster'
+              sh 'cd operator && make integration-test'
+              sh 'cd operator && make clean-cluster'
+            }
+          }
+        }
+
+        stage("AKS") {
+          agent { label "worker-4" }
+          options { timeout(time: 30, unit: 'MINUTES') }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
             AKS_CLUSTER_NAME = "k8po-ci"
