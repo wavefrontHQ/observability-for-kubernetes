@@ -29,6 +29,8 @@ import (
 	"text/template"
 	"time"
 
+	"k8s.io/client-go/discovery"
+
 	appsv1 "k8s.io/api/apps/v1"
 
 	"k8s.io/client-go/util/workqueue"
@@ -73,6 +75,7 @@ type WavefrontReconciler struct {
 
 	FS                fs.FS
 	KubernetesManager KubernetesManager
+	DiscoveryClient   discovery.ServerGroupsInterface
 	MetricConnection  *metric.Connection
 	Versions          Versions
 	namespace         string
@@ -162,12 +165,13 @@ type Versions struct {
 	LoggingVersion   string
 }
 
-func NewWavefrontReconciler(versions Versions, client client.Client) (operator *WavefrontReconciler, err error) {
+func NewWavefrontReconciler(versions Versions, client client.Client, discoveryClient discovery.ServerGroupsInterface) (operator *WavefrontReconciler, err error) {
 	return &WavefrontReconciler{
 		Versions:          versions,
 		Client:            client,
 		FS:                os.DirFS(DeployDir),
 		KubernetesManager: kubernetes_manager.NewKubernetesManager(client),
+		DiscoveryClient:   discoveryClient,
 		MetricConnection:  metric.NewConnection(metric.WavefrontSenderFactory()),
 	}, nil
 }
@@ -218,7 +222,10 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec,
 		if err != nil {
 			return nil, err
 		}
-		resources = append(resources, buffer.String())
+
+		if buffer.Len() != 0 {
+			resources = append(resources, buffer.String())
+		}
 	}
 	return resources, nil
 }
@@ -419,6 +426,10 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		wavefront.Spec.DataCollection.Logging.ConfigHash = hashValue(configHashBytes)
 	}
 
+	if r.shouldEnableEtcdCollection(wavefront, ctx) {
+		wavefront.Spec.DataCollection.Metrics.ControlPlane.EnableEtcd = true
+	}
+
 	wavefront.Spec.DataExport.WavefrontProxy.Args = strings.ReplaceAll(wavefront.Spec.DataExport.WavefrontProxy.Args, "\r", "")
 	wavefront.Spec.DataExport.WavefrontProxy.Args = strings.ReplaceAll(wavefront.Spec.DataExport.WavefrontProxy.Args, "\n", "")
 
@@ -433,7 +444,41 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
 	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
 
+	if r.isAnOpenshiftEnvironment() {
+		wavefront.Spec.Openshift = true
+	}
+
 	return nil
+}
+
+func (r *WavefrontReconciler) isAnOpenshiftEnvironment() bool {
+	serverGroups, err := r.DiscoveryClient.ServerGroups()
+	if err != nil {
+		return false
+	}
+
+	for _, group := range serverGroups.Groups {
+		if strings.Contains(group.Name, "openshift") {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (r *WavefrontReconciler) shouldEnableEtcdCollection(wavefront *wf.Wavefront, ctx context.Context) bool {
+	// never collect etcd if control plane metrics are disabled
+	if !wavefront.Spec.DataCollection.Metrics.ControlPlane.Enable {
+		return false
+	}
+
+	// only enable collection from etcd if the certs are supplied as a Secret
+	key := client.ObjectKey{
+		Namespace: r.namespace,
+		Name:      "etcd-certs",
+	}
+	err := r.Client.Get(ctx, key, &corev1.Secret{})
+	return err == nil
 }
 
 func (r *WavefrontReconciler) parseHttpProxyConfigs(wavefront *wf.Wavefront, ctx context.Context) error {

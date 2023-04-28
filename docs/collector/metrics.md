@@ -183,28 +183,28 @@ Application metrics:
 
 These are internal metrics about the health and configuration of the Kubernetes Metrics Collector.
 
-| Metric Name                                          | Description                                                                                                                     |
-|------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| kubernetes.collector.discovery.enabled               | Whether discovery is enabled. 0 (false) or 1 (true).                                                                            |
-| kubernetes.collector.discovery.rules.count           | Number of discovery configuration rules.                                                                                        |
-| kubernetes.collector.discovery.targets.registered    | Number of auto discovered scrape targets currently being monitored.                                                             |
-| kubernetes.collector.events.*                        | Events received, sent and filtered.                                                                                             |
-| kubernetes.collector.leaderelection.error            | leader election error counter. Only emitted in daemonset mode.                                                                  |
-| kubernetes.collector.leaderelection.leading          | 1 indicates a pod is the leader. 0 (no). Only emitted in daemonset mode.                                                        |
-| kubernetes.collector.runtime.*                       | Go runtime metrics (MemStats, NumGoroutine etc).                                                                                |
-| kubernetes.collector.sink.manager.timeouts           | Counter of timeouts in sending data to Operations for Applications.                                                             |
-| kubernetes.collector.source.manager.providers        | Number of configured source providers. Includes sources configured via auto-discovery.                                               |
-| kubernetes.collector.source.manager.scrape.errors    | Scrape error counter across all sources.                                                                                        |
-| kubernetes.collector.source.manager.scrape.latency.* | Scrape latencies across all sources.                                                                                            |
-| kubernetes.collector.source.manager.scrape.timeouts  | Scrape timeout counter across all sources.                                                                                      |
-| kubernetes.collector.source.manager.sources          | Number of configured scrape targets. For example, a single Kubernetes source provider on a 10 node cluster will yield a count of 10. |
-| kubernetes.collector.source.points.collected         | collected points counter per source type.                                                                                       |
-| kubernetes.collector.source.points.filtered          | filtered points counter per source type.                                                                                        |
-| kubernetes.collector.version                         | The version of the collector.                                                                                                   |
-| kubernetes.collector.wavefront.points.*              | Operations for Applications sink points sent, filtered, errors etc.                                                             |
-| kubernetes.collector.wavefront.events.*              | Operations for Applications sink events sent, filtered, errors etc.                                                             |
-| kubernetes.collector.wavefront.sender.type           | 1 for proxy and 0 for direct ingestion.                                                                                         |
-| kubernetes.collector.histograms.duplicates           | Number of duplicate histogram series tagged by metricname (not emitted if no duplicates)                                        |
+| Metric Name | Description |
+|---|---|
+| kubernetes.collector.discovery.enabled | Whether discovery is enabled. 0 (false) or 1 (true). |
+| kubernetes.collector.discovery.rules.count | Number of discovery configuration rules. |
+| kubernetes.collector.discovery.targets.registered | Number of auto discovered scrape targets currently being monitored. |
+| kubernetes.collector.events.* | Events received, sent and filtered. |
+| kubernetes.collector.leaderelection.error | leader election error counter. Only emitted in daemonset mode. |
+| kubernetes.collector.leaderelection.leading | 1 indicates a pod is the leader. 0 (no). Only emitted in daemonset mode. |
+| kubernetes.collector.runtime.* | Go runtime metrics (MemStats, NumGoroutine etc). |
+| kubernetes.collector.sink.manager.timeouts | Counter of timeouts in sending data to Operations for Applications. |
+| kubernetes.collector.source.manager.providers | Number of configured source providers. Includes sources configured via auto-discovery. |
+| kubernetes.collector.source.manager.scrape.errors | Scrape error counter across all sources. |
+| kubernetes.collector.source.manager.scrape.latency.* | Scrape latencies across all sources. |
+| kubernetes.collector.source.manager.scrape.timeouts | Scrape timeout counter across all sources. |
+| kubernetes.collector.source.manager.sources | Number of configured scrape targets. For example, a single Kubernetes source provider on a 10 node cluster will yield a count of 10. |
+| kubernetes.collector.source.points.collected | collected points counter per source type. |
+| kubernetes.collector.source.points.filtered | filtered points counter per source type. |
+| kubernetes.collector.version | The version of the collector. |
+| kubernetes.collector.wavefront.points.* | Operations for Applications sink points sent, filtered, errors etc. |
+| kubernetes.collector.wavefront.events.* | Operations for Applications sink events sent, filtered, errors etc. |
+| kubernetes.collector.wavefront.sender.type | 1 for proxy and 0 for direct ingestion. |
+| kubernetes.collector.histograms.duplicates | Number of duplicate histogram series tagged by metricname (not emitted if no duplicates) |
 
 ## cAdvisor Metrics
 
@@ -216,19 +216,19 @@ These are metrics for the health of the Kubernetes Control Plane.
 
 Metrics collected per type:
 
-| Metric Name                                                         | Description                                                                                                                   | K8s environment exceptions      |
-|---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|----------------------------------|
-| kubernetes.node.cpu.node_utilization (node_role="control-plane")    | CPU utilization as a share of the contol-plane node allocatable in millicores.                                                | Not available in AKS, EKS, GKE  |
-| kubernetes.node.memory.working_set (node_role="control-plane")      | Total working set usage of the control-plane node. Working set is the memory being used and not easily dropped by the kernel. | Not available in AKS, EKS, GKE  |
-| kubernetes.node.filesystem.usage (node_role="control-plane")        | Total number of bytes consumed on a filesyste of the control-plane node                                                       | Not available in AKS, EKS, GKE  |
-| kubernetes.controlplane.apiserver.storage.objects.gauge             | etcd object counts                                                                                                            | Not available from kubernetes release version 1.23 onwards  |
-| kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge           | etcd database size                                                                                                            | -                               |
-| kubernetes.controlplane.apiserver.request.duration.seconds.bucket   | Histogram buckets for API server request latency                                                                              | -                               |
-| kubernetes.controlplane.apiserver.request.duration.seconds          | API server request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html)  | -                               |
-| kubernetes.controlplane.apiserver.request.total.counter             | API server total request count                                                                                                | -                               |
-| kubernetes.controlplane.workqueue.adds.total.counter                | Current depth of API server workqueue                                                                                         | -                               |
-| kubernetes.controlplane.workqueue.queue.duration.seconds.bucket     | Histogram buckets for workqueue latency                                                                                       | -                               |
-| kubernetes.controlplane.workqueue.queue.duration.seconds            | workqueue latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html)           | -                               |
-| kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket | Histogram buckets for CoreDNS request latency                                                                                 | Not available in GKE, OpenShift |
-| kubernetes.controlplane.coredns.dns.request.duration.seconds        | CoreDNS request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html)     | Not available in GKE, OpenShift |
-| kubernetes.controlplane.coredns.dns.responses.total.counter         | CoreDNS total response count                                                                                                  | Not available in GKE, OpenShift |
+| Metric Name | Description | K8s environment exceptions |
+|---|---|---|
+| kubernetes.node.cpu.node_utilization (node_role="control-plane") | CPU utilization as a share of the contol-plane node allocatable in millicores. | Not available in AKS, EKS, GKE |
+| kubernetes.node.memory.working_set (node_role="control-plane") | Total working set usage of the control-plane node. Working set is the memory being used and not easily dropped by the kernel. | Not available in AKS, EKS, GKE |
+| kubernetes.node.filesystem.usage (node_role="control-plane") | Total number of bytes consumed on a filesyste of the control-plane node | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.apiserver.storage.objects.gauge | etcd object counts | Not available from kubernetes release version 1.23 onwards |
+| kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge | etcd database size | - |
+| kubernetes.controlplane.apiserver.request.duration.seconds.bucket | Histogram buckets for API server request latency | - |
+| kubernetes.controlplane.apiserver.request.duration.seconds | API server request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | - |
+| kubernetes.controlplane.apiserver.request.total.counter | API server total request count | - |
+| kubernetes.controlplane.workqueue.adds.total.counter | Current depth of API server workqueue | - |
+| kubernetes.controlplane.workqueue.queue.duration.seconds.bucket | Histogram buckets for workqueue latency | - |
+| kubernetes.controlplane.workqueue.queue.duration.seconds | workqueue latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | - |
+| kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket | Histogram buckets for CoreDNS request latency | Not available in GKE, OpenShift |
+| kubernetes.controlplane.coredns.dns.request.duration.seconds | CoreDNS request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in GKE, OpenShift |
+| kubernetes.controlplane.coredns.dns.responses.total.counter | CoreDNS total response count | Not available in GKE, OpenShift |

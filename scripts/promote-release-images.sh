@@ -23,6 +23,11 @@ sed -i.bak "s/collector: ${COLLECTOR_ALPHA_TAG}/collector: ${COLLECTOR_VERSION}/
 sed -i.bak "s#image: ${OPERATOR_ALPHA_IMAGE}#image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:${OPERATOR_VERSION}#g" ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml
 rm -rf ${REPO_ROOT}/operator/dev-internal/deploy/wavefront-operator.yaml.bak
 
+# Update custom-configuration md in dev-internal with release versions
+sed -i.bak "s%kubernetes-collector:[0-9.]*%kubernetes-collector:${COLLECTOR_VERSION}%g" ${REPO_ROOT}/operator/dev-internal/docs/operator/custom-configuration.md
+sed -i.bak "s%kubernetes-operator:[0-9.]*%kubernetes-operator:${OPERATOR_VERSION}%g" ${REPO_ROOT}/operator/dev-internal/docs/operator/custom-configuration.md
+rm -rf ${REPO_ROOT}/operator/dev-internal/docs/operator/custom-configuration.md.bak
+
 # Promote dev-internal to top level
 pushd ${REPO_ROOT}
   make promote-internal

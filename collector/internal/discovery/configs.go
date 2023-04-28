@@ -84,7 +84,12 @@ type PluginConfig struct {
 	// whether to include resource labels with the reported metrics. Defaults to "true".
 	IncludeLabels string `yaml:"includeLabels"`
 
-	Filters    filter.Config    `yaml:"filters"`
+	// filters to be applied prior to emitting the metrics to Wavefront.
+	Filters filter.Config `yaml:"filters"`
+
+	// whether Prometheus histograms should be converted to WF histograms.
+	ConvertHistograms bool `yaml:"convertHistograms"`
+
 	Collection CollectionConfig `yaml:"collection"`
 
 	// Internal: whether this plugin config was produced internally

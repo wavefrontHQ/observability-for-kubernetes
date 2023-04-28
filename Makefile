@@ -27,11 +27,11 @@ nuke-kind:
 
 nuke-kind-ha:
 	kind delete cluster
-	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha.yml"
+	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha.yml" --image kindest/node:v1.24.7 #setting to 1.24.7 to avoid floating to 1.25 which we currently don't support
 
 nuke-kind-ha-workers:
 	kind delete cluster
-	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha-workers.yml"
+	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha-workers.yml" --image kindest/node:v1.24.7 #setting to 1.24.7 to avoid floating to 1.25 which we currently don't support
 
 kind-connect-to-cluster:
 	kubectl config use kind-kind
@@ -64,7 +64,7 @@ delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 create-gke-cluster: gke-cluster-name-check
 	echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=e2-standard-2 \
-		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 --num-nodes=$(NUMBER_OF_NODES)
+		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 --num-nodes=$(NUMBER_OF_NODES) --logging=NONE
 	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
 	kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
@@ -101,3 +101,23 @@ docker-login-eks:
 
 target-eks: docker-login-eks
 	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-ci --profile $(AWS_PROFILE) --alias k8s-saas-team-ci-eks
+
+# create a new branch from main
+# usage: make branch JIRA=XXXX OR make branch NAME=YYYY
+.PHONY: branch
+branch:
+	$(eval NAME := $(if $(JIRA),K8SSAAS-$(JIRA),$(NAME)))
+	@if [ -z "$(NAME)" ]; then \
+		echo "usage: make branch JIRA=XXXX OR make branch NAME=YYYY"; \
+		exit 1; \
+	fi
+	git stash
+	git checkout main
+	git pull
+	git checkout -b $(NAME)
+
+.PHONY: git-rebase
+git-rebase:
+	git fetch origin
+	git rebase origin/main
+	git log --oneline -n 10

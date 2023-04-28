@@ -57,6 +57,12 @@ func TestCleanTags(t *testing.T) {
 			assert.Equal(t, map[string]string{"a-tag": tagEqualMinLen}, actual)
 		})
 
+		t.Run("when one of the duplicated values is in the tag include list", func(t *testing.T) {
+			actual := map[string]string{"nodename": "same-value", "hostname": "same-value"}
+			cleanTags(actual, []string{}, 1)
+			assert.Equal(t, map[string]string{"nodename": "same-value"}, actual)
+		})
+
 		t.Run("when under the max capacity", func(t *testing.T) {
 			actual := map[string]string{"a-tag": tagLessThanMinLen, "b-tag": tagLessThanMinLen}
 			cleanTags(actual, []string{}, 2)
@@ -126,6 +132,7 @@ func TestCleanTags(t *testing.T) {
 				"cluster":                                "mamichael-aks-221116",
 				"node_role":                              "worker",
 				"nodename":                               "aks-agentpool-33708643-vmss000000",
+				"hostname":                               "aks-agentpool-33708643-vmss000000",
 				"type":                                   "node",
 				"pod_cidr":                               "10.96.2.0/24",
 				"internal_ip":                            "10.40.56.17",
@@ -226,10 +233,10 @@ func TestCleanTags(t *testing.T) {
 				"foo":                                    "bar",
 				"test":                                   "tester",
 				"czar":                                   "aljkssljfdk",
-				"label.alpha.eksctl.io/cluster-name":     "k8s-saas-team-ci",
 				"label.alpha.eksctl.io/instance-id":      "i-00ba63d14a98f141d",
 				"label.alpha.eksctl.io/nodegroup-name":   "arm-group",
 				"label.kubernetes.io/arch":               "arm64",
+				"label.kubernetes.io/hostname":           "ip-192-168-12-242.us-west-2.compute.internal",
 				"label.kubernetes.io/os":                 "linux",
 				"label.node-lifecycle":                   "on-demand",
 				"label.node.kubernetes.io/instance-type": "m6g.medium",

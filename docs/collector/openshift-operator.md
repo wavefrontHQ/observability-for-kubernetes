@@ -41,7 +41,7 @@ oc create -f wavefront-collector-operator_v1beta1_cr.yaml -n wavefront-collector
 ``` 
 
 
-### Option 1. Using external Wavefront Proxy 
+### Option 1. Using external Wavefront Proxy
 
 * Uncomment the property `collector.proxyAddress` and provide the external Wavefront proxy IP address with port and set `proxy.enabled: false` in `wavefront-collector-operator_v1beta1_cr.yaml`. 
 

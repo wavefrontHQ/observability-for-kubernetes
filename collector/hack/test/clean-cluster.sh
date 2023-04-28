@@ -21,4 +21,10 @@ if [[ ! -z "$NS" ]] ; then
     kubectl delete --wait=false namespace ${NS} || true
 fi
 
+SCC=$(kubectl get scc | awk '/wavefront-controller-manager-scc|wavefront|wavefront-collector-scc|wavefront-proxy-scc|custom-namespace/ {print $1}')
+if [[ ! -z "$SCC" ]] ; then
+    echo "Found Securitycontextconstraints: ${SCC}"
+    kubectl delete --wait=true scc ${SCC} || true
+fi
+
 

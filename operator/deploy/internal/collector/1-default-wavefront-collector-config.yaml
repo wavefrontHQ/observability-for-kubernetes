@@ -70,6 +70,14 @@ data:
       {{- end }}
 
     discovery:
+      {{- if .Openshift }}
+      # Exclude resources from annotation-based discovery
+      annotation_excludes:
+      - resourceType: "service"
+        # namespaces to filter resources by. Provided as a list of glob pattern strings.
+        namespaces:
+        - "openshift-*"
+      {{- end }}
       enable_runtime_plugins: true
 
       plugins:
