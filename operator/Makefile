@@ -3,8 +3,8 @@ include ../Makefile
 export # Used to let all sub-make use the initialized value of variables whose names consist solely of alphanumerics and underscores
 
 # Image URL to use all building/pushing image targets
-PREFIX?=projects.registry.vmware.com/tanzu_observability
-DOCKER_IMAGE?=kubernetes-operator-snapshot
+PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
+DOCKER_IMAGE?=kubernetes-operator
 
 GO_IMPORTS_BIN:=$(if $(shell which goimports),$(shell which goimports),$(GOPATH)/bin/goimports)
 
