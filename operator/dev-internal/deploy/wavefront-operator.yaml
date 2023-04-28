@@ -955,7 +955,7 @@ subjects:
 apiVersion: v1
 data:
   collector: 1.18.0
-  logging: 2.0.10
+  logging: 2.1.2
   proxy: "12.3"
 kind: ConfigMap
 metadata:
