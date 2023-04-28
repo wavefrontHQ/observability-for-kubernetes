@@ -108,6 +108,17 @@ pipeline {
           }
         }
       }
+
+      stage("Build Operator yaml") {
+        agent { label "worker-5" }
+        environment {
+          TOKEN = credentials('GITHUB_TOKEN')
+        }
+        steps {
+          sh 'make -C operator clean-build'
+          sh './ci/jenkins/build-dev-internal-operator-yaml.sh'
+        }
+      }
     }
 
     stage('Run Collector Integration Tests') {
