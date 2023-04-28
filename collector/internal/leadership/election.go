@@ -9,11 +9,14 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 
+	coordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -40,7 +43,7 @@ func init() {
 
 // Subscribe starts the leader election process if not already started
 // and returns a channel subscriber can listen on for election results
-func Subscribe(client v1.CoreV1Interface, name string) (<-chan bool, error) {
+func Subscribe(client kubernetes.Interface, name string) (<-chan bool, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -70,7 +73,7 @@ func Unsubscribe(name string) {
 
 // startLeaderElection starts the election process if not already started
 // this will only be done once per collector instance
-func startLeaderElection(client v1.CoreV1Interface) error {
+func startLeaderElection(client kubernetes.Interface) error {
 	if !started {
 		le, err := getLeaderElector(client)
 		if err != nil {
@@ -88,7 +91,7 @@ func startLeaderElection(client v1.CoreV1Interface) error {
 }
 
 // getLeaderElector returns a leader elector
-func getLeaderElector(client v1.CoreV1Interface) (*leaderelection.LeaderElector, error) {
+func getLeaderElector(client kubernetes.Interface) (*leaderelection.LeaderElector, error) {
 	nodeName := util.GetNodeName()
 	if nodeName == "" {
 		return nil, fmt.Errorf("%s envvar is not defined", util.NodeNameEnvVar)
@@ -98,7 +101,7 @@ func getLeaderElector(client v1.CoreV1Interface) (*leaderelection.LeaderElector,
 		return nil, fmt.Errorf("%s envvar is not defined", util.NamespaceNameEnvVar)
 	}
 
-	resourceLock, err := getResourceLock(ns, "wf-collector-leader", client, nodeName)
+	resourceLock, err := getResourceLock(ns, "wf-collector-leader", client.CoreV1(), client.CoordinationV1(), nodeName)
 	if err != nil {
 		return nil, err
 	}
@@ -140,13 +143,13 @@ func getLeaderElector(client v1.CoreV1Interface) (*leaderelection.LeaderElector,
 }
 
 // getResourceLock returns a config map based resource lock for leader election
-func getResourceLock(ns string, name string, client v1.CoreV1Interface, resourceLockID string) (resourcelock.Interface, error) {
+func getResourceLock(ns string, name string, client v1.CoreV1Interface, coordinationClient coordinationv1.CoordinationV1Interface, resourceLockID string) (resourcelock.Interface, error) {
 	return resourcelock.New(
-		resourcelock.ConfigMapsResourceLock,
+		resourcelock.ConfigMapsLeasesResourceLock,
 		ns,
 		name,
 		client,
-		nil,
+		coordinationClient,
 		resourcelock.ResourceLockConfig{
 			Identity:      resourceLockID,
 			EventRecorder: &record.FakeRecorder{},

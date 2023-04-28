@@ -12,11 +12,11 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	batchv1 "k8s.io/api/batch/v1"
 )
 
 func pointsForCronJob(item interface{}, transforms configuration.Transforms) []wf.Metric {
-	job, ok := item.(*batchv1beta1.CronJob)
+	job, ok := item.(*batchv1.CronJob)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
 		return nil

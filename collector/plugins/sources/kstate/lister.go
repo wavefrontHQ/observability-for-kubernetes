@@ -8,14 +8,13 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/api/autoscaling/v2beta2"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -65,8 +64,8 @@ func buildInformers(kubeClient kubernetes.Interface) map[string]cache.SharedInfo
 	m[statefulSets] = buildInformer(statefulSets, &appsv1.StatefulSet{}, kubeClient.AppsV1().RESTClient())
 	m[replicaSets] = buildInformer(replicaSets, &appsv1.ReplicaSet{}, kubeClient.AppsV1().RESTClient())
 	m[jobs] = buildInformer(jobs, &batchv1.Job{}, kubeClient.BatchV1().RESTClient())
-	m[cronJobs] = buildInformer(cronJobs, &batchv1beta1.CronJob{}, kubeClient.BatchV1beta1().RESTClient())
-	m[horizontalPodAutoscalers] = buildInformer(horizontalPodAutoscalers, &v2beta2.HorizontalPodAutoscaler{}, kubeClient.AutoscalingV2beta2().RESTClient())
+	m[cronJobs] = buildInformer(cronJobs, &batchv1.CronJob{}, kubeClient.BatchV1().RESTClient())
+	m[horizontalPodAutoscalers] = buildInformer(horizontalPodAutoscalers, &autoscalingv2.HorizontalPodAutoscaler{}, kubeClient.AutoscalingV2().RESTClient())
 	m[nodes] = buildInformer(nodes, &v1.Node{}, kubeClient.CoreV1().RESTClient())
 	m[replicationControllers] = buildInformer(replicationControllers, &v1.ReplicationController{}, kubeClient.CoreV1().RESTClient())
 	m[nonRunningPods] = buildInformerWithFieldsSelector(nonRunningPods, &v1.Pod{}, kubeClient.CoreV1().RESTClient(), fields.OneTermNotEqualSelector("status.phase", "Running"))
