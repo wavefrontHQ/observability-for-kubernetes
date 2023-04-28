@@ -14,33 +14,36 @@ metadata:
     uid: {{ .ControllerManagerUID }}
 data:
   rules.yaml: |
-    '{{ .DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts }},9999':
-      - rule: noop-rule
-        action: count
-  {{- if .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules }}
-    {{ .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules }}
-  {{- end }}
+    {{ .DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts }},49151:
+    - rule: noop-rule
+      action: count
+{{- if .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules }}
+{{ .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules | indent 4 }}
+{{- end }}
 
-    'global':
-      - rule: metrics-add-cluster-uuid
-        action: addTag
-        tag: cluster_uuid
-        value: "{{ .ClusterUUID }}"
-      - rule: metrics-add-cluster-name
-        action: addTag
-        tag: cluster
-        value: "{{ .ClusterName }}"
-      - rule: span-drop-cluster-uuid
-        action: spanDropTag
-        key: cluster_uuid
-      - rule: span-add-cluster-uuid
-        action: spanAddTag
-        key: cluster_uuid
-        value: "{{ .ClusterUUID }}"
-      - rule: span-drop-cluster-name
-        action: spanDropTag
-        key: cluster
-      - rule: span-add-cluster-name
-        action: spanAddTag
-        key: cluster
-        value: "{{ .ClusterName }}"
+    global:
+{{- if .DataExport.WavefrontProxy.PreprocessorRules.GlobalUserDefinedRules }}
+{{ .DataExport.WavefrontProxy.PreprocessorRules.GlobalUserDefinedRules | indent 4 }}
+{{- end }}
+    - rule: metrics-add-cluster-uuid
+      action: addTag
+      tag: cluster_uuid
+      value: "{{ .ClusterUUID }}"
+    - rule: metrics-add-cluster-name
+      action: addTag
+      tag: cluster
+      value: "{{ .ClusterName }}"
+    - rule: span-drop-cluster-uuid
+      action: spanDropTag
+      key: cluster_uuid
+    - rule: span-add-cluster-uuid
+      action: spanAddTag
+      key: cluster_uuid
+      value: "{{ .ClusterUUID }}"
+    - rule: span-drop-cluster-name
+      action: spanDropTag
+      key: cluster
+    - rule: span-add-cluster-name
+      action: spanAddTag
+      key: cluster
+      value: "{{ .ClusterName }}"

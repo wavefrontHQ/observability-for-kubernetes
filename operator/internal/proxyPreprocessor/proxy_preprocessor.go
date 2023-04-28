@@ -2,6 +2,7 @@ package proxyPreprocessor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -15,9 +16,9 @@ import (
 type PreprocessorRule struct {
 	Rule   string
 	Action string
-	Key    string
-	Tag    string
-	Value  string
+	Key    string `yaml:",omitempty"`
+	Tag    string `yaml:",omitempty"`
+	Value  string `yaml:",omitempty"`
 }
 
 func SetEnabledPorts(wavefront *wf.Wavefront) {
@@ -56,49 +57,62 @@ func SetUserDefinedRules(client client.Client, wavefront *wf.Wavefront) error {
 		return err
 	}
 
-	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules = preprocessorConfigMap.Data["rules.yaml"]
+	rules := make(map[string][]PreprocessorRule)
+	if err := baseYaml.Unmarshal([]byte(preprocessorConfigMap.Data["rules.yaml"]), &rules); err != nil {
+		return err
+	}
+
+	var globalRulesYAML []byte
+	if len(rules["global"]) > 0 {
+		globalRulesYAML, err = baseYaml.Marshal(rules["global"])
+		if err != nil {
+			return err
+		}
+		delete(rules, "global")
+	}
+
+	userDefinedRulesYAML, err := baseYaml.Marshal(rules)
+
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.GlobalUserDefinedRules = string(globalRulesYAML)
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules = string(userDefinedRulesYAML)
 	return nil
 }
 
 func ValidateRules(namespace string, client client.Client, wavefront *wf.Wavefront) error {
-	if len(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor) != 0 {
-		preprocessorConfigMap, err := findConfigMap(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor, namespace, client)
-		if err != nil {
-			return err
-		}
-		//println(fmt.Sprintf("Configmap:%v", preprocessorConfigMap.Data))
-		//
-		//println(fmt.Sprintf("String output:%s", preprocessorConfigMap.Data["rules.yaml"]))
+	if len(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor) == 0 {
+		return nil
+	}
+	preprocessorConfigMap, err := findConfigMap(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor, namespace, client)
+	if err != nil {
+		return err
+	}
 
-		out := make(map[string][]PreprocessorRule)
-		if err := baseYaml.Unmarshal([]byte(preprocessorConfigMap.Data["rules.yaml"]), &out); err != nil {
-			return err
-		}
+	out := make(map[string][]PreprocessorRule)
+	if err := baseYaml.Unmarshal([]byte(preprocessorConfigMap.Data["rules.yaml"]), &out); err != nil {
+		return errors.New("cannot parse rules YAML configured in dataExport.wavefrontProxy.preprocessor")
+	}
 
-		for port, rules := range out {
-			fmt.Printf("port:%s rules:%+v\n", port, rules)
-			for _, rule := range rules {
-				fmt.Printf("value:%+v\n", rule)
-				//for key, value := range rule {
-				//	fmt.Printf("key:%s value:%+v\n", key, value)
-				//}
-				if rule.Tag == "cluster" {
-					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding metric tag 'cluster' is disallowed.")
-				}
-				if rule.Tag == "cluster_uuid" {
-					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding metric tag 'cluster_uuid' is disallowed.")
-				}
-				if rule.Key == "cluster" {
-					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding span key 'cluster' is disallowed.")
-				}
-				if rule.Key == "cluster_uuid" {
-					return fmt.Errorf("Invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding span key 'cluster_uuid' is disallowed.")
-				}
+	for port, rules := range out {
+		fmt.Printf("port:%s rules:%+v\n", port, rules)
+		for _, rule := range rules {
+			fmt.Printf("value:%+v\n", rule)
+			errMsg := "invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding %s tag '%s' is disallowed"
+			if rule.Tag == "cluster" {
+				return fmt.Errorf(errMsg, "metric", "cluster")
+			}
+			if rule.Tag == "cluster_uuid" {
+				return fmt.Errorf(errMsg, "metric", "cluster_uuid")
+			}
+			if rule.Key == "cluster" {
+				return fmt.Errorf(errMsg, "span", "cluster")
+			}
+			if rule.Key == "cluster_uuid" {
+				return fmt.Errorf(errMsg, "span", "cluster_uuid")
 			}
 		}
-
-		println(fmt.Sprintf("%+v", out))
 	}
+
+	println(fmt.Sprintf("%+v", out))
 	return nil
 }
 
@@ -111,25 +125,3 @@ func findConfigMap(name, namespace string, client client.Client) (*corev1.Config
 	}
 	return configMap, nil
 }
-
-// retrieve config map and look for port.
-//func (r *WavefrontReconciler) postProcess(wavefront *wf.Wavefront, ctx context.Context) error {
-//	if len(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor) != 0 {
-//		preprocessorConfigMap, err := r.findConfigMap(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor, ctx)
-//		if err != nil {
-//			return err
-//		}
-//		out := make(map[string][]PreprocessorRule)
-//		if err := baseYaml.Unmarshal([]byte(preprocessorConfigMap.Data["rules.yaml"]), &out); err != nil {
-//			return err
-//		}
-//
-//		for port, rules := range out {
-//			println(fmt.Printf("port:%s rules:%+v\n", port, rules))
-//			if port.
-//		}
-//
-//		println(fmt.Sprintf("%+v", out))
-//	}
-//	return nil
-//}

@@ -516,6 +516,28 @@ func (skm MockKubernetesManager) GetProxyDeployment() (appsv1.Deployment, error)
 	return deployment, nil
 }
 
+func (skm MockKubernetesManager) GetProxyPreprocessorRulesConfigMap() (corev1.ConfigMap, error) {
+	yamlUnstructured, err := skm.GetAppliedYAML(
+		"v1",
+		"ConfigMap",
+		"wavefront",
+		"proxy",
+		"operator-proxy-preprocessor-rules-config",
+	)
+
+	if err != nil {
+		return corev1.ConfigMap{}, err
+	}
+
+	var configMap corev1.ConfigMap
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(yamlUnstructured.Object, &configMap)
+	if err != nil {
+		return corev1.ConfigMap{}, err
+	}
+
+	return configMap, nil
+}
+
 func (skm MockKubernetesManager) ObjectPassesFilter(object *unstructured.Unstructured) bool {
 	// TODO: filter returning true if filtered is confusing
 	return !skm.usedFilter(object)

@@ -193,8 +193,9 @@ type WavefrontProxy struct {
 }
 
 type PreprocessorRules struct {
-	EnabledPorts     string `json:"-"`
-	UserDefinedRules string `json:"-"`
+	EnabledPorts           string `json:"-"`
+	UserDefinedRules       string `json:"-"`
+	GlobalUserDefinedRules string `json:"-"`
 }
 
 type Tracing struct {
