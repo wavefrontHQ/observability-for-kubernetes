@@ -133,9 +133,15 @@ function main() {
     echo "Checking node metrics for: ${node}"
 
     local EXPECTED_NODE_CPU_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "cpu" | awk '{print $2}' | tr -dc '0-9\n')"
+    if [[ "${EXPECTED_NODE_CPU_REQUEST}" =~ ^[0-9]$ ]]; then
+      EXPECTED_NODE_CPU_REQUEST="${EXPECTED_NODE_CPU_REQUEST}000"
+    fi
     exit_on_fail wait_for_query_match_exact "ts(kubernetes.node.cpu.request%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22)" "${EXPECTED_NODE_CPU_REQUEST}.000"
 
     local EXPECTED_NODE_CPU_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "cpu" | awk '{print $4}' | tr -dc '0-9\n')"
+    if [[ "${EXPECTED_NODE_CPU_LIMIT}" =~ ^[0-9]$ ]]; then
+      EXPECTED_NODE_CPU_LIMIT="${EXPECTED_NODE_CPU_LIMIT}000"
+    fi
     exit_on_fail wait_for_query_match_exact "ts(kubernetes.node.cpu.limit%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22)" "${EXPECTED_NODE_CPU_LIMIT}.000"
 
     local EXPECTED_NODE_MEMORY_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "memory" | awk '{print $2}' | numfmt --from=auto)"

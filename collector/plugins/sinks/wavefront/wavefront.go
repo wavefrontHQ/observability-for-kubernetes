@@ -38,7 +38,6 @@ const maxWavefrontTags = 19 // the maximum numbers of tags allowed in a wavefron
 
 var (
 	excludeTagList = []string{"namespace_id", "host_id", "pod_id", "hostname"}
-	includeTagList = []string{"nodename"}
 	sentPoints     gm.Counter
 	errPoints      gm.Counter
 	filteredPoints gm.Counter
