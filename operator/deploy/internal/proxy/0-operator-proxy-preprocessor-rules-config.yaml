@@ -20,7 +20,6 @@ data:
 {{- if .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules }}
 {{ .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules | indent 4 }}
 {{- end }}
-
     global:
 {{- if .DataExport.WavefrontProxy.PreprocessorRules.GlobalUserDefinedRules }}
 {{ .DataExport.WavefrontProxy.PreprocessorRules.GlobalUserDefinedRules | indent 4 }}

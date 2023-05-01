@@ -1,4 +1,4 @@
-package proxyPreprocessor
+package preprocessor
 
 import (
 	"context"

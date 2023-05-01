@@ -29,7 +29,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/proxyPreprocessor"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -399,8 +399,8 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 			return err
 		}
 
-		proxyPreprocessor.SetEnabledPorts(wavefront)
-		proxyPreprocessor.SetUserDefinedRules(r.Client, wavefront)
+		preprocessor.SetEnabledPorts(wavefront)
+		preprocessor.SetUserDefinedRules(r.Client, wavefront)
 		wavefront.Spec.ClusterUUID = r.ClusterUUID
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
 		wavefront.Spec.CanExportData = true
