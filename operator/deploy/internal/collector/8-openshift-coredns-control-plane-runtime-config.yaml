@@ -1,4 +1,4 @@
-{{- if .DataCollection.Metrics.ControlPlane.Enable }}
+{{- if and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -28,14 +28,6 @@ data:
       conf: |
         bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
         tls_config:
-          ca_file: '/etc/coredns-config/service-ca.crt'
+          ca_file: '/etc/openshift-service-ca-bundle/service-ca.crt'
           server_name: 'dns-default.openshift-dns.svc'
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: openshift-coredns-control-plane-cabundle
-  namespace: {{ .Namespace }}
-  annotations:
-    service.beta.openshift.io/inject-cabundle: 'true'
 {{- end }}

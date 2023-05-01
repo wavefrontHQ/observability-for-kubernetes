@@ -139,6 +139,7 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			Requeue: true,
 		}, nil
 	}
+
 	return ctrl.Result{
 		Requeue:      true,
 		RequeueAfter: maxReconcileInterval,
@@ -209,6 +210,7 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -230,10 +232,12 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec,
 			return nil, err
 		}
 
-		if buffer.Len() != 0 {
-			resources = append(resources, buffer.String())
+		rawResourceData := strings.TrimSpace(buffer.String())
+		if rawResourceData != "" {
+			resources = append(resources, rawResourceData)
 		}
 	}
+
 	return resources, nil
 }
 
@@ -262,12 +266,15 @@ func dirList(proxy, collector, logging bool) []string {
 	if proxy {
 		dirsToInclude = append(dirsToInclude, "proxy")
 	}
+
 	if collector {
 		dirsToInclude = append(dirsToInclude, "collector")
 	}
+
 	if logging {
 		dirsToInclude = append(dirsToInclude, "logging")
 	}
+
 	return dirsToInclude
 }
 
@@ -289,6 +296,7 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 			},
 		},
 	}
+
 	resources, err := r.readAndInterpolateResources(specToDelete, allDirs())
 	if err != nil {
 		return err
@@ -298,6 +306,7 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -307,6 +316,7 @@ func (r *WavefrontReconciler) deployment(name string) (*appsv1.Deployment, error
 	if err != nil {
 		return nil, err
 	}
+
 	return &deployment, err
 }
 
@@ -315,6 +325,7 @@ func (r *WavefrontReconciler) getControllerManagerUID() (types.UID, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return deployment.UID, nil
 }
 
@@ -364,12 +375,14 @@ func newTemplate(resourceFile string) *template.Template {
 			return pad + strings.Replace(v, "\n", "\n"+pad, -1)
 		},
 	}
+
 	return template.New(resourceFile).Funcs(fMap)
 }
 
 func hashValue(bytes []byte) string {
 	h := sha1.New()
 	h.Write(bytes)
+
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
@@ -494,6 +507,7 @@ func (r *WavefrontReconciler) shouldEnableEtcdCollection(wavefront *wf.Wavefront
 		Name:      "etcd-certs",
 	}
 	err := r.Client.Get(ctx, key, &corev1.Secret{})
+
 	return err == nil
 }
 
@@ -508,6 +522,7 @@ func (r *WavefrontReconciler) parseHttpProxyConfigs(wavefront *wf.Wavefront, ctx
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -521,6 +536,7 @@ func (r *WavefrontReconciler) findHttpProxySecret(wavefront *wf.Wavefront, ctx c
 	if err != nil {
 		return nil, err
 	}
+
 	return httpProxySecret, nil
 }
 
@@ -581,6 +597,7 @@ func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, wavefront 
 	}
 	newWavefront := *wavefront
 	newWavefront.Status = wavefrontStatus
+
 	return wavefrontStatus, r.Status().Patch(ctx, &newWavefront, client.MergeFrom(wavefront))
 }
 
@@ -612,6 +629,7 @@ func filterDisabledAndConfigMap(wavefrontSpec wf.WavefrontSpec) func(object *uns
 		if labelVal := objLabels["app.kubernetes.io/component"]; labelVal == "collector" && object.GetKind() == "ConfigMap" && wavefrontSpec.DataCollection.Metrics.CollectorConfigName != object.GetName() {
 			return true
 		}
+
 		return false
 	}
 }

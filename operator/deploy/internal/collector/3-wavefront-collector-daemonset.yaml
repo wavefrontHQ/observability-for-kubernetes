@@ -47,7 +47,7 @@ spec:
         - name: wavefront-collector
           securityContext:
             readOnlyRootFilesystem: true
-          image: {{ .ImageRegistry }}/kubernetes-collector:{{ .DataCollection.Metrics.CollectorVersion }}
+          image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector:1.18.0-dev-jalvis-230501140824@sha256:edbdd99db7b160afb6c7f6cea9aca71cedef21d8ad6522f61fbb42b5293f8b30
           imagePullPolicy: Always
           command:
             - /wavefront-collector
@@ -88,13 +88,11 @@ spec:
             - name: config
               mountPath: /etc/collector/
               readOnly: true
-            - name: coredns-config
-              mountPath: /etc/coredns-config/
+            {{- if and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}
+            - name: openshift-service-ca-bundle
+              mountPath: /etc/openshift-service-ca-bundle/
               readOnly: true
-              optional: true
-            - name: openshift-coredns-certs
-              mountPath: /etc/coredns-certs/
-              readOnly: true
+            {{- end }}
       volumes:
         - name: procfs
           hostPath:
@@ -107,9 +105,8 @@ spec:
         - name: config
           configMap:
             name: {{ .DataCollection.Metrics.CollectorConfigName }}
-        - name: coredns-config
+        {{- if and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}
+        - name: openshift-service-ca-bundle
           configMap:
-            name: openshift-coredns-control-plane-cabundle
-        - name: openshift-coredns-certs
-          secret:
-            secretName: openshift-coredns-certs
+            name: openshift-service-ca-bundle
+        {{- end }}

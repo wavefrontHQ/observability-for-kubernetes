@@ -1,4 +1,4 @@
-{{- if .DataCollection.Metrics.ControlPlane.Enable }}
+{{- if and .DataCollection.Metrics.ControlPlane.Enable (not .Openshift) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
