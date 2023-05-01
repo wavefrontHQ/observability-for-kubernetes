@@ -1,0 +1,41 @@
+{{- if .DataCollection.Metrics.ControlPlane.Enable }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openshift-coredns-control-plane-config
+  namespace: {{ .Namespace }}
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: wavefront-controller-manager
+    uid: {{ .ControllerManagerUID }}
+  annotations:
+    wavefront.com/discovery-config: 'true'
+data:
+  collector.yaml: |
+    plugins:
+    - name: openshift-coredns-discovery
+      type: prometheus
+      selectors:
+        labels:
+          dns.operator.openshift.io/daemonset-dns:
+          - default
+      port: 9154
+      path: /metrics
+      scheme: https
+      prefix: kubernetes.controlplane.
+      convertHistograms: true
+      conf: |
+        bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+        tls_config:
+          ca_file: '/etc/coredns-config/service-ca.crt'
+          server_name: 'dns-default.openshift-dns.svc'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openshift-coredns-control-plane-cabundle
+  namespace: {{ .Namespace }}
+  annotations:
+    service.beta.openshift.io/inject-cabundle: 'true'
+{{- end }}
