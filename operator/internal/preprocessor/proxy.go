@@ -89,6 +89,9 @@ func getUserDefinedRules(client client.Client, wavefront *wf.Wavefront) (portBas
 	}
 
 	userDefinedRulesYAML, err := baseYaml.Marshal(rules)
+	if err != nil {
+		return "", "", err
+	}
 
 	return string(userDefinedRulesYAML), string(globalRulesYAML), nil
 

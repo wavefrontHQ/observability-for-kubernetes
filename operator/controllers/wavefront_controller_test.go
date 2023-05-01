@@ -804,9 +804,9 @@ func TestReconcileProxy(t *testing.T) {
 
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-uuid\n      action: addTag\n      tag: cluster_uuid\n      value: \"%s\"", r.ClusterUUID)))
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-name\n      action: addTag\n      tag: cluster\n      value: \"%s\"", clusterName)))
-		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-drop-cluster-uuid\n      action: spanDropTag\n      key: cluster_uuid")))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("- rule: span-drop-cluster-uuid\n      action: spanDropTag\n      key: cluster_uuid"))
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-add-cluster-uuid\n      action: spanAddTag\n      key: cluster_uuid\n      value: \"%s\"", r.ClusterUUID)))
-		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-drop-cluster-name\n      action: spanDropTag\n      key: cluster")))
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("- rule: span-drop-cluster-name\n      action: spanDropTag\n      key: cluster"))
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: span-add-cluster-name\n      action: spanAddTag\n      key: cluster\n      value: \"%s\"", clusterName)))
 	})
 
