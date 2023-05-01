@@ -93,6 +93,7 @@ func TestProcess(t *testing.T) {
 		_, err := Process(client, wfcr)
 
 		require.Error(t, err)
+		require.Equal(t, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port '2878', overriding metric tag 'cluster' is disallowed", err.Error())
 	})
 
 	t.Run("returns error proxy if user preprocessor port rules have a rule for cluster_uuid", func(t *testing.T) {
@@ -114,6 +115,7 @@ func TestProcess(t *testing.T) {
 		_, err := Process(client, wfcr)
 
 		require.Error(t, err)
+		require.Equal(t, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port '2878', overriding span tag 'cluster_uuid' is disallowed", err.Error())
 	})
 
 	t.Run("returns error proxy if user preprocessor global rules have a rule for cluster_uuid", func(t *testing.T) {
@@ -135,12 +137,13 @@ func TestProcess(t *testing.T) {
 		_, err := Process(client, wfcr)
 
 		require.Error(t, err)
+		require.Equal(t, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port 'global', overriding span tag 'cluster_uuid' is disallowed", err.Error())
 	})
 
 	t.Run("returns error proxy if user preprocessor global rules have a rule for cluster", func(t *testing.T) {
 		wfcr := defaultWFCR()
 		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
-		rules := "'global':\n      - rule: tag-all-metrics-processed\n        action: addTag\n        key: cluster\n        value: \"my-cluster\""
+		rules := "'global':\n      - rule: tag-all-metrics-processed\n        action: addTag\n        tag: cluster\n        value: \"my-cluster\""
 
 		rulesConfigMap := &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -156,6 +159,7 @@ func TestProcess(t *testing.T) {
 		_, err := Process(client, wfcr)
 
 		require.Error(t, err)
+		require.Equal(t, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port 'global', overriding metric tag 'cluster' is disallowed", err.Error())
 	})
 
 }

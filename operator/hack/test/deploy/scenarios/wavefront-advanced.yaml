@@ -84,6 +84,11 @@ data:
         action: addTag
         tag: processed
         value: "true"
+    'global':
+      - rule: global-tag
+        action: addTag
+        tag: global
+        value: global-test-tag
 ---
 apiVersion: v1
 kind: ConfigMap

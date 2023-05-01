@@ -74,7 +74,7 @@ func getUserDefinedRules(client client.Client, wavefront *wf.Wavefront) (portBas
 		return "", "", err
 	}
 
-	err = validateUserRules(rules)
+	err = validateUserRules(rules, wavefront.Spec.DataExport.WavefrontProxy.Preprocessor)
 	if err != nil {
 		return "", "", err
 	}
@@ -94,22 +94,21 @@ func getUserDefinedRules(client client.Client, wavefront *wf.Wavefront) (portBas
 
 }
 
-func validateUserRules(userRules map[string][]rule) error {
-	for _, rules := range userRules {
+func validateUserRules(userRules map[string][]rule, configMapName string) error {
+	for port, rules := range userRules {
 		for _, rule := range rules {
-			fmt.Printf("value:%+v\n", rule)
-			errMsg := "invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding %s tag '%s' is disallowed"
+			errMsg := "Invalid rule configured in ConfigMap '%s' on port '%s', overriding %s tag '%s' is disallowed"
 			if rule.Tag == "cluster" {
-				return fmt.Errorf(errMsg, "metric", "cluster")
+				return fmt.Errorf(errMsg, configMapName, port, "metric", "cluster")
 			}
 			if rule.Tag == "cluster_uuid" {
-				return fmt.Errorf(errMsg, "metric", "cluster_uuid")
+				return fmt.Errorf(errMsg, configMapName, port, "metric", "cluster_uuid")
 			}
 			if rule.Key == "cluster" {
-				return fmt.Errorf(errMsg, "span", "cluster")
+				return fmt.Errorf(errMsg, configMapName, port, "span", "cluster")
 			}
 			if rule.Key == "cluster_uuid" {
-				return fmt.Errorf(errMsg, "span", "cluster_uuid")
+				return fmt.Errorf(errMsg, configMapName, port, "span", "cluster_uuid")
 			}
 		}
 	}

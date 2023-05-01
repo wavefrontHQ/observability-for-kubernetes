@@ -420,6 +420,7 @@ function main() {
     tests_to_run=(
       "validation-errors"
       "validation-legacy"
+      "validation-errors-preprocessor-rules"
       "allow-legacy-install"
       "basic"
       "advanced"
@@ -443,6 +444,9 @@ function main() {
   fi
   if [[ " ${tests_to_run[*]} " =~ " validation-legacy " ]]; then
     run_test "validation-legacy" "unhealthy"
+  fi
+  if [[ " ${tests_to_run[*]} " =~ " validation-errors-preprocessor-rules " ]]; then
+    run_test "validation-errors-preprocessor-rules" "unhealthy"
   fi
   if [[ " ${tests_to_run[*]} " =~ " logging-integration " ]]; then
     run_test "logging-integration" "logging-integration-checks"
