@@ -12,8 +12,6 @@ metadata:
   name: prom-example
   namespace: collector-targets
 spec:
-  nodeSelector:
-    kubernetes.io/arch: amd64
   containers:
   - name: prom-example
     image: projects.registry.vmware.com/tanzu_observability_keights_saas/prometheus-example-app:latest
