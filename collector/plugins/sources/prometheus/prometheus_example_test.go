@@ -109,6 +109,42 @@ http_request_duration_seconds_count 144320
 	experimental.DisableFeature(experimental.HistogramConversion)
 }
 
+func TestParsePrometheusHistogramOnlyCreateDistributions(t *testing.T) {
+	src := &prometheusMetricsSource{
+		convertHistograms: true,
+	}
+
+	metrics, err := src.parseMetrics(bytes.NewReader([]byte(`
+# A histogram, which has a pretty complex representation in the text format:
+# HELP http_request_duration_seconds A histogram of the request duration.
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{le="0.05"} 24054
+http_request_duration_seconds_bucket{le="0.2"} 100392
+http_request_duration_seconds_bucket{le="0.1"} 33444
+http_request_duration_seconds_bucket{le="0.5"} 129389
+http_request_duration_seconds_bucket{le="1"} 133988
+http_request_duration_seconds_bucket{le="+Inf"} 144320
+http_request_duration_seconds_sum 53423
+http_request_duration_seconds_count 144320
+`)))
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(metrics))
+
+	distribution, ok := metrics[0].(*wf.Distribution)
+	require.True(t, ok)
+	assert.Equal(t, 6, len(distribution.Centroids))
+	expectedCentroids := []wf.Centroid{
+		{Value: 0.05, Count: 24054},
+		{Value: 0.1, Count: 33444},
+		{Value: 0.2, Count: 100392},
+		{Value: 0.5, Count: 129389},
+		{Value: 1.0, Count: 133988},
+		{Value: math.Inf(1), Count: 144320},
+	}
+	assert.Equal(t, expectedCentroids, distribution.Centroids)
+}
+
 func TestFilteringWFHistogramPoints(t *testing.T) {
 	experimental.EnableFeature(experimental.HistogramConversion)
 	src := &prometheusMetricsSource{

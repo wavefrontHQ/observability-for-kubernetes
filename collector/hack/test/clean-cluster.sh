@@ -3,6 +3,8 @@ set -e
 
 echo "Cleaning up cluster"
 
+kubectl get nodes > /dev/null # preflight: check for successful cluster connection
+
 CLUSTER_ROLES=$(kubectl get clusterroles | awk '/wavefront-collector|wavefront|wavefront-wavefront-collector|wavefront-wavefront-legacy-install-detection|wavefront-wavefront-logging/ {print $1}')
 if [[ ! -z "$CLUSTER_ROLES" ]] ; then
     echo "Found ClusterRoles: ${CLUSTER_ROLES}"
@@ -17,6 +19,12 @@ NS=$(kubectl get namespaces | awk '/wavefront-collector|wavefront|collector-targ
 if [[ ! -z "$NS" ]] ; then
     echo "Found Namespaces: ${NS}"
     kubectl delete --wait=false namespace ${NS} || true
+fi
+
+SCC=$(kubectl get scc | awk '/wavefront-controller-manager-scc|wavefront|wavefront-collector-scc|wavefront-proxy-scc|custom-namespace/ {print $1}')
+if [[ ! -z "$SCC" ]] ; then
+    echo "Found Securitycontextconstraints: ${SCC}"
+    kubectl delete --wait=true scc ${SCC} || true
 fi
 
 

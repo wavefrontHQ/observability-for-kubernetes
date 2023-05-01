@@ -284,6 +284,14 @@ spec:
                             items:
                               type: string
                             type: array
+                          tagGuaranteeList:
+                            description: List of tags guaranteed to not be removed
+                              during kubernetes metrics collection. Supersedes all
+                              other collection filters. These tags are given priority
+                              if you hit the 20 tag limit.
+                            items:
+                              type: string
+                            type: array
                         type: object
                       nodeCollector:
                         default:

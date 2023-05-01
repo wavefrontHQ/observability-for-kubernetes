@@ -80,6 +80,11 @@ spec:
             - name: procfs
               mountPath: /host/proc
               readOnly: true
+            {{- if .DataCollection.Metrics.ControlPlane.EnableEtcd }}
+            - name: etcd-certs
+              mountPath: /etc/etcd-certs/
+              readOnly: true
+            {{- end }}
             - name: config
               mountPath: /etc/collector/
               readOnly: true
@@ -87,6 +92,11 @@ spec:
         - name: procfs
           hostPath:
             path: /proc
+        {{- if .DataCollection.Metrics.ControlPlane.EnableEtcd }}
+        - name: etcd-certs
+          secret:
+            secretName: etcd-certs
+        {{- end }}
         - name: config
           configMap:
             name: {{ .DataCollection.Metrics.CollectorConfigName }}

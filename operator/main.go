@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"os"
 
+	"k8s.io/client-go/discovery"
+
 	"go.uber.org/zap/zapcore"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -101,6 +103,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		setupLog.Error(err, "error creating kubernetes discovery client")
+		os.Exit(1)
+	}
+
 	cs, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		setupLog.Error(err, "error creating reconciler client")
@@ -115,12 +123,18 @@ func main() {
 		log.Log.Info(fmt.Sprintf("*********************** Setting cluster uud: %s", clusterUUID))
 	}
 
-	controller, err := controllers.NewWavefrontReconciler(controllers.Versions{
-		OperatorVersion:  version,
-		CollectorVersion: getComponentVersion("COLLECTOR_VERSION"),
-		ProxyVersion:     getComponentVersion("PROXY_VERSION"),
-		LoggingVersion:   getComponentVersion("LOGGING_VERSION"),
-	}, objClient, clusterUUID)
+	controller, err := controllers.NewWavefrontReconciler(
+		controllers.Versions{
+			OperatorVersion:  version,
+			CollectorVersion: getComponentVersion("COLLECTOR_VERSION"),
+			ProxyVersion:     getComponentVersion("PROXY_VERSION"),
+			LoggingVersion:   getComponentVersion("LOGGING_VERSION"),
+		},
+		objClient,
+		discoveryClient,
+		clusterUUID,
+	)
+
 	setupLog.Info(fmt.Sprintf("Versions %+v", controller.Versions))
 
 	if err != nil {

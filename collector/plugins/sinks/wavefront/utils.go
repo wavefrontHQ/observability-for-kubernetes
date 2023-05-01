@@ -16,10 +16,12 @@ const (
 	dedupeReason      = "there were too many tags so we removed tags with duplicate tag values"
 	iaasReason        = "there were too many tags so we removed IaaS specific tags"
 	alphaBetaReason   = "there were too many tags so we removed alpha and beta tags"
+	extraTagsReason   = "there were too many tags so we removed label.* tags"
 )
 
 var alphaBetaRegex = regexp.MustCompile("^label.*beta|alpha*")
-var iaasNameRegex = regexp.MustCompile("^label.*gke|azure*")
+var iaasNameRegex = regexp.MustCompile("^label.*gke|azure|eks*")
+var labelNameRegex = regexp.MustCompile("^label.*")
 
 // cleanTags removes empty, excluded tags, and tags with duplicate values (if there are too many tags) and returns a map
 // that lists removed tag names by their reason for removal
@@ -27,21 +29,23 @@ func cleanTags(tags map[string]string, tagGuaranteeList []string, maxCapacity in
 	removedReasons := map[string][]string{}
 	removedReasons[emptyReason] = removeEmptyTags(tags)
 
+	// Exclude tags irrespective of annotation count as long as they are not in the guarantee list.
+	removedReasons[excludeListReason] = excludeTags(tags)
+
 	// Split include tags and adjust maxCapacity
 	tagsToGuarantee, tagsToGuaranteeSize := splitGuaranteedTags(tags, tagGuaranteeList)
 	adjustedMaxCapacity := maxCapacity - tagsToGuaranteeSize
 	if len(tags) > adjustedMaxCapacity {
-		removedReasons[dedupeReason] = dedupeTagValues(tags, []string{})
+		removedReasons[dedupeReason] = dedupeTagValues(tags)
 	}
 
-	// Exclude tags irrespective of annotation count as long as they are not in the guarantee list.
-	removedReasons[excludeListReason] = excludeTags(tags)
-
-	// remove IaaS label tags is over max capacity
+	// remove other tags if we are still over the max capacity
 	if len(tags) > adjustedMaxCapacity {
 		removedReasons[alphaBetaReason] = removeTagsLabelsMatching(tags, alphaBetaRegex, len(tags)-adjustedMaxCapacity)
 		removedReasons[iaasReason] = removeTagsLabelsMatching(tags, iaasNameRegex, len(tags)-adjustedMaxCapacity)
+		removedReasons[extraTagsReason] = removeTagsLabelsMatching(tags, labelNameRegex, len(tags)-adjustedMaxCapacity)
 	}
+
 	combineTags(tagsToGuarantee, tags)
 
 	return removedReasons
@@ -61,6 +65,13 @@ func splitGuaranteedTags(tags map[string]string, tagGuaranteeList []string) (map
 		}
 		delete(tags, tagKey)
 	}
+
+	for tagKey, val := range tags {
+		if !labelNameRegex.MatchString(tagKey) {
+			tagsToGuarantee[tagKey] = val
+			delete(tags, tagKey)
+		}
+	}
 	return tagsToGuarantee, len(tagsToGuarantee)
 }
 
@@ -78,38 +89,49 @@ func logTagCleaningReasons(metricName string, reasons map[string][]string) {
 
 const minDedupeTagValueLen = 5
 
-func dedupeTagValues(tags map[string]string, tagInclude []string) []string {
+func dedupeTagValues(tags map[string]string) []string {
 	var removedTags []string
-	invertedTags := map[string]string{} // tag value -> tag name
-	for name, value := range tags {
+	invertedTags := make(map[string]string) // tag value -> tag name
+	tagNames := sortKeys(tags)
+	for _, name := range tagNames {
+		value := tags[name]
 		if len(value) < minDedupeTagValueLen {
 			continue
 		}
-		if len(invertedTags[value]) == 0 {
+
+		if _, ok := invertedTags[value]; !ok {
 			invertedTags[value] = name
-		} else if isWinningName(name, invertedTags[value]) {
-			// Do below only if not present in tagInclude
-			removedTags = append(removedTags, invertedTags[value])
-			delete(tags, invertedTags[value])
-			invertedTags[value] = name
-		} else {
-			// Do below only if not present in tagInclude
-			removedTags = append(removedTags, name)
-			delete(tags, name)
+			continue
 		}
+
+		nameToKeep, nameToRemove := compareTagNames(name, invertedTags[value])
+		removedTags = append(removedTags, nameToRemove)
+		delete(tags, nameToRemove)
+		invertedTags[value] = nameToKeep
 	}
 	return removedTags
 }
 
-func isWinningName(name string, prevWinner string) bool {
+func compareTagNames(name string, prevWinner string) (string, string) {
 	if alphaBetaRegex.MatchString(name) {
-		return false
-	}
-	if alphaBetaRegex.MatchString(prevWinner) {
-		return true
+		return prevWinner, name
 	}
 
-	return len(name) < len(prevWinner) || (len(name) == len(prevWinner) && name < prevWinner)
+	if alphaBetaRegex.MatchString(prevWinner) {
+		return name, prevWinner
+	}
+
+	if len(name) < len(prevWinner) {
+		return name, prevWinner
+	} else if len(prevWinner) < len(name) {
+		return prevWinner, name
+	}
+
+	if name < prevWinner {
+		return name, prevWinner
+	} else {
+		return prevWinner, name
+	}
 }
 
 func isAnEmptyTag(value string) bool {
@@ -135,13 +157,13 @@ func removeTagsLabelsMatching(tags map[string]string, regexp *regexp.Regexp, num
 	count := 0
 	tagNames := sortKeys(tags)
 	for _, name := range tagNames {
+		if count >= numberToRemove {
+			break
+		}
 		if regexp.MatchString(name) {
 			removed = append(removed, name)
 			delete(tags, name)
 			count++
-			if count >= numberToRemove {
-				break
-			}
 		}
 	}
 	return removed

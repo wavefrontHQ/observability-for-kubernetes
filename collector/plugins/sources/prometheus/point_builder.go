@@ -59,8 +59,9 @@ func (builder *pointBuilder) build(metricFamilies map[string]*prom.MetricFamily)
 				if experimental.IsEnabled(experimental.HistogramConversion) || builder.convertHistograms {
 					point := builder.buildWFHistogram(metricName, m, now, builder.buildTags(m))
 					result = wf.FilterAppend(builder.filters, builder.filtered, result, point)
+				} else {
+					result = append(result, builder.buildHistogramPoints(metricName, m, now, builder.buildTags(m))...)
 				}
-				result = append(result, builder.buildHistogramPoints(metricName, m, now, builder.buildTags(m))...)
 			} else {
 				result = append(result, builder.buildPoints(metricName, m, now)...)
 			}

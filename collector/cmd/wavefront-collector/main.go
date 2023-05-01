@@ -140,7 +140,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	// start leader-election
 	if cfg.ScrapeCluster {
-		_, err = leadership.Subscribe(kubeClient.CoreV1(), "agent")
+		_, err = leadership.Subscribe(kubeClient, "agent")
 	}
 	if err != nil {
 		log.Fatalf("Failed to start leader election: %v", err)

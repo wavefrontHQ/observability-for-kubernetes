@@ -30,10 +30,6 @@ spec:
         app.kubernetes.io/name: wavefront
         app.kubernetes.io/component: controller-manager
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 65534
-        runAsGroup: 65534
       tolerations:
         - effect: NoSchedule
           key: kubernetes.io/arch

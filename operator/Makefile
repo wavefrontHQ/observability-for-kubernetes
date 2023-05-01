@@ -290,20 +290,3 @@ integration-test: install-kube-score install-kube-linter undeploy deploy
 clean-cluster:
 	(cd $(REPO_DIR)/hack/test && ./clean-cluster.sh)
 
-# create a new branch from main
-# usage: make branch JIRA=XXXX OR make branch NAME=YYYY
-branch:
-	$(eval NAME := $(if $(JIRA),K8SSAAS-$(JIRA),$(NAME)))
-	@if [ -z "$(NAME)" ]; then \
-		echo "usage: make branch JIRA=XXXX OR make branch NAME=YYYY"; \
-		exit 1; \
-  	fi
-	git stash
-	git checkout main
-	git pull
-	git checkout -b $(NAME)
-
-git-rebase:
-	git fetch origin
-	git rebase origin/main
-	git log --oneline -n 10

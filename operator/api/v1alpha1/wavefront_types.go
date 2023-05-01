@@ -63,6 +63,9 @@ type WavefrontSpec struct {
 	// Namespace is for internal use
 	Namespace string `json:"-"`
 
+	// Openshift is for internal use
+	Openshift bool `json:"-"`
+
 	// Cluster UUID is for internal use only
 	ClusterUUID string `json:"-"`
 }
@@ -337,6 +340,9 @@ type ControlPlane struct {
 	// and whether to include kubernetes_control_plane_source
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable"`
+
+	// EnableEtcd is for internal use only
+	EnableEtcd bool `json:"-"`
 }
 
 type Filters struct {

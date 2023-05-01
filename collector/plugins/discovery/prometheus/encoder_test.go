@@ -67,7 +67,7 @@ func TestEncode(t *testing.T) {
 		t.Errorf("expected empty scrapeURL. actual: %s", promCfg)
 	}
 
-	// expect non-empty when scrape annotation set to true
+	// expect non-empty scrapeURL when scrape annotation set to true
 	pod.Annotations[customAnnotation(scrapeAnnotationFormat, prefix)] = "true"
 	name, promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
 	if !ok {
@@ -101,12 +101,13 @@ func TestEncode(t *testing.T) {
 
 	// validate cfg is picked up
 	cfg := discovery.PluginConfig{
-		Name:          "test",
-		Scheme:        "https",
-		Path:          "/path",
-		Port:          "9103",
-		Prefix:        "foo.",
-		IncludeLabels: "false",
+		Name:              "test",
+		Scheme:            "https",
+		Path:              "/path",
+		Port:              "9103",
+		Prefix:            "foo.",
+		IncludeLabels:     "false",
+		ConvertHistograms: true,
 		Conf: `
 bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
 tls_config:
@@ -117,7 +118,7 @@ tls_config:
 	}
 	pod.Annotations = map[string]string{}
 
-	name, promCfg, ok = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, cfg)
+	name, promCfg, _ = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, cfg)
 	pcfg = promCfg.(configuration.PrometheusSourceConfig)
 
 	assert.Equal(t, fmt.Sprintf("https://%s:9103/path", pod.Status.PodIP), pcfg.URL)
@@ -131,6 +132,14 @@ tls_config:
 	assert.Equal(t, "/var/run/secrets/kubernetes.io/serviceaccount/token", pcfg.HTTPClientConfig.BearerTokenFile)
 	assert.Equal(t, "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt", pcfg.HTTPClientConfig.TLSConfig.CAFile)
 	assert.True(t, pcfg.HTTPClientConfig.TLSConfig.InsecureSkipVerify)
+
+	assert.True(t, pcfg.ConvertHistograms)
+
+	// validate convertHistograms defaults to false
+	name, promCfg, _ = encoder.Encode("10.2.3.4", "pod", pod.ObjectMeta, discovery.PluginConfig{})
+	pcfg = promCfg.(configuration.PrometheusSourceConfig)
+
+	assert.False(t, pcfg.ConvertHistograms)
 }
 
 func checkTag(tags map[string]string, key, val string, t *testing.T) {

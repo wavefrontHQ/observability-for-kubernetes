@@ -33,7 +33,7 @@ func NewManager(system Resumer, name string, kubeClient kubernetes.Interface) *M
 }
 
 func (lm *Manager) Start() {
-	ch, err := Subscribe(lm.kubeClient.CoreV1(), lm.name)
+	ch, err := Subscribe(lm.kubeClient, lm.name)
 	if err != nil {
 		log.Errorf("%s: leader election error: %q", lm.name, err)
 	} else {

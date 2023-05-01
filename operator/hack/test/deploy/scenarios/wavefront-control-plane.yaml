@@ -1,0 +1,16 @@
+apiVersion: wavefront.com/v1alpha1
+kind: Wavefront
+metadata:
+  name: wavefront
+  namespace: YOUR_NAMESPACE
+spec:
+  clusterName: YOUR_CLUSTER_NAME
+  wavefrontUrl: YOUR_WAVEFRONT_URL
+  dataCollection:
+    metrics:
+      enable: true
+    logging:
+      enable: true
+  dataExport:
+    wavefrontProxy:
+      enable: true
