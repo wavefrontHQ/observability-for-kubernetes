@@ -399,14 +399,19 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 
 		err = r.parseHttpProxyConfigs(wavefront, ctx)
 		if err != nil {
-			errInfo := fmt.Sprintf("error setting up http proxy configuration: %s", err.Error())
-			log.Log.Info(errInfo)
 			return err
 		}
 
-		preprocessor.SetEnabledPorts(wavefront)
-		preprocessor.SetUserDefinedRules(r.Client, wavefront)
 		wavefront.Spec.ClusterUUID = r.ClusterUUID
+
+		var result preprocessor.Result
+		result, err = preprocessor.Process(r.Client, wavefront)
+		if err != nil {
+			return err
+		}
+		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts = result.EnabledPorts
+		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules = result.UserDefinedPortRules
+		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules = result.UserDefinedGlobalRules
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
 		wavefront.Spec.CanExportData = true
 		wavefront.Spec.DataCollection.Metrics.ProxyAddress = wavefront.Spec.DataExport.ExternalWavefrontProxy.Url

@@ -17,12 +17,12 @@ data:
     {{ .DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts }},49151:
     - rule: noop-rule
       action: count
-{{- if .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules }}
-{{ .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules | indent 4 }}
+{{- if .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules }}
+{{ .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules | indent 4 }}
 {{- end }}
     global:
-{{- if .DataExport.WavefrontProxy.PreprocessorRules.GlobalUserDefinedRules }}
-{{ .DataExport.WavefrontProxy.PreprocessorRules.GlobalUserDefinedRules | indent 4 }}
+{{- if .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules }}
+{{ .DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules | indent 4 }}
 {{- end }}
     - rule: metrics-add-cluster-uuid
       action: addTag

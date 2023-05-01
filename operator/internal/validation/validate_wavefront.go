@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -58,10 +57,6 @@ func Validate(objClient client.Client, wavefront *wf.Wavefront) Result {
 		return Result{err, !areAnyComponentsDeployed(objClient, wavefront.Spec.Namespace)}
 	}
 	err = validateWavefrontSpec(wavefront)
-	if err != nil {
-		return Result{err, true}
-	}
-	err = preprocessor.ValidateRules(wavefront.Spec.Namespace, objClient, wavefront)
 	if err != nil {
 		return Result{err, true}
 	}

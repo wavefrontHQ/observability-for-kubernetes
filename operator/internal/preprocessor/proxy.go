@@ -2,7 +2,6 @@ package preprocessor
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -13,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type PreprocessorRule struct {
+type rule struct {
 	Rule   string
 	Action string
 	Key    string `yaml:",omitempty"`
@@ -21,7 +20,20 @@ type PreprocessorRule struct {
 	Value  string `yaml:",omitempty"`
 }
 
-func SetEnabledPorts(wavefront *wf.Wavefront) {
+type Result struct {
+	EnabledPorts           string
+	UserDefinedPortRules   string
+	UserDefinedGlobalRules string
+}
+
+func Process(client client.Client, wavefront *wf.Wavefront) (Result, error) {
+	var err error
+	result := Result{EnabledPorts: getEnabledPorts(wavefront)}
+	result.UserDefinedPortRules, result.UserDefinedGlobalRules, err = getUserDefinedRules(client, wavefront)
+	return result, err
+}
+
+func getEnabledPorts(wavefront *wf.Wavefront) string {
 	allPorts := []int{wavefront.Spec.DataExport.WavefrontProxy.MetricPort,
 		wavefront.Spec.DataExport.WavefrontProxy.DeltaCounterPort,
 		wavefront.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort,
@@ -44,56 +56,46 @@ func SetEnabledPorts(wavefront *wf.Wavefront) {
 		}
 	}
 
-	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts = strings.Trim(strings.Join(strings.Fields(fmt.Sprint(enabledPorts)), ","), "[]")
+	return strings.Trim(strings.Join(strings.Fields(fmt.Sprint(enabledPorts)), ","), "[]")
 }
 
-func SetUserDefinedRules(client client.Client, wavefront *wf.Wavefront) error {
+func getUserDefinedRules(client client.Client, wavefront *wf.Wavefront) (portBasedRules, globalRules string, err error) {
 	if len(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor) == 0 {
-		return nil
+		return "", "", nil
 	}
 
 	preprocessorConfigMap, err := findConfigMap(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor, wavefront.Spec.Namespace, client)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 
-	rules := make(map[string][]PreprocessorRule)
+	rules := make(map[string][]rule)
 	if err := baseYaml.Unmarshal([]byte(preprocessorConfigMap.Data["rules.yaml"]), &rules); err != nil {
-		return err
+		return "", "", err
+	}
+
+	err = validateUserRules(rules)
+	if err != nil {
+		return "", "", err
 	}
 
 	var globalRulesYAML []byte
 	if len(rules["global"]) > 0 {
 		globalRulesYAML, err = baseYaml.Marshal(rules["global"])
 		if err != nil {
-			return err
+			return "", "", err
 		}
 		delete(rules, "global")
 	}
 
 	userDefinedRulesYAML, err := baseYaml.Marshal(rules)
 
-	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.GlobalUserDefinedRules = string(globalRulesYAML)
-	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedRules = string(userDefinedRulesYAML)
-	return nil
+	return string(userDefinedRulesYAML), string(globalRulesYAML), nil
+
 }
 
-func ValidateRules(namespace string, client client.Client, wavefront *wf.Wavefront) error {
-	if len(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor) == 0 {
-		return nil
-	}
-	preprocessorConfigMap, err := findConfigMap(wavefront.Spec.DataExport.WavefrontProxy.Preprocessor, namespace, client)
-	if err != nil {
-		return err
-	}
-
-	out := make(map[string][]PreprocessorRule)
-	if err := baseYaml.Unmarshal([]byte(preprocessorConfigMap.Data["rules.yaml"]), &out); err != nil {
-		return errors.New("cannot parse rules YAML configured in dataExport.wavefrontProxy.preprocessor")
-	}
-
-	for port, rules := range out {
-		fmt.Printf("port:%s rules:%+v\n", port, rules)
+func validateUserRules(userRules map[string][]rule) error {
+	for _, rules := range userRules {
 		for _, rule := range rules {
 			fmt.Printf("value:%+v\n", rule)
 			errMsg := "invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding %s tag '%s' is disallowed"
@@ -112,7 +114,6 @@ func ValidateRules(namespace string, client client.Client, wavefront *wf.Wavefro
 		}
 	}
 
-	println(fmt.Sprintf("%+v", out))
 	return nil
 }
 

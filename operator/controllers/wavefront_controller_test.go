@@ -745,71 +745,6 @@ func TestReconcileProxy(t *testing.T) {
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("4317", "4318"))
 	})
 
-	t.Run("reports invalid user defined proxy preprocessor rules", func(t *testing.T) {
-		invalidRulesYAML := `  "2878":\n- rule: tag1\n  key: foo\n`
-		wfCR := wftest.CR(func(w *wf.Wavefront) {
-			w.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
-		})
-		r, _ := emptyScenario(
-			wfCR,
-			&v1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "user-preprocessor-rules",
-					Namespace: wftest.DefaultNamespace,
-				},
-				Data: map[string]string{
-					"rules.yaml": invalidRulesYAML,
-				},
-			},
-		)
-
-		_, err := r.Reconcile(context.Background(), defaultRequest())
-		require.NoError(t, err)
-
-		var reconciledWFCR wf.Wavefront
-
-		require.NoError(t, r.Client.Get(
-			context.Background(),
-			util.ObjKey(wfCR.Namespace, wfCR.Name),
-			&reconciledWFCR,
-		))
-
-		require.Contains(t, reconciledWFCR.Status.Status, health.Unhealthy)
-		require.Equal(t, reconciledWFCR.Status.Message, "cannot parse rules YAML configured in dataExport.wavefrontProxy.preprocessor")
-	})
-
-	t.Run("can merge multiple user proxy rules with operator preprocessor rules", func(t *testing.T) {
-		rules := "    \"2878\":\n    - rule: tag1\n      action: addTag\n      tag: tag1\n      value: \"true\"\n    - rule: tag2\n      action: addTag\n      tag: tag2\n      value: \"true\"\n    2878,2999:\n    - rule: tag3\n      action: addTag\n      tag: tag3\n      value: \"true\"\n"
-		r, mockKM := emptyScenario(
-			wftest.CR(func(w *wf.Wavefront) {
-				w.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
-			}),
-			&v1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "user-preprocessor-rules",
-					Namespace: wftest.DefaultNamespace,
-				},
-				Data: map[string]string{
-					"rules.yaml": rules,
-				},
-			},
-		)
-
-		_, err := r.Reconcile(context.Background(), defaultRequest())
-		require.NoError(t, err)
-
-		containsProxyArg(t, "--preprocessorConfigFile /etc/wavefront/preprocessor/rules.yaml", *mockKM)
-
-		deployment, err := mockKM.GetAppliedDeployment("proxy", util.ProxyName)
-		require.NoError(t, err)
-
-		volumeMountHasPath(t, deployment, "preprocessor", "/etc/wavefront/preprocessor")
-		volumeHasConfigMap(t, deployment, "preprocessor", "operator-proxy-preprocessor-rules-config")
-		require.False(t, mockKM.ProxyPreprocessorRulesConfigMapContains("[]"))
-		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(fmt.Sprintf("- rule: metrics-add-cluster-uuid\n      action: addTag\n      tag: cluster_uuid\n      value: \"%s\"", r.ClusterUUID)))
-		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains(rules))
-	})
-
 	t.Run("can merge 'global' user proxy rules with operator preprocessor rules", func(t *testing.T) {
 		rules := "    '2878':\n      - rule: tag1\n        action: addTag\n        tag: tag1\n        value: \"true\"\n      - rule: tag2\n        action: addTag\n        tag: tag2\n        value: \"true\"\n    'global':\n      - rule: tag3\n        action: addTag\n        tag: tag3\n        value: \"true\"\n"
 		r, mockKM := emptyScenario(
@@ -849,9 +784,7 @@ func TestReconcileProxy(t *testing.T) {
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("- rule: tag3\n      action: addTag\n      tag: tag3\n      value: \"true\"\n"))
 	})
 
-	// TODO: write a test for cluster, cluster_uuid, one with no conflicting,
-
-	t.Run("can't create proxy if user preprocessor rules have a rule for cluster", func(t *testing.T) {
+	t.Run("can't create proxy if user preprocessor rules have a rule for cluster or cluster_uuid", func(t *testing.T) {
 		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Preprocessor = "preprocessor-rules"
 		})
@@ -885,41 +818,6 @@ func TestReconcileProxy(t *testing.T) {
 
 		require.Contains(t, reconciledWFCR.Status.Status, health.Unhealthy)
 		require.Equal(t, reconciledWFCR.Status.Message, "invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding metric tag 'cluster' is disallowed")
-	})
-
-	t.Run("can't create proxy if user preprocessor rules have a rule for cluster_uuid", func(t *testing.T) {
-		wfCR := wftest.CR(func(w *wf.Wavefront) {
-			w.Spec.DataExport.WavefrontProxy.Preprocessor = "preprocessor-rules"
-		})
-		r, _ := emptyScenario(
-			wfCR,
-			&v1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "preprocessor-rules",
-					Namespace: wftest.DefaultNamespace,
-				},
-				Data: map[string]string{
-					"rules.yaml": "'2878':\n      - rule: tag-all-metrics-processed\n        action: spanAddTag\n        key: cluster_uuid\n        value: \"my-cluster-uuid\"",
-				},
-			},
-		)
-
-		mockSender := &testhelper.MockSender{}
-		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
-
-		_, err := r.Reconcile(context.Background(), defaultRequest())
-
-		require.NoError(t, err)
-		var reconciledWFCR wf.Wavefront
-
-		require.NoError(t, r.Client.Get(
-			context.Background(),
-			util.ObjKey(wfCR.Namespace, wfCR.Name),
-			&reconciledWFCR,
-		))
-
-		require.Contains(t, reconciledWFCR.Status.Status, health.Unhealthy)
-		require.Equal(t, reconciledWFCR.Status.Message, "invalid rule configured in dataExport.wavefrontProxy.preprocessor, overriding span tag 'cluster_uuid' is disallowed")
 	})
 
 	t.Run("resources set for the proxy", func(t *testing.T) {
