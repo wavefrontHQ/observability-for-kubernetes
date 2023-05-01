@@ -782,28 +782,6 @@ rules:
   - create
   - list
   - watch
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - '*'
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: wavefront-manager-role
-rules:
-- apiGroups:
-  - security.openshift.io
-  resources:
-  - securitycontextconstraints
-  verbs:
-  - create
-  - delete
-  - get
-  - patch
-  - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -932,19 +910,6 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: wavefront-manager-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: wavefront-manager-role
-subjects:
-- kind: ServiceAccount
-  name: wavefront-controller-manager
-  namespace: observability-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
   name: wavefront-wavefront-collector
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -983,8 +948,8 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.18.0
-  logging: 2.1.2
+  collector: 1.17.0
+  logging: 2.0.10
   proxy: "12.3"
 kind: ConfigMap
 metadata:
@@ -1055,7 +1020,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.6.0
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.5.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -1082,6 +1047,10 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
+      securityContext:
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
       serviceAccountName: wavefront-controller-manager
       terminationGracePeriodSeconds: 10
       tolerations:
