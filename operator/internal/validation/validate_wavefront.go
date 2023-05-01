@@ -48,6 +48,10 @@ func (result Result) IsWarning() bool {
 	return result.error != nil && !result.isError
 }
 
+func NewErrorResult(err error) Result {
+	return Result{err, true}
+}
+
 func Validate(objClient client.Client, wavefront *wf.Wavefront) Result {
 	err := validateEnvironment(objClient, wavefront)
 	if err != nil {

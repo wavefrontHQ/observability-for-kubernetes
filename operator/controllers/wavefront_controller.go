@@ -116,12 +116,8 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	err = r.preprocess(wavefront, ctx)
-	if err != nil {
-		return errorCRTLResult(err)
-	}
+	validationResult := r.preprocessAndValidate(wavefront, ctx)
 
-	validationResult := validation.Validate(r.Client, wavefront)
 	if !validationResult.IsError() {
 		err = r.readAndCreateResources(wavefront.Spec)
 		if err != nil {
@@ -144,6 +140,15 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		Requeue:      true,
 		RequeueAfter: maxReconcileInterval,
 	}, nil
+}
+
+func (r *WavefrontReconciler) preprocessAndValidate(wavefront *wf.Wavefront, ctx context.Context) validation.Result {
+	err := r.preprocess(wavefront, ctx)
+	if err != nil {
+		return validation.NewErrorResult(err)
+	}
+
+	return validation.Validate(r.Client, wavefront)
 }
 
 // SetupWithManager sets up the controller with the Manager.
