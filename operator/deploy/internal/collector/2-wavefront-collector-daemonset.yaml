@@ -88,6 +88,13 @@ spec:
             - name: config
               mountPath: /etc/collector/
               readOnly: true
+            - name: coredns-config
+              mountPath: /etc/coredns-config/
+              readOnly: true
+              optional: true
+            - name: openshift-coredns-certs
+              mountPath: /etc/coredns-certs/
+              readOnly: true
       volumes:
         - name: procfs
           hostPath:
@@ -100,3 +107,9 @@ spec:
         - name: config
           configMap:
             name: {{ .DataCollection.Metrics.CollectorConfigName }}
+        - name: coredns-config
+          configMap:
+            name: openshift-coredns-control-plane-cabundle
+        - name: openshift-coredns-certs
+          secret:
+            secretName: openshift-coredns-certs
