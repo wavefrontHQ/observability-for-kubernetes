@@ -17,6 +17,10 @@ jobs:
         git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > additions.txt
         git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > removals.txt
         
+        echo "Diffs:"
+        cat additions.txt
+        cat removals.txt
+        
         echo "diff_of_diffs='$(diff removals.txt additions.txt)'" >> $GITHUB_OUTPUT
 
   test_outputs:
