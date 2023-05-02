@@ -21,15 +21,15 @@ jobs:
 
   test_outputs:
     runs-on: ubuntu-latest
-    needs: diffCollector
+    needs: check_go_mods
     steps:
     - name: Comment
       run: |
         echo '🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨'
-        echo "${{needs.diffCollector.outputs.diff_of_diffs}}"
+        echo "${{needs.check_go_mods.outputs.diff_of_diffs}}"
         
         echo 'or...'
-        echo "${{needs.diffCollector.outputs}}"
+        echo "${{needs.check_go_mods.outputs}}"
 
 #  comment_osl_warning:
 #    runs-on: ubuntu-latest
