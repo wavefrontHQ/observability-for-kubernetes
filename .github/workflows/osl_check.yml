@@ -1,0 +1,62 @@
+name: Check PR for Package Diff
+
+on:
+  pull_request: {}
+
+jobs:
+  check_go_mods:
+    runs-on: ubuntu-latest
+
+    outputs:
+      diff_of_diffs: ${{ steps.diffCollector.outputs.diff_of_diffs }}
+
+    steps:
+    - id: diffCollector
+      name: Diff Collector go.mod
+      run: |
+        git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > additions.txt
+        git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > removals.txt
+        
+        echo "::set-output name=diff_of_diffs::$(diff removals.txt additions.txt)"
+
+  test_outputs:
+    runs-on: ubuntu-latest
+    needs: diffCollector
+    steps:
+    - name: Comment
+      run: |
+        echo '🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨'
+        echo "${{needs.diffCollector.outputs.diff_of_diffs}}"
+        
+        echo 'or...'
+        echo "${{needs.diffCollector.outputs}}"
+
+#  comment_osl_warning:
+#    runs-on: ubuntu-latest
+#    needs: diffCollector
+#    steps:
+#    - uses: actions/github-script@v5
+#      with:
+#        github-token: ${{secrets.GITHUB_TOKEN}}
+#        script: |
+#          github.rest.issues.createComment({
+#            issue_number: context.issue.number,
+#            owner: context.repo.owner,
+#            repo: context.repo.repo,
+#            body: |
+#              🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨
+#
+#              ${{needs.diffCollector.outputs.diff_of_diffs}}
+#          })
+#    if:
+
+
+    #   check_component_versions:
+    #     runs-on: ubuntu-latest
+
+    #     steps:
+    #     - name:
+
+# opinions and questions:
+# - it's good
+# -
