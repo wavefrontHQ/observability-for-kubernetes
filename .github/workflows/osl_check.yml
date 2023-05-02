@@ -11,6 +11,9 @@ jobs:
       diff_of_diffs: ${{ steps.diffCollector.outputs.diff_of_diffs }}
 
     steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v3
+
     - id: diffCollector
       name: Diff Collector go.mod
       run: |
