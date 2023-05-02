@@ -287,3 +287,21 @@ stringData:
   #  basic-auth-password: YOUR_HTTP_PROXY__BASIC_AUTH_PASSWORD
   tls-root-ca-bundle: |
     YOUR_HTTP_PROXY_CA_CERTIFICATE
+---
+# Need to change CONTROL_PLANE_ETCD_CA_CERTIFICATE, CONTROL_PLANE_ETCD_SERVER_CERTIFICATE, and CONTROL_PLANE_ETCD_SERVER_KEY accordingly
+apiVersion: v1
+kind: Secret
+metadata:
+  name: etcd-certs
+  namespace: observability-system
+type: Opaque
+stringData:
+  # The location of these certificates on the control plane host filesystem depends on your distribution.
+  # Check your distribution documentation for how to access them. See the following as an example:
+  # https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths
+  ca_crt: |
+    CONTROL_PLANE_ETCD_CA_CERTIFICATE
+  server_crt: |
+    CONTROL_PLANE_ETCD_SERVER_CERTIFICATE
+  server_key: |
+    CONTROL_PLANE_ETCD_SERVER_KEY
