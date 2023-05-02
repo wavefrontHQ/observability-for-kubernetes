@@ -3,6 +3,7 @@ _output
 .DS_Store
 osstp_golang.yml
 hack/test/base/kustomization.yaml
+hack/test/res.txt
 callgrind.out*
 wavefront-collector.test
 /build
