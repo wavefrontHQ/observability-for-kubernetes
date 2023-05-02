@@ -12,11 +12,9 @@ metadata:
   name: cpu-throttled-prom-example
   namespace: collector-targets
 spec:
-  nodeSelector:
-    kubernetes.io/arch: amd64
   containers:
   - name: cpu-throttled-prom-example
-    image: projects.registry.vmware.com/tanzu_observability_keights_saas/prometheus-example-app:latest
+    image: projects.registry.vmware.com/tanzu_observability_keights_saas/prometheus-example-app:v0.1.5
     resources:
       requests:
         memory: "64Mi"
