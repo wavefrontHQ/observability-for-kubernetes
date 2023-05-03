@@ -11,18 +11,16 @@ jobs:
     - name: Checkout Repo
       uses: actions/checkout@v3
 
+    - name: Fetch Branches for Diff
+      run: 'git fetch --unshallow'
+
     - id: diffOperator
       name: Diff Operator go.mod
       run: |
-        git fetch --unshallow
-        
-        git diff main..HEAD -- operator/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > operator_additions.txt
-        git diff main..HEAD -- operator/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > operator_removals.txt
-        
         # failing exit code means there is a diff,
         # and we use that to determine if we need OSL,
-        # but we don't want the whole pipeline to fail (hence "return true")
-        (diff operator_removals.txt operator_additions.txt > operator_diff_of_diffs.txt \
+        # but we don't want the whole pipeline to fail (hence "true")
+        (./scripts/osl-check.sh operator v2.2.0 \
           && echo 'operator_needs_osl=false' \
           || (echo 'operator_needs_osl=true'; true) \
         ) >> "$GITHUB_OUTPUT"
@@ -30,10 +28,7 @@ jobs:
     - id: diffCollector
       name: Diff Collector go.mod
       run: |
-        git diff main..HEAD -- collector/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > collector_additions.txt
-        git diff main..HEAD -- collector/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > collector_removals.txt
-        
-        (diff collector_removals.txt collector_additions.txt > collector_diff_of_diffs.txt \
+        (./scripts/osl-check.sh collector v2.5.0 \
           && echo 'collector_needs_osl=false' \
           || (echo 'collector_needs_osl=true'; true) \
         ) >> "$GITHUB_OUTPUT"
@@ -49,9 +44,7 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: `🚨 Warning: merging this PR will require a new OSL request for the Operator! See diff below. 🚨
-  
-              ${ fs.readFileSync('./operator_diff_of_diffs.txt', {encoding: 'utf8', flag: 'r'}) }`
+            body: fs.readFileSync('./operator_report.txt', {encoding: 'utf8', flag: 'r'})
           })
 
     - name: Comment Collector OSL Warning
@@ -65,7 +58,5 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: `🚨 Warning: merging this PR will require a new OSL request for the Collector, which will also require one for the Operator! See diff below. 🚨
-          
-              ${ fs.readFileSync('./collector_diff_of_diffs.txt', {encoding: 'utf8', flag: 'r'}) }`
+            body: fs.readFileSync('./collector_report.txt', {encoding: 'utf8', flag: 'r'})
           })
