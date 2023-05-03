@@ -626,6 +626,7 @@ func (r *WavefrontReconciler) reportMetrics(sendStatusMetrics bool, clusterName 
 func filterDisabledAndConfigMap(wavefrontSpec wf.WavefrontSpec) func(object *unstructured.Unstructured) bool {
 	return func(object *unstructured.Unstructured) bool {
 		objLabels := object.GetLabels()
+		//TODO: debug filtering of configmaps
 		if labelVal := objLabels["app.kubernetes.io/component"]; labelVal == "collector" && object.GetKind() == "ConfigMap" && wavefrontSpec.DataCollection.Metrics.CollectorConfigName != object.GetName() {
 			return true
 		}
