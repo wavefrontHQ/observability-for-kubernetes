@@ -33,13 +33,14 @@ jobs:
     - name: Comment OSL Warning
       if: steps.diffCollector.outputs.needs_osl == 'true'
       uses: actions/github-script@v5
-      script: |
-        github.rest.issues.createComment({
-          issue_number: context.issue.number,
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          body: |
-            🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨
-
-            ${{cat diff_of_diffs.txt}}
-        })
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: |
+              🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨
+  
+              ${{cat diff_of_diffs.txt}}
+          })
