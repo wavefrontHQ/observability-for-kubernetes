@@ -30,42 +30,16 @@ jobs:
           || (echo 'needs_osl=true'; true) \
         ) > "$GITHUB_OUTPUT"
 
-#  test_outputs:
-#    runs-on: ubuntu-latest
-#    needs: check_go_mods
-#    steps:
-    - name: Comment
+    - name: Comment OSL Warning
       if: steps.diffCollector.outputs.needs_osl == 'true'
-      run: |
-        echo '🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨'
-        cat diff_of_diffs.txt
+      uses: actions/github-script@v5
+      script: |
+        github.rest.issues.createComment({
+          issue_number: context.issue.number,
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          body: |
+            🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨
 
-#  comment_osl_warning:
-#    runs-on: ubuntu-latest
-#    needs: diffCollector
-#    steps:
-#    - uses: actions/github-script@v5
-#      with:
-#        github-token: ${{secrets.GITHUB_TOKEN}}
-#        script: |
-#          github.rest.issues.createComment({
-#            issue_number: context.issue.number,
-#            owner: context.repo.owner,
-#            repo: context.repo.repo,
-#            body: |
-#              🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨
-#
-#              ${{needs.diffCollector.outputs.diff_of_diffs}}
-#          })
-#    if:
-
-
-    #   check_component_versions:
-    #     runs-on: ubuntu-latest
-
-    #     steps:
-    #     - name:
-
-# opinions and questions:
-# - it's good
-# -
+            ${{cat diff_of_diffs.txt}}
+        })
