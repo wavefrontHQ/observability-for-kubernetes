@@ -7,31 +7,41 @@ jobs:
   check_go_mods:
     runs-on: ubuntu-latest
 
-    outputs:
-      needs_osl: ${{ steps.diffCollector.outputs.needs_osl }}
-
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v3
+
+    - id: diffOperator
+      name: Diff Operator go.mod
+      run: |
+        git fetch --unshallow
+        
+        git diff v2.5.0..HEAD -- operator/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > operator_additions.txt
+        git diff v2.5.0..HEAD -- operator/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > operator_removals.txt
+        
+        # failing exit code means there is a diff,
+        # and we use that to determine if we need OSL,
+        # but we don't want the whole pipeline to fail (hence "return true")
+        (diff operator_removals.txt operator_additions.txt > operator_diff_of_diffs.txt \
+          && echo 'operator_needs_osl=false' \
+          || (echo 'operator_needs_osl=true'; true) \
+        ) >> "$GITHUB_OUTPUT"
 
     - id: diffCollector
       name: Diff Collector go.mod
       run: |
         git fetch --unshallow
         
-        git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > additions.txt
-        git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > removals.txt
+        git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > collector_additions.txt
+        git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > collector_removals.txt
         
-        # failing exit code means there is a diff,
-        # and we use that to determine if we need OSL,
-        # but we don't want the whole pipeline to fail (hence "return true")
-        (diff removals.txt additions.txt > diff_of_diffs.txt \
-          && echo 'needs_osl=false' \
-          || (echo 'needs_osl=true'; true) \
-        ) > "$GITHUB_OUTPUT"
+        (diff collector_removals.txt collector_additions.txt > collector_diff_of_diffs.txt \
+          && echo 'collector_needs_osl=false' \
+          || (echo 'collector_needs_osl=true'; true) \
+        ) >> "$GITHUB_OUTPUT"
 
-    - name: Comment OSL Warning
-      if: steps.diffCollector.outputs.needs_osl == 'true'
+    - name: Comment Operator OSL Warning
+      if: steps.diffOperator.outputs.operator_needs_osl == 'true'
       uses: actions/github-script@v6
       with:
         script: |
@@ -41,7 +51,23 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: `🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨
+            body: `🚨 Warning: merging this PR will require a new OSL request for the Operator! See diff below. 🚨
   
-              ${ fs.readFileSync('./diff_of_diffs.txt', {encoding: 'utf8', flag: 'r'}) }`
+              ${ fs.readFileSync('./operator_diff_of_diffs.txt', {encoding: 'utf8', flag: 'r'}) }`
+          })
+
+    - name: Comment Collector OSL Warning
+      if: steps.diffCollector.outputs.collector_needs_osl == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs')
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `🚨 Warning: merging this PR will require a new OSL request for the Collector, which will also require one for the Operator! See diff below. 🚨
+          
+              ${ fs.readFileSync('./collector_diff_of_diffs.txt', {encoding: 'utf8', flag: 'r'}) }`
           })
