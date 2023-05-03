@@ -74,11 +74,9 @@ func buildPromConfigs(cfg configuration.ControlPlaneSourceConfig, summaryCfg con
 		},
 	}
 	metricAllowList := []string{
-		metricsPrefix + "etcd.request.duration.seconds.bucket",
 		metricsPrefix + "etcd.request.duration.seconds",
 		metricsPrefix + "etcd.db.total.size.in.bytes.gauge",
 		metricsPrefix + "workqueue.adds.total.counter",
-		metricsPrefix + "workqueue.queue.duration.seconds.bucket",
 		metricsPrefix + "workqueue.queue.duration.seconds",
 	}
 
@@ -86,7 +84,6 @@ func buildPromConfigs(cfg configuration.ControlPlaneSourceConfig, summaryCfg con
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promSourceConfig)
 
 	apiServerAllowList := []string{
-		metricsPrefix + "apiserver.request.duration.seconds.bucket",
 		metricsPrefix + "apiserver.request.duration.seconds",
 		metricsPrefix + "apiserver.request.total.counter",
 		metricsPrefix + "apiserver.storage.objects.gauge",
