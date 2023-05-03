@@ -32,15 +32,16 @@ jobs:
 
     - name: Comment OSL Warning
       if: steps.diffCollector.outputs.needs_osl == 'true'
-      uses: actions/github-script@v5
+      uses: actions/github-script@v6
       with:
         script: |
+          import 'fs'
+          
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: |
-              🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨
+            body: `🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨
   
-              TODO: figure out how to get this to output file contents
+              ${ fs.readFileSync('./diff_of_diffs.txt', {encoding: 'utf8', flag: 'r'}) }`
           })
