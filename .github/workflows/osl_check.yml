@@ -27,7 +27,7 @@ jobs:
         # but we don't want the whole pipeline to fail (hence "return true")
         (diff removals.txt additions.txt > diff_of_diffs.txt \
           && echo 'needs_osl=false' \
-          || (echo 'needs_osl=true' && return true) \
+          || (echo 'needs_osl=true'; true) \
         ) > "$GITHUB_OUTPUT"
 
 #  test_outputs:
