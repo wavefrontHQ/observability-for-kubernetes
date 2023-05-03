@@ -1,8 +1,10 @@
 {{- if and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: collector
   name: openshift-service-ca-bundle
   namespace: {{ .Namespace }}
   ownerReferences:

@@ -47,7 +47,7 @@ spec:
         - name: wavefront-collector
           securityContext:
             readOnlyRootFilesystem: true
-          image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector:1.18.0-dev-jalvis-230501140824@sha256:edbdd99db7b160afb6c7f6cea9aca71cedef21d8ad6522f61fbb42b5293f8b30
+          image: {{ .ImageRegistry }}/kubernetes-collector:{{ .DataCollection.Metrics.CollectorVersion }}
           imagePullPolicy: Always
           command:
             - /wavefront-collector
