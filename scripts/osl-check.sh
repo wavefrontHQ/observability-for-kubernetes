@@ -17,15 +17,21 @@ function generateReport() {
     echo
 
     echo "## The following packages have been added:"
+    echo '```'
     cat "${added_packages_file}"
+    echo '```'
     echo
 
     echo "## The following packages have been removed:"
+    echo '```'
     cat "${removed_packages_file}"
+    echo '```'
     echo
 
     echo "## The following packages have been upgraded:"
+    echo '```'
     cat "${upgraded_packages_file}"
+    echo '```'
 }
 
 function main() {
