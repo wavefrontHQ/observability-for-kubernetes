@@ -16,8 +16,8 @@ jobs:
       run: |
         git fetch --unshallow
         
-        git diff v2.5.0..HEAD -- operator/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > operator_additions.txt
-        git diff v2.5.0..HEAD -- operator/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > operator_removals.txt
+        git diff main..HEAD -- operator/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > operator_additions.txt
+        git diff main..HEAD -- operator/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > operator_removals.txt
         
         # failing exit code means there is a diff,
         # and we use that to determine if we need OSL,
@@ -30,8 +30,8 @@ jobs:
     - id: diffCollector
       name: Diff Collector go.mod
       run: |
-        git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > collector_additions.txt
-        git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > collector_removals.txt
+        git diff main..HEAD -- collector/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > collector_additions.txt
+        git diff main..HEAD -- collector/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > collector_removals.txt
         
         (diff collector_removals.txt collector_additions.txt > collector_diff_of_diffs.txt \
           && echo 'collector_needs_osl=false' \
