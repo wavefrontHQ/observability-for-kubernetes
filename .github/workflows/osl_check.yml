@@ -20,7 +20,8 @@ jobs:
         # failing exit code means there is a diff,
         # and we use that to determine if we need OSL,
         # but we don't want the whole pipeline to fail (hence "true")
-        (./scripts/osl-check.sh operator main \ # the default start for commit range is "main"
+        # the default start for commit range is "main"
+        (./scripts/osl-check.sh operator main \
           && echo 'operator_needs_osl=false' \
           || (echo 'operator_needs_osl=true'; true) \
         ) >> "$GITHUB_OUTPUT"
