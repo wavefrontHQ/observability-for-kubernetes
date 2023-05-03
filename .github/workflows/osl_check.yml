@@ -42,5 +42,5 @@ jobs:
             body: |
               🚨 Warning: merging this PR will require a new OSL request! See diff below. 🚨
   
-              ${{cat diff_of_diffs.txt}}
+              TODO: figure out how to get this to output file contents
           })
