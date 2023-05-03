@@ -30,4 +30,8 @@ data:
       scheme: http
       prefix: kubernetes.controlplane.
       convertHistograms: true
+      filters:
+        metricAllowList:
+        - 'kubernetes.controlplane.coredns.dns.request.duration.seconds'
+        - 'kubernetes.controlplane.coredns.dns.responses.total.counter'
 {{- end }}
