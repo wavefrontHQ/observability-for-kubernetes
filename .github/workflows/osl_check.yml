@@ -22,11 +22,13 @@ jobs:
         git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^+\s' | awk '{print $2}' | sort > additions.txt
         git diff v2.5.0..HEAD -- collector/go.mod | grep -e '^-\s' | awk '{print $2}' | sort > removals.txt
         
-        # exit code is "1" if there is a diff
-        diff removals.txt additions.txt > diff_of_diffs.txt
-        
-        # take exit code ("$?") and use it to output whether we need OSL
-        ([ $? -eq 1 ] && echo 'needs_osl=true' || echo 'needs_osl=false') > "$GITHUB_OUTPUT"
+        # failing exit code means there is a diff,
+        # and we use that to determine if we need OSL,
+        # but we don't want the whole pipeline to fail (hence "return true")
+        (diff removals.txt additions.txt > diff_of_diffs.txt \
+          && echo 'needs_osl=false' \
+          || (echo 'needs_osl=true' && return true) \
+        ) > "$GITHUB_OUTPUT"
 
 #  test_outputs:
 #    runs-on: ubuntu-latest
