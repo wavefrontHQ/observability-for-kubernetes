@@ -7,28 +7,28 @@ function generateReport() {
     local upgraded_packages_file=$4
 
     if [ "${component}" == 'collector' ]; then
-        echo "🚨 Warning: merging this PR will require a new OSL request for the Collector, which will also require one for the Operator! See diff below. 🚨"
+        echo "## 🚨 Warning: merging this PR will require a new OSL request for the Collector, which will also require one for the Operator! See diff below. 🚨"
     fi
 
     if [ "${component}" == 'operator' ]; then
-        echo "🚨 Warning: merging this PR will require a new OSL request for the Operator! See diff below. 🚨"
+        echo "## 🚨 Warning: merging this PR will require a new OSL request for the Operator! See diff below. 🚨"
     fi
 
     echo
 
-    echo "## The following packages have been added:"
+    echo "### The following packages have been added:"
     echo '```'
     cat "${added_packages_file}"
     echo '```'
     echo
 
-    echo "## The following packages have been removed:"
+    echo "### The following packages have been removed:"
     echo '```'
     cat "${removed_packages_file}"
     echo '```'
     echo
 
-    echo "## The following packages have been upgraded:"
+    echo "### The following packages have been upgraded:"
     echo '```'
     cat "${upgraded_packages_file}"
     echo '```'
