@@ -272,6 +272,18 @@ func (skm MockKubernetesManager) CollectorConfigMapContains(checks ...string) bo
 	)
 }
 
+func (skm MockKubernetesManager) ProxyPreprocessorRulesConfigMapContains(checks ...string) bool {
+	return contains(
+		skm.appliedYAMLs,
+		"v1",
+		"ConfigMap",
+		"wavefront",
+		"proxy",
+		"operator-proxy-preprocessor-rules-config",
+		checks...,
+	)
+}
+
 func (skm MockKubernetesManager) NodeCollectorDaemonSetContains(checks ...string) bool {
 	return contains(
 		skm.appliedYAMLs,
@@ -502,6 +514,28 @@ func (skm MockKubernetesManager) GetProxyDeployment() (appsv1.Deployment, error)
 	}
 
 	return deployment, nil
+}
+
+func (skm MockKubernetesManager) GetProxyPreprocessorRulesConfigMap() (corev1.ConfigMap, error) {
+	yamlUnstructured, err := skm.GetAppliedYAML(
+		"v1",
+		"ConfigMap",
+		"wavefront",
+		"proxy",
+		"operator-proxy-preprocessor-rules-config",
+	)
+
+	if err != nil {
+		return corev1.ConfigMap{}, err
+	}
+
+	var configMap corev1.ConfigMap
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(yamlUnstructured.Object, &configMap)
+	if err != nil {
+		return corev1.ConfigMap{}, err
+	}
+
+	return configMap, nil
 }
 
 func (skm MockKubernetesManager) ObjectPassesFilter(object *unstructured.Unstructured) bool {

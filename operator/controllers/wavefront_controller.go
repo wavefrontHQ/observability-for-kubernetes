@@ -29,10 +29,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
 	"k8s.io/client-go/discovery"
 
 	appsv1 "k8s.io/api/apps/v1"
-
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
@@ -79,6 +79,7 @@ type WavefrontReconciler struct {
 	MetricConnection  *metric.Connection
 	Versions          Versions
 	namespace         string
+	ClusterUUID       string
 }
 
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts,verbs=get;list;watch;create;update;patch;delete
@@ -95,6 +96,7 @@ type WavefrontReconciler struct {
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=configmaps,verbs=get;create;update;patch;delete
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=secrets,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",namespace="",resources=namespaces,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -117,12 +119,8 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	err = r.preprocess(wavefront, ctx)
-	if err != nil {
-		return errorCRTLResult(err)
-	}
+	validationResult := r.preprocessAndValidate(wavefront, ctx)
 
-	validationResult := validation.Validate(r.Client, wavefront)
 	if !validationResult.IsError() {
 		err = r.readAndCreateResources(wavefront.Spec)
 		if err != nil {
@@ -131,7 +129,6 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	} else {
 		_ = r.readAndDeleteResources()
 	}
-
 	wavefrontStatus, err := r.reportHealthStatus(ctx, wavefront, validationResult)
 	if err != nil {
 		return errorCRTLResult(err)
@@ -146,6 +143,15 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		Requeue:      true,
 		RequeueAfter: maxReconcileInterval,
 	}, nil
+}
+
+func (r *WavefrontReconciler) preprocessAndValidate(wavefront *wf.Wavefront, ctx context.Context) validation.Result {
+	err := r.preprocess(wavefront, ctx)
+	if err != nil {
+		return validation.NewErrorResult(err)
+	}
+
+	return validation.Validate(r.Client, wavefront)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -165,7 +171,7 @@ type Versions struct {
 	LoggingVersion   string
 }
 
-func NewWavefrontReconciler(versions Versions, client client.Client, discoveryClient discovery.ServerGroupsInterface) (operator *WavefrontReconciler, err error) {
+func NewWavefrontReconciler(versions Versions, client client.Client, discoveryClient discovery.ServerGroupsInterface, clusterUUID string) (operator *WavefrontReconciler, err error) {
 	return &WavefrontReconciler{
 		Versions:          versions,
 		Client:            client,
@@ -173,6 +179,7 @@ func NewWavefrontReconciler(versions Versions, client client.Client, discoveryCl
 		KubernetesManager: kubernetes_manager.NewKubernetesManager(client),
 		DiscoveryClient:   discoveryClient,
 		MetricConnection:  metric.NewConnection(metric.WavefrontSenderFactory()),
+		ClusterUUID:       clusterUUID,
 	}, nil
 }
 
@@ -400,10 +407,19 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 
 		err = r.parseHttpProxyConfigs(wavefront, ctx)
 		if err != nil {
-			errInfo := fmt.Sprintf("error setting up http proxy configuration: %s", err.Error())
-			log.Log.Info(errInfo)
 			return err
 		}
+
+		wavefront.Spec.ClusterUUID = r.ClusterUUID
+
+		var result preprocessor.Result
+		result, err = preprocessor.Process(r.Client, wavefront)
+		if err != nil {
+			return err
+		}
+		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts = result.EnabledPorts
+		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules = result.UserDefinedPortRules
+		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules = result.UserDefinedGlobalRules
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
 		wavefront.Spec.CanExportData = true
 		wavefront.Spec.DataCollection.Metrics.ProxyAddress = wavefront.Spec.DataExport.ExternalWavefrontProxy.Url
@@ -559,6 +575,9 @@ func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, wavefront 
 
 	if wavefrontStatus.Status != wavefront.Status.Status {
 		log.Log.Info(fmt.Sprintf("Wavefront CR wavefrontStatus changed from %s --> %s", wavefront.Status.Status, wavefrontStatus.Status))
+		if !validationResult.IsValid() {
+			log.Log.Info(fmt.Sprintf("Wavefront CR wavefrontStatus Unhealthy reasons: %s", validationResult.Message()))
+		}
 	}
 	newWavefront := *wavefront
 	newWavefront.Status = wavefrontStatus

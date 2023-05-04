@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -24,12 +25,15 @@ import (
 	"k8s.io/client-go/discovery"
 
 	"go.uber.org/zap/zapcore"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	wavefrontcomv1alpha1 "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
@@ -104,6 +108,21 @@ func main() {
 		setupLog.Error(err, "error creating kubernetes discovery client")
 		os.Exit(1)
 	}
+
+	cs, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		setupLog.Error(err, "error creating reconciler client")
+		os.Exit(1)
+	}
+
+	defaultNS, err := cs.CoreV1().Namespaces().Get(context.Background(), "default", v12.GetOptions{})
+	clusterUUID := string(defaultNS.UID)
+	if err != nil {
+		log.Log.Error(err, "error reading default namespace: %s")
+	} else {
+		log.Log.Info(fmt.Sprintf("*********************** Setting cluster uud: %s", clusterUUID))
+	}
+
 	controller, err := controllers.NewWavefrontReconciler(
 		controllers.Versions{
 			OperatorVersion:  version,
@@ -113,7 +132,9 @@ func main() {
 		},
 		objClient,
 		discoveryClient,
+		clusterUUID,
 	)
+
 	setupLog.Info(fmt.Sprintf("Versions %+v", controller.Versions))
 
 	if err != nil {

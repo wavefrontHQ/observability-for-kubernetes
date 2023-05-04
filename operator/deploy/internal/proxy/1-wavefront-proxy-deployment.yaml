@@ -74,6 +74,7 @@ spec:
               value: >
                 --pushListenerPorts {{ .DataExport.WavefrontProxy.MetricPort }}
                 --buffer /wavefront-proxy/buffer
+                --preprocessorConfigFile /etc/wavefront/preprocessor/rules.yaml
               {{- if .DataExport.WavefrontProxy.Args }} {{ .DataExport.WavefrontProxy.Args }} {{- end -}}
               {{- if .DataExport.WavefrontProxy.DeltaCounterPort }} --deltaCounterPorts {{ .DataExport.WavefrontProxy.DeltaCounterPort }} {{- end -}}
               {{- if .DataExport.WavefrontProxy.Tracing.Wavefront.Port }} --traceListenerPorts {{ .DataExport.WavefrontProxy.Tracing.Wavefront.Port }} {{- end -}}
@@ -92,7 +93,6 @@ spec:
               {{- if .DataExport.WavefrontProxy.OTLP.GrpcPort}} --otlpGrpcListenerPorts {{ .DataExport.WavefrontProxy.OTLP.GrpcPort }} {{- end -}}
               {{- if .DataExport.WavefrontProxy.OTLP.HttpPort}} --otlpHttpListenerPorts {{ .DataExport.WavefrontProxy.OTLP.HttpPort }} {{- end -}}
               {{- if .DataExport.WavefrontProxy.OTLP.ResourceAttrsOnMetricsIncluded}} --otlpResourceAttrsOnMetricsIncluded true {{- end -}}
-              {{- if .DataExport.WavefrontProxy.Preprocessor }} --preprocessorConfigFile /etc/wavefront/preprocessor/rules.yaml {{- end -}}
               {{- if .DataExport.WavefrontProxy.HttpProxy.HttpProxyHost }} --proxyHost {{ .DataExport.WavefrontProxy.HttpProxy.HttpProxyHost }} {{- end -}}
               {{- if .DataExport.WavefrontProxy.HttpProxy.HttpProxyPort }} --proxyPort {{ .DataExport.WavefrontProxy.HttpProxy.HttpProxyPort }} {{- end -}}
               {{- if .DataExport.WavefrontProxy.HttpProxy.HttpProxyUser }} --proxyUser {{ .DataExport.WavefrontProxy.HttpProxy.HttpProxyUser }} {{- end -}}
@@ -166,10 +166,8 @@ spec:
           volumeMounts:
           - name: buffer-volume
             mountPath: /wavefront-proxy
-          {{- if .DataExport.WavefrontProxy.Preprocessor }}
           - name: preprocessor
             mountPath: /etc/wavefront/preprocessor
-          {{- end }}
           {{- if .DataExport.WavefrontProxy.HttpProxy.UseHttpProxyCAcert }}
           - name: http-proxy-keystores
             mountPath: /tmp/secrets/keystores
@@ -177,11 +175,9 @@ spec:
       volumes:
       - name: buffer-volume
         emptyDir: {}
-      {{- if .DataExport.WavefrontProxy.Preprocessor }}
       - name: preprocessor
         configMap:
-          name: {{ .DataExport.WavefrontProxy.Preprocessor }}
-      {{- end }}
+          name: operator-proxy-preprocessor-rules-config
       {{- if .DataExport.WavefrontProxy.HttpProxy.UseHttpProxyCAcert }}
       - name: http-proxy-keystores
         emptyDir: {}

@@ -65,6 +65,9 @@ type WavefrontSpec struct {
 
 	// Openshift is for internal use
 	Openshift bool `json:"-"`
+
+	// Cluster UUID is for internal use only
+	ClusterUUID string `json:"-"`
 }
 
 type Metrics struct {
@@ -187,6 +190,15 @@ type WavefrontProxy struct {
 
 	// ProxyVersion is for internal use only
 	ProxyVersion string `json:"-"`
+
+	// PreprocessorRules is for internal use only
+	PreprocessorRules PreprocessorRules `json:"-"`
+}
+
+type PreprocessorRules struct {
+	EnabledPorts           string `json:"-"`
+	UserDefinedPortRules   string `json:"-"`
+	UserDefinedGlobalRules string `json:"-"`
 }
 
 type Tracing struct {

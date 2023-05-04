@@ -86,7 +86,7 @@ api/v1alpha1/zz_generated.deepcopy.go: hack/boilerplate.go.txt api/v1alpha1/wave
 
 .PHONY: fmt
 fmt: $(GO_IMPORTS_BIN)
-	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
+	find . -type f -name "*.go" | grep -v "./vendor*" | xargs $(GO_IMPORTS_BIN) -w
 
 .PHONY: checkfmt
 checkfmt: $(GO_IMPORTS_BIN)

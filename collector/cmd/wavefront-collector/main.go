@@ -4,7 +4,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
@@ -14,9 +13,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/experimental"
 
@@ -120,7 +116,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// create sink managers
-	setInternalSinkProperties(kubeClient.CoreV1().Namespaces(), cfg)
+	setInternalSinkProperties(cfg)
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
 	// Events
@@ -213,21 +209,15 @@ func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *
 	return optsCfg
 }
 
-func setInternalSinkProperties(ns v1.NamespaceInterface, cfg *configuration.Config) {
+func setInternalSinkProperties(cfg *configuration.Config) {
 	log.Infof("using clusterName: %s", cfg.ClusterName)
 	prefix := ""
 	if cfg.Sources.StatsConfig != nil {
 		prefix = configuration.GetStringValue(cfg.Sources.StatsConfig.Prefix, "kubernetes.")
 	}
 	version := getVersion()
-	defaultNS, err := ns.Get(context.Background(), "default", v12.GetOptions{})
-	if err != nil {
-		log.Errorf("error reading default namespace: %s", err.Error())
-	}
-	clusterUUID := string(defaultNS.GetUID())
 	for _, sink := range cfg.Sinks {
 		sink.ClusterName = cfg.ClusterName
-		sink.ClusterUUID = clusterUUID
 		sink.InternalStatsPrefix = prefix
 		sink.Version = version
 		sink.EventsEnabled = cfg.EnableEvents

@@ -466,6 +466,7 @@ function main() {
     tests_to_run=(
       "validation-errors"
       "validation-legacy"
+      "validation-errors-preprocessor-rules"
       "allow-legacy-install"
       "basic"
       "advanced"
@@ -490,6 +491,9 @@ function main() {
   if [[ " ${tests_to_run[*]} " =~ " validation-legacy " ]]; then
     run_test "validation-legacy" "unhealthy"
   fi
+  if [[ " ${tests_to_run[*]} " =~ " validation-errors-preprocessor-rules " ]]; then
+    run_test "validation-errors-preprocessor-rules" "unhealthy"
+  fi
   if [[ " ${tests_to_run[*]} " =~ " logging-integration " ]]; then
     run_test "logging-integration" "logging-integration-checks"
   fi
@@ -501,6 +505,9 @@ function main() {
   fi
   if [[ " ${tests_to_run[*]} " =~ " advanced " ]]; then
     run_test "advanced" "health" "test_wavefront_metrics" "logging"
+  fi
+  if [[ " ${tests_to_run[*]} " =~ " proxy-preprocessor " ]]; then
+    run_test "basic" "test_wavefront_metrics"
   fi
   if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
