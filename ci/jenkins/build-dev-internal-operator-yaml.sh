@@ -15,13 +15,16 @@ collector_image_version="$(get_next_collector_version)${VERSION_POSTFIX}"
 sed -i.bak "s%collector:.*$%collector: ${collector_image_version}%" "${DEV_INTERNAL_DIR}"/wavefront-operator.yaml
 rm -f "${DEV_INTERNAL_DIR}"/wavefront-operator.yaml.bak
 
+# Setup git config to push to remote repository
 git config --global user.email "svc.wf-jenkins@vmware.com"
 git config --global user.name "svc.wf-jenkins"
 git config --global push.default current
+git config --global push.autoSetupRemote true
 git remote set-url origin https://${TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git
 
 # Commit wavefront-operator.yaml to dev-internal/deploy directory
 git add "${DEV_INTERNAL_DIR}"/wavefront-operator.yaml
+echo "GIT_BRANCH: ${GIT_BRANCH}" || true
 git commit -m "Build dev-internal/deploy/wavefront-operator.yaml from ${GIT_COMMIT}" || exit 0
 git push || exit 0
 git checkout .
