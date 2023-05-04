@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: wavefront
     app.kubernetes.io/component: collector
   annotations:
-    wavefront.com/conditionally-provision: "{{ .Openshift }}"
+    wavefront.com/conditionally-provision: '{{ .Openshift }}'
 allowHostDirVolumePlugin: true
 allowHostIPC: false
 allowHostNetwork: false

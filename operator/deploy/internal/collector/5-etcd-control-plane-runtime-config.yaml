@@ -13,7 +13,7 @@ metadata:
     uid: {{ .ControllerManagerUID }}
   annotations:
     wavefront.com/discovery-config: 'true'
-    wavefront.com/conditionally-provision: "{{ .DataCollection.Metrics.ControlPlane.EnableEtcd }}"
+    wavefront.com/conditionally-provision: '{{ .DataCollection.Metrics.ControlPlane.EnableEtcd }}'
 data:
   collector.yaml: |
     plugins:

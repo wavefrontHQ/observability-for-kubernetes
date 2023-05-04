@@ -13,4 +13,4 @@ metadata:
     uid: {{ .ControllerManagerUID }}
   annotations:
     service.beta.openshift.io/inject-cabundle: "true"
-    wavefront.com/conditionally-provision: "{{ and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}"
+    wavefront.com/conditionally-provision: '{{ and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}'

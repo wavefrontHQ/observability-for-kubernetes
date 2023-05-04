@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -103,6 +104,8 @@ type WavefrontReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 
 const maxReconcileInterval = 60 * time.Second
+
+var shouldNotProvision = regexp.MustCompile("wavefront.com/conditionally-provision: [\"']false[\"']")
 
 func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.namespace = req.Namespace
@@ -228,7 +231,7 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 		}
 
 		resourceData := buffer.String()
-		if shouldApply && !strings.Contains(resourceData, "wavefront.com/conditionally-provision: \"false\"") {
+		if shouldApply && !shouldNotProvision.MatchString(resourceData) {
 			resourcesToApply = append(resourcesToApply, resourceData)
 		} else {
 			resourcesToDelete = append(resourcesToDelete, resourceData)
@@ -236,10 +239,6 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 	}
 
 	return resourcesToApply, resourcesToDelete, nil
-}
-
-func allDirs() []string {
-	return dirList(true, true, true)
 }
 
 func enabledDirs(spec wf.WavefrontSpec) []string {

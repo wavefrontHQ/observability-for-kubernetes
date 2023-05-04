@@ -12,7 +12,7 @@ metadata:
       name: wavefront-controller-manager
       uid: {{ .ControllerManagerUID }}
   annotations:
-    wavefront.com/conditionally-provision: "{{ not .DataCollection.Metrics.CustomConfig }}"
+    wavefront.com/conditionally-provision: '{{ not .DataCollection.Metrics.CustomConfig }}'
 data:
   config.yaml: |
     clusterName: {{.ClusterName}}
