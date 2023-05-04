@@ -1,0 +1,63 @@
+name: Check PR for Package Diff
+
+on:
+  pull_request: {}
+
+jobs:
+  check_go_mods:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v3
+
+    - name: Fetch Branches for Diff
+      run: 'git fetch --unshallow'
+
+    - id: diffOperator
+      name: Diff Operator go.mod
+      run: |
+        # failing exit code means there is a diff,
+        # and we use that to determine if we need OSL,
+        # but we don't want the whole pipeline to fail (hence "true")
+        # the default start for commit range is "main"
+        (./scripts/osl-check.sh operator origin/main \
+          && echo 'operator_needs_osl=false' \
+          || (echo 'operator_needs_osl=true'; true) \
+        ) >> "$GITHUB_OUTPUT"
+
+    - id: diffCollector
+      name: Diff Collector go.mod
+      run: |
+        (./scripts/osl-check.sh collector origin/main \
+          && echo 'collector_needs_osl=false' \
+          || (echo 'collector_needs_osl=true'; true) \
+        ) >> "$GITHUB_OUTPUT"
+
+    - name: Comment Operator OSL Warning
+      if: steps.diffOperator.outputs.operator_needs_osl == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs')
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: fs.readFileSync('./operator_report.txt', {encoding: 'utf8', flag: 'r'})
+          })
+
+    - name: Comment Collector OSL Warning
+      if: steps.diffCollector.outputs.collector_needs_osl == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs')
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: fs.readFileSync('./collector_report.txt', {encoding: 'utf8', flag: 'r'})
+          })
