@@ -17,6 +17,7 @@ rm -f "${DEV_INTERNAL_DIR}"/wavefront-operator.yaml.bak
 
 git config --global user.email "svc.wf-jenkins@vmware.com"
 git config --global user.name "svc.wf-jenkins"
+git config --global push.default current
 git remote set-url origin https://${TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git
 
 # Commit wavefront-operator.yaml to dev-internal/deploy directory
