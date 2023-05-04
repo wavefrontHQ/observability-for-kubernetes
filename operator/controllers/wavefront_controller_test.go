@@ -255,18 +255,8 @@ func TestReconcileCollector(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
-		/* Note: User is responsible for applying ConfigMap; we can't test for new ConfigMap "myconfig" */
-
-		/* It DOES call the ApplyResources function with the ConfigMap, but it's filtered out */
-		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "default-wavefront-collector-config"))
-		require.False(t, mockKM.DeletedContains("v1", "ConfigMap", "wavefront", "collector", "default-wavefront-collector-config"))
-
-		configMapObject, err := mockKM.GetUnstructuredCollectorConfigMap()
-		require.NoError(t, err)
-
-		require.False(t, mockKM.ObjectPassesFilter(
-			configMapObject,
-		))
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "default-wavefront-collector-config"))
+		require.True(t, mockKM.DeletedContains("v1", "ConfigMap", "wavefront", "collector", "default-wavefront-collector-config"))
 	})
 
 	t.Run("can change the default collection interval", func(t *testing.T) {
@@ -338,8 +328,7 @@ func TestReconcileCollector(t *testing.T) {
 
 		require.True(t, mockKM.CollectorConfigMapContains("kubernetes_control_plane_source"))
 
-		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "coredns-control-plane-config"))
-		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "openshift-coredns-control-plane-config"))
+		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "coredns-control-plane-config", "kube-dns"))
 	})
 
 	t.Run("control plane metrics can be enabled when on an openshift environment", func(t *testing.T) {
@@ -353,8 +342,7 @@ func TestReconcileCollector(t *testing.T) {
 
 		require.True(t, mockKM.CollectorConfigMapContains("kubernetes_control_plane_source"))
 
-		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "coredns-control-plane-config"))
-		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "openshift-coredns-control-plane-config"))
+		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "coredns-control-plane-config", "bearer_token_file"))
 	})
 
 	t.Run("control plane metrics can be disabled", func(t *testing.T) {

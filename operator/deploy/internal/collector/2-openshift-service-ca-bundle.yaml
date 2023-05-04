@@ -1,4 +1,3 @@
-{{- if and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,5 +12,5 @@ metadata:
     name: wavefront-controller-manager
     uid: {{ .ControllerManagerUID }}
   annotations:
-    service.beta.openshift.io/inject-cabundle: 'true'
-{{- end }}
+    service.beta.openshift.io/inject-cabundle: "true"
+    wavefront.com/conditionally-provision: "{{ and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}"

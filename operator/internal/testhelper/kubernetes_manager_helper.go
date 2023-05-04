@@ -14,16 +14,14 @@ import (
 type MockKubernetesManager struct {
 	deletedYAMLs []string
 	appliedYAMLs []string
-	usedFilter   func(*unstructured.Unstructured) bool
 }
 
 func NewMockKubernetesManager() *MockKubernetesManager {
 	return &MockKubernetesManager{}
 }
 
-func (skm *MockKubernetesManager) ApplyResources(resourceYAMLs []string, filterObject func(*unstructured.Unstructured) bool) error {
+func (skm *MockKubernetesManager) ApplyResources(resourceYAMLs []string) error {
 	skm.appliedYAMLs = resourceYAMLs
-	skm.usedFilter = filterObject
 	return nil
 }
 
@@ -536,11 +534,6 @@ func (skm MockKubernetesManager) GetProxyPreprocessorRulesConfigMap() (corev1.Co
 	}
 
 	return configMap, nil
-}
-
-func (skm MockKubernetesManager) ObjectPassesFilter(object *unstructured.Unstructured) bool {
-	// TODO: filter returning true if filtered is confusing
-	return !skm.usedFilter(object)
 }
 
 func contains(

@@ -43,8 +43,6 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric/status"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 
 	baseYaml "gopkg.in/yaml.v2"
@@ -65,7 +63,7 @@ import (
 const DeployDir = "../deploy/internal"
 
 type KubernetesManager interface {
-	ApplyResources(resourceYAMLs []string, exclude func(*unstructured.Unstructured) bool) error
+	ApplyResources(resourceYAMLs []string) error
 	DeleteResources(resourceYAMLs []string) error
 }
 
@@ -192,20 +190,16 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 	}
 	spec.ControllerManagerUID = string(controllerManagerUID)
 
-	toApply, err := r.readAndInterpolateResources(spec, enabledDirs(spec))
+	toApply, toDelete, err := r.readAndInterpolateResources(spec)
 	if err != nil {
 		return err
 	}
 
-	err = r.KubernetesManager.ApplyResources(toApply, filterDisabledAndConfigMap(spec))
+	err = r.KubernetesManager.ApplyResources(toApply)
 	if err != nil {
 		return err
 	}
 
-	toDelete, err := r.readAndInterpolateResources(spec, disabledDirs(spec))
-	if err != nil {
-		return err
-	}
 	err = r.KubernetesManager.DeleteResources(toDelete)
 	if err != nil {
 		return err
@@ -214,31 +208,34 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 	return nil
 }
 
-func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec, dirsToInclude []string) ([]string, error) {
-	resourceFiles, err := resourceFiles("yaml", dirsToInclude)
+func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]string, []string, error) {
+	files, err := resourceFiles("yaml", spec)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	var resources []string
-	for _, resourceFile := range resourceFiles {
+
+	var resourcesToApply, resourcesToDelete []string
+	for resourceFile, shouldApply := range files {
 		templateName := filepath.Base(resourceFile)
 		resourceTemplate, err := newTemplate(templateName).ParseFS(r.FS, resourceFile)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		buffer := bytes.NewBuffer(nil)
 		err = resourceTemplate.Execute(buffer, spec)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		rawResourceData := strings.TrimSpace(buffer.String())
-		if rawResourceData != "" {
-			resources = append(resources, rawResourceData)
+		resourceData := buffer.String()
+		if shouldApply && !strings.Contains(resourceData, "wavefront.com/conditionally-provision: \"false\"") {
+			resourcesToApply = append(resourcesToApply, resourceData)
+		} else {
+			resourcesToDelete = append(resourcesToDelete, resourceData)
 		}
 	}
 
-	return resources, nil
+	return resourcesToApply, resourcesToDelete, nil
 }
 
 func allDirs() []string {
@@ -297,12 +294,12 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 		},
 	}
 
-	resources, err := r.readAndInterpolateResources(specToDelete, allDirs())
+	resourcesToApply, resourcesToDelete, err := r.readAndInterpolateResources(specToDelete)
 	if err != nil {
 		return err
 	}
 
-	err = r.KubernetesManager.DeleteResources(resources)
+	err = r.KubernetesManager.DeleteResources(append(resourcesToApply, resourcesToDelete...))
 	if err != nil {
 		return err
 	}
@@ -339,19 +336,27 @@ func contains(s []string, str string) bool {
 	return false
 }
 
-func resourceFiles(suffix string, dirsToInclude []string) ([]string, error) {
-	var files []string
+func resourceFiles(suffix string, spec wf.WavefrontSpec) (map[string]bool, error) {
+	files := make(map[string]bool)
+	dirsToApply := enabledDirs(spec)
 
+	var currentDir string
 	err := filepath.WalkDir(DeployDir, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if entry.IsDir() && !contains(dirsToInclude, entry.Name()) {
-			return fs.SkipDir
+
+		if entry.IsDir() {
+			currentDir = entry.Name()
 		}
+
 		if strings.HasSuffix(path, suffix) {
 			filePath := strings.Replace(path, DeployDir+"/", "", 1)
-			files = append(files, filePath)
+			if contains(dirsToApply, currentDir) {
+				files[filePath] = true
+			} else {
+				files[filePath] = false
+			}
 		}
 
 		return nil
@@ -621,18 +626,6 @@ func (r *WavefrontReconciler) reportMetrics(sendStatusMetrics bool, clusterName 
 	}
 
 	r.MetricConnection.Send(metrics)
-}
-
-func filterDisabledAndConfigMap(wavefrontSpec wf.WavefrontSpec) func(object *unstructured.Unstructured) bool {
-	return func(object *unstructured.Unstructured) bool {
-		objLabels := object.GetLabels()
-		//TODO: debug filtering of configmaps
-		if labelVal := objLabels["app.kubernetes.io/component"]; labelVal == "collector" && object.GetKind() == "ConfigMap" && wavefrontSpec.DataCollection.Metrics.CollectorConfigName != object.GetName() {
-			return true
-		}
-
-		return false
-	}
 }
 
 func errorCRTLResult(err error) (ctrl.Result, error) {
