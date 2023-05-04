@@ -160,6 +160,7 @@ docker-xplatform-build:
 	docker buildx create --use --node wavefront_collector_builder_$(BUILDER_SUFFIX)
 	docker buildx build --platform linux/amd64,linux/arm64 --push \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) -f Dockerfile $(OUT_DIR)
+	@echo "Built collector version: $(VERSION)"
 
 .PHONY: test-proxy-container
 test-proxy-container: $(SEMVER_CLI_BIN)

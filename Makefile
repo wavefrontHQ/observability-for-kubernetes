@@ -13,11 +13,23 @@ semver-cli: $(SEMVER_CLI_BIN)
 $(SEMVER_CLI_BIN):
 	@(CGO_ENABLED=0 go install github.com/davidrjonas/semver-cli@latest)
 
+.PHONY: promote-internal
 promote-internal:
 	cp -a $(MONOREPO_DIR)/operator/dev-internal/* $(MONOREPO_DIR)/
 
 	mkdir -p $(MONOREPO_DIR)/deploy/crd/
 	cp $(MONOREPO_DIR)/operator/config/crd/bases/wavefront.com_wavefronts.yaml $(MONOREPO_DIR)/deploy/crd/
+
+
+.PHONY: combined-deploy
+combined-deploy:
+	cd $(MONOREPO_DIR) && ./scripts/combined-deploy.sh
+
+.PHONY: combined-integration-tests
+combined-integration-tests:
+	$(MAKE) -C operator clean-cluster
+	cd $(MONOREPO_DIR) && ./scripts/combined-deploy.sh
+	$(MAKE) -C operator integration-test -o undeploy -o deploy
 
 #----- KIND ----#
 .PHONY: nuke-kind
