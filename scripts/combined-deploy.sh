@@ -13,7 +13,7 @@ function main() {
   local BUILD_OPERATOR=true
   local COLLECTOR_VERSION="$(get_component_version collector)"
 
-  while getopts ":c:o" opt; do
+  while getopts "co" opt; do
     case $opt in
     c)
       BUILD_COLLECTOR=false
