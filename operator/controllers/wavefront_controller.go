@@ -249,14 +249,6 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 	)
 }
 
-func disabledDirs(spec wf.WavefrontSpec) []string {
-	return dirList(
-		!spec.DataExport.WavefrontProxy.Enable,
-		!spec.DataCollection.Metrics.Enable,
-		!spec.DataCollection.Logging.Enable,
-	)
-}
-
 func dirList(proxy, collector, logging bool) []string {
 	dirsToInclude := []string{"internal"}
 	if proxy {
