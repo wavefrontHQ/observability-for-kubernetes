@@ -105,7 +105,7 @@ type WavefrontReconciler struct {
 
 const maxReconcileInterval = 60 * time.Second
 
-var shouldNotProvision = regexp.MustCompile("wavefront.com/conditionally-provision: [\"']false[\"']")
+var shouldNotProvision = regexp.MustCompile("wavefront\\.com/conditionally-provision: [\"']false[\"']")
 
 func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.namespace = req.Namespace
