@@ -24,12 +24,8 @@ pipeline {
   stages {
     stage('Test git output') {
       steps {
-        sh 'git --version'
-        sh 'git branch --list'
-        echo "GIT_BRANCH: ${GIT_BRANCH}"
-        echo "GIT_LOCAL_BRANCH: ${GIT_LOCAL_BRANCH}"
-        echo "GIT_COMMIT: ${GIT_COMMIT}"
-        echo "GIT_PREVIOUS_COMMIT: ${GIT_PREVIOUS_COMMIT}"
+        echo "GIT_COMMIT: ${GIT_COMMIT:-}"
+        echo "GIT_PREVIOUS_COMMIT: ${GIT_PREVIOUS_COMMIT:-}"
       }
     }
   }
