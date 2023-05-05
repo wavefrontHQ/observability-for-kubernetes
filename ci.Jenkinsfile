@@ -24,9 +24,8 @@ pipeline {
   stages {
     stage('Test git output') {
       steps {
-        sh 'git rev-parse --abbrev-ref HEAD'
-        sh 'git name-rev --name-only HEAD'
-        sh 'git branch --show-current'
+        sh 'git --version'
+        sh 'git branch --list'
         echo "GIT_BRANCH: ${GIT_BRANCH}"
         echo "GIT_LOCAL_BRANCH: ${GIT_LOCAL_BRANCH}"
         echo "GIT_COMMIT: ${GIT_COMMIT}"
