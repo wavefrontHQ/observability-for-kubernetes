@@ -138,7 +138,7 @@ kubectl get pods -n px-sock-shop
 4. Enter `Operations for Applications Spans` in the `Script Name` field.
 5. Select `OpenTelemetry` in the `Plugin` field.
 6. Choose your cluster from the `Clusters` field.
-7. Set the `Summary Window (Seconds)` field to `60`.
+7. Set the `Summary Window (Seconds)` field to `10`.
 8. If the `Export URL` isn't already set to `wavefront-proxy.observability-system.svc.cluster.local:4317`, put that value in this field.
 8. Replace the contents of the `PxL` field with the script at [/operator/hack/autoinstrumentation/spans.pxl](/operator/hack/autoinstrumentation/spans.pxl).
 9. Click the `CREATE` button.
