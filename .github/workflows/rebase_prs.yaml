@@ -14,8 +14,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Rebase from main
-      run: 'git rebase origin/main'
+    - name: Automatic rebase
+      uses: cirrus-actions/rebase@1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Remove label
       if: always()
