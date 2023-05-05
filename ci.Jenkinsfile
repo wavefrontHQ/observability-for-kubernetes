@@ -24,13 +24,13 @@ pipeline {
   stages {
     stage('Test git output') {
       steps {
-        sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
-        sh(returnStdout: true, script: 'git name-rev --name-only HEAD').trim()
-        sh(returnStdout: true, script: 'git branch --show-current').trim()
-        sh(returnStdout: true, script: 'echo "GIT_BRANCH: ${GIT_BRANCH}"').trim()
-        sh(returnStdout: true, script: 'echo "GIT_LOCAL_BRANCH: ${GIT_LOCAL_BRANCH}"').trim()
-        sh(returnStdout: true, script: 'echo "GIT_COMMIT: ${GIT_COMMIT}"').trim()
-        sh(returnStdout: true, script: 'echo "GIT_PREVIOUS_COMMIT: ${GIT_PREVIOUS_COMMIT}"').trim()
+        sh 'git rev-parse --abbrev-ref HEAD'
+        sh 'git name-rev --name-only HEAD'
+        sh 'git branch --show-current'
+        echo "GIT_BRANCH: ${GIT_BRANCH}"
+        echo "GIT_LOCAL_BRANCH: ${GIT_LOCAL_BRANCH}"
+        echo "GIT_COMMIT: ${GIT_COMMIT}"
+        echo "GIT_PREVIOUS_COMMIT: ${GIT_PREVIOUS_COMMIT}"
       }
     }
   }
