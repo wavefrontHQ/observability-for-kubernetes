@@ -11,13 +11,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: git checkout
+    - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: automatic rebase
-      uses: cirrus-actions/rebase@1.5
+    - name: Rebase from main
+      run: 'git rebase origin/main'
 
-    - name: remove label
+    - name: Remove label
       if: always()
       uses: actions-ecosystem/action-remove-labels@v1
       with:
