@@ -9,17 +9,13 @@ jobs:
     if: ${{ github.event.label.name == 'rebase' }}
     name: Rebase
     runs-on: ubuntu-latest
+
     steps:
     - name: git checkout
-      uses: actions/checkout@v2
-      with:
-        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        fetch-depth: 0
+      uses: actions/checkout@v3
 
     - name: automatic rebase
       uses: cirrus-actions/rebase@1.5
-      env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
     - name: remove label
       if: always()
