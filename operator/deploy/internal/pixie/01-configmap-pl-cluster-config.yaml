@@ -1,0 +1,18 @@
+apiVersion: v1
+data:
+  PL_CUSTOM_ANNOTATIONS: ""
+  PL_CUSTOM_LABELS: ""
+  PL_DISABLE_AUTO_UPDATE: "false"
+  PL_ETCD_OPERATOR_ENABLED: "true"
+  PL_MD_ETCD_SERVER: https://pl-etcd-client.observability-system.svc:2379
+  PX_MEMORY_LIMIT: ""
+  PX_MEMORY_REQUEST: "<no value>"
+kind: ConfigMap
+metadata:
+  annotations:
+    
+  creationTimestamp: null
+  labels:
+    
+  name: pl-cluster-config
+  namespace: observability-system

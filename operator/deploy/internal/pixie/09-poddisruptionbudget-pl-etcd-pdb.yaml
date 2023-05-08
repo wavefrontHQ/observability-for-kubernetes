@@ -1,0 +1,16 @@
+apiVersion: "policy/v1"
+kind: PodDisruptionBudget
+metadata:
+  annotations:
+    
+  labels:
+    
+    app: pl-monitoring
+  name: pl-etcd-pdb
+  namespace: observability-system
+spec:
+  minAvailable: 51%
+  selector:
+    matchLabels:
+      app: pl-monitoring
+      etcd_cluster: pl-etcd
