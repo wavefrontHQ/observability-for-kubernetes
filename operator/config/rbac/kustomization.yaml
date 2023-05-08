@@ -5,6 +5,24 @@ resources:
 - role_binding.yaml
 - components/collector/1-collector-roles.yaml
 - components/collector/2-collector-rbac.yaml
+- components/pixie/00-role-pl-cloud-connector-ns-role.yaml
+- components/pixie/01-role-pl-updater-role.yaml
+- components/pixie/02-role-pl-vizier-crd-role.yaml
+- components/pixie/03-role-pl-vizier-metadata-role.yaml
+- components/pixie/04-clusterrole-pl-cloud-connector-role.yaml
+- components/pixie/05-clusterrole-pl-node-view.yaml
+- components/pixie/06-clusterrole-pl-updater-cluster-role.yaml
+- components/pixie/07-clusterrole-pl-vizier-metadata.yaml
+- components/pixie/08-rolebinding-pl-cloud-connector-binding pl-cloud-connector-ns-role cloud-conn-service-account.yaml
+- components/pixie/09-rolebinding-pl-updater-binding pl-updater-role pl-updater-service-account.yaml
+- components/pixie/10-rolebinding-pl-vizier-crd-binding pl-vizier-crd-role default.yaml
+- components/pixie/11-rolebinding-pl-vizier-crd-metadata-binding pl-vizier-crd-role metadata-service-account.yaml
+- components/pixie/12-rolebinding-pl-vizier-metadata-binding pl-vizier-metadata-role metadata-service-account.yaml
+- components/pixie/13-clusterrolebinding-pl-cloud-connector-cluster-binding pl-cloud-connector-role cloud-conn-service-account.yaml
+- components/pixie/14-clusterrolebinding-pl-node-view-cluster-binding pl-node-view default.yaml
+- components/pixie/15-clusterrolebinding-pl-updater-cluster-binding pl-updater-role pl-updater-service-account.yaml
+- components/pixie/16-clusterrolebinding-pl-vizier-metadata-cluster-binding pl-vizier-metadata metadata-service-account.yaml
+- components/pixie/17-clusterrolebinding-pl-vizier-metadata-node-view-cluster-binding pl-node-view metadata-service-account.yaml
 - components/logging/1-logging-roles.yaml
 - components/logging/2-logging-rbac.yaml
 - legacy-installation-detection/1-legacy-install-detection-roles.yaml
