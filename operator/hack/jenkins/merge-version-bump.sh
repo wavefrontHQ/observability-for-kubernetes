@@ -11,7 +11,9 @@ git branch -D "$GIT_BUMP_BRANCH_NAME" &>/dev/null || true
 git checkout -b "$GIT_BUMP_BRANCH_NAME"
 
 # Add changes from promoting dev-internal folder
-git add deploy/ docs/ README.md
+pushd "$REPO_ROOT"
+  git add deploy/ docs/ README.md
+popd
 git commit -am "Release operator version: ${VERSION}"
 git push --force --set-upstream origin "${GIT_BUMP_BRANCH_NAME}"
 
