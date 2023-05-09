@@ -221,29 +221,29 @@ Metrics collected per type:
 | kubernetes.node.cpu.node_utilization (node_role="control-plane") | CPU utilization as a share of the contol-plane node allocatable in millicores. | Not available in AKS, EKS, GKE |
 | kubernetes.node.memory.working_set (node_role="control-plane") | Total working set usage of the control-plane node. Working set is the memory being used and not easily dropped by the kernel. | Not available in AKS, EKS, GKE |
 | kubernetes.node.filesystem.usage (node_role="control-plane") | Total number of bytes consumed on a filesyste of the control-plane node | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.apiserver.request.duration.seconds | API server request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | - |
+| kubernetes.controlplane.apiserver.request.duration.seconds.m | API server request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | - |
 | kubernetes.controlplane.apiserver.request.total.counter | API server total request count | - |
 | kubernetes.controlplane.workqueue.adds.total.counter | Current depth of API server workqueue | - |
-| kubernetes.controlplane.workqueue.queue.duration.seconds | workqueue latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | - |
-| kubernetes.controlplane.coredns.dns.request.duration.seconds | CoreDNS request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in GKE, OpenShift |
+| kubernetes.controlplane.workqueue.queue.duration.seconds.m | workqueue latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | - |
+| kubernetes.controlplane.coredns.dns.request.duration.seconds.m | CoreDNS request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in GKE, OpenShift |
 | kubernetes.controlplane.coredns.dns.responses.total.counter | CoreDNS total response count | Not available in GKE, OpenShift |
 
 ### etcd Metrics
 
 Metrics collected for etcd:
 
-| Metric Name | Description                                                                                                                                             | K8s environment exceptions |
-|---|---------------------------------------------------------------------------------------------------------------------------------------------------------|---|
-| kubernetes.controlplane.apiserver.storage.objects.gauge | etcd object counts                                                                                                                                      | Not available from kubernetes release version 1.23 onwards |
-| kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge | etcd database size                                                                                                                                      | - |
-| kubernetes.controlplane.etcd.server.has.leader.gauge | Whether or not a leader exists.                                                                                                                         | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.server.leader.changes.seen.total.counter | The number of leader changes seen.                                                                                                                      | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.server.proposals.failed.total.counter | The total number of failed proposals seen.                                                                                                              | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.server.proposals.applied.total.gauge | The total number of concensus proposals applied.                                                                                                        | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.server.proposals.committed.total.gauge | The total number of consensus proposals committed.                                                                                                      | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.server.proposals.pending.gauge | The current number of pending proposals to commit.                                                                                                      | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.disk.wal.fsync.duration.seconds.bucket | The latency distributions of fsync called by wal as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.disk.backend.commit.duration.seconds | The latency distributions of commit called by backend as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds | Round-Trip-Time between peers as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html)                         | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.network.peer.sent.failures.total.counter | The total number of failures sent by peers.                                                                                                             | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.network.peer.received.failures.total.counter | The total number of failures received by peers.                                                                                                         | Not available in AKS, EKS, GKE |
+| Metric Name | Description | K8s environment exceptions |
+|---|---|---|
+| kubernetes.controlplane.apiserver.storage.objects.gauge | etcd object counts | Not available from kubernetes release version 1.23 onwards |
+| kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge | etcd database size | - |
+| kubernetes.controlplane.etcd.server.has.leader.gauge | Whether or not a leader exists. | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.server.leader.changes.seen.total.counter | The number of leader changes seen. | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.server.proposals.failed.total.counter | The total number of failed proposals seen. | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.server.proposals.applied.total.gauge | The total number of concensus proposals applied. | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.server.proposals.committed.total.gauge | The total number of consensus proposals committed. | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.server.proposals.pending.gauge | The current number of pending proposals to commit. | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.disk.wal.fsync.duration.seconds.m | The latency distributions of fsync called by wal as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.disk.backend.commit.duration.seconds.m | The latency distributions of commit called by backend as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.m | Round-Trip-Time between peers as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.network.peer.sent.failures.total.counter | The total number of failures sent by peers. | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.network.peer.received.failures.total.counter | The total number of failures received by peers. | Not available in AKS, EKS, GKE |
