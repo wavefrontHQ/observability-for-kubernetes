@@ -14,26 +14,21 @@ pipeline {
     stage('Randomize Team') {
       steps {
         script {
-          if (currentBuild.number %2 == 0) {
-            team_name = '*Team Helios* :sun_with_face:'
-            todays_team = ['Anil', 'Devon', 'Ginwoo', 'Glenn', 'Matt']
-          } else {
-            team_name = '*Team Raven* :raven:'
-            todays_team = ['Jeremy', 'Jerry', 'Jesse', 'John', 'Peter', 'Yuqi']
-          }
+          team_name = '*Team Raven* :disco_raven:'
+          team_members = ['Jeremy', 'Jerry', 'Jesse', 'John', 'Peter', 'Yuqi']
 
           // Prevent the same person from being selected twice in a row.
           (rotating_off, staying_on) = currentBuild.getPreviousBuild().description.tokenize(',')
-          todays_team -= rotating_off
-          Collections.shuffle todays_team
-          todays_team += rotating_off
+          team_members -= rotating_off
+          Collections.shuffle team_members
+          team_members += rotating_off
 
-          currentBuild.description = "${staying_on},${todays_team[0]}"
+          currentBuild.description = "${staying_on},${team_members[0]}"
           SLACK_MSG = """
 The results are in from <${env.BUILD_URL}|${env.JOB_NAME}> :dice-9823:
 
 ${team_name}
-${todays_team.join('\n')}
+${team_members.join('\n')}
 """
           println SLACK_MSG
         }
