@@ -792,7 +792,22 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   name: wavefront-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: wavefront-manager-role-scc
 rules:
 - apiGroups:
   - security.openshift.io
@@ -933,6 +948,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: wavefront-manager-rolebinding
+  namespace: observability-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -983,9 +999,9 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.18.0
+  collector: 1.19.0
   logging: 2.1.2
-  proxy: "12.3"
+  proxy: "12.4"
 kind: ConfigMap
 metadata:
   labels:
@@ -1055,7 +1071,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.6.0
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.7.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
