@@ -32,7 +32,7 @@ ${team_members.join('\n')}
 """
           println SLACK_MSG
         }
-//         slackSend (channel: '#tobs-k8po-team', message: SLACK_MSG)
+        slackSend (channel: '#tobs-k8po-team', message: SLACK_MSG)
       }
     }
   }
