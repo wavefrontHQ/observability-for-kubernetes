@@ -6,8 +6,6 @@ export # Used to let all sub-make use the initialized value of variables whose n
 PREFIX?=projects.registry.vmware.com/tanzu_observability
 DOCKER_IMAGE?=kubernetes-operator-snapshot
 
-GO_IMPORTS_BIN:=$(if $(shell which goimports),$(shell which goimports),$(GOPATH)/bin/goimports)
-
 OS := $(shell uname -s | tr A-Z a-z)
 
 GOLANGCI_LINT_VERSION:="1.52.2"
@@ -69,9 +67,6 @@ help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Development
-$(GO_IMPORTS_BIN):
-	@(cd $(REPO_DIR)/..; CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest)
-
 .PHONY: manifests
 manifests: controller-gen config/crd/bases/wavefront.com_wavefronts.yaml
 

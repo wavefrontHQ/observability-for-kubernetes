@@ -1,17 +1,21 @@
 export # Used to let all sub-make use the initialized value of variables whose names consist solely of alphanumerics and underscores
 
-SEMVER_CLI_BIN:=$(if $(shell which semver-cli),$(shell which semver-cli),$(GOPATH)/bin/semver-cli)
-
 MONOREPO_DIR=$(shell git rev-parse --show-toplevel)
 
 GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
 
+SEMVER_CLI_BIN:=$(or $(shell which semver-cli),$(GOPATH)/bin/semver-cli)
+GO_IMPORTS_BIN:=$(or $(shell which goimports),$(GOPATH)/bin/goimports)
+
 .PHONY: semver-cli
 semver-cli: $(SEMVER_CLI_BIN)
 
 $(SEMVER_CLI_BIN):
-	@(CGO_ENABLED=0 go install github.com/davidrjonas/semver-cli@latest)
+	cd $(MONOREPO_DIR); CGO_ENABLED=0 go install github.com/davidrjonas/semver-cli@latest
+
+$(GO_IMPORTS_BIN):
+	cd $(MONOREPO_DIR); CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest
 
 .PHONY: promote-internal
 promote-internal:

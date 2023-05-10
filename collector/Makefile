@@ -22,8 +22,6 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-GO_IMPORTS_BIN:=$(if $(shell which goimports),$(shell which goimports),$(GOPATH)/bin/goimports)
-
 ifndef VERSION_POSTFIX
 VERSION_POSTFIX:=-dev-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
@@ -182,9 +180,6 @@ test-proxy: peg $(COLLECTOR_REPO_ROOT)/internal/testproxy/metrics/metric_grammar
 peg:
 	@which peg > /dev/null || \
 		(cd $(COLLECTOR_REPO_ROOT)/..; GOARCH=$(GOARCH) CGO_ENABLED=0 go install github.com/pointlander/peg@latest)
-
-$(GO_IMPORTS_BIN):
-	@(cd $(COLLECTOR_REPO_ROOT)/..; CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest)
 
 %.peg.go: %.peg
 	peg -switch -inline $<
