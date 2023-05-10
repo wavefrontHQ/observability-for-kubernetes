@@ -285,8 +285,3 @@ undeploy: operator-yaml
 .PHONY: integration-test
 integration-test: install-kube-score install-kube-linter undeploy deploy
 	(cd $(REPO_DIR)/hack/test && ./run-e2e-tests.sh -t $(WAVEFRONT_TOKEN) -d $(NS) -v $(NEXT_RELEASE_VERSION) $(INTEGRATION_TEST_ARGS))
-
-.PHONY: clean-cluster
-clean-cluster:
-	(cd $(REPO_DIR)/hack/test && ./clean-cluster.sh)
-

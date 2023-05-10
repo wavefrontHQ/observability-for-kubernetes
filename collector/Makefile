@@ -250,10 +250,6 @@ coverage-test: token-check k8s-env clean-deployment deploy-targets delete-images
 integration-test-rhel: token-check k8s-env clean-deployment deploy-targets
 	VERSION=$(VERSION)-rhel make container_rhel test-proxy-container delete-images push-images proxy-test
 
-.PHONY: clean-cluster
-clean-cluster:
-	(cd $(TEST_DIR) && ./clean-cluster.sh)
-
 # list the available makefile targets
 .PHONY: no_targets__ list
 list:

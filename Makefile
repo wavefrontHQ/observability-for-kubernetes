@@ -31,6 +31,10 @@ combined-integration-tests:
 	cd $(MONOREPO_DIR) && ./scripts/combined-deploy.sh
 	$(MAKE) -C operator integration-test -o undeploy -o deploy
 
+.PHONY: clean-cluster
+clean-cluster:
+	@$(MONOREPO_DIR)/scripts/clean-cluster.sh
+
 #----- KIND ----#
 .PHONY: nuke-kind
 nuke-kind:
