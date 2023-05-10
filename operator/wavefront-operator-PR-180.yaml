@@ -682,6 +682,16 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - get
@@ -834,7 +844,6 @@ rules:
   - px.dev
   resources:
   - secrets
-  - endpoints
   - pods
   - viziers
   verbs:
@@ -1452,7 +1461,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.19.0-alpha-1d5e63c2
+  collector: 1.19.0-alpha-b4bc52e0
   logging: 2.1.2
   proxy: "12.4"
 kind: ConfigMap
@@ -1524,7 +1533,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.7.0-alpha-1d5e63c2
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.7.0-alpha-b4bc52e0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
