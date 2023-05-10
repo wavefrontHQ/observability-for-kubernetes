@@ -6,7 +6,7 @@ then
     exit 0
 fi
 
-CURRENT_CONTEXT=$(kubectl config current-context)
+CURRENT_CONTEXT=$(kubectl config current-context 2>/dev/null)
 
 if grep -q "kind" <<< "$CURRENT_CONTEXT"; then
   echo "Kind"
