@@ -88,7 +88,7 @@ spec:
               optional: true
         - name: PL_CLOCK_CONVERTER
           value: "default"
-        image: 'gcr.io/pixie-oss/pixie-prod/vizier/pem_image:0.12.18'
+        image: 'gcr.io/pixie-oss/pixie-prod/vizier/pem_image:0.13.2'
         name: pem
         resources:
           limits:
@@ -101,9 +101,20 @@ spec:
             - SYS_PTRACE
             - SYS_ADMIN
           privileged: true
+          seccompProfile:
+            type: RuntimeDefault
         volumeMounts:
-        - mountPath: /host
-          name: host-root
+        - mountPath: /host/lib
+          name: host-lib
+          readOnly: true
+        - mountPath: /host/var
+          name: host-var
+          readOnly: true
+        - mountPath: /host/boot
+          name: host-boot
+          readOnly: true
+        - mountPath: /host/etc
+          name: host-etc
           readOnly: true
         - mountPath: /sys
           name: sys
@@ -125,31 +136,43 @@ spec:
           value: vizier-query-broker-svc
         - name: SERVICE_PORT
           value: "50300"
-        image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0'
+        image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0@sha256:f7f265d5c64eb4463a43a99b6bf773f9e61a50aaa7cefaf564f43e42549a01dd'
         name: qb-wait
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       terminationGracePeriodSeconds: 10
       tolerations:
       - effect: NoSchedule
-        key: kubernetes.io/arch
-        operator: Equal
-        value: amd64
+        key: node-role.kubernetes.io/master
       - effect: NoExecute
-        key: kubernetes.io/arch
-        operator: Equal
-        value: amd64
+        operator: Exists
       - effect: NoSchedule
-        key: kubernetes.io/arch
-        operator: Equal
-        value: arm64
-      - effect: NoExecute
-        key: kubernetes.io/arch
-        operator: Equal
-        value: arm64
+        operator: Exists
       volumes:
       - hostPath:
-          path: /
+          path: /lib
           type: Directory
-        name: host-root
+        name: host-lib
+      - hostPath:
+          path: /var
+          type: Directory
+        name: host-var
+      - hostPath:
+          path: /boot
+          type: Directory
+        name: host-boot
+      - hostPath:
+          path: /etc
+          type: Directory
+        name: host-etc
       - hostPath:
           path: /sys
           type: Directory

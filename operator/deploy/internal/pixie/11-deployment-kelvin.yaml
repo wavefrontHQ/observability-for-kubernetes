@@ -7,17 +7,14 @@ metadata:
     
     app: pl-monitoring
     component: vizier
-    vizier-bootstrap: "true"
-  name: vizier-cloud-connector
+  name: kelvin
   namespace: observability-system
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: pl-monitoring
       component: vizier
-      name: vizier-cloud-connector
-      vizier-bootstrap: "true"
+      name: kelvin
   template:
     metadata:
       annotations:
@@ -26,9 +23,8 @@ spec:
         
         app: pl-monitoring
         component: vizier
-        name: vizier-cloud-connector
-        plane: control
-        vizier-bootstrap: "true"
+        name: kelvin
+        plane: data
     spec:
       affinity:
         nodeAffinity:
@@ -50,12 +46,37 @@ spec:
                 - linux
       containers:
       - env:
+        - name: PL_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: PL_CLUSTER_ID
+          valueFrom:
+            secretKeyRef:
+              key: cluster-id
+              name: pl-cluster-secrets
+        - name: PL_SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              key: sentry-dsn
+              name: pl-cluster-secrets
+              optional: true
+        - name: PL_HOST_PATH
+          value: /host
+        - name: PL_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: PL_HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
         - name: PL_JWT_SIGNING_KEY
           valueFrom:
             secretKeyRef:
               key: jwt-signing-key
               name: pl-cluster-secrets
-        - name: PL_CLUSTER_ID
+        - name: PL_VIZIER_ID
           valueFrom:
             secretKeyRef:
               key: cluster-id
@@ -67,37 +88,20 @@ spec:
               key: cluster-name
               name: pl-cluster-secrets
               optional: true
-        - name: PL_DEPLOY_KEY
-          valueFrom:
-            secretKeyRef:
-              key: deploy-key
-              name: "pl-deploy-secrets"
-              optional: true
-        - name: PL_POD_NAMESPACE
+        - name: PL_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        - name: PL_MAX_EXPECTED_CLOCK_SKEW
-          value: "2000"
-        - name: PL_RENEW_PERIOD
-          value: "7500"
+        - name: TCMALLOC_SAMPLE_PARAMETER
+          value: "1048576"
         envFrom:
         - configMapRef:
-            name: pl-cloud-config
-        - configMapRef:
-            name: pl-cloud-connector-tls-config
-        - configMapRef:
-            name: pl-cluster-config
-            optional: true
-        image: 'gcr.io/pixie-oss/pixie-prod/vizier/cloud_connector_server_image:0.13.2'
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 50800
-            scheme: HTTPS
+            name: pl-tls-config
+        image: 'gcr.io/pixie-oss/pixie-prod/vizier/kelvin_image:0.13.2'
         name: app
         ports:
-        - containerPort: 50800
+        - containerPort: 59300
+        resources: {}
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -108,24 +112,43 @@ spec:
         volumeMounts:
         - mountPath: /certs
           name: certs
+        - mountPath: /sys
+          name: sys
+          readOnly: true
       initContainers:
       - command:
         - sh
         - -c
-        - set -xe; URL="${PROTOCOL}://${SERVICE_NAME}:${SERVICE_PORT}${HEALTH_PATH}";
-          until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200
-          ]; do echo "waiting for ${URL}"; sleep 2; done;
+        - 'set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz"; until [ $(curl
+          -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do echo "waiting
+          for ${URL}" sleep 2; done; '
         env:
         - name: SERVICE_NAME
-          value: pl-nats-mgmt
+          value: vizier-cloud-connector-svc
         - name: SERVICE_PORT
-          value: "8222"
-        - name: HEALTH_PATH
-          value: ""
-        - name: PROTOCOL
-          value: http
+          value: "50800"
         image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0@sha256:f7f265d5c64eb4463a43a99b6bf773f9e61a50aaa7cefaf564f43e42549a01dd'
-        name: nats-wait
+        name: cc-wait
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      - command:
+        - sh
+        - -c
+        - 'set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [
+          $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
+          echo "waiting for ${URL}" sleep 2; done; '
+        env:
+        - name: SERVICE_NAME
+          value: vizier-query-broker-svc
+        - name: SERVICE_PORT
+          value: "50300"
+        image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0@sha256:f7f265d5c64eb4463a43a99b6bf773f9e61a50aaa7cefaf564f43e42549a01dd'
+        name: qb-wait
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -140,7 +163,7 @@ spec:
         runAsUser: 10100
         seccompProfile:
           type: RuntimeDefault
-      serviceAccountName: cloud-conn-service-account
+      terminationGracePeriodSeconds: 30
       tolerations:
       - effect: NoSchedule
         key: kubernetes.io/arch
@@ -162,3 +185,7 @@ spec:
       - name: certs
         secret:
           secretName: service-tls-certs
+      - hostPath:
+          path: /sys
+          type: Directory
+        name: sys

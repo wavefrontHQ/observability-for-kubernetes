@@ -32,7 +32,6 @@ rules:
   - px.dev
   resources:
   - secrets
-  - endpoints
   - pods
   - viziers
   verbs:

@@ -3,7 +3,7 @@ set -e
 
 rm -rf pixie_yamls
 
-px deploy --extract_yaml . --deploy_key $PX_DEPLOY_KEY --use_etcd_operator=true
+px deploy --extract_yaml . --deploy_key foobar --use_etcd_operator=false
 
 tar -xvf yamls.tar
 
@@ -12,7 +12,7 @@ pushd pixie_yamls
 mkdir splits
 
 # Split resources into their own yaml files
-files_to_apply=(00_secrets.yaml 01_nats.yaml 02_etcd.yaml 03_vizier_etcd.yaml)
+files_to_apply=(00_secrets.yaml 01_nats.yaml 04_vizier_persistent.yaml 06_vizier_persistent_ap.yaml)
 cat "${files_to_apply[@]}" | csplit -n 3 -f 'splits/pixie-' - '/^---$/' "{$(($(cat "${files_to_apply[@]}" | grep -c '^\-\-\-$') - 2))}"
 
 # Remove duplicate resources

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    
+  labels:
+    
+    app: pl-monitoring
+    component: vizier
+  name: metadata-pv-claim
+  namespace: observability-system
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 16Gi

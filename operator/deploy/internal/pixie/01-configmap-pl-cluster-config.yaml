@@ -3,8 +3,8 @@ data:
   PL_CUSTOM_ANNOTATIONS: ""
   PL_CUSTOM_LABELS: ""
   PL_DISABLE_AUTO_UPDATE: "false"
-  PL_ETCD_OPERATOR_ENABLED: "true"
-  PL_MD_ETCD_SERVER: https://pl-etcd-client.observability-system.svc:2379
+  PL_ETCD_OPERATOR_ENABLED: "false"
+  PL_MD_ETCD_SERVER: https://pl-etcd-client.pl.svc:2379
   PX_MEMORY_LIMIT: ""
   PX_MEMORY_REQUEST: "<no value>"
 kind: ConfigMap
