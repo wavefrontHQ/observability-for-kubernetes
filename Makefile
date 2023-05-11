@@ -2,6 +2,7 @@ export # Used to let all sub-make use the initialized value of variables whose n
 
 MONOREPO_DIR=$(shell git rev-parse --show-toplevel)
 
+GOPATH?=$(or $(shell go env GOPATH),$(HOME)/go)
 GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
 
