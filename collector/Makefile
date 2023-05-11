@@ -22,8 +22,6 @@ ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
 endif
 
-GO_IMPORTS_BIN:=$(if $(shell which goimports),$(shell which goimports),$(GOPATH)/bin/goimports)
-
 ifndef VERSION_POSTFIX
 VERSION_POSTFIX:=-dev-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
@@ -183,9 +181,6 @@ peg:
 	@which peg > /dev/null || \
 		(cd $(COLLECTOR_REPO_ROOT)/..; GOARCH=$(GOARCH) CGO_ENABLED=0 go install github.com/pointlander/peg@latest)
 
-$(GO_IMPORTS_BIN):
-	@(cd $(COLLECTOR_REPO_ROOT)/..; CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest)
-
 %.peg.go: %.peg
 	peg -switch -inline $<
 
@@ -249,10 +244,6 @@ coverage-test: token-check k8s-env clean-deployment deploy-targets delete-images
 .PHONY: integration-test-rhel
 integration-test-rhel: token-check k8s-env clean-deployment deploy-targets
 	VERSION=$(VERSION)-rhel make container_rhel test-proxy-container delete-images push-images proxy-test
-
-.PHONY: clean-cluster
-clean-cluster:
-	(cd $(TEST_DIR) && ./clean-cluster.sh)
 
 # list the available makefile targets
 .PHONY: no_targets__ list
