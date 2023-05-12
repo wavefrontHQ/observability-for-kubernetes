@@ -1,7 +1,7 @@
 apiVersion: v1
 data:
   PL_CLOUD_ADDR: "withpixie.ai:443"
-  PL_CLUSTER_NAME: {{ .ClusterName }}
+  PL_CLUSTER_NAME: "gke_wavefront-gcp-dev_us-central1-c_pginwoo"
   PL_UPDATE_CLOUD_ADDR: "withpixie.ai:443"
 kind: ConfigMap
 metadata:

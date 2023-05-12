@@ -104,17 +104,8 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
-        - mountPath: /host/lib
-          name: host-lib
-          readOnly: true
-        - mountPath: /host/var
-          name: host-var
-          readOnly: true
-        - mountPath: /host/boot
-          name: host-boot
-          readOnly: true
-        - mountPath: /host/etc
-          name: host-etc
+        - mountPath: /host
+          name: host-root
           readOnly: true
         - mountPath: /sys
           name: sys
@@ -158,21 +149,9 @@ spec:
         operator: Exists
       volumes:
       - hostPath:
-          path: /lib
+          path: /
           type: Directory
-        name: host-lib
-      - hostPath:
-          path: /var
-          type: Directory
-        name: host-var
-      - hostPath:
-          path: /boot
-          type: Directory
-        name: host-boot
-      - hostPath:
-          path: /etc
-          type: Directory
-        name: host-etc
+        name: host-root
       - hostPath:
           path: /sys
           type: Directory
