@@ -249,7 +249,7 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		spec.DataExport.WavefrontProxy.Enable,
 		spec.CanExportData && spec.DataCollection.Metrics.Enable,
 		spec.CanExportData && spec.DataCollection.Logging.Enable,
-		spec.Experimental.AutoInstrumentation.Enable,
+		spec.CanExportData && spec.Experimental.AutoInstrumentation.Enable,
 	)
 }
 

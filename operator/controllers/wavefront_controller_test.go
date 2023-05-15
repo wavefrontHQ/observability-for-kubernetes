@@ -82,6 +82,62 @@ func TestReconcileAll(t *testing.T) {
 
 	})
 
+	t.Run("does not create Pixie components until the proxy is running", func(t *testing.T) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.AutoInstrumentation.Enable = true
+			wavefront.Spec.Experimental.AutoInstrumentation.DeployKey = "foobar"
+		}), nil, wftest.Proxy(wftest.WithReplicas(0, 1)))
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		results, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.Equal(t, ctrl.Result{Requeue: true}, results)
+
+		require.False(t, mockKM.PixieComponentContains("apps/v1", "StatefulSet", "pl-nats"))
+		require.False(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
+		require.False(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "kelvin"))
+		require.False(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "vizier-query-broker"))
+		require.False(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets"))
+		require.False(t, mockKM.PixieComponentContains("v1", "Secret", "pl-deploy-secrets"))
+		require.False(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config"))
+		require.False(t, mockKM.PixieComponentContains("v1", "ServiceAccount", "metadata-service-account"))
+
+		require.Equal(t, 0, len(mockSender.SentMetrics), "should not have sent metrics")
+	})
+
+	t.Run("creates Pixie components after the proxy is running", func(t *testing.T) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.AutoInstrumentation.Enable = true
+			wavefront.Spec.Experimental.AutoInstrumentation.DeployKey = "foobar"
+		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		results, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		r.MetricConnection.Flush()
+
+		require.Equal(t, ctrl.Result{Requeue: true}, results)
+
+		require.True(t, mockKM.PixieComponentContains("apps/v1", "StatefulSet", "pl-nats"))
+		require.True(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
+		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "kelvin"))
+		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "vizier-query-broker"))
+		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets"))
+		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-deploy-secrets"))
+		require.True(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config"))
+		require.True(t, mockKM.PixieComponentContains("v1", "ServiceAccount", "metadata-service-account"))
+
+		require.Greater(t, len(mockSender.SentMetrics), 0, "should not have sent metrics")
+		require.Equal(t, 99.9999, VersionSent(mockSender), "should send OperatorVersion")
+
+	})
+
+	// TODO: check for etcd secrets to fail, should be pvc
+
 	t.Run("transitions status when sub-components change (even if overall health is still unhealthy)", func(t *testing.T) {
 		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Status.Status = health.Unhealthy

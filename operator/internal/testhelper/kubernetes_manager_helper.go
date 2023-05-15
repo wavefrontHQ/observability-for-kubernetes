@@ -118,13 +118,17 @@ func objectMatchesAll(
 	}
 
 	objectAppK8sIOName, found, err := unstructured.NestedString(object.Object, "metadata", "labels", "app.kubernetes.io/name")
-	if objectAppK8sIOName != appKubernetesIOName || !found || err != nil {
-		return false
+	if found {
+		if objectAppK8sIOName != appKubernetesIOName || !found || err != nil {
+			return false
+		}
 	}
 
 	objectAppK8sIOComponent, found, err := unstructured.NestedString(object.Object, "metadata", "labels", "app.kubernetes.io/component")
-	if objectAppK8sIOComponent != appKubernetesIOComponent || !found || err != nil {
-		return false
+	if found {
+		if objectAppK8sIOComponent != appKubernetesIOComponent || !found || err != nil {
+			return false
+		}
 	}
 
 	objectMetadataName, found, err := unstructured.NestedString(object.Object, "metadata", "name")
@@ -244,6 +248,18 @@ func (skm MockKubernetesManager) GetAppliedService(appKubernetesIOComponent, met
 	}
 
 	return service, nil
+}
+
+func (skm MockKubernetesManager) PixieComponentContains(apiVersion, kind, metadataName string, checks ...string) bool {
+	return contains(
+		skm.appliedYAMLs,
+		apiVersion,
+		kind,
+		"",
+		"",
+		metadataName,
+		checks...,
+	)
 }
 
 func (skm MockKubernetesManager) CollectorServiceAccountContains(checks ...string) bool {
