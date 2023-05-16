@@ -216,6 +216,13 @@ git-rebase:
 	git rebase origin/main
 	git log --oneline -n 10
 
+$(MONOREPO_DIR)/.git/hooks/pre-commit: $(MONOREPO_DIR)/scripts/githooks/pre-commit
+	cp $< $@
+
+# create pre-commit hook to abort unintentional changes to root level docs/deploy
+.PHONY: githooks
+githooks: $(MONOREPO_DIR)/.git/hooks/pre-commit
+
 # list the available makefile targets
 .PHONY: no_targets__ list
 list:
