@@ -131,6 +131,10 @@ func TestReconcileAll(t *testing.T) {
 		require.True(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config"))
 		require.True(t, mockKM.PixieComponentContains("v1", "ServiceAccount", "metadata-service-account"))
 
+		containsPortInContainers(t, "otlpGrpcListenerPorts", *mockKM, 4317)
+		containsPortInServicePort(t, 4317, *mockKM)
+		containsProxyArg(t, "--otlpResourceAttrsOnMetricsIncluded true", *mockKM)
+
 		require.Greater(t, len(mockSender.SentMetrics), 0, "should not have sent metrics")
 		require.Equal(t, 99.9999, VersionSent(mockSender), "should send OperatorVersion")
 

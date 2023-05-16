@@ -409,32 +409,10 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 
 	wavefront.Spec.DataExport.WavefrontProxy.AvailableReplicas = 1
 	if wavefront.Spec.DataExport.WavefrontProxy.Enable {
-		deployment, err := r.deployment(util.ProxyName)
-		if err == nil && deployment.Status.AvailableReplicas > 0 {
-			wavefront.Spec.DataExport.WavefrontProxy.AvailableReplicas = int(deployment.Status.AvailableReplicas)
-			wavefront.Spec.CanExportData = true
-		}
-		wavefront.Spec.DataExport.WavefrontProxy.ConfigHash = ""
-		wavefront.Spec.DataCollection.Metrics.ProxyAddress = fmt.Sprintf("%s:%d", util.ProxyName, wavefront.Spec.DataExport.WavefrontProxy.MetricPort)
-
-		// The endpoint for logging requires the "http://" prefix
-		wavefront.Spec.DataCollection.Logging.ProxyAddress = fmt.Sprintf("http://%s:%d", util.ProxyName, wavefront.Spec.DataExport.WavefrontProxy.MetricPort)
-
-		err = r.parseHttpProxyConfigs(wavefront, ctx)
+		err = r.preprocessProxy(wavefront, ctx)
 		if err != nil {
 			return err
 		}
-
-		wavefront.Spec.ClusterUUID = r.ClusterUUID
-
-		var result preprocessor.Result
-		result, err = preprocessor.Process(r.Client, wavefront)
-		if err != nil {
-			return err
-		}
-		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts = result.EnabledPorts
-		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules = result.UserDefinedPortRules
-		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules = result.UserDefinedGlobalRules
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
 		wavefront.Spec.CanExportData = true
 		wavefront.Spec.DataCollection.Metrics.ProxyAddress = wavefront.Spec.DataExport.ExternalWavefrontProxy.Url
@@ -479,6 +457,41 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		wavefront.Spec.Openshift = true
 	}
 
+	return nil
+}
+
+func (r *WavefrontReconciler) preprocessProxy(wavefront *wf.Wavefront, ctx context.Context) error {
+	deployment, err := r.deployment(util.ProxyName)
+	if err == nil && deployment.Status.AvailableReplicas > 0 {
+		wavefront.Spec.DataExport.WavefrontProxy.AvailableReplicas = int(deployment.Status.AvailableReplicas)
+		wavefront.Spec.CanExportData = true
+	}
+	wavefront.Spec.DataExport.WavefrontProxy.ConfigHash = ""
+	wavefront.Spec.DataCollection.Metrics.ProxyAddress = fmt.Sprintf("%s:%d", util.ProxyName, wavefront.Spec.DataExport.WavefrontProxy.MetricPort)
+
+	// The endpoint for logging requires the "http://" prefix
+	wavefront.Spec.DataCollection.Logging.ProxyAddress = fmt.Sprintf("http://%s:%d", util.ProxyName, wavefront.Spec.DataExport.WavefrontProxy.MetricPort)
+
+	err = r.parseHttpProxyConfigs(wavefront, ctx)
+	if err != nil {
+		return err
+	}
+
+	wavefront.Spec.ClusterUUID = r.ClusterUUID
+
+	var result preprocessor.Result
+	result, err = preprocessor.Process(r.Client, wavefront)
+	if err != nil {
+		return err
+	}
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts = result.EnabledPorts
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules = result.UserDefinedPortRules
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules = result.UserDefinedGlobalRules
+
+	if wavefront.Spec.Experimental.AutoInstrumentation.Enable {
+		wavefront.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort = 4317
+		wavefront.Spec.DataExport.WavefrontProxy.OTLP.ResourceAttrsOnMetricsIncluded = true
+	}
 	return nil
 }
 

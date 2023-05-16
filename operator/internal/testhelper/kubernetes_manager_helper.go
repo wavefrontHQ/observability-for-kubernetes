@@ -117,15 +117,15 @@ func objectMatchesAll(
 		return false
 	}
 
-	objectAppK8sIOName, found, err := unstructured.NestedString(object.Object, "metadata", "labels", "app.kubernetes.io/name")
-	if found {
+	if len(appKubernetesIOName) > 0 {
+		objectAppK8sIOName, found, err := unstructured.NestedString(object.Object, "metadata", "labels", "app.kubernetes.io/name")
 		if objectAppK8sIOName != appKubernetesIOName || !found || err != nil {
 			return false
 		}
 	}
 
-	objectAppK8sIOComponent, found, err := unstructured.NestedString(object.Object, "metadata", "labels", "app.kubernetes.io/component")
-	if found {
+	if len(appKubernetesIOComponent) > 0 {
+		objectAppK8sIOComponent, found, err := unstructured.NestedString(object.Object, "metadata", "labels", "app.kubernetes.io/component")
 		if objectAppK8sIOComponent != appKubernetesIOComponent || !found || err != nil {
 			return false
 		}
