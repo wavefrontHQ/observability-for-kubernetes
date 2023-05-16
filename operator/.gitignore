@@ -13,6 +13,9 @@ config/samples/*.yaml
 hack/test/_v1alpha1_wavefront_test.yaml
 hack/test/egress-http-proxy/mitmproxy-ca-cert.pem
 
+config/manager/patches.yaml
+config/rbac/kustomization.yaml
+
 # Test binary, build with `go test -c`
 *.test
 
