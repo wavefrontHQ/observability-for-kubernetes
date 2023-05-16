@@ -74,25 +74,24 @@ osspi scan binary \
   --output-dir binary_scan
 set +x
 
-cat binary_scan/osspi_binary_detect_result.manifest
 
-#declare -a osstp_dry_run_flag
-#if [ "${OSSTP_LOAD_DRY_RUN+defined}" = defined ] && [ "$OSSTP_LOAD_DRY_RUN" = 'true' ]; then
-#  osstp_dry_run_flag=('-n')
-#  echo "Dry run mode enabled for osstp-load"
-#fi
-#
-#set -x
-#osstp-load.py \
-#  "${osstp_dry_run_flag[@]}" \
-#  -S "$OSM_ENVIRONMENT" \
-#  -F \
-#  -A apiKeyFile \
-#  "${baseos_append_flag[@]}" \
-#  --noinput \
-#  --baseos-ct-tracker "$CT_TRACKER_ID" \
-#  binary_scan/osspi_binary_detect_result.manifest
-#set +x
+declare -a osstp_dry_run_flag
+if [ "${OSSTP_LOAD_DRY_RUN+defined}" = defined ] && [ "$OSSTP_LOAD_DRY_RUN" = 'true' ]; then
+  osstp_dry_run_flag=('-n')
+  echo "Dry run mode enabled for osstp-load"
+fi
+
+set -x
+osstp-load.py \
+  "${osstp_dry_run_flag[@]}" \
+  -S "$OSM_ENVIRONMENT" \
+  -F \
+  -A apiKeyFile \
+  "${baseos_append_flag[@]}" \
+  --noinput \
+  --baseos-ct-tracker "$CT_TRACKER_ID" \
+  binary_scan/osspi_binary_detect_result.manifest
+set +x
 
 # Uncomment to cause a failure so we can hijack and get docker scan results for debugging
 #echo 'AAGHH'
