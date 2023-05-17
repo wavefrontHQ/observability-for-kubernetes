@@ -86,7 +86,6 @@ osstp-load.py \
   "${osstp_dry_run_flag[@]}" \
   -S "$OSM_ENVIRONMENT" \
   -F \
-  -a \
   -A apiKeyFile \
   "${baseos_append_flag[@]}" \
   --noinput \
