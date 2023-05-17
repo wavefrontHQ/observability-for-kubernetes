@@ -477,8 +477,12 @@ func (r *WavefrontReconciler) preprocessProxy(wavefront *wf.Wavefront, ctx conte
 		return err
 	}
 
-	wavefront.Spec.ClusterUUID = r.ClusterUUID
+	if wavefront.Spec.Experimental.AutoInstrumentation.Enable {
+		wavefront.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort = 4317
+		wavefront.Spec.DataExport.WavefrontProxy.OTLP.ResourceAttrsOnMetricsIncluded = true
+	}
 
+	wavefront.Spec.ClusterUUID = r.ClusterUUID
 	var result preprocessor.Result
 	result, err = preprocessor.Process(r.Client, wavefront)
 	if err != nil {
@@ -488,10 +492,6 @@ func (r *WavefrontReconciler) preprocessProxy(wavefront *wf.Wavefront, ctx conte
 	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules = result.UserDefinedPortRules
 	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules = result.UserDefinedGlobalRules
 
-	if wavefront.Spec.Experimental.AutoInstrumentation.Enable {
-		wavefront.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort = 4317
-		wavefront.Spec.DataExport.WavefrontProxy.OTLP.ResourceAttrsOnMetricsIncluded = true
-	}
 	return nil
 }
 

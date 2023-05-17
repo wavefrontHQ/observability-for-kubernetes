@@ -1248,13 +1248,14 @@ func TestReconcileAutoInstrumentation(t *testing.T) {
 		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "ConfigMap", "pl-cloud-config"))
 		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "ServiceAccount", "metadata-service-account"))
 
+		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("4317"))
 		containsPortInContainers(t, "otlpGrpcListenerPorts", *mockKM, 4317)
 		containsPortInServicePort(t, 4317, *mockKM)
 		containsProxyArg(t, "--otlpResourceAttrsOnMetricsIncluded true", *mockKM)
 
 	})
 
-	t.Run("creates AutoInstrumentation components when AutoInstrumentation is not enabled", func(t *testing.T) {
+	t.Run("does not create auto instrumentation components when auto instrumentation is not enabled", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.AutoInstrumentation.Enable = false
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
