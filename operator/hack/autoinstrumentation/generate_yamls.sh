@@ -14,7 +14,7 @@ mkdir splits
 
 # Split resources into their own yaml files
 files_to_apply=(00_secrets.yaml 01_nats.yaml 04_vizier_persistent.yaml)
-cat "${files_to_apply[@]}" | csplit -n 3 -f 'splits/pixie-' - '/^---$/' "{$(($(cat "${files_to_apply[@]}" | grep -c '^\-\-\-$') - 2))}"
+cat "${files_to_apply[@]}" | csplit -n 3 -f 'splits/autoinstrumentation-' - '/^---$/' "{$(($(cat "${files_to_apply[@]}" | grep -c '^\-\-\-$') - 2))}"
 
 # Remove duplicate resources
 duplicates=$(fdupes -f splits)
@@ -23,7 +23,7 @@ if [[ $duplicates != "" ]]; then
 fi
 
 # rename everything to a yaml file
-original_file_names=($(echo splits/pixie-*))
+original_file_names=($(echo splits/autoinstrumentation-*))
 mkdir -p splits/roles
 mkdir -p splits/secrets
 for index in "${!original_file_names[@]}"; do
@@ -44,19 +44,19 @@ for index in "${!original_file_names[@]}"; do
   rm "$original_file_name"
 done
 
-git rm -rf "${REPO_ROOT}/operator/config/rbac/components/pixie/*.yaml"
-mkdir -p "${REPO_ROOT}/operator/config/rbac/components/pixie"
-cp splits/roles/*.yaml "${REPO_ROOT}/operator/config/rbac/components/pixie"
-git add "${REPO_ROOT}/operator/config/rbac/components/pixie"
+git rm -rf "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation/*.yaml"
+mkdir -p "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation"
+cp splits/roles/*.yaml "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation"
+git add "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation"
 
-git rm -rf "${REPO_ROOT}/operator/deploy/internal/pixie/*.yaml"
-mkdir -p "${REPO_ROOT}/operator/deploy/internal/pixie"
-cp splits/secrets/*.yaml "${REPO_ROOT}/operator/deploy/internal/pixie"
-cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/pixie"
+git rm -rf "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/*.yaml"
+mkdir -p "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
+cp splits/secrets/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
+cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 
-sed -i '' 's/  PL_CLUSTER_NAME: "replace_me"/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/pixie/00-configmap-pl-cloud-config.yaml"
-sed -i '' 's/  deploy-key: "replace_me"/  deploy-key: {{ .Experimental.AutoInstrumentation.DeployKey }}/' "${REPO_ROOT}/operator/deploy/internal/pixie/01-secret-pl-deploy-secrets.yaml"
-git add "${REPO_ROOT}/operator/deploy/internal/pixie"
+sed -i '' 's/  PL_CLUSTER_NAME: "replace_me"/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-configmap-pl-cloud-config.yaml"
+sed -i '' 's/  deploy-key: "replace_me"/  deploy-key: {{ .Experimental.AutoInstrumentation.DeployKey }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/01-secret-pl-deploy-secrets.yaml"
+git add "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 
 popd
 

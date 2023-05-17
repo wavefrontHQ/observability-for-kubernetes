@@ -253,7 +253,7 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 	)
 }
 
-func dirList(proxy, collector, logging bool, pixie bool) []string {
+func dirList(proxy, collector, logging bool, autoinstrumentation bool) []string {
 	dirsToInclude := []string{"internal"}
 	if proxy {
 		dirsToInclude = append(dirsToInclude, "proxy")
@@ -266,8 +266,8 @@ func dirList(proxy, collector, logging bool, pixie bool) []string {
 	if logging {
 		dirsToInclude = append(dirsToInclude, "logging")
 	}
-	if pixie {
-		dirsToInclude = append(dirsToInclude, "pixie")
+	if autoinstrumentation {
+		dirsToInclude = append(dirsToInclude, "autoinstrumentation")
 	}
 	return dirsToInclude
 }
