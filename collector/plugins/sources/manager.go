@@ -26,8 +26,6 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
-
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/controlplane"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/cadvisor"
@@ -74,7 +72,6 @@ func init() {
 // SourceManager ProviderHandler with metrics gathering support
 type SourceManager interface {
 	metrics.ProviderHandler
-	discovery.PluginProvider
 
 	StopProviders()
 	GetPendingMetrics() []*metrics.Batch
@@ -116,16 +113,6 @@ func Manager() SourceManager {
 		go singleton.run()
 	})
 	return singleton
-}
-
-func (sm *sourceManagerImpl) DiscoveryPluginConfigs() []discovery.PluginConfig {
-	var pluginConfigs []discovery.PluginConfig
-	for _, provider := range sm.metricsSourceProviders {
-		if pluginProvider, ok := provider.(discovery.PluginProvider); ok {
-			pluginConfigs = append(pluginConfigs, pluginProvider.DiscoveryPluginConfigs()...)
-		}
-	}
-	return pluginConfigs
 }
 
 // BuildProviders creates a new source manager with the configured MetricsSourceProviders

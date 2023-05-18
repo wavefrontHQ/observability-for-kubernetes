@@ -227,6 +227,7 @@ func TestReconcileAll(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
+		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "openshift-service-ca-bundle"))
 		require.True(t, mockKM.AppliedContains("security.openshift.io/v1", "SecurityContextConstraints", "wavefront", "collector", "wavefront-collector-scc"))
 		require.True(t, mockKM.AppliedContains("security.openshift.io/v1", "SecurityContextConstraints", "wavefront", "proxy", "wavefront-proxy-scc"))
 	})
@@ -239,6 +240,7 @@ func TestReconcileAll(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
+		require.False(t, mockKM.AppliedContains("security.openshift.io/v1", "Configmap", "wavefront", "collector", "openshift-service-ca-bundle"))
 		require.False(t, mockKM.AppliedContains("security.openshift.io/v1", "SecurityContextConstraints", "wavefront", "collector", "wavefront-collector-scc"))
 		require.False(t, mockKM.AppliedContains("security.openshift.io/v1", "SecurityContextConstraints", "wavefront", "proxy", "wavefront-proxy-scc"))
 	})
@@ -253,18 +255,8 @@ func TestReconcileCollector(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
-		/* Note: User is responsible for applying ConfigMap; we can't test for new ConfigMap "myconfig" */
-
-		/* It DOES call the ApplyResources function with the ConfigMap, but it's filtered out */
-		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "default-wavefront-collector-config"))
-		require.False(t, mockKM.DeletedContains("v1", "ConfigMap", "wavefront", "collector", "default-wavefront-collector-config"))
-
-		configMapObject, err := mockKM.GetUnstructuredCollectorConfigMap()
-		require.NoError(t, err)
-
-		require.False(t, mockKM.ObjectPassesFilter(
-			configMapObject,
-		))
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "default-wavefront-collector-config"))
+		require.True(t, mockKM.DeletedContains("v1", "ConfigMap", "wavefront", "collector", "default-wavefront-collector-config"))
 	})
 
 	t.Run("can change the default collection interval", func(t *testing.T) {
@@ -325,7 +317,7 @@ func TestReconcileCollector(t *testing.T) {
 		require.True(t, mockKM.CollectorConfigMapContains("kubernetes_state_source"))
 	})
 
-	t.Run("control plane metrics can be enabled", func(t *testing.T) {
+	t.Run("control plane metrics can be enabled when not on an openshift environment", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Enable = true
 			w.Spec.DataCollection.Metrics.ControlPlane.Enable = true
@@ -335,6 +327,22 @@ func TestReconcileCollector(t *testing.T) {
 		require.NoError(t, err)
 
 		require.True(t, mockKM.CollectorConfigMapContains("kubernetes_control_plane_source"))
+
+		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "coredns-control-plane-config", "kube-dns"))
+	})
+
+	t.Run("control plane metrics can be enabled when on an openshift environment", func(t *testing.T) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Enable = true
+			w.Spec.DataCollection.Metrics.ControlPlane.Enable = true
+		}), []string{"security.openshift.io"})
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.True(t, mockKM.CollectorConfigMapContains("kubernetes_control_plane_source"))
+
+		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "coredns-control-plane-config", "bearer_token_file"))
 	})
 
 	t.Run("control plane metrics can be disabled", func(t *testing.T) {
@@ -347,6 +355,23 @@ func TestReconcileCollector(t *testing.T) {
 		require.NoError(t, err)
 
 		require.False(t, mockKM.CollectorConfigMapContains("kubernetes_control_plane_source"))
+
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "coredns-control-plane-config"))
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "openshift-coredns-control-plane-config"))
+	})
+
+	t.Run("control plane metrics can be disabled when on openshift", func(t *testing.T) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Enable = true
+			w.Spec.DataCollection.Metrics.ControlPlane.Enable = false
+		}), []string{"security.openshift.io"})
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.False(t, mockKM.CollectorConfigMapContains("kubernetes_control_plane_source"))
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "coredns-control-plane-config"))
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "openshift-coredns-control-plane-config"))
 	})
 
 	t.Run("can add custom filters", func(t *testing.T) {
@@ -529,7 +554,7 @@ func TestReconcileCollector(t *testing.T) {
 		)
 	})
 
-	t.Run("adds the etcd secrets as a volume for the node collector when there is an etcd-certs secret in the same namespace", func(t *testing.T) {
+	t.Run("adds the etcd secrets as a volume for the node collector and creates the etcd auto-discovery configmap when there is an etcd-certs secret in the same namespace", func(t *testing.T) {
 		r, mockKM := componentScenario(
 			wftest.CR(),
 			nil,
@@ -554,18 +579,23 @@ func TestReconcileCollector(t *testing.T) {
 
 		volumeMountHasPath(t, daemonSet.Spec.Template.Spec.Containers[0], "etcd-certs", "/etc/etcd-certs/", "DaemonSet", daemonSet.Name)
 		volumeHasSecret(t, daemonSet.Spec.Template.Spec.Volumes, "etcd-certs", "etcd-certs", "DaemonSet", daemonSet.Name)
+
+		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "etcd-control-plane-config"))
 	})
 
-	t.Run("does not add the etcd secrets as a volume for the node collector when there is no etcd-certs secret in the same namespace", func(t *testing.T) {
+	t.Run("does not add the etcd secrets as a volume for the node collector or create the etcd auto-discovery configmap when there is no etcd-certs secret in the same namespace", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(), nil)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
 		require.False(t, mockKM.NodeCollectorDaemonSetContains("etcd-certs"))
+
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "etcd-control-plane-config"))
+
 	})
 
-	t.Run("does not add the etcd secrets as a volume for the node collector when control plane metrics are disabled", func(t *testing.T) {
+	t.Run("does not add the etcd secrets as a volume for the node collector or create the etcd auto-discovery configmap when control plane metrics are disabled", func(t *testing.T) {
 		r, mockKM := componentScenario(
 			wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataCollection.Metrics.ControlPlane.Enable = false
@@ -588,6 +618,9 @@ func TestReconcileCollector(t *testing.T) {
 		require.NoError(t, err)
 
 		require.False(t, mockKM.NodeCollectorDaemonSetContains("etcd-certs"))
+
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "etcd-control-plane-config"))
+
 	})
 }
 

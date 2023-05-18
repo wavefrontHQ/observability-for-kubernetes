@@ -16,7 +16,6 @@ import (
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/experimental"
 
-	intdiscovery "github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
 
 	gm "github.com/rcrowley/go-metrics"
@@ -130,7 +129,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	podLister := getPodListerOrDie(kubeClient)
 
-	dm := createDiscoveryManagerOrDie(kubeClient, cfg, sourceManager, sourceManager, podLister)
+	dm := createDiscoveryManagerOrDie(kubeClient, cfg, sourceManager, podLister)
 
 	dataProcessors := createDataProcessorsOrDie(kubeClient, clusterName, podLister, cfg)
 	man, err := manager.NewFlushManager(dataProcessors, sinkManager, cfg.FlushInterval)
@@ -237,7 +236,6 @@ func createDiscoveryManagerOrDie(
 	client *kube_client.Clientset,
 	cfg *configuration.Config,
 	handler metrics.ProviderHandler,
-	internalPluginConfigProvider intdiscovery.PluginProvider,
 	podLister v1listers.PodLister,
 ) *discovery.Manager {
 	if cfg.EnableDiscovery {
@@ -245,12 +243,11 @@ func createDiscoveryManagerOrDie(
 		nodeLister := getNodeListerOrDie(client)
 
 		return discovery.NewDiscoveryManager(discovery.RunConfig{
-			KubeClient:             client,
-			DiscoveryConfig:        cfg.DiscoveryConfig,
-			Handler:                handler,
-			InternalPluginProvider: internalPluginConfigProvider,
-			Lister:                 discovery.NewResourceLister(podLister, serviceLister, nodeLister),
-			ScrapeCluster:          cfg.ScrapeCluster,
+			KubeClient:      client,
+			DiscoveryConfig: cfg.DiscoveryConfig,
+			Handler:         handler,
+			Lister:          discovery.NewResourceLister(podLister, serviceLister, nodeLister),
+			ScrapeCluster:   cfg.ScrapeCluster,
 		})
 	}
 	return nil

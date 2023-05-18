@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	kubernetes_manager "github.com/wavefronthq/observability-for-kubernetes/operator/internal/kubernetes"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -70,12 +69,38 @@ spec:
   type: ClusterIP
 `
 
+const missingCRDYAML = `
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: wavefront-proxy-scc
+  namespace: system
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: proxy
+  annotations:
+    wavefront.com/conditionally-provision: "false"
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegedContainer: false
+readOnlyRootFilesystem: true
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: MustRunAs
+users:
+- system:serviceaccount:observability-system:wavefront-proxy
+`
+
 func TestKubernetesManager(t *testing.T) {
 	t.Run("applying", func(t *testing.T) {
 		t.Run("rejects invalid objects", func(t *testing.T) {
 			km := kubernetes_manager.NewKubernetesManager(fake.NewClientBuilder().Build())
 
-			err := km.ApplyResources([]string{"invalid: {{object}}"}, excludeNothing)
+			err := km.ApplyResources([]string{"invalid: {{object}}"})
 
 			require.ErrorContains(t, err, "yaml: invalid")
 		})
@@ -84,7 +109,7 @@ func TestKubernetesManager(t *testing.T) {
 			objClient := fake.NewClientBuilder().Build()
 			km := kubernetes_manager.NewKubernetesManager(objClient)
 
-			require.NoError(t, km.ApplyResources([]string{fakeServiceYAML}, excludeNothing))
+			require.NoError(t, km.ApplyResources([]string{fakeServiceYAML}))
 
 			require.NoError(t, objClient.Get(
 				context.Background(),
@@ -97,7 +122,7 @@ func TestKubernetesManager(t *testing.T) {
 			objClient := fake.NewClientBuilder().Build()
 			km := kubernetes_manager.NewKubernetesManager(objClient)
 
-			err := km.ApplyResources([]string{fakeServiceYAML, fakeServiceUpdatedYAML}, excludeNothing)
+			err := km.ApplyResources([]string{fakeServiceYAML, fakeServiceUpdatedYAML})
 			require.NoError(t, err)
 
 			var service corev1.Service
@@ -110,24 +135,10 @@ func TestKubernetesManager(t *testing.T) {
 			require.Equal(t, int32(1112), service.Spec.Ports[0].Port)
 		})
 
-		t.Run("filters objects", func(t *testing.T) {
-			objClient := fake.NewClientBuilder().Build()
-			km := kubernetes_manager.NewKubernetesManager(objClient)
-
-			err := km.ApplyResources([]string{fakeServiceYAML}, excludeEverything)
-			require.NoError(t, err)
-
-			require.Error(t, objClient.Get(
-				context.Background(),
-				util.ObjKey("fake-namespace", "fake-name"),
-				&corev1.Service{},
-			))
-		})
-
 		t.Run("reports client errors", func(t *testing.T) {
 			km := kubernetes_manager.NewKubernetesManager(&errClient{errors.New("some error")})
 
-			err := km.ApplyResources([]string{fakeServiceYAML}, excludeNothing)
+			err := km.ApplyResources([]string{fakeServiceYAML})
 			require.Error(t, err)
 		})
 	})
@@ -145,7 +156,7 @@ func TestKubernetesManager(t *testing.T) {
 			objClient := fake.NewClientBuilder().Build()
 			km := kubernetes_manager.NewKubernetesManager(objClient)
 
-			_ = km.ApplyResources([]string{fakeServiceYAML}, excludeNothing)
+			_ = km.ApplyResources([]string{fakeServiceYAML})
 
 			require.NoError(t, km.DeleteResources([]string{fakeServiceYAML}))
 
@@ -168,11 +179,17 @@ func TestKubernetesManager(t *testing.T) {
 			require.NoError(t, km.DeleteResources([]string{fakeServiceYAML}))
 		})
 
+		t.Run("does not return an error for custom objects that are not defined", func(t *testing.T) {
+			km := kubernetes_manager.NewKubernetesManager(fake.NewClientBuilder().Build())
+
+			require.NoError(t, km.DeleteResources([]string{missingCRDYAML}))
+		})
+
 		t.Run("deletes all resources", func(t *testing.T) {
 			objClient := fake.NewClientBuilder().Build()
 			km := kubernetes_manager.NewKubernetesManager(objClient)
 
-			_ = km.ApplyResources([]string{fakeServiceYAML, otherFakeServiceYAML}, excludeNothing)
+			_ = km.ApplyResources([]string{fakeServiceYAML, otherFakeServiceYAML})
 
 			require.NoError(t, km.DeleteResources([]string{fakeServiceYAML, otherFakeServiceYAML}))
 
@@ -189,14 +206,6 @@ func TestKubernetesManager(t *testing.T) {
 			))
 		})
 	})
-}
-
-func excludeEverything(_ *unstructured.Unstructured) bool {
-	return true
-}
-
-func excludeNothing(_ *unstructured.Unstructured) bool {
-	return false
 }
 
 type errClient struct {

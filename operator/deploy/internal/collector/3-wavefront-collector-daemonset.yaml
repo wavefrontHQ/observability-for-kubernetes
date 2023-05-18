@@ -88,6 +88,11 @@ spec:
             - name: config
               mountPath: /etc/collector/
               readOnly: true
+            {{- if and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}
+            - name: openshift-service-ca-bundle
+              mountPath: /etc/openshift-service-ca-bundle/
+              readOnly: true
+            {{- end }}
       volumes:
         - name: procfs
           hostPath:
@@ -100,3 +105,8 @@ spec:
         - name: config
           configMap:
             name: {{ .DataCollection.Metrics.CollectorConfigName }}
+        {{- if and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}
+        - name: openshift-service-ca-bundle
+          configMap:
+            name: openshift-service-ca-bundle
+        {{- end }}

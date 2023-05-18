@@ -221,14 +221,11 @@ Metrics collected per type:
 | kubernetes.node.cpu.node_utilization (node_role="control-plane") | CPU utilization as a share of the contol-plane node allocatable in millicores. | Not available in AKS, EKS, GKE |
 | kubernetes.node.memory.working_set (node_role="control-plane") | Total working set usage of the control-plane node. Working set is the memory being used and not easily dropped by the kernel. | Not available in AKS, EKS, GKE |
 | kubernetes.node.filesystem.usage (node_role="control-plane") | Total number of bytes consumed on a filesyste of the control-plane node | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.apiserver.request.duration.seconds.bucket | Histogram buckets for API server request latency | - |
-| kubernetes.controlplane.apiserver.request.duration.seconds | API server request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | - |
+| kubernetes.controlplane.apiserver.request.duration.seconds.m | API server request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | - |
 | kubernetes.controlplane.apiserver.request.total.counter | API server total request count | - |
 | kubernetes.controlplane.workqueue.adds.total.counter | Current depth of API server workqueue | - |
-| kubernetes.controlplane.workqueue.queue.duration.seconds.bucket | Histogram buckets for workqueue latency | - |
-| kubernetes.controlplane.workqueue.queue.duration.seconds | workqueue latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | - |
-| kubernetes.controlplane.coredns.dns.request.duration.seconds.bucket | Histogram buckets for CoreDNS request latency | Not available in GKE, OpenShift |
-| kubernetes.controlplane.coredns.dns.request.duration.seconds | CoreDNS request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in GKE, OpenShift |
+| kubernetes.controlplane.workqueue.queue.duration.seconds.m | workqueue latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | - |
+| kubernetes.controlplane.coredns.dns.request.duration.seconds.m | CoreDNS request latency as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in GKE, OpenShift |
 | kubernetes.controlplane.coredns.dns.responses.total.counter | CoreDNS total response count | Not available in GKE, OpenShift |
 
 ### etcd Metrics
@@ -245,8 +242,8 @@ Metrics collected for etcd:
 | kubernetes.controlplane.etcd.server.proposals.applied.total.gauge | The total number of concensus proposals applied. | Not available in AKS, EKS, GKE |
 | kubernetes.controlplane.etcd.server.proposals.committed.total.gauge | The total number of consensus proposals committed. | Not available in AKS, EKS, GKE |
 | kubernetes.controlplane.etcd.server.proposals.pending.gauge | The current number of pending proposals to commit. | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.disk.wal.fsync.duration.seconds.bucket | The latency distributions of fsync called by wal. | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.disk.backend.commit.duration.seconds.bucket | The latency distributions of commit called by backend. | Not available in AKS, EKS, GKE |
-| kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.bucket | Round-Trip-Time between peers. | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.disk.wal.fsync.duration.seconds.m | The latency distributions of fsync called by wal as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.disk.backend.commit.duration.seconds.m | The latency distributions of commit called by backend as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in AKS, EKS, GKE |
+| kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.m | Round-Trip-Time between peers as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in AKS, EKS, GKE |
 | kubernetes.controlplane.etcd.network.peer.sent.failures.total.counter | The total number of failures sent by peers. | Not available in AKS, EKS, GKE |
 | kubernetes.controlplane.etcd.network.peer.received.failures.total.counter | The total number of failures received by peers. | Not available in AKS, EKS, GKE |

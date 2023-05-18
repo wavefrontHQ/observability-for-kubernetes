@@ -6,9 +6,6 @@ import (
 
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
-
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/prometheus"
 
@@ -57,37 +54,6 @@ func (p *provider) Name() string {
 	return metricsSource
 }
 
-func (p *provider) DiscoveryPluginConfigs() []discovery.PluginConfig {
-	if !util.ScrapeAnyNodes() {
-		return nil
-	}
-	return []discovery.PluginConfig{{
-		Name: "coredns-discovery-controlplane",
-		Type: "prometheus",
-		Selectors: discovery.Selectors{
-			Images: []string{"*coredns:*"},
-			Labels: map[string][]string{
-				"k8s-app": {"kube-dns"},
-			},
-		},
-		Port:   "9153",
-		Scheme: "http",
-		Path:   "/metrics",
-		Prefix: metricsPrefix,
-		Filters: filter.Config{
-			MetricAllowList: []string{
-				metricsPrefix + "coredns.dns.request.duration.seconds.bucket",
-				metricsPrefix + "coredns.dns.responses.total.counter",
-			},
-		},
-		Collection: discovery.CollectionConfig{
-			Interval: p.CollectionInterval(),
-			Timeout:  p.Timeout(),
-		},
-		Internal: true,
-	}}
-}
-
 func buildPromConfigs(cfg configuration.ControlPlaneSourceConfig, summaryCfg configuration.SummarySourceConfig) []configuration.PrometheusSourceConfig {
 	var prometheusSourceConfigs []configuration.PrometheusSourceConfig
 
@@ -108,11 +74,9 @@ func buildPromConfigs(cfg configuration.ControlPlaneSourceConfig, summaryCfg con
 		},
 	}
 	metricAllowList := []string{
-		metricsPrefix + "etcd.request.duration.seconds.bucket",
 		metricsPrefix + "etcd.request.duration.seconds",
 		metricsPrefix + "etcd.db.total.size.in.bytes.gauge",
 		metricsPrefix + "workqueue.adds.total.counter",
-		metricsPrefix + "workqueue.queue.duration.seconds.bucket",
 		metricsPrefix + "workqueue.queue.duration.seconds",
 	}
 
@@ -120,7 +84,6 @@ func buildPromConfigs(cfg configuration.ControlPlaneSourceConfig, summaryCfg con
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promSourceConfig)
 
 	apiServerAllowList := []string{
-		metricsPrefix + "apiserver.request.duration.seconds.bucket",
 		metricsPrefix + "apiserver.request.duration.seconds",
 		metricsPrefix + "apiserver.request.total.counter",
 		metricsPrefix + "apiserver.storage.objects.gauge",

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: collector
+  name: openshift-service-ca-bundle
+  namespace: {{ .Namespace }}
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: wavefront-controller-manager
+    uid: {{ .ControllerManagerUID }}
+  annotations:
+    service.beta.openshift.io/inject-cabundle: "true"
+    wavefront.com/conditionally-provision: '{{ and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}'

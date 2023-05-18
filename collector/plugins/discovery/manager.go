@@ -32,12 +32,11 @@ func init() {
 
 // RunConfig encapsulates the runtime configuration required for a discovery manager
 type RunConfig struct {
-	KubeClient             kubernetes.Interface
-	DiscoveryConfig        discovery.Config
-	Handler                metrics.ProviderHandler
-	InternalPluginProvider discovery.PluginProvider
-	Lister                 discovery.ResourceLister
-	ScrapeCluster          bool
+	KubeClient      kubernetes.Interface
+	DiscoveryConfig discovery.Config
+	Handler         metrics.ProviderHandler
+	Lister          discovery.ResourceLister
+	ScrapeCluster   bool
 }
 
 // Manager manages the discovery of kubernetes targets based on annotations or configuration rules.
@@ -74,7 +73,6 @@ func (dm *Manager) Start() {
 		dm.configListener = newConfigHandler(
 			dm.runConfig.KubeClient,
 			dm.runConfig.DiscoveryConfig,
-			dm.runConfig.InternalPluginProvider,
 		)
 		if !dm.configListener.start() {
 			log.Error("timed out waiting for configmap caches to sync")

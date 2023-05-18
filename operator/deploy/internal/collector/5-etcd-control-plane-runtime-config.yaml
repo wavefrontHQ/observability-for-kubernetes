@@ -1,7 +1,9 @@
-{{- if .DataCollection.Metrics.ControlPlane.EnableEtcd }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: collector
   name: etcd-control-plane-config
   namespace: {{ .Namespace }}
   ownerReferences:
@@ -11,6 +13,7 @@ metadata:
     uid: {{ .ControllerManagerUID }}
   annotations:
     wavefront.com/discovery-config: 'true'
+    wavefront.com/conditionally-provision: '{{ .DataCollection.Metrics.ControlPlane.EnableEtcd }}'
 data:
   collector.yaml: |
     plugins:
@@ -34,4 +37,3 @@ data:
           ca_file: '/etc/etcd-certs/ca_crt'
           cert_file: '/etc/etcd-certs/server_crt'
           key_file: '/etc/etcd-certs/server_key'
-{{- end }}

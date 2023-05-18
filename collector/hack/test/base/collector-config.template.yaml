@@ -96,14 +96,9 @@ data:
         port: 9153
         path: /metrics
         scheme: http
-        prefix: kube.coredns.
+        prefix: kubernetes.controlplane.
+        convertHistograms: true
         filters:
-          metricWhitelist:
-          - 'kube.coredns.coredns.cache.*'
-          - 'kube.coredns.coredns.dns.request.count.total.counter'
-          - 'kube.coredns.coredns.dns.request.duration.seconds'
-          - 'kube.coredns.coredns.dns.request.size.bytes'
-          - 'kube.coredns.coredns.dns.request.type.count.total.counter'
-          - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
-          - 'kube.coredns.coredns.dns.response.size.bytes'
-          - 'kube.coredns.process.*'
+          metricAllowList:
+          - 'kubernetes.controlplane.coredns.dns.request.duration.seconds'
+          - 'kubernetes.controlplane.coredns.dns.responses.total.counter'

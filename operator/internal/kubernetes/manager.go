@@ -3,6 +3,8 @@ package kubernetes_manager
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/meta"
+
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -28,17 +30,13 @@ func NewKubernetesManager(objClient Client) *KubernetesManager {
 	return &KubernetesManager{objClient: objClient}
 }
 
-func (km *KubernetesManager) ApplyResources(resourceYAMLs []string, exclude func(*unstructured.Unstructured) bool) error {
+func (km *KubernetesManager) ApplyResources(resourceYAMLs []string) error {
 	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
 	for _, resourceYAML := range resourceYAMLs {
 		object := &unstructured.Unstructured{}
 		_, gvk, err := resourceDecoder.Decode([]byte(resourceYAML), nil, object)
 		if err != nil {
 			return err
-		}
-
-		if exclude(object) {
-			continue
 		}
 
 		var getObj unstructured.Unstructured
@@ -68,7 +66,7 @@ func (km *KubernetesManager) DeleteResources(resourceYAMLs []string) error {
 		}
 
 		err = km.objClient.Delete(context.Background(), object)
-		if err != nil && !errors.IsNotFound(err) {
+		if err != nil && !errors.IsNotFound(err) && !meta.IsNoMatchError(err) {
 			return err
 		}
 	}
