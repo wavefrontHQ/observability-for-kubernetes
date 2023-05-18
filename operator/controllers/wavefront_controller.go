@@ -140,7 +140,7 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			Requeue: true,
 		}, nil
 	}
-
+	log.Log.Info("Dummy commit")
 	return ctrl.Result{
 		Requeue:      true,
 		RequeueAfter: maxReconcileInterval,
