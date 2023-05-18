@@ -2,15 +2,13 @@ package senders
 
 import (
 	"fmt"
+	"github.com/wavefronthq/wavefront-sdk-go/event"
+	"github.com/wavefronthq/wavefront-sdk-go/histogram"
+	"github.com/wavefronthq/wavefront-sdk-go/internal"
 	eventInternal "github.com/wavefronthq/wavefront-sdk-go/internal/event"
 	histogramInternal "github.com/wavefronthq/wavefront-sdk-go/internal/histogram"
 	"github.com/wavefronthq/wavefront-sdk-go/internal/metric"
 	"github.com/wavefronthq/wavefront-sdk-go/internal/span"
-	"time"
-
-	"github.com/wavefronthq/wavefront-sdk-go/event"
-	"github.com/wavefronthq/wavefront-sdk-go/histogram"
-	"github.com/wavefronthq/wavefront-sdk-go/internal"
 )
 
 // Sender Interface for sending metrics, distributions and spans to Wavefront
@@ -58,8 +56,6 @@ type wavefrontSender struct {
 }
 
 func newLineHandler(reporter internal.Reporter, cfg *configuration, format, prefix string, registry *internal.MetricRegistry) *internal.LineHandler {
-	flushInterval := time.Second * time.Duration(cfg.FlushIntervalSeconds)
-
 	opts := []internal.LineHandlerOption{internal.SetHandlerPrefix(prefix), internal.SetRegistry(registry)}
 	batchSize := cfg.BatchSize
 	if format == internal.EventFormat {
@@ -67,7 +63,7 @@ func newLineHandler(reporter internal.Reporter, cfg *configuration, format, pref
 		opts = append(opts, internal.SetLockOnThrottledError(true))
 	}
 
-	return internal.NewLineHandler(reporter, format, flushInterval, batchSize, cfg.MaxBufferSize, opts...)
+	return internal.NewLineHandler(reporter, format, cfg.FlushInterval, batchSize, cfg.MaxBufferSize, opts...)
 }
 
 func (sender *wavefrontSender) Start() {
