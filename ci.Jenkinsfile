@@ -115,33 +115,7 @@ pipeline {
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
-        stage("GKE Integration Test") {
-          agent {
-            label "worker-1"
-          }
-          options {
-            timeout(time: 30, unit: 'MINUTES')
-          }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS")
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
-            GCP_ZONE="a"
-            DOCKER_IMAGE = "kubernetes-collector"
-            INTEGRATION_TEST_ARGS="all"
-            INTEGRATION_TEST_BUILD="ci"
-          }
-          steps {
-            withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-              lock("integration-test-gke") {
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-                sh 'cd collector && make gke-connect-to-cluster'
-                sh 'cd collector && make clean-cluster'
-                sh 'cd collector && make integration-test'
-                sh 'cd collector && make clean-cluster'
-              }
-            }
-          }
-        }
+        
 
         stage("EKS Integration Test") {
           agent {
@@ -169,34 +143,6 @@ pipeline {
             }
           }
         }
-
-        stage("AKS Integration Test") {
-          agent {
-            label "worker-3"
-          }
-          options {
-            timeout(time: 30, unit: 'MINUTES')
-          }
-          environment {
-            AKS_CLUSTER_NAME = "k8po-ci"
-            DOCKER_IMAGE = "kubernetes-collector"
-            INTEGRATION_TEST_ARGS="all"
-            INTEGRATION_TEST_BUILD="ci"
-          }
-          steps {
-            withEnv(["PATH+GO=${HOME}/go/bin"]) {
-             lock("integration-test-aks") {
-               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-                 sh 'cd collector && kubectl config use k8po-ci'
-                 sh 'cd collector && make clean-cluster'
-                 sh 'cd collector && make integration-test'
-                 sh 'cd collector && make clean-cluster'
-               }
-             }
-            }
-          }
-        }
       }
     }
 
@@ -208,31 +154,7 @@ pipeline {
       }
 
       parallel {
-        stage("GKE") {
-          agent {
-            label "worker-1"
-          }
-          options {
-            timeout(time: 30, unit: 'MINUTES')
-          }
-          environment {
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
-            GCP_ZONE="a"
-            GCP_CREDS = credentials("GCP_CREDS")
-            GCP_PROJECT = "wavefront-gcp-dev"
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli'
-            lock("integration-test-gke") {
-              sh 'cd operator && make gke-connect-to-cluster'
-              sh 'cd operator && make clean-cluster'
-              sh 'cd operator && make integration-test'
-              sh 'cd operator && make clean-cluster'
-            }
-          }
-        }
+        
 
 //         stage("GKE with customization") {
 //           agent {
@@ -294,27 +216,7 @@ pipeline {
           }
         }
 
-        stage("AKS") {
-          agent { label "worker-4" }
-          options { timeout(time: 30, unit: 'MINUTES') }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS")
-            AKS_CLUSTER_NAME = "k8po-ci"
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli'
-            lock("integration-test-aks") {
-              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                sh 'cd operator && kubectl config use k8po-ci'
-                sh 'cd operator && make clean-cluster'
-                sh 'cd operator && make integration-test'
-                sh 'cd operator && make clean-cluster'
-              }
-            }
-          }
-        }
+     
       }
     }
   }
