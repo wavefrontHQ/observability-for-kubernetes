@@ -94,8 +94,13 @@ osstp-load.py \
   "${baseos_append_flag[@]}" \
   --noinput \
   --baseos-ct-tracker "$CT_TRACKER_ID" \
-  binary_scan/osspi_binary_detect_result.manifest
+  binary_scan/osspi_binary_detect_result.manifest > loadOutput.txt
 set +x
+
+if grep -q "otc-00023" loadOutput.txt; then
+    echo "osstp-load.py failed due to [otc-00023]: Warning: No BaseOS package available error. "
+    exit 1
+fi
 
 # Uncomment to cause a failure so we can hijack and get docker scan results for debugging
 #echo 'AAGHH'
