@@ -10,6 +10,7 @@ cd "$SCRIPT_DIR"
 
 echo "Deploying targets..."
 
+set -x
 kubectl delete namespace collector-targets &> /dev/null || true
 
 wait_for_namespace_created collector-targets
