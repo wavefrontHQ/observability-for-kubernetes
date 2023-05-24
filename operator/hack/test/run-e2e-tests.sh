@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -x
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
