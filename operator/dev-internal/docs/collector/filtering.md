@@ -33,7 +33,7 @@ sinks:
     # Filter out all go runtime metrics for kube-dns and apiserver.
     metricDenyList:
     - 'kube.dns.go.*'
-    - 'kube.apiserver.go.*'
+    - 'kubernetes.controlplane.apiserver.go.*'
 
     # Allow metrics that have an environment tag of production or staging.
     metricTagAllowList:

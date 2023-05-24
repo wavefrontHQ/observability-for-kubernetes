@@ -95,12 +95,12 @@ data:
           tls_config:
             ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
             insecure_skip_verify: true
-        prefix: kube.apiserver.
+        prefix: kubernetes.controlplane.
         filters:
           metricWhitelist:
-          - 'kube.apiserver.apiserver.*'
-          - 'kube.apiserver.etcd.*'
-          - 'kube.apiserver.process.*'
+          - 'kubernetes.controlplane.apiserver.*'
+          - 'kubernetes.controlplane.etcd.*'
+          - 'kubernetes.controlplane.process.*'
       {{- end }}
 
     {{- if .Values.collector.events.enabled }}

@@ -329,6 +329,7 @@ func TestReconcileCollector(t *testing.T) {
 		require.True(t, mockKM.CollectorConfigMapContains("kubernetes_control_plane_source"))
 
 		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "coredns-control-plane-config", "kube-dns"))
+		require.True(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "apiserver-control-plane-config", "bearer_token_file"))
 	})
 
 	t.Run("control plane metrics can be enabled when on an openshift environment", func(t *testing.T) {
@@ -358,6 +359,7 @@ func TestReconcileCollector(t *testing.T) {
 
 		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "coredns-control-plane-config"))
 		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "openshift-coredns-control-plane-config"))
+		require.False(t, mockKM.AppliedContains("v1", "ConfigMap", "wavefront", "collector", "apiserver-control-plane-config"))
 	})
 
 	t.Run("control plane metrics can be disabled when on openshift", func(t *testing.T) {

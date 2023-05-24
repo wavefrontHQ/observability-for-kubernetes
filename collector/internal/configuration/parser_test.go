@@ -69,7 +69,7 @@ sources:
       tls_config:
         ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
         insecure_skip_verify: true
-    prefix: 'kube.apiserver.'
+    prefix: 'kubernetes.controlplane.'
 
   telegraf_sources:
     - plugins: [cpu]
@@ -114,7 +114,7 @@ func TestFromYAML(t *testing.T) {
 
 	assert.True(t, len(cfg.Sources.PrometheusConfigs) > 0)
 	assert.Equal(t, "kubernetes.", cfg.Sources.SummaryConfig.Prefix)
-	assert.Equal(t, "kube.apiserver.", cfg.Sources.PrometheusConfigs[0].Prefix)
+	assert.Equal(t, "kubernetes.controlplane.", cfg.Sources.PrometheusConfigs[0].Prefix)
 	assert.Equal(t, "kubernetes.cadvisor.", cfg.Sources.CadvisorConfig.Prefix)
 	assert.Equal(t, "histogram-conversion", cfg.Experimental[0])
 
