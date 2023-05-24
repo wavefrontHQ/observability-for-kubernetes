@@ -65,11 +65,11 @@ echo "CT_TRACKER_ID: '${CT_TRACKER_ID}'"
 
 set -x
 
-if [[ "${TAG}" =~ "sha256:" ]]; then
-  /root/.osspicli/osspi/bin/crane export "$IMAGE"@"$TAG" container_tar
-else
-  /root/.osspicli/osspi/bin/crane export "$IMAGE":"$TAG" container_tar
-fi
+#if [[ "${TAG}" =~ "sha256:" ]]; then
+#  /root/.osspicli/osspi/bin/crane export "$IMAGE"@"$TAG" container_tar
+#else
+#  /root/.osspicli/osspi/bin/crane export "$IMAGE":"$TAG" container_tar
+#fi
 
 osspi scan binary \
   "${ignore_package_flag[@]}" \

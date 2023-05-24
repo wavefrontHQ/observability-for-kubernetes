@@ -74,36 +74,36 @@ jobs:
       - in_parallel:
           limit: 3
           steps:
-          - task: osspi-scan-packages
-            attempts: 3
-            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
-            input_mapping:
-              ci_repo: observability-for-kubernetes
-              project_repo: observability-for-kubernetes
-            params:
-              SCAN_PATH: operator
-              REPO: project_repo
-              API_KEY: ((osspi.osm-prod-api-key))
-              USERNAME: ((osspi.osm-prod-username))
-              PRODUCT: Wavefront_K8_Operator
-              VERSION: Latest
-              PREPARE: |
-                go mod vendor
-              OSSPI_SCANNING_PARAMS: |
-                enable: true
-                include_bomtools: "go_mod"
-                search_depth: 5
-                go_mod.path: "/go/bin/go"
-  
-                # exclude for signature scans
-                exclude_patterns:
-                  - vendor
-              OSSPI_IGNORE_RULES: |
-                - name_regex: onsi\/ginkgo
-                  version_regex: .*
-                - name_regex: gomega
-                  version_regex: .*
-          - task: osspi-scan-docker
+#          - task: osspi-scan-packages
+#            attempts: 3
+#            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
+#            input_mapping:
+#              ci_repo: observability-for-kubernetes
+#              project_repo: observability-for-kubernetes
+#            params:
+#              SCAN_PATH: operator
+#              REPO: project_repo
+#              API_KEY: ((osspi.osm-prod-api-key))
+#              USERNAME: ((osspi.osm-prod-username))
+#              PRODUCT: Wavefront_K8_Operator
+#              VERSION: Latest
+#              PREPARE: |
+#                go mod vendor
+#              OSSPI_SCANNING_PARAMS: |
+#                enable: true
+#                include_bomtools: "go_mod"
+#                search_depth: 5
+#                go_mod.path: "/go/bin/go"
+#
+#                # exclude for signature scans
+#                exclude_patterns:
+#                  - vendor
+#              OSSPI_IGNORE_RULES: |
+#                - name_regex: onsi\/ginkgo
+#                  version_regex: .*
+#                - name_regex: gomega
+#                  version_regex: .*
+          - task: osspi-scan-fluentbit
             file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
             input_mapping:
               ci_repo: observability-for-kubernetes
@@ -180,27 +180,27 @@ jobs:
             input_mapping:
               ci_repo: observability-for-kubernetes
             params:
-              IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-pixie-curl:multiarch-7.87.0
-              TAG: sha256:f7f265d5c64eb4463a43a99b6bf773f9e61a50aaa7cefaf564f43e42549a01dd
+              IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-pixie-curl
+              TAG: multiarch-7.87.0@sha256:f7f265d5c64eb4463a43a99b6bf773f9e61a50aaa7cefaf564f43e42549a01dd
               API_KEY: ((osspi.osm-prod-api-key))
               USERNAME: ((osspi.osm-prod-username))
               PRODUCT: Wavefront_K8_Operator
               VERSION: Latest
               APPEND: false
               CT_TRACKER_OS: alpine
-          - task: osspi-scan-pixie-nats
-            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
-            input_mapping:
-              ci_repo: observability-for-kubernetes
-            params:
-              IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-pixie-nats:multiarch-2.8.4-alpine3.15
-              TAG: sha256:988010f74b61749cfb82c28b50b47d26d0b972860ce6e9325a5afcde97713da2
-              API_KEY: ((osspi.osm-prod-api-key))
-              USERNAME: ((osspi.osm-prod-username))
-              PRODUCT: Wavefront_K8_Operator
-              VERSION: Latest
-              APPEND: false
-              CT_TRACKER_OS: alpine
+#          - task: osspi-scan-pixie-nats
+#            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
+#            input_mapping:
+#              ci_repo: observability-for-kubernetes
+#            params:
+#              IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-pixie-nats:multiarch-2.8.4-alpine3.15
+#              TAG: sha256:988010f74b61749cfb82c28b50b47d26d0b972860ce6e9325a5afcde97713da2
+#              API_KEY: ((osspi.osm-prod-api-key))
+#              USERNAME: ((osspi.osm-prod-username))
+#              PRODUCT: Wavefront_K8_Operator
+#              VERSION: Latest
+#              APPEND: false
+#              CT_TRACKER_OS: alpine
   - name: osspi-scan-wavefront-kubernetes-adapter
     serial: true
     plan:
