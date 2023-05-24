@@ -116,7 +116,7 @@ jobs:
               VERSION: Latest
               APPEND: true
           - task: osspi-scan-pixie-kelvin
-            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
+            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
             input_mapping:
               ci_repo: observability-for-kubernetes
             params:
@@ -126,9 +126,10 @@ jobs:
               USERNAME: ((osspi.osm-prod-username))
               PRODUCT: Wavefront_K8_Operator
               VERSION: Latest
-              APPEND: false
+              APPEND: true
+              SCAN_TYPE: binary
           - task: osspi-scan-pixie-query-broker
-            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
+            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
             input_mapping:
               ci_repo: observability-for-kubernetes
             params:
@@ -138,9 +139,10 @@ jobs:
               USERNAME: ((osspi.osm-prod-username))
               PRODUCT: Wavefront_K8_Operator
               VERSION: Latest
-              APPEND: false
+              APPEND: true
+              SCAN_TYPE: binary
           - task: osspi-scan-pixie-metadata
-            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
+            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
             input_mapping:
               ci_repo: observability-for-kubernetes
             params:
@@ -150,21 +152,23 @@ jobs:
               USERNAME: ((osspi.osm-prod-username))
               PRODUCT: Wavefront_K8_Operator
               VERSION: Latest
-              APPEND: false
-#          - task: osspi-scan-pixie-pem
-#            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
-#            input_mapping:
-#              ci_repo: observability-for-kubernetes
-#            params:
-#              IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-pixie-pem_image
-#              TAG: 0.13.2
-#              API_KEY: ((osspi.osm-prod-api-key))
-#              USERNAME: ((osspi.osm-prod-username))
-#              PRODUCT: Wavefront_K8_Operator
-#              VERSION: Latest
-#              APPEND: false
+              APPEND: true
+              SCAN_TYPE: binary
+          - task: osspi-scan-pixie-pem
+            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
+            input_mapping:
+              ci_repo: observability-for-kubernetes
+            params:
+              IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-pixie-pem_image
+              TAG: 0.13.2
+              API_KEY: ((osspi.osm-prod-api-key))
+              USERNAME: ((osspi.osm-prod-username))
+              PRODUCT: Wavefront_K8_Operator
+              VERSION: Latest
+              APPEND: true
+              SCAN_TYPE: binary
           - task: osspi-scan-pixie-cert-provisioner
-            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
+            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
             input_mapping:
               ci_repo: observability-for-kubernetes
             params:
@@ -174,9 +178,10 @@ jobs:
               USERNAME: ((osspi.osm-prod-username))
               PRODUCT: Wavefront_K8_Operator
               VERSION: Latest
-              APPEND: false
+              APPEND: true
+              SCAN_TYPE: binary
           - task: osspi-scan-pixie-curl
-            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
+            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
             input_mapping:
               ci_repo: observability-for-kubernetes
             params:
@@ -186,21 +191,21 @@ jobs:
               USERNAME: ((osspi.osm-prod-username))
               PRODUCT: Wavefront_K8_Operator
               VERSION: Latest
-              APPEND: false
-              CT_TRACKER_OS: alpine
-#          - task: osspi-scan-pixie-nats
-#            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
-#            input_mapping:
-#              ci_repo: observability-for-kubernetes
-#            params:
-#              IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-pixie-nats:multiarch-2.8.4-alpine3.15
-#              TAG: sha256:988010f74b61749cfb82c28b50b47d26d0b972860ce6e9325a5afcde97713da2
-#              API_KEY: ((osspi.osm-prod-api-key))
-#              USERNAME: ((osspi.osm-prod-username))
-#              PRODUCT: Wavefront_K8_Operator
-#              VERSION: Latest
-#              APPEND: false
-#              CT_TRACKER_OS: alpine
+              APPEND: true
+              SCAN_TYPE: binary
+          - task: osspi-scan-pixie-nats
+            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
+            input_mapping:
+              ci_repo: observability-for-kubernetes
+            params:
+              IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-pixie-nats
+              TAG: multiarch-2.8.4-alpine3.15@sha256:988010f74b61749cfb82c28b50b47d26d0b972860ce6e9325a5afcde97713da2
+              API_KEY: ((osspi.osm-prod-api-key))
+              USERNAME: ((osspi.osm-prod-username))
+              PRODUCT: Wavefront_K8_Operator
+              VERSION: Latest
+              APPEND: true
+              SCAN_TYPE: binary
   - name: osspi-scan-wavefront-kubernetes-adapter
     serial: true
     plan:
