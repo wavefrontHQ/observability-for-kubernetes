@@ -71,6 +71,8 @@ set -x
 #  /root/.osspicli/osspi/bin/crane export "$IMAGE":"$TAG" container_tar
 #fi
 
+/root/.osspicli/osspi/bin/crane export "$IMAGE":"$TAG" container_tar
+
 osspi scan binary \
   "${ignore_package_flag[@]}" \
   --upload-file container_tar \

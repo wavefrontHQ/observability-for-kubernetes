@@ -151,18 +151,18 @@ jobs:
               PRODUCT: Wavefront_K8_Operator
               VERSION: Latest
               APPEND: false
-          - task: osspi-scan-pixie-pem
-            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
-            input_mapping:
-              ci_repo: observability-for-kubernetes
-            params:
-              IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-pixie-pem_image
-              TAG: 0.13.2
-              API_KEY: ((osspi.osm-prod-api-key))
-              USERNAME: ((osspi.osm-prod-username))
-              PRODUCT: Wavefront_K8_Operator
-              VERSION: Latest
-              APPEND: false
+#          - task: osspi-scan-pixie-pem
+#            file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
+#            input_mapping:
+#              ci_repo: observability-for-kubernetes
+#            params:
+#              IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-pixie-pem_image
+#              TAG: 0.13.2
+#              API_KEY: ((osspi.osm-prod-api-key))
+#              USERNAME: ((osspi.osm-prod-username))
+#              PRODUCT: Wavefront_K8_Operator
+#              VERSION: Latest
+#              APPEND: false
           - task: osspi-scan-pixie-cert-provisioner
             file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-binary.yaml
             input_mapping:
