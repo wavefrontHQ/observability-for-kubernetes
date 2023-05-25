@@ -271,16 +271,20 @@ function run_logging_integration_checks() {
   printf "Running logging checks with test-proxy ..."
 
   # send request to the fake proxy control endpoint and check status code for success
-  kill $(jobs -p) &>/dev/null || true
+  RES=$(mktemp)
+  jobs -p
+  kill "$(jobs -p)" || true
   sleep 3
   kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &
-  trap 'kill $(jobs -p) &>/dev/null || true' EXIT
+  jobs -p
+  trap 'set -x; cat "$RES"; kill "$(jobs -p)"' EXIT
   sleep 3
+  jobs -p
 
-  RES=$(mktemp)
+
 
   for _ in {1..10}; do
-    RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" "http://localhost:8888/logs/assert")
+    RES_CODE=$(set -x; curl --silent --output "$RES" --write-out "%{http_code}" "http://localhost:8888/logs/assert")
     if [[ $RES_CODE -eq 200 ]]; then
       break
     fi
