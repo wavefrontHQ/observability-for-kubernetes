@@ -275,10 +275,10 @@ function run_logging_integration_checks() {
   CURL_ERR=$(mktemp)
   PF_OUT=$(mktemp)
   jobs -l
-  netstat -anp
+  netstat -tnulp
   kill "$(jobs -p)" || true
   sleep 3
-  netstat -anp
+  netstat -tnulp
   kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &> "$PF_OUT" &
   echo "Last background process: $!"
   jobs -l
