@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -e
-set -x
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
@@ -274,22 +273,20 @@ function run_logging_integration_checks() {
   CURL_OUT=$(mktemp)
   CURL_ERR=$(mktemp)
   PF_OUT=$(mktemp)
-  jobs -l
-  netstat -tnulp
+  jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  netstat -tnulp # TODO: Delete me once CI stabilizes from K8SSAAS-1910
   kill "$(jobs -p)" || true
   sleep 3
-  netstat -tnulp
+  netstat -tnulp # TODO: Delete me once CI stabilizes from K8SSAAS-1910
   kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &> "$PF_OUT" &
-  echo "Last background process: $!"
-  jobs -l
-  trap 'set -x; cat "$PF_OUT"; cat "$CURL_OUT"; cat "$CURL_ERR"; kill "$(jobs -p)"' EXIT
+  jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  trap 'echo "PF_OUT:"; cat "$PF_OUT"; echo "CURL_OUT:"; cat "$CURL_OUT"; echo "CURL_ERR:"; cat "$CURL_ERR"; echo "Killing jobs: $(jobs -l)"; kill "$(jobs -p)"' EXIT
   sleep 3
-  jobs -l
 
 
 
   for _ in {1..10}; do
-    CURL_CODE=$(set -x; curl --silent --show-error --output "$CURL_OUT" --stderr "$CURL_ERR" --write-out "%{http_code}" "http://localhost:8888/logs/assert")
+    CURL_CODE=$(curl --silent --show-error --output "$CURL_OUT" --stderr "$CURL_ERR" --write-out "%{http_code}" "http://localhost:8888/logs/assert")
     if [[ $CURL_CODE -eq 200 ]]; then
       break
     fi
