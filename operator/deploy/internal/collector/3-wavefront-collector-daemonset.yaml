@@ -43,6 +43,10 @@ spec:
       {{- end }}
       serviceAccountName: wavefront-collector
       automountServiceAccountToken: true
+      {{- if .ImagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .ImagePullSecret }}
+      {{- end }}
       containers:
         - name: wavefront-collector
           securityContext:

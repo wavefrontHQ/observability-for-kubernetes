@@ -40,6 +40,10 @@ spec:
         - effect: NoSchedule
           key: kubernetes.io/arch
           value: arm64
+      {{- if .ImagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .ImagePullSecret }}
+      {{- end }}
       {{- if .DataExport.WavefrontProxy.HttpProxy.UseHttpProxyCAcert }}
       initContainers:
       - name: pem-to-keystore
