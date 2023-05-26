@@ -210,7 +210,7 @@ function main() {
      --arg cluster "$CONFIG_CLUSTER_NAME" \
      '$ARGS.named' | \
      sort | sed 's/,//g' > "$EXPECTED_TAGS_JSON"
-  exit_on_fail wait_for_query_match_tags "at(%22end%22%2C%202m%2C%20ts(%22kubernetes.cluster.pod.count%22%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22))" "${EXPECTED_TAGS_JSON}"
+  exit_on_fail wait_for_query_match_tags "at(%22end%22%2C%202m%2C%20ts(%22kubernetes.collector.version%22%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22))" "${EXPECTED_TAGS_JSON}"
   echo Expected collector version: $COLLECTOR_VERSION_IN_DECIMAL
   exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(kubernetes.collector.version%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22%20AND%20installation_method%3D%22operator%22))" "${COLLECTOR_VERSION_IN_DECIMAL}"
   exit_on_fail wait_for_query_non_zero "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22)"

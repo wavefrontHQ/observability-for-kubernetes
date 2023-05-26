@@ -20,5 +20,6 @@ params:
   OSSPI_IGNORE_RULES:
   APPEND:
   CT_TRACKER_OS: debian
+  SCAN_TYPE: docker # Use 'binary' if 'docker' results in 0 packages found
 run:
   path: ci_repo/osspi/tasks/osspi/run-osspi-docker.sh

@@ -64,11 +64,20 @@ fi
 echo "CT_TRACKER_ID: '${CT_TRACKER_ID}'"
 
 set -x
-osspi scan docker \
-  "${ignore_package_flag[@]}" \
-  --image "$IMAGE":"$TAG" \
-  --format manifest \
-  --output-dir docker_scan
+if [ "${SCAN_TYPE}" == "binary" ]; then
+  /root/.osspicli/osspi/bin/crane export "$IMAGE":"$TAG" container_tar
+  osspi scan binary \
+    "${ignore_package_flag[@]}" \
+    --upload-file container_tar \
+    --format manifest \
+    --output-dir docker_scan
+else
+  osspi scan docker \
+    "${ignore_package_flag[@]}" \
+    --image "$IMAGE":"$TAG" \
+    --format manifest \
+    --output-dir docker_scan
+fi
 set +x
 
 declare -a osstp_dry_run_flag
@@ -86,8 +95,14 @@ osstp-load.py \
   "${baseos_append_flag[@]}" \
   --noinput \
   --baseos-ct-tracker "$CT_TRACKER_ID" \
-  docker_scan/osspi_docker_detect_result.manifest
+  docker_scan/osspi_"${SCAN_TYPE}"_detect_result.manifest > osstp-load.stdout
+  cat osstp-load.stdout
 set +x
+
+if grep -q "otc-00023" osstp-load.stdout; then
+    echo "ERROR: failing due to '[otc-00023]' in osstp-load.py command."
+    exit 1
+fi
 
 # Uncomment to cause a failure so we can hijack and get docker scan results for debugging
 #echo 'AAGHH'

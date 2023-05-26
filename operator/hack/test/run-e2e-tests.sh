@@ -270,61 +270,68 @@ function run_logging_integration_checks() {
   printf "Running logging checks with test-proxy ..."
 
   # send request to the fake proxy control endpoint and check status code for success
-  kill $(jobs -p) &>/dev/null || true
+  CURL_OUT=$(mktemp)
+  CURL_ERR=$(mktemp)
+  PF_OUT=$(mktemp)
+  jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  netstat -tnulp # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  kill "$(jobs -p)" || true
   sleep 3
-  kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &
-  trap 'kill $(jobs -p) &>/dev/null || true' EXIT
+  netstat -tnulp # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &> "$PF_OUT" &
+  jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  trap 'echo "PF_OUT:"; cat "$PF_OUT"; echo "CURL_OUT:"; cat "$CURL_OUT"; echo "CURL_ERR:"; cat "$CURL_ERR"; echo "Killing jobs: $(jobs -l)"; kill "$(jobs -p)"' EXIT
   sleep 3
 
-  RES=$(mktemp)
+
 
   for _ in {1..10}; do
-    RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" "http://localhost:8888/logs/assert")
-    if [[ $RES_CODE -eq 200 ]]; then
+    CURL_CODE=$(curl --silent --show-error --output "$CURL_OUT" --stderr "$CURL_ERR" --write-out "%{http_code}" "http://localhost:8888/logs/assert")
+    if [[ $CURL_CODE -eq 200 ]]; then
       break
     fi
     sleep 1
   done
 
   # Helpful for debugging:
-  # cat "${RES}" >/tmp/test
+  # cat "${CURL_OUT}" >/tmp/test
 
-  if [[ $RES_CODE -eq 204 ]]; then
+  if [[ $CURL_CODE -eq 204 ]]; then
     red "Logs were never received by test proxy"
     kubectl -n observability-system exec deployment/test-proxy -- cat /logs/test-proxy.log
     exit 1
   fi
 
   # TODO look at result and pass or fail test
-  if [[ $RES_CODE -gt 399 ]]; then
+  if [[ $CURL_CODE -gt 399 ]]; then
     red "LOGGING ASSERTION FAILURE"
     kubectl -n observability-system exec deployment/test-proxy -- cat /logs/test-proxy.log
     exit 1
   fi
 
-  hasValidFormat=$(jq -r .hasValidFormat "${RES}")
+  hasValidFormat=$(jq -r .hasValidFormat "${CURL_OUT}")
   if [[ ${hasValidFormat} -ne 1 ]]; then
     red "Test proxy received logs with invalid format"
     kubectl -n observability-system exec deployment/test-proxy -- cat /logs/test-proxy.log
     exit 1
   fi
 
-  hasValidTags=$(jq -r .hasValidTags "${RES}")
-  missingExpectedTags="$(jq .missingExpectedTags "${RES}")"
-  missingExpectedTagsCount="$(jq .missingExpectedTagsCount "${RES}")"
+  hasValidTags=$(jq -r .hasValidTags "${CURL_OUT}")
+  missingExpectedTags="$(jq .missingExpectedTags "${CURL_OUT}")"
+  missingExpectedTagsCount="$(jq .missingExpectedTagsCount "${CURL_OUT}")"
 
-  missingExpectedOptionalTags="$(jq .missingExpectedOptionalTagsMap "${RES}")"
+  missingExpectedOptionalTags="$(jq .missingExpectedOptionalTagsMap "${CURL_OUT}")"
 
-  emptyExpectedTags="$(jq .emptyExpectedTags "${RES}")"
-  emptyExpectedTagsCount="$(jq .emptyExpectedTagsCount "${RES}")"
+  emptyExpectedTags="$(jq .emptyExpectedTags "${CURL_OUT}")"
+  emptyExpectedTagsCount="$(jq .emptyExpectedTagsCount "${CURL_OUT}")"
 
-  unexpectedAllowedLogs="$(jq .unexpectedAllowedLogs "${RES}")"
-  unexpectedAllowedLogsCount="$(jq .unexpectedAllowedLogsCount "${RES}")"
+  unexpectedAllowedLogs="$(jq .unexpectedAllowedLogs "${CURL_OUT}")"
+  unexpectedAllowedLogsCount="$(jq .unexpectedAllowedLogsCount "${CURL_OUT}")"
 
-  unexpectedDeniedTags="$(jq .unexpectedDeniedTags "${RES}")"
-  unexpectedDeniedTagsCount="$(jq .unexpectedDeniedTagsCount "${RES}")"
+  unexpectedDeniedTags="$(jq .unexpectedDeniedTags "${CURL_OUT}")"
+  unexpectedDeniedTagsCount="$(jq .unexpectedDeniedTagsCount "${CURL_OUT}")"
 
-  receivedLogCount=$(jq .receivedLogCount "${RES}")
+  receivedLogCount=$(jq .receivedLogCount "${CURL_OUT}")
 
   if [[ ${hasValidTags} -ne 1 ]]; then
     red "Invalid tags were found:"
