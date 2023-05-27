@@ -29,7 +29,30 @@ Install the Observability for Kubernetes Operator into `observability-system` na
   - name: projects.registry.vmware.com/tanzu_observability/kubernetes-operator
     newName: YOUR_IMAGE_REGISTRY/kubernetes-operator
   ```
-5. Deploy the Observability for Kubernetes Operator
+5. If your image registry needs authentication, modify the `kustomization.yaml` as shown below.
+  ```yaml
+  # Need to change YOUR_IMAGE_REGISTRY and YOUR_IMAGE_REGISTRY_SECRET
+  apiVersion: kustomize.config.k8s.io/v1beta1
+  kind: Kustomization
+ 
+  resources:
+  - wavefront-operator.yaml
+ 
+  images:
+  - name: projects.registry.vmware.com/tanzu_observability/kubernetes-operator
+    newName: YOUR_IMAGE_REGISTRY/kubernetes-operator
+
+  patches:
+  - target:
+        kind: Deployment
+        name: wavefront-controller-manager
+    patch: |-
+        - op: add
+          path: /spec/template/spec/imagePullSecrets
+          value:
+          - name: YOUR_IMAGE_REGISTRY_SECRET
+  ```
+6. Deploy the Observability for Kubernetes Operator
   ```
   kubectl apply -k observability
   ```
