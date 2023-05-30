@@ -56,7 +56,8 @@ Install the Observability for Kubernetes Operator into `observability-system` na
   ```
   kubectl apply -k observability
   ```
-6. Now follow the steps starting from step 2 in [Deploy the Kubernetes Metrics Collector and Wavefront Proxy with the Operator](../../README.md#Deploy-the-Kubernetes-Metrics-Collector-and-Wavefront-Proxy-with-the-Observability-for-Kubernetes-Operator)
+6. Now follow the steps starting from step 2 in [Deploy the Kubernetes Metrics Collector and Wavefront Proxy with the Operator](../../README.md#Deploy-the-Kubernetes-Metrics-Collector-and-Wavefront-Proxy-with-the-Observability-for-Kubernetes-Operator).
+   Also, add your registry secret to the Wavefront Custom Resource as shown in this [example](../../../deploy/scenarios/wavefront-custom-private-registry.yaml).
 
 # Deploy the Observability for Kubernetes Operator into a Custom Namespace
 
