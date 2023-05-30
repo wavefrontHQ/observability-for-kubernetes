@@ -17,6 +17,7 @@ GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
 
 K8S_ENV=$(shell $(REPO_ROOT)/scripts/get-k8s-cluster-env.sh)
+KIND_LOCATION=$(shell $(REPO_ROOT)/scripts/kind-location.sh)
 
 ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)
@@ -62,7 +63,7 @@ k8s-nodes-arch:
 	kubectl get nodes --label-columns='kubernetes.io/arch'
 
 delete-images:
-ifeq ($(K8S_ENV), Kind)
+ifeq ($(K8S_ENV)$(KIND_RUNNING_LOCALLY), Kind-local)
 	make delete-images-kind
 endif
 
@@ -80,14 +81,14 @@ delete-images-kind:
 	@docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
 
 push-images:
-ifeq ($(K8S_ENV), Kind)
+ifeq ($(K8S_ENV)$(KIND_RUNNING_LOCALLY), Kind-local)
 	make push-to-kind
 else
 	make docker-xplatform-build
 endif
 
 cover-push-images:
-ifeq ($(K8S_ENV), Kind)
+ifeq ($(K8S_ENV)$(KIND_RUNNING_LOCALLY), Kind-local)
 	make cover-push-to-kind
 else
 	make docker-xplatform-build
