@@ -1,0 +1,20 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    
+  labels:
+    
+    app: pl-monitoring
+    component: vizier
+  name: pl-node-view
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - watch
+  - list

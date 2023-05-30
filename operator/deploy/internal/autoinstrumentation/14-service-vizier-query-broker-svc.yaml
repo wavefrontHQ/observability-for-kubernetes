@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    
+  labels:
+    
+    app: pl-monitoring
+    component: vizier
+  name: vizier-query-broker-svc
+  namespace: observability-system
+spec:
+  ports:
+  - name: tcp-http2
+    port: 50300
+    protocol: TCP
+    targetPort: 50300
+  - name: tcp-grpc-web
+    port: 50305
+    protocol: TCP
+    targetPort: 50305
+  selector:
+    app: pl-monitoring
+    component: vizier
+    name: vizier-query-broker
+  type: ClusterIP

@@ -51,6 +51,9 @@ type WavefrontSpec struct {
 	//  Allows the operator based Wavefront installation to be run in parallel with a legacy Wavefront (helm or manual) installation. Defaults to false.
 	AllowLegacyInstall bool `json:"allowLegacyInstall,omitempty"`
 
+	// Experimental features
+	Experimental Experimental `json:"experimental,omitempty"`
+
 	// ImageRegistry for internal use
 	ImageRegistry string `json:"-"`
 
@@ -68,6 +71,15 @@ type WavefrontSpec struct {
 
 	// Cluster UUID is for internal use only
 	ClusterUUID string `json:"-"`
+}
+
+type Experimental struct {
+	AutoInstrumentation AutoInstrumentation `json:"autoInstrumentation,omitempty"`
+}
+
+type AutoInstrumentation struct {
+	Enable    bool   `json:"enable,omitempty"`
+	DeployKey string `json:"deployKey,omitempty"`
 }
 
 type Metrics struct {

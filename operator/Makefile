@@ -45,6 +45,7 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+ALLOW_AUTO_INSTRUMENTATION?=false
 
 .PHONY: all
 all: build
@@ -132,6 +133,9 @@ build: generate fmt vet ## Build manager binary.
 	go build -ldflags "$(LDFLAGS)" -o build/$(GOOS)/$(GOARCH)/manager main.go
 	rm -rf build/$(GOOS)/$(GOARCH)/deploy
 	cp -r deploy build/$(GOOS)/$(GOARCH)
+	@if [ ${ALLOW_AUTO_INSTRUMENTATION} != true ]; then \
+    	rm -rf build/$(GOOS)/$(GOARCH)/deploy/internal/autoinstrumentation; \
+	fi
 	cp open_source_licenses.txt build/
 
 .PHONY: clean
@@ -174,6 +178,11 @@ endif
 .PHONY: copy-base-patches
 copy-base-patches:
 	cp config/manager/patches-base.yaml config/manager/patches.yaml
+	@if [ ${ALLOW_AUTO_INSTRUMENTATION} != true ]; then \
+    	cp config/rbac/base_kustomization.yaml config/rbac/kustomization.yaml; \
+    else \
+    	cp config/rbac/auto_instrumentation_kustomization.yaml config/rbac/kustomization.yaml; \
+	fi
 
 CONTROLLER_GEN = $(REPO_DIR)/bin/controller-gen
 .PHONY: controller-gen

@@ -88,14 +88,18 @@ type WavefrontReconciler struct {
 // Permissions for creating Kubernetes resources from internal files.
 // Possible point of confusion: the collector itself watches resources,
 // but the operator doesn't need to... yet?
-// +kubebuilder:rbac:groups=apps,namespace=observability-system,resources=deployments,verbs=get;create;update;patch;delete;watch;list
-// +kubebuilder:rbac:groups="",namespace=observability-system,resources=services,verbs=get;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,namespace=observability-system,resources=deployments,verbs=get;create;update;patch;delete;watch;list;
 // +kubebuilder:rbac:groups=apps,namespace=observability-system,resources=daemonsets,verbs=get;create;update;patch;delete;
-// +kubebuilder:rbac:groups="",namespace=observability-system,resources=serviceaccounts,verbs=get;create;update;patch;delete
-// +kubebuilder:rbac:groups="",namespace=observability-system,resources=configmaps,verbs=get;create;update;patch;delete
-// +kubebuilder:rbac:groups="",namespace=observability-system,resources=secrets,verbs=get;list;watch
-// +kubebuilder:rbac:groups="",namespace=observability-system,resources=pods,verbs=get;list;watch
-// +kubebuilder:rbac:groups="",namespace="",resources=namespaces,verbs=get;list;watch
+// +kubebuilder:rbac:groups=apps,namespace=observability-system,resources=statefulsets,verbs=get;create;update;patch;delete;
+// +kubebuilder:rbac:groups="",namespace=observability-system,resources=services,verbs=get;create;update;patch;delete;
+// +kubebuilder:rbac:groups="",namespace=observability-system,resources=serviceaccounts,verbs=get;create;update;patch;delete;watch;list;
+// +kubebuilder:rbac:groups="",namespace=observability-system,resources=configmaps,verbs=get;create;update;patch;delete;
+// +kubebuilder:rbac:groups="",namespace=observability-system,resources=secrets,verbs=get;list;watch;create;update;patch;delete;
+// +kubebuilder:rbac:groups="",namespace=observability-system,resources=pods,verbs=get;list;watch;
+// +kubebuilder:rbac:groups="",namespace=observability-system,resources=persistentvolumeclaims,verbs=get;create;update;patch;delete;
+// +kubebuilder:rbac:groups="",namespace="",resources=namespaces,verbs=get;list;watch;
+// +kubebuilder:rbac:groups=batch,namespace=observability-system,resources=jobs,verbs=get;list;watch;create;update;patch;
+// +kubebuilder:rbac:groups=policy,namespace=observability-system,resources=poddisruptionbudgets,verbs=get;list;watch;create;update;patch;delete;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -237,7 +241,6 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 			resourcesToDelete = append(resourcesToDelete, resourceData)
 		}
 	}
-
 	return resourcesToApply, resourcesToDelete, nil
 }
 
@@ -246,10 +249,11 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		spec.DataExport.WavefrontProxy.Enable,
 		spec.CanExportData && spec.DataCollection.Metrics.Enable,
 		spec.CanExportData && spec.DataCollection.Logging.Enable,
+		spec.CanExportData && spec.Experimental.AutoInstrumentation.Enable,
 	)
 }
 
-func dirList(proxy, collector, logging bool) []string {
+func dirList(proxy, collector, logging bool, autoinstrumentation bool) []string {
 	dirsToInclude := []string{"internal"}
 	if proxy {
 		dirsToInclude = append(dirsToInclude, "proxy")
@@ -262,7 +266,9 @@ func dirList(proxy, collector, logging bool) []string {
 	if logging {
 		dirsToInclude = append(dirsToInclude, "logging")
 	}
-
+	if autoinstrumentation {
+		dirsToInclude = append(dirsToInclude, "autoinstrumentation")
+	}
 	return dirsToInclude
 }
 
@@ -403,32 +409,10 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 
 	wavefront.Spec.DataExport.WavefrontProxy.AvailableReplicas = 1
 	if wavefront.Spec.DataExport.WavefrontProxy.Enable {
-		deployment, err := r.deployment(util.ProxyName)
-		if err == nil && deployment.Status.AvailableReplicas > 0 {
-			wavefront.Spec.DataExport.WavefrontProxy.AvailableReplicas = int(deployment.Status.AvailableReplicas)
-			wavefront.Spec.CanExportData = true
-		}
-		wavefront.Spec.DataExport.WavefrontProxy.ConfigHash = ""
-		wavefront.Spec.DataCollection.Metrics.ProxyAddress = fmt.Sprintf("%s:%d", util.ProxyName, wavefront.Spec.DataExport.WavefrontProxy.MetricPort)
-
-		// The endpoint for logging requires the "http://" prefix
-		wavefront.Spec.DataCollection.Logging.ProxyAddress = fmt.Sprintf("http://%s:%d", util.ProxyName, wavefront.Spec.DataExport.WavefrontProxy.MetricPort)
-
-		err = r.parseHttpProxyConfigs(wavefront, ctx)
+		err = r.preprocessProxy(wavefront, ctx)
 		if err != nil {
 			return err
 		}
-
-		wavefront.Spec.ClusterUUID = r.ClusterUUID
-
-		var result preprocessor.Result
-		result, err = preprocessor.Process(r.Client, wavefront)
-		if err != nil {
-			return err
-		}
-		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts = result.EnabledPorts
-		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules = result.UserDefinedPortRules
-		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules = result.UserDefinedGlobalRules
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
 		wavefront.Spec.CanExportData = true
 		wavefront.Spec.DataCollection.Metrics.ProxyAddress = wavefront.Spec.DataExport.ExternalWavefrontProxy.Url
@@ -472,6 +456,41 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	if r.isAnOpenshiftEnvironment() {
 		wavefront.Spec.Openshift = true
 	}
+
+	return nil
+}
+
+func (r *WavefrontReconciler) preprocessProxy(wavefront *wf.Wavefront, ctx context.Context) error {
+	deployment, err := r.deployment(util.ProxyName)
+	if err == nil && deployment.Status.AvailableReplicas > 0 {
+		wavefront.Spec.DataExport.WavefrontProxy.AvailableReplicas = int(deployment.Status.AvailableReplicas)
+		wavefront.Spec.CanExportData = true
+	}
+	wavefront.Spec.DataExport.WavefrontProxy.ConfigHash = ""
+	wavefront.Spec.DataCollection.Metrics.ProxyAddress = fmt.Sprintf("%s:%d", util.ProxyName, wavefront.Spec.DataExport.WavefrontProxy.MetricPort)
+
+	// The endpoint for logging requires the "http://" prefix
+	wavefront.Spec.DataCollection.Logging.ProxyAddress = fmt.Sprintf("http://%s:%d", util.ProxyName, wavefront.Spec.DataExport.WavefrontProxy.MetricPort)
+
+	err = r.parseHttpProxyConfigs(wavefront, ctx)
+	if err != nil {
+		return err
+	}
+
+	if wavefront.Spec.Experimental.AutoInstrumentation.Enable {
+		wavefront.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort = 4317
+		wavefront.Spec.DataExport.WavefrontProxy.OTLP.ResourceAttrsOnMetricsIncluded = true
+	}
+
+	wavefront.Spec.ClusterUUID = r.ClusterUUID
+	var result preprocessor.Result
+	result, err = preprocessor.Process(r.Client, wavefront)
+	if err != nil {
+		return err
+	}
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts = result.EnabledPorts
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules = result.UserDefinedPortRules
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules = result.UserDefinedGlobalRules
 
 	return nil
 }
