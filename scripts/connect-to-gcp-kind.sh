@@ -8,7 +8,7 @@ function nukeRemoteKind() {
   ssh "root@${KIND_VM_IP}" \
     -- kind delete cluster
   ssh "root@${KIND_VM_IP}" \
-    -- kind create cluster --config /root/kind-config.yml --image kindest/node:v1.24.7
+    -- kind create cluster --config /root/kind-config.yml --image kindest/node:v1.24.13@sha256:cea86276e698af043af20143f4bf0509e730ec34ed3b7fa790cc0bea091bc5dd
 }
 
 function fetchKindPort() {
