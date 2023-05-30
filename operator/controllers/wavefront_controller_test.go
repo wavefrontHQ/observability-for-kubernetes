@@ -178,6 +178,25 @@ func TestReconcileAll(t *testing.T) {
 		require.True(t, mockKM.ProxyDeploymentContains("image: docker.io/proxy"))
 	})
 
+	t.Run("Can configure imagePullSecrets for a private Custom Registry", func(t *testing.T) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.ImagePullSecret = "private-reg-cred"
+		})
+		r, mockKM := componentScenario(wfCR, nil)
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		request := defaultRequest()
+		request.Namespace = wfCR.Namespace
+		_, err := r.Reconcile(context.Background(), request)
+		require.NoError(t, err)
+
+		require.True(t, mockKM.NodeCollectorDaemonSetContains("imagePullSecrets:\n        - name: private-reg-cred"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("imagePullSecrets:\n        - name: private-reg-cred"))
+		require.True(t, mockKM.LoggingDaemonSetContains("imagePullSecrets:\n        - name: private-reg-cred"))
+		require.True(t, mockKM.ProxyDeploymentContains("imagePullSecrets:\n        - name: private-reg-cred"))
+	})
+
 	t.Run("Child components inherits controller's namespace", func(t *testing.T) {
 		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Namespace = "customNamespace"

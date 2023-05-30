@@ -1,0 +1,19 @@
+# Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
+apiVersion: wavefront.com/v1alpha1
+kind: Wavefront
+metadata:
+  name: wavefront
+  namespace: observability-system
+spec:
+  clusterName: YOUR_CLUSTER_NAME
+  wavefrontUrl: YOUR_WAVEFRONT_URL
+  # First follow steps for setting imagePullSecret for the operator at below link
+  # https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/docs/operator/custom-configuration.md.
+  # Then set the below to the name of the registry secret to authenticate with a private custom registry.
+  imagePullSecret: registry-secret
+  dataCollection:
+    metrics:
+      enable: true
+  dataExport:
+    wavefrontProxy:
+      enable: true
