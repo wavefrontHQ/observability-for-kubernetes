@@ -138,16 +138,16 @@ function clean_up_test() {
     delete_etcd_cert_printer
   fi
 
+  wait_for_proxy_termination "$NS"
+
   if [[ "$(k8s_env)" == "Kind" ]]; then
     # kill ssh tunnel if it's still open
     if [[ -f /tmp/kind-tunnel-pid ]]; then
        echo "Cleaning Up kind ssh tunnel ..."
        kill -9 $(cat /tmp/kind-tunnel-pid) || true
-       rm /tmp/kind-tunnel-pid
+       rm /tmp/kind-tunnel-pid || true
     fi
   fi
-
-  wait_for_proxy_termination "$NS"
 }
 
 function checks_to_remove() {
