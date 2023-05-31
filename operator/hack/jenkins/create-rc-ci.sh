@@ -12,7 +12,7 @@ RELEASE_VERSION=$(get_next_operator_version)
 
 git checkout .
 
-VERSION=$RELEASE_VERSION$VERSION_POSTFIX make released-kubernetes-yaml
+VERSION=$RELEASE_VERSION$VERSION_POSTFIX make copy-rbac-kustomization-yaml released-kubernetes-yaml
 cp "${OPERATOR_DIR}"/dev-internal/deploy/wavefront-operator.yaml "${OPERATOR_DIR}"/build/wavefront-operator.yaml
 
 current_version="$(get_next_collector_version)"
