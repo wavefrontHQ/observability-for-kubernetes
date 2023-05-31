@@ -178,11 +178,6 @@ endif
 .PHONY: copy-base-patches
 copy-base-patches:
 	cp config/manager/patches-base.yaml config/manager/patches.yaml
-	@if [ ${ALLOW_AUTO_INSTRUMENTATION} != true ]; then \
-    	cp config/rbac/base_kustomization.yaml config/rbac/kustomization.yaml; \
-    else \
-    	cp config/rbac/auto_instrumentation_kustomization.yaml config/rbac/kustomization.yaml; \
-	fi
 
 CONTROLLER_GEN = $(REPO_DIR)/bin/controller-gen
 .PHONY: controller-gen
@@ -273,8 +268,16 @@ kind-kubernetes-yaml: docker-build copy-kind-patches kubernetes-yaml
 copy-kind-patches:
 	cp config/manager/patches-kind.yaml config/manager/patches.yaml
 
+.PHONY: copy-rbac-kustomization-yaml
+copy-rbac-kustomization-yaml:
+	@if [ ${ALLOW_AUTO_INSTRUMENTATION} != true ]; then \
+    	cp config/rbac/base_kustomization.yaml config/rbac/kustomization.yaml; \
+    else \
+    	cp config/rbac/auto_instrumentation_kustomization.yaml config/rbac/kustomization.yaml; \
+	fi
+
 .PHONY: operator-yaml
-operator-yaml: $(OPERATOR_YAML_TYPE)-kubernetes-yaml $(KUSTOMIZATION_TYPE)-kustomization-yaml
+operator-yaml: copy-rbac-kustomization-yaml $(OPERATOR_YAML_TYPE)-kubernetes-yaml $(KUSTOMIZATION_TYPE)-kustomization-yaml
 
 .PHONY: deploy
 deploy: operator-yaml

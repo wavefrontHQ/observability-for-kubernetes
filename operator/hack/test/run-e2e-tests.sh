@@ -283,10 +283,10 @@ function run_logging_integration_checks() {
   CURL_ERR=$(mktemp)
   PF_OUT=$(mktemp)
   jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  netstat -tnulp # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
   kill "$(jobs -p)" || true
   sleep 3
-  netstat -tnulp # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
   kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &> "$PF_OUT" &
   jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
   trap 'echo "PF_OUT:"; cat "$PF_OUT"; echo "CURL_OUT:"; cat "$CURL_OUT"; echo "CURL_ERR:"; cat "$CURL_ERR"; echo "Killing jobs: $(jobs -l)"; kill "$(jobs -p)"' EXIT
