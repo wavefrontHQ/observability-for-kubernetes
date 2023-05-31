@@ -1,0 +1,30 @@
+{
+  "alertType": "THRESHOLD",
+  "alertSources": [
+    {
+      "alertSourceType": [
+        "VARIABLE",
+        "AUDIT"
+      ],
+      "hidden": false,
+      "name": "Display Condition",
+      "query": "${Alert Condition}.gt(0)",
+      "queryType": "WQL"
+    },
+    {
+      "alertSourceType": [
+        "CONDITION"
+      ],
+      "hidden": true,
+      "name": "Alert Condition",
+      "query": "ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\")",
+      "queryType": "WQL"
+    }
+  ],
+  "conditions": {
+    "warn": "ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\") >= 1"
+  },
+  "displayExpression": "${Display Condition}",
+  "minutes": 15,
+  "name": "Pods Stuck in Pending"
+}
