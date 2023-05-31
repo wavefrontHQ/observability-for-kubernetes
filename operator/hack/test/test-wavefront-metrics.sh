@@ -7,6 +7,8 @@ source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 function curl_query_to_wf_dashboard() {
   local query=$1
+  local AFTER_UNIX_TS="$(date '+%s')000"
+
   # NOTE: any output inside this function is concatenated and used as the return value;
   # otherwise we would love to put a log such as this in here to give us more information:
   # echo "=============== Querying '$WF_CLUSTER' for query '${query}'"
@@ -132,7 +134,6 @@ function exit_on_fail() {
 function main() {
   cd "$(dirname "$0")" # hack/test
 
-  local AFTER_UNIX_TS="$(date '+%s')000"
   local MAX_QUERY_TIMES=90
   local CURL_WAIT=5
 
@@ -213,10 +214,10 @@ function main() {
   exit_on_fail wait_for_query_match_tags "at(%22end%22%2C%202m%2C%20ts(%22kubernetes.collector.version%22%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22))" "${EXPECTED_TAGS_JSON}"
   echo Expected collector version: $COLLECTOR_VERSION_IN_DECIMAL
   exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(kubernetes.collector.version%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22%20AND%20installation_method%3D%22operator%22))" "${COLLECTOR_VERSION_IN_DECIMAL}"
-  exit_on_fail wait_for_query_non_zero "ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22)"
+  exit_on_fail wait_for_query_non_zero "at(%22end%22%2C%202m%2C%20ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22))"
 
   if [[ -n ${LOGGING_TEST_PROXY_NAME} ]]; then
-    exit_on_fail wait_for_query_non_zero "ts(~proxy.logs.*.received.bytes%2C%20source%3D%22${LOGGING_TEST_PROXY_NAME}%22)"
+    exit_on_fail wait_for_query_non_zero "at(%22end%22%2C%202m%2C%20ts(ts(~proxy.logs.*.received.bytes%2C%20source%3D%22${LOGGING_TEST_PROXY_NAME}%22))"
   fi
 
   if [[ -f "${EXTRA_TESTS}" ]]; then
