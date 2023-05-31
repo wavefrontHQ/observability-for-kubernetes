@@ -18,17 +18,29 @@ pipeline {
   }
 
   parameters {
-      string(name: 'OPERATOR_YAML_RC_SHA', defaultValue: '')
+    string(name: 'OPERATOR_YAML_RC_SHA', defaultValue: '')
+    booleanParam(
+      name: 'FORCE_RUN_CI',
+      defaultValue: false,
+      description: 'To manually trigger a build, activate the FORCE_RUN_CI checkbox.'
+    )
   }
 
   stages {
     stage("Set RUN_CI") {
       steps {
         script {
-          env.RUN_CI = sh(
-            script: 'if [[ "$(git rev-parse origin/main)" == "${GIT_COMMIT}" ]]; then git diff --quiet --name-only --diff-filter=ADMR ${GIT_COMMIT}~..${GIT_COMMIT} -- operator scripts collector ci.Jenkinsfile Makefile && echo false || echo true; else git diff --quiet --name-only --diff-filter=ADMR origin/main..${GIT_COMMIT} -- operator scripts collector ci.Jenkinsfile Makefile && echo false || echo true; fi',
-            returnStdout: true
-          ).trim()
+          if (params.FORCE_RUN_CI) {
+            env.RUN_CI = 'true'
+          } else if (env.BRANCH_NAME == 'main') {
+            env.RUN_CI = sh(
+              script: 'git diff --quiet --name-only --diff-filter=ADMR ${GIT_COMMIT}~..${GIT_COMMIT} -- operator scripts collector ci.Jenkinsfile Makefile && echo false || echo true',
+              returnStdout: true).trim()
+          } else {
+            env.RUN_CI = sh(
+              script: 'git diff --quiet --name-only --diff-filter=ADMR origin/main..${GIT_COMMIT} -- operator scripts collector Makefile && echo false || echo true',
+              returnStdout: true).trim()
+          }
         }
       }
     }
