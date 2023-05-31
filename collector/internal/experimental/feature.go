@@ -5,6 +5,7 @@ import (
 )
 
 const HistogramConversion = "histogram-conversion"
+const IncludePVCMetrics = "include-pvc-metrics"
 
 var (
 	mu      sync.RWMutex

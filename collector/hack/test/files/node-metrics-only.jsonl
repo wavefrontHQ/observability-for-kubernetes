@@ -20,6 +20,7 @@
 {"Name":"kubernetes.pod_container.cpu.limit"}
 ~{"Name":"kubernetes.replicaset.available_replicas"}
 ~{"Name":"kubernetes.statefulset.current_replicas"}
+{"Name":"kubernetes.pvc.request.storage_bytes"}
 {"Name":"linux.sysctl.fs.aio-max-nr"}
 {"Name":"mem.available"}
 {"Name":"memcached.accepting.conns"}

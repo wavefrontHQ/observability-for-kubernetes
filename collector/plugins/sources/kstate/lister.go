@@ -33,6 +33,7 @@ const (
 	horizontalPodAutoscalers = "horizontalpodautoscalers"
 	nodes                    = "nodes"
 	nonRunningPods           = "pods"
+	pvc                      = "persistentvolumeclaim"
 )
 
 var (
