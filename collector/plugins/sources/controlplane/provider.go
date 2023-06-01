@@ -90,7 +90,6 @@ func buildPromConfigs(cfg configuration.ControlPlaneSourceConfig, summaryCfg con
 	}
 	apiServerTagAllowList := map[string][]string{
 		"resource": {"customresourcedefinitions", "namespaces", "lease", "nodes", "pods", "tokenreviews", "subjectaccessreviews"},
-		"group":    {"authentication.k8s.io", "authorization.k8s.io", "certificates.k8s.io", "rbac.authorization.k8s.io"},
 	}
 	promApiServerSourceConfig := createPrometheusSourceConfig("apiserver", httpClientConfig, apiServerAllowList, apiServerTagAllowList, cfg.Collection.Interval)
 	prometheusSourceConfigs = append(prometheusSourceConfigs, promApiServerSourceConfig)
