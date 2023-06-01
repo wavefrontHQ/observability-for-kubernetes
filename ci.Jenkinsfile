@@ -28,18 +28,18 @@ pipeline {
 
   stages {
     stage("Set RUN_CI") {
+      environment {
+        FILES_TO_CHECK = 'operator scripts collector ci.Jenkinsfile Makefile'
+      }
       steps {
         script {
           if (params.FORCE_RUN_CI) {
             env.RUN_CI = 'true'
-          } else if (env.BRANCH_NAME == 'main') {
-            env.RUN_CI = sh(
-              script: 'git diff --quiet --name-only --diff-filter=ADMR ${GIT_COMMIT}~..${GIT_COMMIT} -- operator scripts collector ci.Jenkinsfile Makefile && echo false || echo true',
-              returnStdout: true).trim()
           } else {
             env.RUN_CI = sh(
-              script: 'git diff --quiet --name-only --diff-filter=ADMR origin/main..${GIT_COMMIT} -- operator scripts collector Makefile && echo false || echo true',
-              returnStdout: true).trim()
+              script: './ci/jenkins/run-ci.sh -b ${GIT_COMMIT}~ -d ${GIT_COMMIT} -f "${FILES_TO_CHECK}"',
+              returnStdout: true
+            ).trim()
           }
         }
       }
