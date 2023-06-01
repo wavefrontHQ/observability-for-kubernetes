@@ -108,13 +108,13 @@ data:
           tls_config:
             ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
             insecure_skip_verify: true
-        prefix: 'kubernetes.controlplane.'
+        prefix: 'kube.apiserver.'
 
         filters:
           metricAllowList:
-          - 'kubernetes.controlplane.apiserver.*'
-          - 'kubernetes.controlplane.etcd.*'
-          - 'kubernetes.controlplane.process.*'
+          - 'kube.apiserver.apiserver.*'
+          - 'kube.apiserver.etcd.*'
+          - 'kube.apiserver.process.*'
 
     # discovery rules for auto-discovery of pods and services
     discovery:
