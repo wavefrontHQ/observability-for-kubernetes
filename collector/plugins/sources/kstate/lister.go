@@ -33,7 +33,7 @@ const (
 	horizontalPodAutoscalers = "horizontalpodautoscalers"
 	nodes                    = "nodes"
 	nonRunningPods           = "pods"
-	pvc                      = "persistentvolumeclaim"
+	pvc                      = "persistentvolumeclaims"
 )
 
 var (
@@ -70,6 +70,7 @@ func buildInformers(kubeClient kubernetes.Interface) map[string]cache.SharedInfo
 	m[nodes] = buildInformer(nodes, &v1.Node{}, kubeClient.CoreV1().RESTClient())
 	m[replicationControllers] = buildInformer(replicationControllers, &v1.ReplicationController{}, kubeClient.CoreV1().RESTClient())
 	m[nonRunningPods] = buildInformerWithFieldsSelector(nonRunningPods, &v1.Pod{}, kubeClient.CoreV1().RESTClient(), fields.OneTermNotEqualSelector("status.phase", "Running"))
+	m[pvc] = buildInformer(pvc, &v1.PersistentVolumeClaim{}, kubeClient.CoreV1().RESTClient())
 	return m
 }
 

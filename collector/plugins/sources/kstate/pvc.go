@@ -16,18 +16,25 @@ import (
 )
 
 func pointsForPVC(item interface{}, transforms configuration.Transforms) []wf.Metric {
-	pvc, ok := item.(*corev1.PersistentVolumeClaim)
+	persistentVolumeClaim, ok := item.(*corev1.PersistentVolumeClaim)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
 		return nil
 	}
 
-	tags := buildTags("pvc", pvc.Name, pvc.Namespace, transforms.Tags)
+	tags := buildTags("pvc", persistentVolumeClaim.Name, persistentVolumeClaim.Namespace, transforms.Tags)
 	now := time.Now().Unix()
 
-	var resourceStorage = pvc.Spec.Resources.Requests[corev1.ResourceStorage]
+	var resourceStorage = persistentVolumeClaim.Spec.Resources.Requests[corev1.ResourceStorage]
+	rsValue := float64(resourceStorage.Value())
+
+	log.Println("Resource storage: " + resourceStorage.String())
+	log.Printf("Resource storage value: %x\n", rsValue)
+	log.Println("PVC Phase: " + persistentVolumeClaim.Status.Phase)
 
 	return []wf.Metric{
-		metricPoint(transforms.Prefix, "pvc.request.storage_bytes", float64(resourceStorage.Value()), now, transforms.Source, tags),
+		metricPoint(transforms.Prefix, "pvc.request.storage_bytes", rsValue, now, transforms.Source, tags),
 	}
 }
+
+// TODO write tests
