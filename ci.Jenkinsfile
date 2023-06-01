@@ -35,11 +35,10 @@ pipeline {
         script {
           if (params.FORCE_RUN_CI) {
             env.RUN_CI = 'true'
+          } else if (env.BRANCH_NAME == 'main') {
+            env.RUN_CI = sh(script: './ci/jenkins/run-ci.sh -b ${GIT_COMMIT}~ -d ${GIT_COMMIT} -f "${FILES_TO_CHECK}"', returnStdout: true).trim()
           } else {
-            env.RUN_CI = sh(
-              script: './ci/jenkins/run-ci.sh -b ${GIT_COMMIT}~ -d ${GIT_COMMIT} -f "${FILES_TO_CHECK}"',
-              returnStdout: true
-            ).trim()
+            env.RUN_CI = sh(script: './ci/jenkins/run-ci.sh -b origin/main -d ${GIT_COMMIT} -f "${FILES_TO_CHECK}"', returnStdout: true).trim()
           }
         }
       }
