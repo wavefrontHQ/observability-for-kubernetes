@@ -68,12 +68,9 @@ data:
         prefix: kubernetes.
 
       {{- if .DataCollection.Metrics.ControlPlane.Enable }}
-      kubernetes_control_plane_source:
-        collection:
-          interval: 120s
-
       prometheus_sources:
        - url: 'https://kubernetes.default.svc:443/metrics'
+         name: 'etcd-workqueue'
          httpConfig:
            bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
            tls_config:
@@ -81,8 +78,6 @@ data:
              insecure_skip_verify: true
          prefix: 'kubernetes.controlplane.'
          convertHistograms: true
-         collection:
-           interval: 120s
          filters:
            metricAllowList:
            - 'kubernetes.controlplane.etcd.request.duration.seconds'
@@ -91,6 +86,7 @@ data:
            - 'kubernetes.controlplane.workqueue.queue.duration.seconds'
 
        - url: 'https://kubernetes.default.svc:443/metrics'
+         name: 'apiserver'
          httpConfig:
            bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
            tls_config:
@@ -98,8 +94,6 @@ data:
              insecure_skip_verify: true
          prefix: 'kubernetes.controlplane.'
          convertHistograms: true
-         collection:
-           interval: 120s
          filters:
            metricAllowList:
            - 'kubernetes.controlplane.apiserver.request.duration.seconds'

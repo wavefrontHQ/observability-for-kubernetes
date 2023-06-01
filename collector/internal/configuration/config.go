@@ -203,9 +203,11 @@ type PrometheusSourceConfig struct {
 	// Optional HTTP client configuration.
 	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
 
+	// Optional Name for Prometheus source
+	Name string `yaml:"name"`
+
 	// internal use only
 	Discovered        string `yaml:"-"`
-	Name              string `yaml:"-"`
 	UseLeaderElection bool   `yaml:"-"`
 }
 
