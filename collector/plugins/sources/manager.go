@@ -26,8 +26,6 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/controlplane"
-
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/cadvisor"
 
 	log "github.com/sirupsen/logrus"
@@ -295,10 +293,6 @@ func buildProviders(client kubernetes.Interface, cfg configuration.SourceConfig)
 		if cfg.CadvisorConfig != nil {
 			provider, err = cadvisor.NewProvider(*cfg.CadvisorConfig, *cfg.SummaryConfig)
 			result = appendProvider(result, provider, err, cfg.CadvisorConfig.Collection)
-		}
-		if cfg.ControlPlaneConfig != nil {
-			provider, err = controlplane.NewProvider(*cfg.ControlPlaneConfig, *cfg.SummaryConfig, client.CoreV1())
-			result = appendProvider(result, provider, err, cfg.ControlPlaneConfig.Collection)
 		}
 	}
 	if cfg.SystemdConfig != nil {
