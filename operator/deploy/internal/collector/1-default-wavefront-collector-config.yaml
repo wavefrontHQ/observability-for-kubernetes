@@ -71,6 +71,49 @@ data:
       kubernetes_control_plane_source:
         collection:
           interval: 120s
+
+      prometheus_sources:
+       - url: 'https://kubernetes.default.svc:443/metrics'
+         httpConfig:
+           bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+           tls_config:
+             ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+             insecure_skip_verify: true
+         prefix: 'kubernetes.controlplane.'
+         convertHistograms: true
+         collection:
+           interval: 120s
+         filters:
+           metricAllowList:
+           - 'kubernetes.controlplane.etcd.request.duration.seconds'
+           - 'kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge'
+           - 'kubernetes.controlplane.workqueue.adds.total.counter'
+           - 'kubernetes.controlplane.workqueue.queue.duration.seconds'
+
+       - url: 'https://kubernetes.default.svc:443/metrics'
+         httpConfig:
+           bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+           tls_config:
+             ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+             insecure_skip_verify: true
+         prefix: 'kubernetes.controlplane.'
+         convertHistograms: true
+         collection:
+           interval: 120s
+         filters:
+           metricAllowList:
+           - 'kubernetes.controlplane.apiserver.request.duration.seconds'
+           - 'kubernetes.controlplane.apiserver.request.total.counter'
+           - 'kubernetes.controlplane.apiserver.storage.objects.gauge'
+           metricTagAllowList:
+             resource:
+             - 'customresourcedefinitions'
+             - 'namespaces'
+             - 'lease'
+             - 'nodes'
+             - 'pods'
+             - 'tokenreviews'
+             - 'subjectaccessreviews'
       {{- end }}
 
     discovery:
