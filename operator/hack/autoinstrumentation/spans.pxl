@@ -168,7 +168,7 @@ px.export(
             'service.instance.id': df.destination_pod,
 
             # OTEL Scope Exporter Conventions
-            'otel.scope.name': 'pixie',
+            'otel.scope.name': 'opapps-auto',
 
         },
         data=[
