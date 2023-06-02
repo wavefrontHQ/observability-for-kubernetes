@@ -596,6 +596,17 @@ spec:
                 maxLength: 253
                 pattern: ^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$
                 type: string
+              experimental:
+                description: Experimental features
+                properties:
+                  autoInstrumentation:
+                    properties:
+                      deployKey:
+                        type: string
+                      enable:
+                        type: boolean
+                    type: object
+                type: object
               wavefrontTokenSecret:
                 default: wavefront-secret
                 description: WavefrontTokenSecret is the name of the secret that contains

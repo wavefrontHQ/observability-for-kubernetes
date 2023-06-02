@@ -15,5 +15,5 @@ if [ $num_nodes -gt 1 ]; then
 
   exit_on_fail \
     wait_for_query_non_zero \
-    "ts(kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.bucket%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22)"
+    "hs(kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.m%2C%20cluster%3D%22${CONFIG_CLUSTER_NAME}%22)"
 fi

@@ -102,6 +102,14 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		require.Equal(t, "'externalWavefrontProxy.url' and 'wavefrontProxy.enable' should not be set at the same time", validateWavefrontSpec(wfCR).Error())
 	})
 
+	t.Run("Validation error when auto instrumentation in enabled and an external proxy is configured", func(t *testing.T) {
+		wfCR := defaultWFCR()
+		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
+		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
+		wfCR.Spec.Experimental.AutoInstrumentation.Enable = true
+		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoInstrumentation.enable' is enabled.", validateWavefrontSpec(wfCR).Error())
+	})
+
 	t.Run("Validation error when CPU request is greater than CPU limit", func(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataExport.WavefrontProxy.Resources.Requests.CPU = "500m"

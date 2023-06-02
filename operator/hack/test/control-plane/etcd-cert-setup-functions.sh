@@ -38,13 +38,19 @@ function create_etcd_cert_files() {
 
   # get the control plane etcd certs
   kubectl logs ${POD_NAME} -n "${NS}" > "${OPERATOR_DIR}/build/all_certs.txt"
-  kubectl delete -f ${OPERATOR_DIR}/hack/test/control-plane/etcd-cert-printer.yaml &>/dev/null || true
 
-  csplit "${OPERATOR_DIR}/build/all_certs.txt" '/^-----BEGIN CERTIFICATE-----$/' '/^-----BEGIN RSA PRIVATE KEY-----$/' &>/dev/null
-  mv xx00 "${OPERATOR_DIR}/build/ca.crt"
-  mv xx01 "${OPERATOR_DIR}/build/server.crt"
-  mv xx02 "${OPERATOR_DIR}/build/server.key"
-  rm "${OPERATOR_DIR}/build/all_certs.txt" || true
+  csplit "${OPERATOR_DIR}/build/all_certs.txt" \
+    '/^-----BEGIN RSA PRIVATE KEY-----$/' &>/dev/null
+  mv xx00 "${OPERATOR_DIR}/build/both_certs.txt"
+  mv xx01 "${OPERATOR_DIR}/build/server.key"
+
+  csplit "${OPERATOR_DIR}/build/both_certs.txt" \
+    '/^-----END CERTIFICATE-----$/' &>/dev/null
+  cat xx00 > "${OPERATOR_DIR}/build/ca.crt"
+  echo '-----END CERTIFICATE-----' >> "${OPERATOR_DIR}/build/ca.crt"
+
+  tail -n +2 xx01 > "${OPERATOR_DIR}/build/server.crt"
+  rm "${OPERATOR_DIR}/build/all_certs.txt" xx* || true
 }
 
 ##########################################################################################

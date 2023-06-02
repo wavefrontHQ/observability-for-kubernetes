@@ -34,6 +34,16 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - get
@@ -44,8 +54,12 @@ rules:
   resources:
   - secrets
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - ""
@@ -55,8 +69,10 @@ rules:
   - create
   - delete
   - get
+  - list
   - patch
   - update
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -81,6 +97,39 @@ rules:
   - apps
   resources:
   - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
   verbs:
   - create
   - delete
