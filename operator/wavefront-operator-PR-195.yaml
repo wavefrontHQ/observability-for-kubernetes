@@ -597,6 +597,17 @@ spec:
                         type: object
                     type: object
                 type: object
+              experimental:
+                description: Experimental features
+                properties:
+                  autoInstrumentation:
+                    properties:
+                      deployKey:
+                        type: string
+                      enable:
+                        type: boolean
+                    type: object
+                type: object
               imagePullSecret:
                 description: ImagePullSecret is the name of the secret to authenticate
                   with a private custom registry.
@@ -677,6 +688,16 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - get
@@ -687,8 +708,12 @@ rules:
   resources:
   - secrets
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - ""
@@ -698,8 +723,10 @@ rules:
   - create
   - delete
   - get
+  - list
   - patch
   - update
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -724,6 +751,39 @@ rules:
   - apps
   resources:
   - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
   verbs:
   - create
   - delete
@@ -1005,7 +1065,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.20.0-alpha-c628bd7b
+  collector: 1.20.0-alpha-d5967850
   logging: 2.1.2
   proxy: 12.4.1
 kind: ConfigMap
@@ -1077,7 +1137,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.8.0-alpha-c628bd7b
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.8.0-alpha-d5967850
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
