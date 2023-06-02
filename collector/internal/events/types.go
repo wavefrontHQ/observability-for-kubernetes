@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/wavefront-sdk-go/event"
+	v1 "k8s.io/api/core/v1"
 )
 
 type EventSink interface {
@@ -13,9 +14,12 @@ type EventSink interface {
 }
 
 type Event struct {
-	Message string
-	Ts      time.Time
-	Host    string
-	Tags    map[string]string
-	Options []event.Option
+	Message     string            `json:"-"`
+	Ts          time.Time         `json:"-"`
+	Host        string            `json:"-"`
+	Tags        map[string]string `json:"-"`
+	Options     []event.Option    `json:"-"`
+	ClusterName string            `json:"clusterName,omitempty"`
+	ClusterUUID string            `json:"clusterUUID,omitempty"`
+	v1.Event    `json:",inline"`
 }
