@@ -129,6 +129,9 @@ type WavefrontSinkConfig struct {
 	// Defaults to 0.01 or 1% of errors. Valid values are > 0.0 and <= 1.0.
 	ErrorLogPercent float32 `yaml:"errorLogPercent"`
 
+	// External endpoint url set for events
+	EventsExternalEndpointURL string `yaml:"eventsExternalEndpointURL"`
+
 	// Note: Properties below are for internal use only. These cannot be set via the configuration file.
 
 	// Internal: Cluster name pulled in from the top level property.

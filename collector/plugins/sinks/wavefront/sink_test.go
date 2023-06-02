@@ -54,6 +54,27 @@ func TestCreateWavefrontSinkWithNoEmptyInputs(t *testing.T) {
 	assert.Equal(t, "testPrefix", wfSink.Prefix)
 }
 
+func TestCreateWavefrontSinkWithEventsExternalEndpointURL(t *testing.T) {
+	cfg := configuration.WavefrontSinkConfig{
+		ProxyAddress: "wavefront-proxy:2878",
+		ClusterName:  "testCluster",
+		TestMode:     true,
+		Transforms: configuration.Transforms{
+			Prefix: "testPrefix",
+		},
+		EventsExternalEndpointURL: "https://example.com",
+	}
+	sink, err := NewWavefrontSink(cfg)
+	assert.NoError(t, err)
+	assert.NotNil(t, sink)
+	wfSink, ok := sink.(*wavefrontSink)
+	assert.Equal(t, true, ok)
+	assert.NotNil(t, wfSink.WavefrontClient)
+	assert.Equal(t, "testCluster", wfSink.ClusterName)
+	assert.Equal(t, "testPrefix", wfSink.Prefix)
+	assert.Equal(t, "https://example.com", wfSink.eventsExternalEndpointURL)
+}
+
 func TestPrefix(t *testing.T) {
 	cfg := configuration.WavefrontSinkConfig{
 		ProxyAddress: "wavefront-proxy:2878",

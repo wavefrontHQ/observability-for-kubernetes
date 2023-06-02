@@ -64,14 +64,15 @@ type WavefrontSink interface {
 }
 
 type wavefrontSink struct {
-	WavefrontClient senders.Sender
-	ClusterName     string
-	Prefix          string
-	globalTags      map[string]string
-	filters         filter.Filter
-	forceGC         bool
-	logPercent      float32
-	stopHeartbeat   chan struct{}
+	WavefrontClient           senders.Sender
+	ClusterName               string
+	Prefix                    string
+	globalTags                map[string]string
+	filters                   filter.Filter
+	forceGC                   bool
+	logPercent                float32
+	stopHeartbeat             chan struct{}
+	eventsExternalEndpointURL string
 }
 
 func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.Centroid, hgs map[histogram.Granularity]bool, ts int64, source string, tags map[string]string) error {
@@ -89,8 +90,9 @@ func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.C
 
 func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, error) {
 	storage := &wavefrontSink{
-		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
-		logPercent:  0.01,
+		ClusterName:               configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
+		logPercent:                0.01,
+		eventsExternalEndpointURL: cfg.EventsExternalEndpointURL,
 	}
 
 	if cfg.TestMode {
