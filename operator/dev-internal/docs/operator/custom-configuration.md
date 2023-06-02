@@ -29,7 +29,7 @@ Install the Observability for Kubernetes Operator into `observability-system` na
   - name: projects.registry.vmware.com/tanzu_observability/kubernetes-operator
     newName: YOUR_IMAGE_REGISTRY/kubernetes-operator
   ```
-5. If your image registry needs authentication, modify the `kustomization.yaml` as shown below.
+5. If your image registry needs authentication, create an image registry secret in the same namespace as the operator (The default namespace is `observability-system`) by following steps [here](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/), then modify the `kustomization.yaml` to include your image registry secret. 
   ```yaml
   # Need to change YOUR_IMAGE_REGISTRY and YOUR_IMAGE_REGISTRY_SECRET
   apiVersion: kustomize.config.k8s.io/v1beta1
@@ -56,8 +56,7 @@ Install the Observability for Kubernetes Operator into `observability-system` na
   ```
   kubectl apply -k observability
   ```
-6. Now follow the steps starting from step 2 in [Deploy the Kubernetes Metrics Collector and Wavefront Proxy with the Operator](../../README.md#Deploy-the-Kubernetes-Metrics-Collector-and-Wavefront-Proxy-with-the-Observability-for-Kubernetes-Operator).
-   Also, add your registry secret to the Wavefront Custom Resource as shown in this [example](../../../deploy/scenarios/wavefront-custom-private-registry.yaml).
+7. Now follow the steps starting from step 2 in [Deploy the Kubernetes Metrics Collector and Wavefront Proxy with the Operator](../../README.md#Deploy-the-Kubernetes-Metrics-Collector-and-Wavefront-Proxy-with-the-Observability-for-Kubernetes-Operator). Also, add your image registry secret to the Wavefront Custom Resource as shown in this [example](../../deploy/scenarios/wavefront-custom-private-registry.yaml).
 
 # Deploy the Observability for Kubernetes Operator into a Custom Namespace
 
