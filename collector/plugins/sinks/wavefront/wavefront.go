@@ -4,8 +4,11 @@
 package wavefront
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"os"
 	"runtime/debug"
 	"strconv"
@@ -233,25 +236,38 @@ func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
 	host := sink.ClusterName
 	ev.ClusterName = sink.ClusterName
 
-	// b, _ := json.Marshal(event)
-	// if sink.UseExternalEventEndpoint {
-	// b, _ := json.Marshal(event)
-	// sink.sendExernalEvant(eve
-	err := sink.WavefrontClient.SendEvent(
-		ev.Message,
-		ev.Ts.Unix(), 0,
-		host,
-		ev.Tags,
-		ev.Options...,
-	)
-	if err != nil {
-		sink.logVerboseError(log.Fields{
-			"message": ev.Message,
-			"error":   err,
-		}, "error sending event")
-		errEvents.Inc(1)
+	if sink.eventsExternalEndpointURL != "" {
+		b, _ := json.Marshal(ev)
+		req, _ := http.NewRequest("POST", sink.eventsExternalEndpointURL, bytes.NewBuffer(b))
+		req.Header.Set("Content-Type", "text/plain")
+		//fmt.Printf("TEST:: token: " + util.GetToken())
+		//req.Header.Set("Authorization", "Bearer " + util.GetToken())
+
+		client := &http.Client{}
+		_, err := client.Do(req)
+		if err != nil {
+			sink.logVerboseError(log.Fields{
+				"message": ev.Message,
+				"error":   err,
+			}, "error sending event to external event endpoint")
+		}
 	} else {
-		sentEvents.Inc(1)
+		err := sink.WavefrontClient.SendEvent(
+			ev.Message,
+			ev.Ts.Unix(), 0,
+			host,
+			ev.Tags,
+			ev.Options...,
+		)
+		if err != nil {
+			sink.logVerboseError(log.Fields{
+				"message": ev.Message,
+				"error":   err,
+			}, "error sending event")
+			errEvents.Inc(1)
+		} else {
+			sentEvents.Inc(1)
+		}
 	}
 }
 
