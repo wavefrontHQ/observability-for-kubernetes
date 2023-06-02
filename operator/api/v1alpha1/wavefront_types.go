@@ -42,6 +42,11 @@ type WavefrontSpec struct {
 	// +kubebuilder:default:=wavefront-secret
 	WavefrontTokenSecret string `json:"wavefrontTokenSecret,omitempty"`
 
+	// ImagePullSecret is the name of the secret to authenticate with a private custom registry.
+	// +kubebuilder:validation:MaxLength:=253
+	// +kubebuilder:validation:Pattern:=`^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$`
+	ImagePullSecret string `json:"imagePullSecret,omitempty"`
+
 	// DataExport options
 	DataExport DataExport `json:"dataExport,omitempty"`
 

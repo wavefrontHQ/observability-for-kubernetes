@@ -41,6 +41,10 @@ spec:
       {{- if .DataCollection.Tolerations }}
 {{ .DataCollection.Tolerations | toYaml | indent 8 }}
       {{- end }}
+      {{- if .ImagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .ImagePullSecret }}
+      {{- end }}
       containers:
       - image: {{ .ImageRegistry }}/kubernetes-operator-fluentbit:{{ .DataCollection.Logging.LoggingVersion }}
         env:

@@ -590,6 +590,12 @@ spec:
                         type: object
                     type: object
                 type: object
+              imagePullSecret:
+                description: ImagePullSecret is the name of the secret to authenticate
+                  with a private custom registry.
+                maxLength: 253
+                pattern: ^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$
+                type: string
               experimental:
                 description: Experimental features
                 properties:

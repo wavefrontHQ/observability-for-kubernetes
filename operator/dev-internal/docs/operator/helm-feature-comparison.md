@@ -35,7 +35,7 @@ Observability for Kubernetes Operator feature comparison with [Helm install](htt
 | `collector.discovery. annotationExcludes` | `Can configure with custom collector config` | Exclude resources from annotation based auto-discovery. |
 | `collector.discovery.config` | `Can configure with custom collector config` | Exclude resources from annotation based auto-discovery. |
 | `collector.resources` | `dataCollection.metrics.nodeCollector.resources` `dataCollection.metrics.clusterCollector.resources` | Configuration for rules based auto-discovery. |
-| `imagePullSecrets` | `Not currently supported` | Enable Wavefront proxy and Kubernetes Metrics Collector to pull from private image repositories. **Note:** Secret must exist in namespace that will be used for the installation. |
+| `imagePullSecrets` | `imagePullSecret` | Enable Wavefront proxy and Kubernetes Metrics Collector to pull from private image repositories. **Note:** Secret must exist in namespace that will be used for the installation. Currently, the operator supports a single imagePullSecret.|
 | `proxy.enabled` | `dataExport.wavefrontProxy.enable` | Whether to enable the Wavefront proxy. Defaults to true. Disable to use `dataExport.externalWavefrontProxy.Url`. |
 | `proxy.image.repository` | `Not currently supported` | Kubernetes Metrics Collector image registry and name. |
 | `proxy.image.tag` | `Not currently supported` | Wavefront proxy image tag. |

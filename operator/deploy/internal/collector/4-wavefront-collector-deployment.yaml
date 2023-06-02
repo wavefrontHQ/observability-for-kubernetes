@@ -36,6 +36,10 @@ spec:
           value: arm64
       serviceAccountName: wavefront-collector
       automountServiceAccountToken: true
+      {{- if .ImagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .ImagePullSecret }}
+      {{- end }}
       containers:
         - name: wavefront-cluster-collector
           securityContext:
