@@ -356,7 +356,6 @@ type Resources struct {
 
 type ControlPlane struct {
 	// Enable is whether to include kubernetes.controlplane.* metrics
-	// and whether to include kubernetes_control_plane_source
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable"`
 

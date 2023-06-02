@@ -215,7 +215,7 @@ spec:
                           enable:
                             default: true
                             description: Enable is whether to include kubernetes.controlplane.*
-                              metrics and whether to include kubernetes_control_plane_source
+                              metrics
                             type: boolean
                         required:
                         - enable
