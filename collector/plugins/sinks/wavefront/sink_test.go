@@ -4,15 +4,16 @@
 package wavefront
 
 import (
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 	"io"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 

@@ -600,6 +600,18 @@ spec:
                       enable:
                         type: boolean
                     type: object
+                  kubernetesEvents:
+                    properties:
+                      enable:
+                        default: false
+                        description: Enable is whether to enable events. Defaults
+                          to false.
+                        type: boolean
+                      externalEndpointURL:
+                        type: string
+                    required:
+                    - externalEndpointURL
+                    type: object
                 type: object
               wavefrontTokenSecret:
                 default: wavefront-secret
