@@ -1,13 +1,16 @@
 # Kubernetes App Auto-Instrumentation via Pixie
 
-These instructions will guide you through setting up auto-instrumentation of applications running on a Kubernetes 
-cluster via Pixie technology.
+These instructions will guide you through setting up auto-instrumentation of applications running on a Kubernetes cluster, through a "bring your own" [Pixie](https://docs.px.dev/about-pixie/what-is-pixie/) deployment.
+
+> **Note**: The installation steps below require about 30 minutes to complete.
 
 ## Prerequisites
 
 A Kubernetes cluster:
-- Minimum of five nodes.
+- Minimum of three nodes.
 - Node VMs need a minimum of 4 vCPUs. For example, the GCP machine type of `e2-standard-4`.
+- x86-64 CPU architecture. ARM is not supported.
+- 600MB free memory per node to enabled Pixie data collection.
 
 Refer to Pixie's [Setting up Kubernetes](https://docs.px.dev/installing-pixie/setting-up-k8s/) and [Requirements](https://docs.px.dev/installing-pixie/requirements/) documentation for more details.
 
@@ -98,6 +101,8 @@ Refer to Pixie's [Setting up Kubernetes](https://docs.px.dev/installing-pixie/se
      --cluster_name=YOUR_CLUSTER_NAME
    ```
 
+   > **Note**: The options above tune Pixie for the specific use-case of OpApps, and disable some features that are unused. This is done to reduce the memory required by Pixie per Kubernetes node to 600MB. The above configuration only enables `http_event` Pixie eBPF probes, and disables all others.
+
 5. Check the status of the Pixie installation.
    Pixie deploys the following pods to your cluster. Note that the number of `vizier-pem` pods correlates with the number of nodes in your cluster, so your  deployment may contain more PEM pods.
 
@@ -129,7 +134,8 @@ Refer to Pixie's [Setting up Kubernetes](https://docs.px.dev/installing-pixie/se
 4. Click the toggle to _disable_ "Secure connections with TLS" and press the SAVE button. The Wavefront Proxy does not support receiving OpenTelemetry data over TLS.
 
 
-## Install the Operations for Applications Pixie Script
+## Install the Operations for Applications Pixie Collection Script
+
 
 1. Navigate to the `Data Retention Scripts` at https://work.withpixie.ai/configure-data-export.
 2. The OpenTelemetry plugin comes with several pre-configured OTel export PxL scripts (Connection Stats, Network Stats, Resource Summary). Click the toggle to disable these scripts (if not already disabled). A custom Operations for Applications PxL script will be used to gather compatible instrumentation data.
@@ -158,6 +164,14 @@ Refer to Pixie's [Setting up Kubernetes](https://docs.px.dev/installing-pixie/se
    ```
    INFO  [AbstractReportableEntityHandler:printStats] [4317] Spans received rate: 0 sps (1 min), 0 sps (5 min), 0 sps (current).
    ```
+
+## Finished!
+
+If your Kubernetes cluster has an existing workload of HTTP traffic, go to https://YOUR_WAVEFRONT_URL/tracing/ and look for RED metric data to flow in.
+
+The name of the Application in OpApps is determined by the Kubernetes namespace a service is deployed in. For example, if your cluster had two services named `frontend` and `backend` deployed in the namespace `demo-app`, you should find RED metrics for those services within a `demo-app`, based upon the HTTP traffic between them. Within a few minutes, you should also see connections between the edges of the services created.
+
+If you need a demo application for your Kubernetes cluster, see the section below.
 
 ## Deploy a Demo Microservices App
 
