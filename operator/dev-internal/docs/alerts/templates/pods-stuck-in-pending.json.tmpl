@@ -4,21 +4,21 @@
   "alertSources": [
     {
       "name": "Alert Condition",
-      "query": "sum(ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\"), pod_name, namespace_name, cluster, nodename, message)",
+      "query": "count(ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\"), pod_name, namespace_name, cluster, nodename, message)",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
     },
     {
       "name": "Display Condition",
-      "query": "${Alert Condition}.gt(0)",
+      "query": "${Alert Condition}",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE","AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "warn": "sum(ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\"), pod_name, namespace_name, cluster, nodename, message) >= 1"
+    "warn": "count(ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\"), pod_name, namespace_name, cluster, nodename, message) >= 1"
   },
   "displayExpression": "${Display Condition}",
   "minutes": 15
