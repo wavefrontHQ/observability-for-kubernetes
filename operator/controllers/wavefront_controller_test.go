@@ -1302,6 +1302,22 @@ func TestReconcileAutoInstrumentation(t *testing.T) {
 	})
 }
 
+func TestReconcileKubernetesEvents(t *testing.T) {
+	t.Run("can enable kubernetes events", func(t *testing.T) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.Experimental.KubernetesEvents.Enable = true
+			w.Spec.Experimental.KubernetesEvents.ExternalEndpointURL = "https://example.com"
+		}), nil)
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.NoError(t, err)
+
+		require.True(t, mockKM.CollectorConfigMapContains("enableEvents: true"))
+		require.True(t, mockKM.CollectorConfigMapContains("eventsExternalEndpointURL: \"https://example.com\""))
+	})
+}
+
 func VersionSent(mockSender *testhelper.MockSender) float64 {
 	var versionSent float64
 	for _, m := range mockSender.SentMetrics {

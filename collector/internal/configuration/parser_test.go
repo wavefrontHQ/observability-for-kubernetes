@@ -34,6 +34,7 @@ sinks:
 
     tagInclude:
     - 'nodename'
+  eventsExternalEndpointURL: 'https://example.com'
 
 events:
   filters:
@@ -117,6 +118,7 @@ func TestFromYAML(t *testing.T) {
 	assert.Equal(t, "kubernetes.controlplane.", cfg.Sources.PrometheusConfigs[0].Prefix)
 	assert.Equal(t, "kubernetes.cadvisor.", cfg.Sources.CadvisorConfig.Prefix)
 	assert.Equal(t, "histogram-conversion", cfg.Experimental[0])
+	assert.Equal(t, "https://example.com", cfg.Sinks[0].EventsExternalEndpointURL)
 
 	assert.Equal(t, cfg.DiscoveryConfig.AnnotationExcludes[0].Images, []string{"not-redis:*", "*not-redis*"})
 }

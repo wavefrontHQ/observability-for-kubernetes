@@ -153,11 +153,12 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		e.LastTimestamp.Time,
 		e.Source.Host,
 		tags,
+		*e,
 		event.Type(eType),
 	))
 }
 
-func newEvent(message string, ts time.Time, host string, tags map[string]string, options ...event.Option) *events.Event {
+func newEvent(message string, ts time.Time, host string, tags map[string]string, coreV1Event v1.Event, options ...event.Option) *events.Event {
 	// convert tags to annotations
 	for k, v := range tags {
 		options = append(options, event.Annotate(k, v))
@@ -168,5 +169,6 @@ func newEvent(message string, ts time.Time, host string, tags map[string]string,
 		Ts:      ts,
 		Host:    host,
 		Options: options,
+		Event:   coreV1Event,
 	}
 }

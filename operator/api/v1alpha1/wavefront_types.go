@@ -80,6 +80,8 @@ type WavefrontSpec struct {
 
 type Experimental struct {
 	AutoInstrumentation AutoInstrumentation `json:"autoInstrumentation,omitempty"`
+
+	KubernetesEvents KubernetesEvents `json:"kubernetesEvents,omitempty"`
 }
 
 type AutoInstrumentation struct {
@@ -412,6 +414,14 @@ type Logging struct {
 
 	// LoggingVersion is for internal use only
 	LoggingVersion string `json:"-"`
+}
+
+type KubernetesEvents struct {
+	// Enable is whether to enable events. Defaults to false.
+	// +kubebuilder:default:=false
+	Enable bool `json:"enable,omitempty"`
+
+	ExternalEndpointURL string `json:"externalEndpointURL,required"`
 }
 
 // WavefrontStatus defines the observed state of Wavefront
