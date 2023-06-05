@@ -249,9 +249,27 @@ Metrics collected for etcd:
 | kubernetes.controlplane.etcd.network.peer.received.failures.total.counter | The total number of failures received by peers. | Not available in AKS, EKS, GKE |
 
 ### PersistentVolumeClaim Metrics
+| Metric Name | Description |
+|---|---|
+| kubernetes.pvc.annotations           | |
+| kubernetes.pvc.access_mode           | The access mode(s) specified by the persistent volume claim.|
+| kubernetes.pvc.info                  | Information about persistent volume claim.|
+| kubernetes.pvc.labels                | |
+| kubernetes.pvc.request.storage_bytes | The storage requested by the persistent volume claim in bytes. |
+| kubernetes.pvc.status.condition      | Information about status of different conditions of persistent volume claim.|
+| kubernetes.pvc.status.phase          | The phase of the persistent volume claim. |
+| kubernetes.pvc.created               | Unix creation timestamp|
 
 
-| kubernetes.pvc.status.phase | Gauge | |
+| Wavefront Collector                  | kube-state-metrics                                          |
+| kubernetes.pvc.annotations           | kube_persistentvolumeclaim_annotations                      |
+| kubernetes.pvc.access_mode           | kube_persistentvolumeclaim_access_mode                      |
+| kubernetes.pvc.info                  | kube_persistentvolumeclaim_info                             |
+| kubernetes.pvc.labels                | kube_persistentvolumeclaim_labels                           |
+| kubernetes.pvc.request.storage_bytes | kube_persistentvolumeclaim_resource_requests_storage_bytes  |
+| kubernetes.pvc.status.condition      | kube_persistentvolumeclaim_status_condition                 |
+| kubernetes.pvc.status.phase          | kube_persistentvolumeclaim_status_phase                     |
+| kubernetes.pvc.created               | kube_persistentvolumeclaim_created                          |
 
 
 | Metric name | Metric type | Description | Unit (where applicable) | Labels/tags | Status |
