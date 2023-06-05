@@ -5,13 +5,14 @@ import "errors"
 type AgentType string
 
 const (
-	AllAgentType     AgentType = "all"
-	ClusterAgentType AgentType = "cluster"
-	NodeAgentType    AgentType = "node"
-	LegacyAgentType  AgentType = "legacy"
+	AllAgentType       AgentType = "all"
+	ClusterAgentType   AgentType = "cluster"
+	K8sEventsAgentType AgentType = "k8s-events"
+	LegacyAgentType    AgentType = "legacy"
+	NodeAgentType      AgentType = "node"
 )
 
-var InvalidAgentTypeErr = errors.New("--agent can only be node, cluster, all or legacy")
+var InvalidAgentTypeErr = errors.New("--agent can only be node, cluster, k8s-events, all or legacy")
 
 func NewAgentType(value string) (AgentType, error) {
 	switch value {
@@ -19,6 +20,8 @@ func NewAgentType(value string) (AgentType, error) {
 		return AllAgentType, nil
 	case "cluster":
 		return ClusterAgentType, nil
+	case "k8s-events":
+		return K8sEventsAgentType, nil
 	case "node":
 		return NodeAgentType, nil
 	case "legacy":
