@@ -20,6 +20,9 @@ function copy_collector_deployment_files() {
   mv xx00 base/deploy/collector-deployments/5-collector-node-metrics-only.yaml
   mv xx01 base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml
 
+  sed -e "s/agent=cluster/agent=k8s_events/g" \
+        base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml > base/deploy/collector-deployments/5-collector-k8s-events-only.yaml
+
   cp "${COLLECTOR_YAML}" base/deploy/5-wavefront-collector.yaml
 }
 

@@ -132,6 +132,11 @@ function main() {
     run_fake_proxy_test "cluster-metrics-only" "base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
+  if [[ "${tests_to_run[*]}" =~ "k8s-events-only" ]]; then
+    echo "==================== Running fake_proxy k8s-events-only test ===================="
+    run_fake_proxy_test "k8s-events-only" "base/deploy/collector-deployments/5-collector-k8s-events-only.yaml"
+    ${SCRIPT_DIR}/clean-deploy.sh
+  fi
   if [[ "${tests_to_run[*]}" =~ "node-metrics-only" ]]; then
     green "\n==================== Running fake_proxy node-metrics-only test ===================="
     run_fake_proxy_test "node-metrics-only" "base/deploy/collector-deployments/5-collector-node-metrics-only.yaml"
