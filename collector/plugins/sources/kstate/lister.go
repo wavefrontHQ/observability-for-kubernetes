@@ -75,6 +75,11 @@ func buildInformers(kubeClient kubernetes.Interface) map[string]cache.SharedInfo
 }
 
 func buildInformer(resource string, resType runtime.Object, getter cache.Getter) cache.SharedInformer {
+	if resource == pvc {
+		log.Printf("pvc_debug:: buildInformer resource: %+v", resource)
+		log.Printf("pvc_debug:: buildInformer resType: %+v", resType)
+		log.Printf("pvc_debug:: buildInformer getter: %+v", getter)
+	}
 	return buildInformerWithFieldsSelector(resource, resType, getter, fields.Everything())
 }
 

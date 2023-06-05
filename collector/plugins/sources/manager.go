@@ -115,6 +115,7 @@ func Manager() SourceManager {
 
 // BuildProviders creates a new source manager with the configured MetricsSourceProviders
 func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig) error {
+	log.Println("pvc_debug:: Entering BuildProviders")
 	sources := buildProviders(sm.client, cfg)
 	for _, runtime := range sources {
 		sm.AddProvider(runtime)
@@ -304,6 +305,7 @@ func buildProviders(client kubernetes.Interface, cfg configuration.SourceConfig)
 		result = appendProvider(result, provider, err, cfg.StatsConfig.Collection)
 	}
 	if cfg.StateConfig != nil {
+		log.Println("pvc_debug:: cfg.StateConfig found in buildProviders")
 		provider, err := kstate.NewStateProvider(*cfg.StateConfig)
 		result = appendProvider(result, provider, err, cfg.StateConfig.Collection)
 	}

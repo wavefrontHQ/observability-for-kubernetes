@@ -154,7 +154,7 @@ function main() {
   fi
   if [[ "${tests_to_run[*]}" =~ "include-pvc-metrics" ]]; then
     echo "==================== Running fake_proxy include-pvc-metrics test ===================="
-    run_fake_proxy_test "node-metrics-only" "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" "include-pvc-metrics"
+    run_fake_proxy_test "all-metrics" "base/deploy/collector-deployments/5-collector-combined.yaml" "include-pvc-metrics"
     run_real_proxy
 #    ${SCRIPT_DIR}/clean-deploy.sh
   fi
