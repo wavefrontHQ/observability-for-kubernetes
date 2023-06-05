@@ -63,7 +63,7 @@ target-kind:
 #----- GKE -----#
 GCP_PROJECT?=wavefront-gcp-dev
 GCP_REGION=us-central1
-GCP_ZONE?=c
+GCP_ZONE?=b
 NUMBER_OF_NODES?=3
 
 target-gke: connect-to-gke gke-connect-to-cluster
