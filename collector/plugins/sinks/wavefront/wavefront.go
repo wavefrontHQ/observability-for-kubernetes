@@ -235,13 +235,12 @@ func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
 	ev.Options = append(ev.Options, event.Annotate("cluster", sink.ClusterName))
 	host := sink.ClusterName
 	ev.ClusterName = sink.ClusterName
+	ev.ClusterUUID = util.GetClusterUUID()
 
 	if sink.eventsExternalEndpointURL != "" {
 		b, _ := json.Marshal(ev)
 		req, _ := http.NewRequest("POST", sink.eventsExternalEndpointURL, bytes.NewBuffer(b))
 		req.Header.Set("Content-Type", "text/plain")
-		//fmt.Printf("TEST:: token: " + util.GetToken())
-		//req.Header.Set("Authorization", "Bearer " + util.GetToken())
 
 		client := &http.Client{}
 		_, err := client.Do(req)
