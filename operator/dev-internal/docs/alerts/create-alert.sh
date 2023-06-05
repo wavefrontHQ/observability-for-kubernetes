@@ -41,7 +41,7 @@ function print_usage_and_exit() {
   red "Failure: $1"
   echo "Usage: $0 -t <WAVEFRONT_TOKEN> -c <WF_CLUSTER> -f <ALERT_FILE> -n <K8S_CLUSTER_NAME>"
   echo -e "\t-t wavefront token (required)"
-  echo -e "\t-c wavefront instance name (required, default: 'nimba')"
+  echo -e "\t-c wavefront instance name (required)"
   echo -e "\t-f alert file (required)"
   echo -e "\t-n kubernetes cluster name (required)"
   exit 1
@@ -52,9 +52,7 @@ function main() {
   local WF_CLUSTER=
   local ALERT_FILE=
   local K8S_CLUSTER_NAME=
-
-  # Default arguments
-  local WF_CLUSTER=nimba
+  local WF_CLUSTER=
 
   while getopts 'c:t:f:n:' opt; do
     case "${opt}" in
