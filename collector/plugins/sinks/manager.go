@@ -127,7 +127,7 @@ func (sm *sinkManager) ExportEvent(event *events.Event) {
 			log.WithField("name", sh.sink.Name()).Debug("Pushing Events to sink")
 			select {
 			case sh.eventBatchChannel <- event:
-				log.WithField("name", sh.sink.Name()).Debug("Events push complete")
+				log.WithField("name", sh.sink.Name()).Info("Events push complete")
 				// everything ok
 			case <-time.After(sm.exportDataTimeout):
 				sinkTimeouts.Inc(1)
