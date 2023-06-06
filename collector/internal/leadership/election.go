@@ -170,5 +170,5 @@ func SetLeading(leading bool) {
 func Leading() bool {
 	lock.RLock()
 	defer lock.RUnlock()
-	return util.ScrapeCluster() && isLeader
+	return util.ClusterCollector() && isLeader
 }

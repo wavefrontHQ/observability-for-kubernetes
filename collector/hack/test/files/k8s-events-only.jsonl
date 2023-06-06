@@ -31,3 +31,8 @@
 ~{"Name":"swap.free"}
 ~{"Name":"system.load1"}
 ~{"Name":"~wavefront.kubernetes.collector.version"}
+~{"Name":"~sdk.go.core.sender.proxy.version"}
+~{"Name":"~wavefront.kubernetes.collector.config.events.enabled"}
+~{"Name":"~wavefront.kubernetes.collector.version"}
+~{"Name":"∆~sdk.go.core.sender.proxy.points.valid"}
+~{"Name":"∆~sdk.go.core.sender.proxy.points.write.success"}

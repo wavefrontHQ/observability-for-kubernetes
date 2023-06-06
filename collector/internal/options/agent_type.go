@@ -44,8 +44,16 @@ func (a AgentType) Type() string {
 	return "string"
 }
 
+func (a AgentType) OnlyExportKubernetesEvents() bool {
+	return a == K8sEventsAgentType
+}
+
 func (a AgentType) ScrapeCluster() bool {
 	return a == AllAgentType || a == LegacyAgentType || a == ClusterAgentType
+}
+
+func (a AgentType) ClusterCollector() bool {
+	return a.ScrapeCluster() || a.OnlyExportKubernetesEvents()
 }
 
 func (a AgentType) ScrapeNodes() string {
@@ -66,7 +74,7 @@ func (a AgentType) ScrapeNodes() string {
 }
 
 func (a AgentType) ScrapeAnyNodes() bool {
-	return a != ClusterAgentType
+	return a != ClusterAgentType && a != K8sEventsAgentType
 }
 
 func (a AgentType) ScrapeOnlyOwnNode() bool {
