@@ -1,7 +1,7 @@
 // Copyright 2018-2019 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package sinks
+package wavefront
 
 import (
 	"bytes"
@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 
@@ -83,7 +84,7 @@ func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.C
 	return sink.WavefrontClient.SendDistribution(name, centroids, hgs, ts, source, tags)
 }
 
-func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (Sink, error) {
+func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (sinks.Sink, error) {
 	storage := &wavefrontSink{
 		ClusterName:               configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
 		logPercent:                0.01,
