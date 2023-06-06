@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-
-source "${REPO_ROOT}/scripts/k8s-utils.sh"
-
 function post_alert_to_wavefront() {
   local wavefront_token=$1
   local wavefront_cluster=$2
@@ -12,23 +8,29 @@ function post_alert_to_wavefront() {
   local k8s_cluster_name=$4
 
   response=$(mktemp)
-  res_code=$(curl -X POST --silent --output "${response}" --write-out "%{http_code}" \
-    "https://${wavefront_cluster}.wavefront.com/api/v2/alert?useMultiQuery=true" \
+  res_code=$(curl --silent --show-error --output "${response}" --write-out "%{http_code}" \
+    -X POST "https://${wavefront_cluster}.wavefront.com/api/v2/alert?useMultiQuery=true" \
     -H "Accept: application/json" \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer ${wavefront_token}" \
     -d @<(sed "s/K8S_CLUSTER_NAME/${k8s_cluster_name}/g" "${alert_file}"))
 
   if [[ ${res_code} -ne 200 ]]; then
-    red "Unable to create alert: "
+    echo "Unable to create alert: "
     cat "${response}"
     exit 1
   fi
 
+  if [ -x "$(command -v jq)" ]; then
+    alert_name=$(jq -r '.name' "${alert_file}")
+    echo "Alert name: ${alert_name}"
+  fi
+
   alert_id=$(sed -n 's/.*id":"\([0-9]*\).*/\1/p' "${response}")
 
-  green "Alert has been created at: https://${wavefront_cluster}.wavefront.com/alerts/${alert_id}"
+  echo "Alert has been created at: https://${wavefront_cluster}.wavefront.com/alerts/${alert_id}"
 }
+
 function check_required_argument() {
   local required_arg=$1
   local failure_msg=$2
@@ -38,13 +40,18 @@ function check_required_argument() {
 }
 
 function print_usage_and_exit() {
-  red "Failure: $1"
-  echo "Usage: $0 -t <WAVEFRONT_TOKEN> -c <WF_CLUSTER> -f <ALERT_FILE> -n <K8S_CLUSTER_NAME>"
+  echo "Failure: $1"
+  print_usage
+  exit 1
+}
+
+function print_usage() {
+  echo "Usage: create-alert.sh -t <WAVEFRONT_TOKEN> -c <WF_CLUSTER> -f <ALERT_FILE> -n <K8S_CLUSTER_NAME> -h"
   echo -e "\t-t wavefront token (required)"
   echo -e "\t-c wavefront instance name (required)"
-  echo -e "\t-f alert file (required)"
+  echo -e "\t-f path to alert file (required)"
   echo -e "\t-n kubernetes cluster name (required)"
-  exit 1
+  echo -e "\t-h print usage"
 }
 
 function main() {
@@ -54,13 +61,14 @@ function main() {
   local K8S_CLUSTER_NAME=
   local WF_CLUSTER=
 
-  while getopts 'c:t:f:n:' opt; do
+  while getopts 'c:t:f:n:h' opt; do
     case "${opt}" in
     t) WAVEFRONT_TOKEN="${OPTARG}" ;;
     c) WF_CLUSTER="${OPTARG}" ;;
     f) ALERT_FILE="${OPTARG}" ;;
     n) K8S_CLUSTER_NAME="${OPTARG}" ;;
-    \?) print_usage_and_exit "Invalid option: -${OPTARG}" ;;
+    h) print_usage; exit 0 ;;
+    \?) print_usage_and_exit "Invalid option" ;;
     esac
   done
 

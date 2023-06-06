@@ -3,23 +3,31 @@
   "alertType": "THRESHOLD",
   "alertSources": [
     {
-      "name": "Alert Condition",
+      "name": "Query",
       "query": "count(ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\"), pod_name, namespace_name, cluster, nodename, message)",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "(mcount(10m, ${Query}) >= 10)",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
     },
     {
       "name": "Display Condition",
-      "query": "${Alert Condition}",
+      "query": "if(${Alert Condition}, ${Alert Condition})",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE","AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "warn": "count(ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\"), pod_name, namespace_name, cluster, nodename, message) >= 1"
+    "warn": "(mcount(10m, ${Query}) >= 10) >= 1"
   },
   "displayExpression": "${Display Condition}",
-  "minutes": 15
+  "minutes": 5,
+  "resolveAfterMinutes": 2
 }
