@@ -293,17 +293,18 @@ function run_logging_integration_checks() {
   CURL_OUT=$(mktemp)
   CURL_ERR=$(mktemp)
   PF_OUT=$(mktemp)
-  jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  kill "$(jobs -p)" || true
-  sleep 3
-  netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &> "$PF_OUT" &
-  jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  trap 'echo "PF_OUT:"; cat "$PF_OUT"; echo "CURL_OUT:"; cat "$CURL_OUT"; echo "CURL_ERR:"; cat "$CURL_ERR"; echo "Killing jobs: $(jobs -l)"; kill "$(jobs -p)"' EXIT
-  sleep 3
 
-
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+    netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+    kill "$(jobs -p)" || true
+    sleep 3
+    netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+    kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &> "$PF_OUT" &
+    jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+    trap 'echo "PF_OUT:"; cat "$PF_OUT"; echo "CURL_OUT:"; cat "$CURL_OUT"; echo "CURL_ERR:"; cat "$CURL_ERR"; echo "Killing jobs: $(jobs -l)"; kill "$(jobs -p)"' EXIT
+    sleep 3
+  fi
 
   for _ in {1..10}; do
     CURL_CODE=$(curl --silent --show-error --output "$CURL_OUT" --stderr "$CURL_ERR" --write-out "%{http_code}" "http://localhost:8888/logs/assert")
@@ -388,6 +389,8 @@ function run_logging_integration_checks() {
 
     exit 1
   fi
+
+  kill "$(jobs -p)" || true
 
   yellow "Integration test complete. ${receivedLogCount} logs were checked."
 }
