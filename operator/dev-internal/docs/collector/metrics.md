@@ -251,38 +251,21 @@ Metrics collected for etcd:
 ### PersistentVolumeClaim Metrics
 | Metric Name | Description |
 |---|---|
-| kubernetes.pvc.annotations           | |
 | kubernetes.pvc.access_mode           | The access mode(s) specified by the persistent volume claim.|
-| kubernetes.pvc.info                  | Information about persistent volume claim.|
-| kubernetes.pvc.labels                | |
+| kubernetes.pvc.info                  | Information about persistent volume claim. No storageClassName tag implies pvc uses default storage class|
 | kubernetes.pvc.request.storage_bytes | The storage requested by the persistent volume claim in bytes. |
-| kubernetes.pvc.status.condition      | Information about status of different conditions of persistent volume claim.|
 | kubernetes.pvc.status.phase          | The phase of the persistent volume claim. |
-| kubernetes.pvc.created               | Unix creation timestamp|
+| kubernetes.pvc.status.condition      | Information about status of different conditions of persistent volume claim. Can be empty.|
 
+TODO: Remove this: Wavefront collector parity with kube-state-metrics for acceptance
 
-| Wavefront Collector                  | kube-state-metrics                                          |
-| kubernetes.pvc.annotations           | kube_persistentvolumeclaim_annotations                      |
-| kubernetes.pvc.access_mode           | kube_persistentvolumeclaim_access_mode                      |
-| kubernetes.pvc.info                  | kube_persistentvolumeclaim_info                             |
-| kubernetes.pvc.labels                | kube_persistentvolumeclaim_labels                           |
-| kubernetes.pvc.request.storage_bytes | kube_persistentvolumeclaim_resource_requests_storage_bytes  |
-| kubernetes.pvc.status.condition      | kube_persistentvolumeclaim_status_condition                 |
-| kubernetes.pvc.status.phase          | kube_persistentvolumeclaim_status_phase                     |
-| kubernetes.pvc.created               | kube_persistentvolumeclaim_created                          |
-
-
-| Metric name | Metric type | Description | Unit (where applicable) | Labels/tags | Status |
-| ----------- | ------------- | ----------- | ----------- | ----------- | ----------- |
-| kube_persistentvolumeclaim_annotations | Gauge | | | `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `annotation_PERSISTENTVOLUMECLAIM_ANNOTATION`=&lt;PERSISTENTVOLUMECLAIM_ANNOATION&gt; | EXPERIMENTAL |
-| kube_persistentvolumeclaim_access_mode | Gauge | | | `access_mode`=&lt;persistentvolumeclaim-access-mode&gt; <br>`namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; | STABLE |
-| kube_persistentvolumeclaim_info | Gauge | | | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `storageclass`=&lt;persistentvolumeclaim-storageclassname&gt;<br>`volumename`=&lt;volumename&gt; | STABLE |
-| kube_persistentvolumeclaim_labels | Gauge | | | `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `label_PERSISTENTVOLUMECLAIM_LABEL`=&lt;PERSISTENTVOLUMECLAIM_LABEL&gt; | STABLE |
-| kube_persistentvolumeclaim_resource_requests_storage_bytes | Gauge | | | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; | STABLE |
-| kube_persistentvolumeclaim_status_condition | Gauge | | | `namespace` =&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `type`=&lt;persistentvolumeclaim-condition-type&gt; <br> `status`=&lt;true\false\unknown&gt; | EXPERIMENTAL |
-| kube_persistentvolumeclaim_status_phase | Gauge | | | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `phase`=&lt;Pending\Bound\Lost&gt; | STABLE |
-| kube_persistentvolumeclaim_created | Gauge | Unix Creation Timestamp | seconds | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; | EXPERIMENTAL |
-
-Note:
-
-- An empty string will be used if PVC has no storage class.
+| Wavefront Collector| Metric name | Metric type | Description | Unit (where applicable) | Labels/tags | Status |
+|--- | ----------- | ------------- | ----------- | ----------- | ----------- | ----------- |
+| kubernetes.pvc.access_mode| kube_persistentvolumeclaim_access_mode | Gauge | | | `access_mode`=&lt;persistentvolumeclaim-access-mode&gt; <br>`namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; | STABLE |
+| kubernetes.pvc.info                 | kube_persistentvolumeclaim_info | Gauge | | | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `storageclass`=&lt;persistentvolumeclaim-storageclassname&gt;<br>`volumename`=&lt;volumename&gt; | STABLE |
+| kubernetes.pvc.request.storage_bytes| kube_persistentvolumeclaim_resource_requests_storage_bytes | Gauge | | | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; | STABLE |
+| kubernetes.pvc.status.condition     | kube_persistentvolumeclaim_status_condition | Gauge | | | `namespace` =&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `type`=&lt;persistentvolumeclaim-condition-type&gt; <br> `status`=&lt;true\false\unknown&gt; | EXPERIMENTAL |
+| kubernetes.pvc.status.phase         | kube_persistentvolumeclaim_status_phase | Gauge | | | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `phase`=&lt;Pending\Bound\Lost&gt; | STABLE |
+| Excluded| kube_persistentvolumeclaim_created | Gauge | Unix Creation Timestamp | seconds | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; | EXPERIMENTAL |
+| Excluded| kube_persistentvolumeclaim_labels | Gauge | | | `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `label_PERSISTENTVOLUMECLAIM_LABEL`=&lt;PERSISTENTVOLUMECLAIM_LABEL&gt; | STABLE |
+| Excluded| kube_persistentvolumeclaim_annotations | Gauge | | | `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `annotation_PERSISTENTVOLUMECLAIM_ANNOTATION`=&lt;PERSISTENTVOLUMECLAIM_ANNOATION&gt; | EXPERIMENTAL |

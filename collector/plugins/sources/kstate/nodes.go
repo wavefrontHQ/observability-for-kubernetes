@@ -43,7 +43,7 @@ func buildNodeConditions(node *v1.Node, transforms configuration.Transforms, ts 
 
 		// add status and condition (condition.status and condition.type)
 		points[i] = metricPoint(transforms.Prefix, "node.status.condition",
-			ConditionStatusFloat64(condition.Status), ts, transforms.Source, tags)
+			util.ConditionStatusFloat64(condition.Status), ts, transforms.Source, tags)
 	}
 	return points
 }

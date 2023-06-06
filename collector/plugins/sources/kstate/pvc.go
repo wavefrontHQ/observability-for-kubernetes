@@ -4,6 +4,7 @@
 package kstate
 
 import (
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	"reflect"
 	"time"
 
@@ -22,40 +23,79 @@ func pointsForPVC(item interface{}, transforms configuration.Transforms) []wf.Me
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
 		return nil
 	}
-	log.Printf("pvc_debug:: pointsForPVC persistentVolumeClaim: %+v", persistentVolumeClaim)
 
-	tags := buildTags("pvc", persistentVolumeClaim.Name, persistentVolumeClaim.Namespace, transforms.Tags)
+	sharedTags := buildTags("pvc_name", persistentVolumeClaim.Name, persistentVolumeClaim.Namespace, transforms.Tags)
+	copyLabels(persistentVolumeClaim.GetLabels(), sharedTags)
 
 	now := time.Now().Unix()
-	var resourceStorage = persistentVolumeClaim.Spec.Resources.Requests[corev1.ResourceStorage]
-	rsValue := float64(resourceStorage.Value())
-
-	log.Printf("pvc_debug:: pointsForPVC tags before buildPVCConditions: %+v", tags)
-	points := buildPVCConditions(persistentVolumeClaim, transforms, now, tags)
-
-	log.Printf("pvc_debug:: pointsForPVC rsValue: %+v", rsValue)
-	log.Printf("pvc_debug:: pointsForPVC tags after buildPVCConditions: %+v", tags)
-	points = append(points, metricPoint(transforms.Prefix, "pvc.request.storage_bytes", rsValue, now, transforms.Source, tags))
-	//points = append(points, buildPVCPhase(persistentVolumeClaim, transforms, now)...)
-	//points = append(points, buildPVCInfo(persistentVolumeClaim, transforms, now))
+	points := buildPVCRequestStorage(persistentVolumeClaim, transforms, now, sharedTags)
+	points = append(points, buildPVCInfo(persistentVolumeClaim, transforms, now, sharedTags))
+	points = append(points, buildPVCPhaseMetrics(persistentVolumeClaim, transforms, now, sharedTags))
+	points = append(points, buildPVCConditions(persistentVolumeClaim, transforms, now, sharedTags)...)
+	points = append(points, buildPVCAccessModes(persistentVolumeClaim, transforms, now, sharedTags)...)
 
 	return points
 }
 
-func buildPVCConditions(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, ts int64, tags map[string]string) []wf.Metric {
-	points := make([]wf.Metric, len(claim.Status.Conditions))
-	for i, condition := range claim.Status.Conditions {
-		copyLabels(claim.GetLabels(), tags)
-		tags["status"] = string(condition.Status)
-		tags["condition"] = string(condition.Type)
+func buildPVCPhaseMetrics(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) wf.Metric {
+	tags := make(map[string]string, len(sharedTags))
+	copyTags(sharedTags, tags)
 
-		log.Printf("pvc_debug:: buildPVCConditions pvc.Status: %+v", claim.Status)
+	tags["phase"] = string(claim.Status.Phase)
+	phaseValue := util.ConvertPVCPhase(claim.Status.Phase)
+	return metricPoint(transforms.Prefix, "pvc.status.phase", float64(phaseValue), now, transforms.Source, tags)
+}
 
-		// add status and condition (condition.status and condition.type)
-		points[i] = metricPoint(transforms.Prefix, "pvc.status.condition",
-			ConditionStatusFloat64(condition.Status), ts, transforms.Source, tags)
+func buildPVCAccessModes(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {
+	tags := make(map[string]string, len(sharedTags))
+	copyTags(sharedTags, tags)
+
+	points := make([]wf.Metric, len(claim.Spec.AccessModes))
+	for i, accessMode := range claim.Spec.AccessModes {
+		tags["access_mode"] = string(accessMode)
+
+		points[i] = metricPoint(transforms.Prefix, "pvc.access_mode",
+			1.0, now, transforms.Source, tags)
 	}
 	return points
 }
 
-// TODO write tests
+func buildPVCRequestStorage(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {
+	tags := make(map[string]string, len(sharedTags))
+	copyTags(sharedTags, tags)
+
+	var resourceStorage = claim.Spec.Resources.Requests[corev1.ResourceStorage]
+	return []wf.Metric{
+		metricPoint(transforms.Prefix, "pvc.request.storage_bytes", float64(resourceStorage.Value()), now, transforms.Source, tags),
+	}
+}
+
+func buildPVCConditions(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {
+	tags := make(map[string]string, len(sharedTags))
+	copyTags(sharedTags, tags)
+
+	points := make([]wf.Metric, len(claim.Status.Conditions))
+	for i, condition := range claim.Status.Conditions {
+		tags["status"] = string(condition.Status)
+		tags["condition"] = string(condition.Type)
+
+		points[i] = metricPoint(transforms.Prefix, "pvc.status.condition",
+			util.ConditionStatusFloat64(condition.Status), now, transforms.Source, tags)
+	}
+	return points
+}
+
+func buildPVCInfo(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) wf.Metric {
+	tags := make(map[string]string, len(sharedTags))
+	copyTags(sharedTags, tags)
+
+	tags["volumename"] = claim.Spec.VolumeName
+	// Use beta annotation first
+	if class, found := claim.Annotations[corev1.BetaStorageClassAnnotation]; found {
+		tags["storageclassname"] = class
+	}
+	tags["storageclassname"] = *claim.Spec.StorageClassName
+
+	return metricPoint(transforms.Prefix, "pvc.info", 1.0, now, transforms.Source, tags)
+}
+
