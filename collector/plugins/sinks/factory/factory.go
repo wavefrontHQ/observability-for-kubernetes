@@ -15,11 +15,13 @@
 // Copyright 2018-2019 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package sinks
+package factory
 
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/kubernetes/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
@@ -28,16 +30,16 @@ import (
 type SinkFactory struct {
 }
 
-func (factory *SinkFactory) Build(cfg configuration.WavefrontSinkConfig) (Sink, error) {
+func (factory *SinkFactory) Build(cfg configuration.WavefrontSinkConfig) (sinks.Sink, error) {
 	if !util.OnlyExportKubernetesEvents() {
 		return wavefront.NewWavefrontSink(cfg)
 	} else {
-		return NewK8sEventsOnlySink(cfg)
+		return events.NewK8sEventsOnlySink(cfg)
 	}
 }
 
-func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig) []Sink {
-	result := make([]Sink, 0, len(cfgs))
+func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig) []sinks.Sink {
+	result := make([]sinks.Sink, 0, len(cfgs))
 
 	for _, cfg := range cfgs {
 		sink, err := factory.Build(*cfg)

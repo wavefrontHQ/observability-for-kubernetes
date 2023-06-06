@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -207,6 +208,6 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 	assert.NotContains(t, getMetrics(sink), "emptyTag")
 }
 
-func getMetrics(sink Sink) string {
+func getMetrics(sink sinks.Sink) string {
 	return strings.TrimSpace(sink.(*wavefrontSink).WavefrontClient.(*TestSender).GetReceivedLines())
 }

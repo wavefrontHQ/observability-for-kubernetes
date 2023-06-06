@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/experimental"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/factory"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
 
@@ -31,7 +32,6 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/manager"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/processors"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/summary"
 
@@ -269,8 +269,8 @@ func getVersion() float64 {
 	return f
 }
 
-func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) wavefront.Sink {
-	sinksFactory := sinks.NewSinkFactory()
+func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) sinks.Sink {
+	sinksFactory := factory.NewSinkFactory()
 	sinkList := sinksFactory.BuildAll(cfgs)
 
 	for _, sink := range sinkList {
