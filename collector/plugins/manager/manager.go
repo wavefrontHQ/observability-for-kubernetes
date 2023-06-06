@@ -38,7 +38,7 @@ type FlushManager interface {
 
 type flushManagerImpl struct {
 	processors    []metrics.Processor
-	sink          wavefront.WavefrontSink
+	sink          wavefront.Sink
 	flushInterval time.Duration
 	ticker        *time.Ticker
 	stopChan      chan struct{}
@@ -46,7 +46,7 @@ type flushManagerImpl struct {
 
 // NewFlushManager crates a new PushManager
 func NewFlushManager(processors []metrics.Processor,
-	sink wavefront.WavefrontSink, flushInterval time.Duration) (FlushManager, error) {
+	sink wavefront.Sink, flushInterval time.Duration) (FlushManager, error) {
 	manager := flushManagerImpl{
 		processors:    processors,
 		sink:          sink,

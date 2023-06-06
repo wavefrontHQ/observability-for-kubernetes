@@ -19,20 +19,24 @@ package sinks
 
 import (
 	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
 )
 
 type SinkFactory struct {
 }
 
-func (factory *SinkFactory) Build(cfg configuration.WavefrontSinkConfig) (wavefront.WavefrontSink, error) {
-	return wavefront.NewWavefrontSink(cfg)
+func (factory *SinkFactory) Build(cfg configuration.WavefrontSinkConfig) (Sink, error) {
+	if !util.OnlyExportKubernetesEvents() {
+		return NewWavefrontSink(cfg)
+	} else {
+		return NewK8sEventsOnlySink(cfg)
+	}
 }
 
-func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig) []wavefront.WavefrontSink {
-	result := make([]wavefront.WavefrontSink, 0, len(cfgs))
+func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig) []Sink {
+	result := make([]Sink, 0, len(cfgs))
 
 	for _, cfg := range cfgs {
 		sink, err := factory.Build(*cfg)

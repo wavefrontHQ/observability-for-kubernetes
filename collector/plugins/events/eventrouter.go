@@ -35,7 +35,7 @@ type EventRouter struct {
 	kubeClient        kubernetes.Interface
 	eLister           corelisters.EventLister
 	eListerSynced     cache.InformerSynced
-	sink              wavefront.WavefrontSink
+	sink              wavefront.Sink
 	sharedInformers   informers.SharedInformerFactory
 	stop              chan struct{}
 	scrapeCluster     bool
@@ -43,7 +43,7 @@ type EventRouter struct {
 	filters           eventFilter
 }
 
-func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink wavefront.WavefrontSink, scrapeCluster bool) *EventRouter {
+func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink wavefront.Sink, scrapeCluster bool) *EventRouter {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
 

@@ -24,8 +24,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
-
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
@@ -47,7 +45,7 @@ func init() {
 }
 
 type sinkHolder struct {
-	sink              wavefront.WavefrontSink
+	sink              Sink
 	dataBatchChannel  chan *metrics.Batch
 	eventBatchChannel chan *events.Event
 	stopChannel       chan bool
@@ -62,7 +60,7 @@ type sinkManager struct {
 	stopTimeout       time.Duration
 }
 
-func NewSinkManager(sinks []wavefront.WavefrontSink, exportDataTimeout, stopTimeout time.Duration) (wavefront.WavefrontSink, error) {
+func NewSinkManager(sinks []Sink, exportDataTimeout, stopTimeout time.Duration) (Sink, error) {
 	var sinkHolders []sinkHolder
 	for _, sink := range sinks {
 		sh := sinkHolder{

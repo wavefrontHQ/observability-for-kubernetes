@@ -1,4 +1,4 @@
-package wavefront
+package sinks
 
 import (
 	"testing"

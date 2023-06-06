@@ -1,7 +1,7 @@
 // Copyright 2018-2019 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package wavefront
+package sinks
 
 import (
 	"io"
@@ -207,6 +207,6 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 	assert.NotContains(t, getMetrics(sink), "emptyTag")
 }
 
-func getMetrics(sink WavefrontSink) string {
+func getMetrics(sink Sink) string {
 	return strings.TrimSpace(sink.(*wavefrontSink).WavefrontClient.(*TestSender).GetReceivedLines())
 }

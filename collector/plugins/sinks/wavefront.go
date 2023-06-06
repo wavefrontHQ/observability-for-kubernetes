@@ -1,7 +1,7 @@
 // Copyright 2018-2019 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package wavefront
+package sinks
 
 import (
 	"bytes"
@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
-
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 	"github.com/wavefronthq/wavefront-sdk-go/histogram"
 
@@ -59,13 +58,6 @@ func init() {
 	clientType = gm.GetOrRegisterGauge("wavefront.sender.type", gm.DefaultRegistry)
 }
 
-type WavefrontSink interface {
-	Name() string
-	Stop()
-	metrics.Sink
-	events.EventSink
-}
-
 type wavefrontSink struct {
 	WavefrontClient           senders.Sender
 	ClusterName               string
@@ -91,7 +83,7 @@ func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.C
 	return sink.WavefrontClient.SendDistribution(name, centroids, hgs, ts, source, tags)
 }
 
-func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, error) {
+func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (Sink, error) {
 	storage := &wavefrontSink{
 		ClusterName:               configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
 		logPercent:                0.01,
@@ -99,8 +91,16 @@ func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (WavefrontSink, err
 	}
 
 	if cfg.TestMode {
+		log.Info("TEST MODE")
 		storage.WavefrontClient = NewTestSender()
 		clientType.Update(testClient)
+	} else if cfg.EventsExternalEndpointURL != "" {
+		var err error
+		log.Info("NOOP MODE")
+		storage.WavefrontClient, err = senders.NewWavefrontNoOpClient()
+		if err != nil {
+			return nil, fmt.Errorf("error creating WavefrontNoOpClient: %s", err.Error())
+		}
 	} else if cfg.ProxyAddress != "" {
 		s := strings.Split(cfg.ProxyAddress, ":")
 		host, portStr := s[0], s[1]

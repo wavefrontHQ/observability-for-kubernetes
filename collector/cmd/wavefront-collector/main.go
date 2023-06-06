@@ -269,7 +269,7 @@ func getVersion() float64 {
 	return f
 }
 
-func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) wavefront.WavefrontSink {
+func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) wavefront.Sink {
 	sinksFactory := sinks.NewSinkFactory()
 	sinkList := sinksFactory.BuildAll(cfgs)
 
