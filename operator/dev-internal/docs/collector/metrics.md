@@ -11,6 +11,7 @@
 * [cAdvisor Metrics](#cadvisor-metrics)
 * [Control Plane Metrics](#control-plane-metrics)
 
+
 ## Kubernetes Source
 
 These metrics are collected from the `/stats/summary` endpoint on each [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) running on a node.
@@ -118,6 +119,12 @@ These are cluster level metrics about the state of Kubernetes objects collected 
 | Node | node.status.condition | Status of all running nodes. |
 | Node | node.spec.taint | Node taints (one metric per node taint). |
 | Node | node.info | Detailed node information (kernel version, kubelet version etc). |
+| PersistentVolumeClaim| pvc.access_mode           | The access mode(s) specified by the persistent volume claim.|
+| PersistentVolumeClaim| pvc.info                  | Information about persistent volume claim. No storageClassName tag implies pvc uses default storage class|
+| PersistentVolumeClaim| pvc.request.storage_bytes | The storage requested by the persistent volume claim in bytes. |
+| PersistentVolumeClaim| pvc.status.phase          | The phase of the persistent volume claim. |
+| PersistentVolumeClaim| pvc.status.condition      | Information about status of different conditions of persistent volume claim. Can be empty.|
+
 
 ## Prometheus Source
 
@@ -248,16 +255,8 @@ Metrics collected for etcd:
 | kubernetes.controlplane.etcd.network.peer.sent.failures.total.counter | The total number of failures sent by peers. | Not available in AKS, EKS, GKE |
 | kubernetes.controlplane.etcd.network.peer.received.failures.total.counter | The total number of failures received by peers. | Not available in AKS, EKS, GKE |
 
-### PersistentVolumeClaim Metrics
-| Metric Name | Description |
-|---|---|
-| kubernetes.pvc.access_mode           | The access mode(s) specified by the persistent volume claim.|
-| kubernetes.pvc.info                  | Information about persistent volume claim. No storageClassName tag implies pvc uses default storage class|
-| kubernetes.pvc.request.storage_bytes | The storage requested by the persistent volume claim in bytes. |
-| kubernetes.pvc.status.phase          | The phase of the persistent volume claim. |
-| kubernetes.pvc.status.condition      | Information about status of different conditions of persistent volume claim. Can be empty.|
 
-TODO: Remove this: Wavefront collector parity with kube-state-metrics for acceptance
+### TODO: Remove this: PersistentVolumeClaim Metrics Comparison with kube-state-metrics for acceptance
 
 | Wavefront Collector| Metric name | Metric type | Description | Unit (where applicable) | Labels/tags | Status |
 |--- | ----------- | ------------- | ----------- | ----------- | ----------- | ----------- |
