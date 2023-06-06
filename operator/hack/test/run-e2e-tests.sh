@@ -124,6 +124,17 @@ function run_unhealthy_checks() {
   fi
 }
 
+function run_proxy_checks() {
+  local blocked_input_count=0
+  echo "Running proxy checks ..."
+
+  blocked_input_count=$(kubectl logs deployment/wavefront-proxy -n $NS | grep "WF-410: Too many point tags" | wc -l | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+  if [[ $blocked_input_count -gt 0 ]]; then
+    red "Expected 'WF-410: Too many point tags' logs received to be zero, but got $blocked_input_count"
+    exit 1
+  fi
+}
+
 function clean_up_test() {
   local type=$1
   echo "Cleaning Up Test '$type' ..."
@@ -412,6 +423,10 @@ function run_test() {
     run_logging_checks
   fi
 
+  if [[ " ${checks[*]} " =~ " proxy " ]]; then
+    run_proxy_checks
+  fi
+
   if [[ " ${checks[*]} " =~ " logging-integration-checks " ]]; then
     run_logging_integration_checks
   fi
@@ -520,10 +535,10 @@ function main() {
     run_test "basic" "health" "static_analysis"
   fi
   if [[ " ${tests_to_run[*]} " =~ " advanced " ]]; then
-    run_test "advanced" "health" "test_wavefront_metrics" "logging"
+    run_test "advanced" "health" "test_wavefront_metrics" "logging" "proxy"
   fi
   if [[ " ${tests_to_run[*]} " =~ " proxy-preprocessor " ]]; then
-    run_test "basic" "test_wavefront_metrics"
+    run_test "basic" "test_wavefront_metrics" "proxy"
   fi
   if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
