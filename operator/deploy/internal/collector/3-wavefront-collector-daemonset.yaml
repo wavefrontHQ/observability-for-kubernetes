@@ -76,7 +76,7 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.annotations['installation-method']
             - name: CLUSTER_UUID
-              value: { { .ClusterUUID } }
+              value: {{ .ClusterUUID }}
           ports:
             - containerPort: 8088
               protocol: TCP
