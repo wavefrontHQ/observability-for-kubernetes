@@ -18,8 +18,8 @@ import (
 
 func NewTestSink() *ExternalSink {
 	return &ExternalSink{
-		ClusterName:               "testCluster",
-		eventsExternalEndpointURL: "test",
+		ClusterName:         "testCluster",
+		externalEndpointURL: "test",
 	}
 }
 
@@ -31,10 +31,10 @@ func TestName(t *testing.T) {
 
 func TestCreateWavefrontSinkWithEventsExternalEndpointURL(t *testing.T) {
 	cfg := configuration.SinkConfig{
-		Type:                      configuration.ExternalSinkType,
-		ClusterName:               "testCluster",
-		ClusterUUID:               "12345-1",
-		EventsExternalEndpointURL: "https://example.com",
+		Type:                configuration.ExternalSinkType,
+		ClusterName:         "testCluster",
+		ClusterUUID:         "12345-1",
+		ExternalEndpointURL: "https://example.com",
 	}
 	sink, err := NewExternalSink(cfg)
 	assert.NoError(t, err)
@@ -42,7 +42,7 @@ func TestCreateWavefrontSinkWithEventsExternalEndpointURL(t *testing.T) {
 	k8sSink, ok := sink.(*ExternalSink)
 	assert.Equal(t, true, ok)
 	assert.Equal(t, "testCluster", k8sSink.ClusterName)
-	assert.Equal(t, "https://example.com", k8sSink.eventsExternalEndpointURL)
+	assert.Equal(t, "https://example.com", k8sSink.externalEndpointURL)
 }
 
 func TestEventsSendToExternalEndpointURL(t *testing.T) {
@@ -55,10 +55,10 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 	defer server.Close()
 
 	cfg := configuration.SinkConfig{
-		Type:                      configuration.ExternalSinkType,
-		ClusterName:               "testCluster",
-		ClusterUUID:               "12345-1",
-		EventsExternalEndpointURL: server.URL,
+		Type:                configuration.ExternalSinkType,
+		ClusterName:         "testCluster",
+		ClusterUUID:         "12345-1",
+		ExternalEndpointURL: server.URL,
 	}
 
 	event := &events.Event{Event: v1.Event{

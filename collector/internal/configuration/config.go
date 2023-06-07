@@ -139,7 +139,7 @@ type SinkConfig struct {
 	ErrorLogPercent float32 `yaml:"errorLogPercent"`
 
 	// External endpoint url set for events
-	EventsExternalEndpointURL string `yaml:"eventsExternalEndpointURL"`
+	ExternalEndpointURL string `yaml:"externalEndpointURL"`
 
 	// Note: Properties below are for internal use only. These cannot be set via the configuration file.
 

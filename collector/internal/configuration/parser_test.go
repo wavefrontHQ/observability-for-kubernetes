@@ -34,7 +34,7 @@ sinks:
 
     tagInclude:
     - 'nodename'
-- eventsExternalEndpointURL: 'https://example.com'
+- externalEndpointURL: 'https://example.com'
   type: external
 
 events:
@@ -121,7 +121,7 @@ func TestFromYAML(t *testing.T) {
 	assert.Equal(t, "histogram-conversion", cfg.Experimental[0])
 	assert.Equal(t, WavefrontSinkType, cfg.Sinks[0].Type)
 	assert.Equal(t, ExternalSinkType, cfg.Sinks[1].Type)
-	assert.Equal(t, "https://example.com", cfg.Sinks[1].EventsExternalEndpointURL)
+	assert.Equal(t, "https://example.com", cfg.Sinks[1].ExternalEndpointURL)
 
 	assert.Equal(t, cfg.DiscoveryConfig.AnnotationExcludes[0].Images, []string{"not-redis:*", "*not-redis*"})
 }

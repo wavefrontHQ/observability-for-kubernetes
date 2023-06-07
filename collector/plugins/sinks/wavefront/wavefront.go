@@ -57,15 +57,15 @@ func init() {
 }
 
 type wavefrontSink struct {
-	WavefrontClient           senders.Sender
-	ClusterName               string
-	Prefix                    string
-	globalTags                map[string]string
-	filters                   filter.Filter
-	forceGC                   bool
-	logPercent                float32
-	stopHeartbeat             chan struct{}
-	eventsExternalEndpointURL string
+	WavefrontClient     senders.Sender
+	ClusterName         string
+	Prefix              string
+	globalTags          map[string]string
+	filters             filter.Filter
+	forceGC             bool
+	logPercent          float32
+	stopHeartbeat       chan struct{}
+	externalEndpointURL string
 }
 
 func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.Centroid, hgs map[histogram.Granularity]bool, ts int64, source string, tags map[string]string) error {
@@ -83,22 +83,15 @@ func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.C
 
 func NewWavefrontSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 	storage := &wavefrontSink{
-		ClusterName:               configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
-		logPercent:                0.01,
-		eventsExternalEndpointURL: cfg.EventsExternalEndpointURL,
+		ClusterName:         configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
+		logPercent:          0.01,
+		externalEndpointURL: cfg.ExternalEndpointURL,
 	}
 
 	if cfg.TestMode {
 		log.Info("TEST MODE")
 		storage.WavefrontClient = NewTestSender()
 		clientType.Update(testClient)
-	} else if cfg.EventsExternalEndpointURL != "" {
-		var err error
-		log.Info("NOOP MODE")
-		storage.WavefrontClient, err = senders.NewWavefrontNoOpClient()
-		if err != nil {
-			return nil, fmt.Errorf("error creating WavefrontNoOpClient: %s", err.Error())
-		}
 	} else if cfg.ProxyAddress != "" {
 		s := strings.Split(cfg.ProxyAddress, ":")
 		host, portStr := s[0], s[1]

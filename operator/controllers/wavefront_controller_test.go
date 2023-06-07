@@ -1318,7 +1318,7 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 		require.NoError(t, err)
 
 		require.True(t, mockKM.CollectorConfigMapContains("enableEvents: true"))
-		require.True(t, mockKM.CollectorConfigMapContains("eventsExternalEndpointURL: \"https://example.com\""))
+		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \"https://example.com\""))
 	})
 }
 
