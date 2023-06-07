@@ -4,9 +4,10 @@
 package kstate
 
 import (
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	"reflect"
 	"time"
+
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -98,4 +99,3 @@ func buildPVCInfo(claim *corev1.PersistentVolumeClaim, transforms configuration.
 
 	return metricPoint(transforms.Prefix, "pvc.info", 1.0, now, transforms.Source, tags)
 }
-
