@@ -123,7 +123,7 @@ These are cluster level metrics about the state of Kubernetes objects collected 
 | PersistentVolumeClaim| pvc.info                  | Information about persistent volume claim. No storageClassName tag implies pvc uses default storage class|
 | PersistentVolumeClaim| pvc.request.storage_bytes | The storage requested by the persistent volume claim in bytes. |
 | PersistentVolumeClaim| pvc.status.phase          | The phase of the persistent volume claim. |
-| PersistentVolumeClaim| pvc.status.condition      | Information about status of different conditions of persistent volume claim. Can be empty.|
+| PersistentVolumeClaim| pvc.status.condition      | Information about status of different conditions of persistent volume claim.|
 
 
 ## Prometheus Source
@@ -258,7 +258,7 @@ Metrics collected for etcd:
 
 ### TODO: Remove this: PersistentVolumeClaim Metrics Comparison with kube-state-metrics for acceptance
 
-| Wavefront Collector| Metric name | Metric type | Description | Unit (where applicable) | Labels/tags | Status |
+| Wavefront Collector metric name| kube state metric name | Metric type | Description | Unit (where applicable) | Labels/tags | Status |
 |--- | ----------- | ------------- | ----------- | ----------- | ----------- | ----------- |
 | kubernetes.pvc.access_mode| kube_persistentvolumeclaim_access_mode | Gauge | | | `access_mode`=&lt;persistentvolumeclaim-access-mode&gt; <br>`namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; | STABLE |
 | kubernetes.pvc.info                 | kube_persistentvolumeclaim_info | Gauge | | | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `storageclass`=&lt;persistentvolumeclaim-storageclassname&gt;<br>`volumename`=&lt;volumename&gt; | STABLE |
