@@ -2,6 +2,8 @@
 
 These instructions will guide you through setting up auto-instrumentation of applications running on a Kubernetes cluster, through a "bring your own" [Pixie](https://docs.px.dev/about-pixie/what-is-pixie/) deployment.
 
+By the end, you will see Application Maps in OpApps showing connections between microservices on a given Kubernetes cluster. You'll also get Request, Error, and Duration (RED) metrics between those connections.
+
 > **Note**: The installation steps below require about 30 minutes to complete.
 
 ## Prerequisites
