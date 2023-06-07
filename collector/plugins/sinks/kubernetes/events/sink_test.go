@@ -1,6 +1,3 @@
-// Copyright 2018-2019 VMware, Inc. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
-
 package events
 
 import (
@@ -19,8 +16,8 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 )
 
-func NewTestSink() *k8sEventsink {
-	return &k8sEventsink{
+func NewTestSink() *k8sEventSink {
+	return &k8sEventSink{
 		ClusterName:               "testCluster",
 		eventsExternalEndpointURL: "test",
 	}
@@ -33,7 +30,7 @@ func TestName(t *testing.T) {
 }
 
 func TestCreateWavefrontSinkWithEventsExternalEndpointURL(t *testing.T) {
-	cfg := configuration.WavefrontSinkConfig{
+	cfg := configuration.SinkConfig{
 		ProxyAddress: "wavefront-proxy:2878",
 		ClusterName:  "testCluster",
 		TestMode:     true,
@@ -45,7 +42,7 @@ func TestCreateWavefrontSinkWithEventsExternalEndpointURL(t *testing.T) {
 	sink, err := NewK8sEventsOnlySink(cfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, sink)
-	k8sSink, ok := sink.(*k8sEventsink)
+	k8sSink, ok := sink.(*k8sEventSink)
 	assert.Equal(t, true, ok)
 	assert.Equal(t, "testCluster", k8sSink.ClusterName)
 	assert.Equal(t, "https://example.com", k8sSink.eventsExternalEndpointURL)
@@ -60,7 +57,7 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 	}))
 	defer server.Close()
 
-	cfg := configuration.WavefrontSinkConfig{
+	cfg := configuration.SinkConfig{
 		ProxyAddress: "wavefront-proxy:2878",
 		ClusterName:  "testCluster",
 		Transforms: configuration.Transforms{

@@ -19,7 +19,6 @@ package factory
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/kubernetes/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
@@ -30,15 +29,15 @@ import (
 type SinkFactory struct {
 }
 
-func (factory *SinkFactory) Build(cfg configuration.WavefrontSinkConfig) (sinks.Sink, error) {
-	if !util.OnlyExportKubernetesEvents() {
-		return wavefront.NewWavefrontSink(cfg)
-	} else {
+func (factory *SinkFactory) Build(cfg configuration.SinkConfig) (sinks.Sink, error) {
+	if cfg.Type == configuration.K8sEventsSinkType {
 		return events.NewK8sEventsOnlySink(cfg)
+	} else {
+		return wavefront.NewWavefrontSink(cfg)
 	}
 }
 
-func (factory *SinkFactory) BuildAll(cfgs []*configuration.WavefrontSinkConfig) []sinks.Sink {
+func (factory *SinkFactory) BuildAll(cfgs []*configuration.SinkConfig) []sinks.Sink {
 	result := make([]sinks.Sink, 0, len(cfgs))
 
 	for _, cfg := range cfgs {

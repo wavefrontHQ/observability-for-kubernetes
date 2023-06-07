@@ -24,6 +24,7 @@ data:
 
     sinks:
     - proxyAddress: {{.DataCollection.Metrics.ProxyAddress}}
+      type: "wavefront"
       {{- if .DataCollection.Metrics.Tags }}
       tags:
 {{ .DataCollection.Metrics.Tags | toYaml | indent 8 }}
@@ -46,6 +47,7 @@ data:
         - label?pod?template*
         - annotation_kubectl_kubernetes_io_last_applied_configuration
     {{- if .Experimental.KubernetesEvents.Enable }}
+    - type: "k8sEvents"
       eventsExternalEndpointURL: "{{ .Experimental.KubernetesEvents.ExternalEndpointURL }}"
     {{- end }}
     sources:

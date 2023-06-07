@@ -190,7 +190,7 @@ func addSinks(cfg *configuration.Config, sinks flags.Uris) {
 }
 
 func addWavefrontSink(cfg *configuration.Config, uri flags.Uri) {
-	sink := &configuration.WavefrontSinkConfig{}
+	sink := &configuration.SinkConfig{}
 	vals := uri.Val.Query()
 
 	sink.Server = flags.DecodeValue(vals, "server")

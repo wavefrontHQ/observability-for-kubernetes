@@ -13,6 +13,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+type SinkType string
+
+const (
+	DefaultSinkType   SinkType = ""
+	WavefrontSinkType SinkType = "wavefront"
+	K8sEventsSinkType SinkType = "k8sEvents"
+)
+
 // The main configuration struct that drives the Wavefront collector
 type Config struct {
 	// the global interval at which data is pushed. Defaults to 60 seconds.
@@ -34,7 +42,7 @@ type Config struct {
 	ClusterName string `yaml:"clusterName"`
 
 	// list of Wavefront sinks. At least 1 is required.
-	Sinks []*WavefrontSinkConfig `yaml:"sinks"`
+	Sinks []*SinkConfig `yaml:"sinks"`
 
 	// list of sources. SummarySource is mandatory. Others are optional.
 	Sources *SourceConfig `yaml:"sources"`
@@ -103,8 +111,11 @@ type Transforms struct {
 }
 
 // Configuration options for the Wavefront sink
-type WavefrontSinkConfig struct {
+type SinkConfig struct {
 	Transforms `yaml:",inline"`
+
+	// Sink type, possible options ('wavefront' or 'k8sEvents'). Defaults to 'wavefront'.
+	Type SinkType `yaml:"type"`
 
 	//  The Wavefront URL of the form https://YOUR_INSTANCE.wavefront.com. Only required for direct ingestion.
 	Server string `yaml:"server"`

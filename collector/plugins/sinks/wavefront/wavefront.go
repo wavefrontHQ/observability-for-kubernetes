@@ -81,7 +81,7 @@ func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.C
 	return sink.WavefrontClient.SendDistribution(name, centroids, hgs, ts, source, tags)
 }
 
-func NewWavefrontSink(cfg configuration.WavefrontSinkConfig) (sinks.Sink, error) {
+func NewWavefrontSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 	storage := &wavefrontSink{
 		ClusterName:               configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
 		logPercent:                0.01,
@@ -264,7 +264,7 @@ func (sink *wavefrontSink) loggingAllowed() bool {
 	return rand.Float32() <= sink.logPercent
 }
 
-func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuration.WavefrontSinkConfig) {
+func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuration.SinkConfig) {
 	ticker := time.NewTicker(1 * time.Minute)
 	sink.stopHeartbeat = make(chan struct{})
 	source := getDefault(util.GetNodeName(), "wavefront-collector-for-kubernetes")
