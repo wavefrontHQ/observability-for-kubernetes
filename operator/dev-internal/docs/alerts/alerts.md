@@ -1,7 +1,7 @@
 # Alerts
-This page contains the steps to create alerts.
+This page contains the steps to create an alert template.
 
-We have templates for common scenarios.
+We have alert templates on common Kubernetes issues.
 
 * [Detect pods stuck in pending](templates/pods-stuck-in-pending.json.tmpl)
 
@@ -34,18 +34,18 @@ curl -sSL -o "$ALERT_FILE_OUTPUT_PATH" "https://raw.githubusercontent.com/wavefr
 1. Ensure that you have the information for the required fields:
    - **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
    - **Wavefront instance**. For example, the value of `<your_instance>` from your wavefront url (`https://<your_instance>.wavefront.com`).
-   - **K8s cluster name**. For example, the value of `clusterName` from your [wavefront.yaml](../../deploy/scenarios/wavefront-getting-started.yaml) file with your Wavefront Custom Resource configuration.
+   - **Cluster name**. For example, a partial regex value (ex: `"prod*"`), or the value of `clusterName` from your Wavefront Custom Resource configuration (ex: [wavefront.yaml](../../deploy/scenarios/wavefront-getting-started.yaml)).
    - **Alert template file**. For example, the download output path of the alert template file from **Step 1**.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/create-alert.sh | bash -s -- \
   -t <YOUR_API_TOKEN> \
   -c <YOUR_WAVEFRONT_INSTANCE> \
-  -n <YOUR_K8S_CLUSTER_NAME> \
+  -n <YOUR_CLUSTER_NAME> \
   -f <PATH_TO_ALERT_FILE>
 ```
 
-**Note:** You will need to change YOUR_API_TOKEN, YOUR_WAVEFRONT_INSTANCE, YOUR_K8S_CLUSTER_NAME, and PATH_TO_ALERT_FILE in the above example.
+**Note:** You will need to change YOUR_API_TOKEN, YOUR_WAVEFRONT_INSTANCE, YOUR_CLUSTER_NAME, and PATH_TO_ALERT_FILE in the above example.
 
 ### Step 3: Customize the alert.
 
