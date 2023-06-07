@@ -13,22 +13,22 @@ import (
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 )
 
-type sink struct {
+type k8sEventsink struct {
 	ClusterName               string
 	eventsExternalEndpointURL string
 }
 
-func (sink *sink) Name() string {
-	return "k8s_events_only_sink"
+func (sink *k8sEventsink) Name() string {
+	return "k8s_events_sink"
 }
 
-func (sink *sink) Stop() {
+func (sink *k8sEventsink) Stop() {
 }
 
-func (sink *sink) Export(batch *metrics.Batch) {
+func (sink *k8sEventsink) Export(batch *metrics.Batch) {
 }
 
-func (sink *sink) ExportEvent(ev *events.Event) {
+func (sink *k8sEventsink) ExportEvent(ev *events.Event) {
 	ev.Options = append(ev.Options, event.Annotate("cluster", sink.ClusterName))
 	ev.ClusterName = sink.ClusterName
 
@@ -49,5 +49,5 @@ func (sink *sink) ExportEvent(ev *events.Event) {
 }
 
 func NewK8sEventsOnlySink(cfg configuration.WavefrontSinkConfig) (sinks.Sink, error) {
-	return &sink{ClusterName: cfg.ClusterName, eventsExternalEndpointURL: cfg.EventsExternalEndpointURL}, nil
+	return &k8sEventsink{ClusterName: cfg.ClusterName, eventsExternalEndpointURL: cfg.EventsExternalEndpointURL}, nil
 }

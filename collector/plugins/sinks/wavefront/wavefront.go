@@ -4,11 +4,8 @@
 package wavefront
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"math/rand"
-	"net/http"
 	"os"
 	"runtime/debug"
 	"strconv"
@@ -238,42 +235,22 @@ func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
 	ev.ClusterName = sink.ClusterName
 	ev.ClusterUUID = util.GetClusterUUID()
 
-	if sink.eventsExternalEndpointURL != "" {
-		err := sink.sendExternalEvent(ev)
-		if err != nil {
-			sink.logVerboseError(log.Fields{
-				"message": ev.Message,
-				"error":   err,
-			}, "error sending event to external event endpoint")
-		}
+	err := sink.WavefrontClient.SendEvent(
+		ev.Message,
+		ev.Ts.Unix(), 0,
+		host,
+		ev.Tags,
+		ev.Options...,
+	)
+	if err != nil {
+		sink.logVerboseError(log.Fields{
+			"message": ev.Message,
+			"error":   err,
+		}, "error sending event")
+		errEvents.Inc(1)
 	} else {
-		err := sink.WavefrontClient.SendEvent(
-			ev.Message,
-			ev.Ts.Unix(), 0,
-			host,
-			ev.Tags,
-			ev.Options...,
-		)
-		if err != nil {
-			sink.logVerboseError(log.Fields{
-				"message": ev.Message,
-				"error":   err,
-			}, "error sending event")
-			errEvents.Inc(1)
-		} else {
-			sentEvents.Inc(1)
-		}
+		sentEvents.Inc(1)
 	}
-}
-
-func (sink *wavefrontSink) sendExternalEvent(ev *events.Event) error {
-	b, _ := json.Marshal(ev)
-	req, _ := http.NewRequest("POST", sink.eventsExternalEndpointURL, bytes.NewBuffer(b))
-	req.Header.Set("Content-Type", "text/plain")
-
-	client := &http.Client{}
-	_, err := client.Do(req)
-	return err
 }
 
 func getDefault(val, defaultVal string) string {
