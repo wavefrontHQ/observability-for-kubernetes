@@ -145,8 +145,6 @@ func (p *stateProvider) Name() string {
 const providerName = "kstate_metrics_provider"
 
 func NewStateProvider(cfg configuration.KubernetesStateSourceConfig) (metrics.SourceProvider, error) {
-	log.Println("pvc_debug:: Entering NewStateProvider")
-
 	if !util.ScrapeCluster() {
 		return &stateProvider{}, nil
 	}
