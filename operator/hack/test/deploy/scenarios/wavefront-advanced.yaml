@@ -147,10 +147,6 @@ data:
       kubernetes_state_source:
         prefix: kubernetes.
 
-      kubernetes_control_plane_source:
-        collection:
-          interval: 120s
-
     discovery:
       enable_runtime_plugins: true
 

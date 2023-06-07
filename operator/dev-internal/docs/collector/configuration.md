@@ -66,10 +66,6 @@ sources:
   kubernetes_cadvisor_source:
     # see kubernetes_cadvisor_source for details
 
-  # Optional source for collecting control plane metrics
-  kubernetes_control_plane_source:
-    # see kubernetes_control_plane_source for details
-
   # Optional source for emitting internal collector stats.
   internal_stats_source:
     # see internal_stats_source for details
@@ -166,15 +162,6 @@ prefix: <string>
 ```yaml
 # We recommend using `kubernetes.cadvisor.` Defaults to empty string.
 prefix: <string>
-```
-
-### kubernetes_control_plane_source
-For more information on control plane metrics, see [reference](metrics.md#control-plane-metrics).
-
-```yaml
-# We recommend using `120s`
-collection:
-    interval: "120s"
 ```
 
 ### prometheus_source

@@ -75,14 +75,13 @@ type EventsFilter struct {
 
 // SourceConfig contains configuration for various sources
 type SourceConfig struct {
-	SummaryConfig      *SummarySourceConfig         `yaml:"kubernetes_source"`
-	CadvisorConfig     *CadvisorSourceConfig        `yaml:"kubernetes_cadvisor_source"`
-	ControlPlaneConfig *ControlPlaneSourceConfig    `yaml:"kubernetes_control_plane_source"`
-	PrometheusConfigs  []*PrometheusSourceConfig    `yaml:"prometheus_sources"`
-	TelegrafConfigs    []*TelegrafSourceConfig      `yaml:"telegraf_sources"`
-	SystemdConfig      *SystemdSourceConfig         `yaml:"systemd_source"`
-	StatsConfig        *StatsSourceConfig           `yaml:"internal_stats_source"`
-	StateConfig        *KubernetesStateSourceConfig `yaml:"kubernetes_state_source"`
+	SummaryConfig     *SummarySourceConfig         `yaml:"kubernetes_source"`
+	CadvisorConfig    *CadvisorSourceConfig        `yaml:"kubernetes_cadvisor_source"`
+	PrometheusConfigs []*PrometheusSourceConfig    `yaml:"prometheus_sources"`
+	TelegrafConfigs   []*TelegrafSourceConfig      `yaml:"telegraf_sources"`
+	SystemdConfig     *SystemdSourceConfig         `yaml:"systemd_source"`
+	StatsConfig       *StatsSourceConfig           `yaml:"internal_stats_source"`
+	StateConfig       *KubernetesStateSourceConfig `yaml:"kubernetes_state_source"`
 }
 
 // Transforms represents transformations that can be applied to metrics at sources or sinks
@@ -187,10 +186,6 @@ type CadvisorSourceConfig struct {
 	Collection CollectionConfig `yaml:"collection"`
 }
 
-type ControlPlaneSourceConfig struct {
-	Collection CollectionConfig `yaml:"collection"`
-}
-
 // Configuration options for a Prometheus source
 type PrometheusSourceConfig struct {
 	Transforms `yaml:",inline"`
@@ -203,9 +198,11 @@ type PrometheusSourceConfig struct {
 	// Optional HTTP client configuration.
 	HTTPClientConfig httputil.ClientConfig `yaml:"httpConfig"`
 
+	// Optional Name for Prometheus source
+	Name string `yaml:"name"`
+
 	// internal use only
 	Discovered        string `yaml:"-"`
-	Name              string `yaml:"-"`
 	UseLeaderElection bool   `yaml:"-"`
 }
 

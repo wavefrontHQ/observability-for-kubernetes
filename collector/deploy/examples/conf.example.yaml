@@ -83,10 +83,6 @@ data:
           - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
           - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
 
-      kubernetes_control_plane_source:
-        collection:
-          interval: "120s"
-
       telegraf_sources:
       # empty list enables all host level telegraf plugins
       - plugins: []
@@ -108,13 +104,13 @@ data:
           tls_config:
             ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
             insecure_skip_verify: true
-        prefix: 'kubernetes.controlplane.'
+        prefix: 'kube.apiserver.'
 
         filters:
           metricAllowList:
-          - 'kubernetes.controlplane.apiserver.*'
-          - 'kubernetes.controlplane.etcd.*'
-          - 'kubernetes.controlplane.process.*'
+          - 'kube.apiserver.apiserver.*'
+          - 'kube.apiserver.etcd.*'
+          - 'kube.apiserver.process.*'
 
     # discovery rules for auto-discovery of pods and services
     discovery:

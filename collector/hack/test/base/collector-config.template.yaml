@@ -59,10 +59,6 @@ data:
           - "kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter"
           - "kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter"
 
-      kubernetes_control_plane_source:
-        collection:
-          interval: COLLECTION_INTERVALs
-
       telegraf_sources:
       # enable all telegraf plugins
       - plugins: [ ]
@@ -76,6 +72,47 @@ data:
         filters:
           tagExclude:
           - server
+
+      prometheus_sources:
+      - url: 'https://kubernetes.default.svc:443/metrics'
+        name: 'etcd-workqueue'
+        httpConfig:
+          bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+          tls_config:
+            ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+            insecure_skip_verify: true
+        prefix: 'kubernetes.controlplane.'
+        convertHistograms: true
+        filters:
+          metricAllowList:
+          - 'kubernetes.controlplane.etcd.request.duration.seconds'
+          - 'kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge'
+          - 'kubernetes.controlplane.workqueue.adds.total.counter'
+          - 'kubernetes.controlplane.workqueue.queue.duration.seconds'
+
+      - url: 'https://kubernetes.default.svc:443/metrics'
+        name: 'apiserver'
+        httpConfig:
+          bearer_token_file: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+          tls_config:
+            ca_file: '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+            insecure_skip_verify: true
+        prefix: 'kubernetes.controlplane.'
+        convertHistograms: true
+        filters:
+          metricAllowList:
+          - 'kubernetes.controlplane.apiserver.request.duration.seconds'
+          - 'kubernetes.controlplane.apiserver.request.total.counter'
+          - 'kubernetes.controlplane.apiserver.storage.objects.gauge'
+          metricTagAllowList:
+            resource:
+            - 'customresourcedefinitions'
+            - 'namespaces'
+            - 'lease'
+            - 'nodes'
+            - 'pods'
+            - 'tokenreviews'
+            - 'subjectaccessreviews'
 
 
     # discovery rules for auto-discovery of pods and services
