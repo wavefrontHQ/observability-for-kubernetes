@@ -217,7 +217,7 @@ pipeline {
             withEnv(["PATH+GO=${HOME}/go/bin"]) {
               lock("integration-test-kind") {
                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k kind'
-                sh './scripts/connect-to-gcp-kind.sh; cd collector; make clean-cluster integration-test clean-cluster'
+                sh './scripts/connect-to-gcp-kind.sh; cd collector; make clean-cluster integration-test; make clean-cluster'
               }
             }
           }
