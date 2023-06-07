@@ -127,13 +127,15 @@ function run_unhealthy_checks() {
 
 function run_proxy_checks() {
   local blocked_input_count=0
-  echo "Running proxy checks ..."
+  printf "Running proxy checks ..."
 
   blocked_input_count=$(kubectl logs deployment/wavefront-proxy -n $NS | grep "WF-410: Too many point tags" | wc -l | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
   if [[ $blocked_input_count -gt 0 ]]; then
     red "Expected 'WF-410: Too many point tags' logs received to be zero, but got $blocked_input_count"
     exit 1
   fi
+
+  echo " done."
 }
 
 function clean_up_test() {
@@ -163,14 +165,17 @@ function clean_up_test() {
 }
 
 function clean_up_port_forward() {
-  if [[ $? -ne 0 ]]; then
+  if [[ -f "$PF_OUT" ]]; then
     echo "PF_OUT:"
     cat "$PF_OUT"
+  fi
+
+  if [[ -f "$CURL_OUT" ]]; then
     echo "CURL_OUT:"
     jq '.' "$CURL_OUT"
   fi
 
-  if [[ -n "$(cat "$CURL_ERR")" ]]; then
+  if [[ -f "$CURL_ERR" ]]; then
     echo "CURL_ERR:"
     cat "$CURL_ERR"
   fi
@@ -325,7 +330,7 @@ function run_logging_integration_checks() {
   fi
   kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &> "$PF_OUT" &
   jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  trap ' clean_up_port_forward' EXIT
+  trap 'clean_up_port_forward' EXIT
   sleep 3
 
   for _ in {1..10}; do
@@ -412,6 +417,7 @@ function run_logging_integration_checks() {
     exit 1
   fi
 
+  rm -f "$CURL_OUT" "$CURL_ERR" "$PF_OUT" || true
   kill $(jobs -p) &>/dev/null || true
 
   yellow "Integration test complete. ${receivedLogCount} logs were checked."
