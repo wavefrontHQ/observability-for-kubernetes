@@ -94,7 +94,6 @@ func TestCleanTags(t *testing.T) {
 	t.Run("limits example IaaS node info metric tags to max capacity ", func(t *testing.T) {
 		t.Run("GKE example", func(t *testing.T) {
 			actual := map[string]string{
-				"cluster":                                "mamichael-gke--helm-21114",
 				"nodename":                               "gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
 				"node_role":                              "worker",
 				"os_image":                               "Container-Optimized OS from Google",
@@ -124,25 +123,23 @@ func TestCleanTags(t *testing.T) {
 				"label.topology.kubernetes.io/zone":              "us-central1-c"}
 
 			expectedCleanedTags := map[string]string{
-				"cluster":         "mamichael-gke--helm-21114",
-				"nodename":        "gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
-				"node_role":       "worker",
-				"os_image":        "Container-Optimized OS from Google",
-				"kubelet_version": "v1.23.8-gke.1900",
-				"pod_cidr":        "10.96.2.0/24",
-				"internal_ip":     "10.40.56.17",
-				"kernel_version":  "5.10.127+",
-				"provider_id":     "gce://wavefront-gcp-dev/us-central1-c/gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
-				"label.cloud.google.com/gke-max-pods-per-node": "110",
-				"label.cloud.google.com/gke-nodepool":          "default-pool",
-				"label.cloud.google.com/gke-os-distribution":   "cos",
-				"label.cloud.google.com/machine-family":        "e2",
-				"label.kubernetes.io/arch":                     "amd64",
-				"label.kubernetes.io/hostname":                 "gke-mamichael-cluster-5-default-pool-5592f664-3op5",
-				"label.kubernetes.io/os":                       "linux",
-				"label.node.kubernetes.io/instance-type":       "e2-standard-2",
-				"label.topology.gke.io/zone":                   "us-central1-c",
-				"label.topology.kubernetes.io/region":          "us-central1",
+				"nodename":                            "gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
+				"node_role":                           "worker",
+				"os_image":                            "Container-Optimized OS from Google",
+				"kubelet_version":                     "v1.23.8-gke.1900",
+				"pod_cidr":                            "10.96.2.0/24",
+				"internal_ip":                         "10.40.56.17",
+				"kernel_version":                      "5.10.127+",
+				"provider_id":                         "gce://wavefront-gcp-dev/us-central1-c/gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
+				"label.cloud.google.com/gke-nodepool": "default-pool",
+				"label.cloud.google.com/gke-os-distribution": "cos",
+				"label.cloud.google.com/machine-family":      "e2",
+				"label.kubernetes.io/arch":                   "amd64",
+				"label.kubernetes.io/hostname":               "gke-mamichael-cluster-5-default-pool-5592f664-3op5",
+				"label.kubernetes.io/os":                     "linux",
+				"label.node.kubernetes.io/instance-type":     "e2-standard-2",
+				"label.topology.gke.io/zone":                 "us-central1-c",
+				"label.topology.kubernetes.io/region":        "us-central1",
 			}
 
 			cleanTags(actual, []string{}, maxWavefrontTags)
@@ -152,8 +149,6 @@ func TestCleanTags(t *testing.T) {
 
 		t.Run("AKS example", func(t *testing.T) {
 			actual := map[string]string{
-				"cluster":                              "jalvis-aks-230428",
-				"cluster_uuid":                         "9579295d-eddf-40df-95dd-bf4b528b6d05",
 				"host_id":                              "",
 				"hostname":                             "aks-agentpool-18535100-vmss000000",
 				"node_role":                            "worker",
@@ -186,8 +181,6 @@ func TestCleanTags(t *testing.T) {
 			}
 
 			expected := map[string]string{
-				"cluster":         "jalvis-aks-230428",
-				"cluster_uuid":    "9579295d-eddf-40df-95dd-bf4b528b6d05",
 				"label.agentpool": "agentpool",
 				"label.kubernetes.azure.com/kubelet-identity-client-id": "80e47095-2878-4d98-9758-9dbfab610463",
 				"label.kubernetes.azure.com/mode":                       "system",
@@ -214,7 +207,6 @@ func TestCleanTags(t *testing.T) {
 
 		t.Run("EKS example", func(t *testing.T) {
 			actual := map[string]string{
-				"cluster":                                "mamichael-eks-221116",
 				"node_role":                              "worker",
 				"nodename":                               "ip-192-168-12-242.us-west-2.compute.internal",
 				"type":                                   "node",
@@ -242,7 +234,6 @@ func TestCleanTags(t *testing.T) {
 			}
 
 			expected := map[string]string{
-				"cluster":                                "mamichael-eks-221116",
 				"node_role":                              "worker",
 				"nodename":                               "ip-192-168-12-242.us-west-2.compute.internal",
 				"type":                                   "node",
@@ -252,7 +243,6 @@ func TestCleanTags(t *testing.T) {
 				"foo":                                    "bar",
 				"test":                                   "tester",
 				"czar":                                   "aljkssljfdk",
-				"label.alpha.eksctl.io/instance-id":      "i-00ba63d14a98f141d",
 				"label.alpha.eksctl.io/nodegroup-name":   "arm-group",
 				"label.kubernetes.io/arch":               "arm64",
 				"label.kubernetes.io/hostname":           "ip-192-168-12-242.us-west-2.compute.internal",
@@ -270,7 +260,6 @@ func TestCleanTags(t *testing.T) {
 
 		t.Run("EKS example v1.25", func(t *testing.T) {
 			actual := map[string]string{
-				"cluster":                                "bjerry-eks-230411",
 				"node_role":                              "worker",
 				"nodename":                               "ip-10-10-0-1.us-west-2.compute.internal",
 				"type":                                   "node",
@@ -304,7 +293,6 @@ func TestCleanTags(t *testing.T) {
 			}
 
 			expected := map[string]string{
-				"cluster":                                "bjerry-eks-230411",
 				"node_role":                              "worker",
 				"nodename":                               "ip-10-10-0-1.us-west-2.compute.internal",
 				"type":                                   "node",
@@ -322,7 +310,6 @@ func TestCleanTags(t *testing.T) {
 				"label.node.kubernetes.io/instance-type": "t3.medium",
 				"label.topology.kubernetes.io/region":    "us-west-2",
 				"label.topology.kubernetes.io/zone":      "us-west-2c",
-				"label.k8s.io/cloud-provider-aws":        "abcdefg123456789abcdefg123456789",
 			}
 
 			cleanTags(actual, []string{}, maxWavefrontTags)
@@ -332,7 +319,6 @@ func TestCleanTags(t *testing.T) {
 
 		t.Run("GKE example to keep Tags specified in the tagGuaranteeList", func(t *testing.T) {
 			actual := map[string]string{
-				"cluster":                                "mamichael-gke--helm-21114",
 				"nodename":                               "gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
 				"node_role":                              "worker",
 				"os_image":                               "Container-Optimized OS from Google",
@@ -363,16 +349,14 @@ func TestCleanTags(t *testing.T) {
 
 			tagGuaranteeList := []string{"label.failure-domain.beta.kubernetes.io/zone"}
 			expectedCleanedTags := map[string]string{
-				"cluster":                             "mamichael-gke--helm-21114",
-				"nodename":                            "gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
-				"node_role":                           "worker",
-				"os_image":                            "Container-Optimized OS from Google",
-				"kubelet_version":                     "v1.23.8-gke.1900",
-				"pod_cidr":                            "10.96.2.0/24",
-				"internal_ip":                         "10.40.56.17",
-				"kernel_version":                      "5.10.127+",
-				"provider_id":                         "gce://wavefront-gcp-dev/us-central1-c/gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
-				"label.cloud.google.com/gke-nodepool": "default-pool",
+				"nodename":        "gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
+				"node_role":       "worker",
+				"os_image":        "Container-Optimized OS from Google",
+				"kubelet_version": "v1.23.8-gke.1900",
+				"pod_cidr":        "10.96.2.0/24",
+				"internal_ip":     "10.40.56.17",
+				"kernel_version":  "5.10.127+",
+				"provider_id":     "gce://wavefront-gcp-dev/us-central1-c/gke-mamichael-cluster-5-default-pool-5592f664-mkrr",
 				"label.cloud.google.com/gke-os-distribution":   "cos",
 				"label.cloud.google.com/machine-family":        "e2",
 				"label.kubernetes.io/arch":                     "amd64",

@@ -99,6 +99,7 @@ function run_health_checks() {
   proxyLogErrorCount=$(kubectl logs deployment/wavefront-proxy -n $NS | grep " ERROR " | wc -l | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
   if [[ $proxyLogErrorCount -gt 0 ]]; then
     red "Expected proxy log error count of 0, but got $proxyLogErrorCount"
+    kubectl logs deployment/wavefront-proxy -n $NS | grep " ERROR " | tail
     exit 1
   fi
 }
@@ -124,6 +125,20 @@ function run_unhealthy_checks() {
   fi
 }
 
+function run_proxy_checks() {
+  local blocked_input_count=0
+  printf "Running proxy checks ..."
+
+  blocked_input_count=$(kubectl logs deployment/wavefront-proxy -n $NS | grep "WF-410: Too many point tags" | wc -l | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+  if [[ $blocked_input_count -gt 0 ]]; then
+    red "Expected 'WF-410: Too many point tags' logs received to be zero, but got $blocked_input_count"
+    kubectl logs deployment/wavefront-proxy -n $NS | grep "WF-410: Too many point tags" | tail
+    exit 1
+  fi
+
+  echo " done."
+}
+
 function clean_up_test() {
   local type=$1
   echo "Cleaning Up Test '$type' ..."
@@ -147,6 +162,28 @@ function clean_up_test() {
        kill -9 $(cat /tmp/kind-tunnel-pid) || true
        rm /tmp/kind-tunnel-pid || true
     fi
+  fi
+}
+
+function clean_up_port_forward() {
+  if [[ -f "$PF_OUT" ]]; then
+    echo "PF_OUT:"
+    cat "$PF_OUT"
+  fi
+
+  if [[ -f "$CURL_OUT" ]]; then
+    echo "CURL_OUT:"
+    jq '.' "$CURL_OUT"
+  fi
+
+  if [[ -f "$CURL_ERR" ]]; then
+    echo "CURL_ERR:"
+    cat "$CURL_ERR"
+  fi
+
+  if [[ -n "$(jobs -l)" ]]; then
+    echo "Killing jobs: $(jobs -l)"
+    kill $(jobs -p) &>/dev/null || true
   fi
 }
 
@@ -276,23 +313,26 @@ function run_logging_checks() {
 }
 
 function run_logging_integration_checks() {
-  printf "Running logging checks with test-proxy ..."
+  echo "Running logging checks with test-proxy ..."
 
   # send request to the fake proxy control endpoint and check status code for success
   CURL_OUT=$(mktemp)
   CURL_ERR=$(mktemp)
   PF_OUT=$(mktemp)
+
   jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  kill "$(jobs -p)" || true
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  fi
+  kill $(jobs -p) &>/dev/null || true
   sleep 3
-  netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  fi
   kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &> "$PF_OUT" &
   jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  trap 'echo "PF_OUT:"; cat "$PF_OUT"; echo "CURL_OUT:"; cat "$CURL_OUT"; echo "CURL_ERR:"; cat "$CURL_ERR"; echo "Killing jobs: $(jobs -l)"; kill "$(jobs -p)"' EXIT
+  trap 'clean_up_port_forward' EXIT
   sleep 3
-
-
 
   for _ in {1..10}; do
     CURL_CODE=$(curl --silent --show-error --output "$CURL_OUT" --stderr "$CURL_ERR" --write-out "%{http_code}" "http://localhost:8888/logs/assert")
@@ -378,6 +418,9 @@ function run_logging_integration_checks() {
     exit 1
   fi
 
+  rm -f "$CURL_OUT" "$CURL_ERR" "$PF_OUT" || true
+  kill $(jobs -p) &>/dev/null || true
+
   yellow "Integration test complete. ${receivedLogCount} logs were checked."
 }
 
@@ -410,6 +453,10 @@ function run_test() {
 
   if [[ " ${checks[*]} " =~ " logging " ]]; then
     run_logging_checks
+  fi
+
+  if [[ " ${checks[*]} " =~ " proxy " ]]; then
+    run_proxy_checks
   fi
 
   if [[ " ${checks[*]} " =~ " logging-integration-checks " ]]; then
@@ -520,10 +567,10 @@ function main() {
     run_test "basic" "health" "static_analysis"
   fi
   if [[ " ${tests_to_run[*]} " =~ " advanced " ]]; then
-    run_test "advanced" "health" "test_wavefront_metrics" "logging"
+    run_test "advanced" "health" "test_wavefront_metrics" "logging" "proxy"
   fi
   if [[ " ${tests_to_run[*]} " =~ " proxy-preprocessor " ]]; then
-    run_test "basic" "test_wavefront_metrics"
+    run_test "basic" "test_wavefront_metrics" "proxy"
   fi
   if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
     run_test "with-http-proxy" "health" "test_wavefront_metrics"
