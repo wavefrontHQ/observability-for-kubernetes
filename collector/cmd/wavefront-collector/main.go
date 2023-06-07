@@ -114,13 +114,19 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 		log.Fatalf("Failed to create source manager: %v", err)
 	}
 
-	// create sink managers
+	// Create sink managers. Must be done before creating event router.
 	setInternalSinkProperties(cfg)
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
 	// Events
 	var eventRouter *events.EventRouter
-	if cfg.EnableEvents {
+	enableEventRouter := false
+	for _, sink := range cfg.Sinks {
+		if sink.EventsEnabled {
+			enableEventRouter = true
+		}
+	}
+	if enableEventRouter {
 		events.Log.Info("Events collection enabled")
 		eventRouter = events.NewEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.ScrapeCluster)
 	} else {
@@ -220,7 +226,11 @@ func setInternalSinkProperties(cfg *configuration.Config) {
 		sink.ClusterUUID = util.GetClusterUUID()
 		sink.InternalStatsPrefix = prefix
 		sink.Version = version
-		sink.EventsEnabled = cfg.EnableEvents
+		if sink.Type == configuration.ExternalSinkType {
+			sink.EventsEnabled = true
+		} else {
+			sink.EventsEnabled = cfg.EnableEvents
+		}
 	}
 }
 

@@ -17,14 +17,13 @@ data:
   config.yaml: |
     clusterName: {{.ClusterName}}
     enableDiscovery: {{.DataCollection.Metrics.EnableDiscovery}}
-    enableEvents: {{.Experimental.KubernetesEvents.Enable}}
+    enableEvents: false
     defaultCollectionInterval: {{.DataCollection.Metrics.DefaultCollectionInterval}}
     flushInterval: 10s
     sinkExportDataTimeout: 20s
 
     sinks:
     - proxyAddress: {{.DataCollection.Metrics.ProxyAddress}}
-      type: "wavefront"
       {{- if .DataCollection.Metrics.Tags }}
       tags:
 {{ .DataCollection.Metrics.Tags | toYaml | indent 8 }}

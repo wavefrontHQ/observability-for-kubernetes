@@ -60,6 +60,7 @@ type wavefrontSink struct {
 	WavefrontClient senders.Sender
 	ClusterName     string
 	Prefix          string
+	eventsEnabled   bool
 	globalTags      map[string]string
 	filters         filter.Filter
 	forceGC         bool
@@ -132,6 +133,7 @@ func NewWavefrontSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 	if cfg.Prefix != "" {
 		storage.Prefix = strings.Trim(cfg.Prefix, ".")
 	}
+	storage.eventsEnabled = cfg.EventsEnabled
 	storage.filters = filter.FromConfig(cfg.Filters)
 
 	// force garbage collection if experimental flag enabled
@@ -221,6 +223,9 @@ func (sink *wavefrontSink) Export(batch *metrics.Batch) {
 }
 
 func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
+	if !sink.eventsEnabled {
+		return
+	}
 	ev.Options = append(ev.Options, event.Annotate("cluster", sink.ClusterName))
 	host := sink.ClusterName
 
