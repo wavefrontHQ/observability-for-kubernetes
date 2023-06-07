@@ -332,6 +332,7 @@ pipeline {
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
             AKS_CLUSTER_NAME = "k8po-ci"
+            INTEGRATION_TEST_ARGS = '-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install'
           }
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
