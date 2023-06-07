@@ -365,7 +365,7 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             lock("integration-test-kind") {
-              sh './scripts/connect-to-gcp-kind.sh; cd operator; make clean-cluster integration-test clean-cluster'
+              sh './scripts/connect-to-gcp-kind.sh; cd operator; make clean-cluster integration-test; make clean-cluster'
             }
           }
           post{
