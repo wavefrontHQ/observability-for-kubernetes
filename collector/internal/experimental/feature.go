@@ -6,8 +6,6 @@ import (
 
 const HistogramConversion = "histogram-conversion"
 
-const IncludePVCMetrics = "include-pvc-metrics" // TODO: actually use feature flag to enable or disable
-
 var (
 	mu      sync.RWMutex
 	enabled = map[string]bool{}

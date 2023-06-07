@@ -93,7 +93,6 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	experimental.DisableAll()
 	for _, feature := range cfg.Experimental {
 		experimental.EnableFeature(feature)
-		log.Println("TOREMOVE:Feature enabled :: " + feature)
 	}
 
 	// backwards compat: used by prometheus sources to format histogram metric names
