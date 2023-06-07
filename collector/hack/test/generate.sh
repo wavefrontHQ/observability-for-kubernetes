@@ -8,8 +8,6 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 NS=wavefront-collector
 
 function copy_collector_deployment_files() {
-  echo "Copying collector deployment files"
-
   cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/0-collector-namespace.yaml" base/deploy/0-collector-namespace.yaml
   cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/1-collector-cluster-role.yaml" base/deploy/1-collector-cluster-role.yaml
   cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/2-collector-rbac.yaml" base/deploy/2-collector-rbac.yaml
@@ -26,7 +24,6 @@ function copy_collector_deployment_files() {
 }
 
 function replace_placeholders_in_template_yaml() {
-  echo "Replacing placeholders in template yaml files"
   local FLUSH_INTERVAL=30
   local COLLECTION_INTERVAL=60
 
@@ -104,13 +101,12 @@ function main() {
   check_required_argument "$WF_CLUSTER" "-c <WAVEFRONT_CLUSTER> is required"
   check_required_argument "$WAVEFRONT_TOKEN" "-t <WAVEFRONT_TOKEN> is required"
 
-  echo "Generating deployment files for wavefront collector"
   copy_collector_deployment_files
   replace_placeholders_in_template_yaml
 
   if [[ "${USE_TEST_PROXY}" = "true" ]] && [[ "${VERSION}" != "fake" ]]; then
-    echo "IMAGE TAG: ${VERSION}"
-    green "WF Cluster Name: ${K8S_CLUSTER_NAME}"
+    yellow "IMAGE TAG: ${VERSION}"
+    yellow "WF Cluster Name: ${K8S_CLUSTER_NAME}"
   fi
 }
 

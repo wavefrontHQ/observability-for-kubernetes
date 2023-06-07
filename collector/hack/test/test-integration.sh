@@ -23,8 +23,6 @@ function run_fake_proxy_test() {
   kubectl apply -f <(sed "s/wavefront-collector/$NS/g" ./deploy/mysql-config.yaml)
   kubectl apply -f <(sed "s/wavefront-collector/$NS/g" ./deploy/memcached-config.yaml)
 
-  echo "deploying collector $IMAGE_NAME $VERSION"
-
   local additional_args=""
   if [[ -n "${COLLECTOR_YAML:-}" ]]; then
     additional_args="$additional_args -y $COLLECTOR_YAML"
@@ -130,41 +128,41 @@ function main() {
   fi
 
   if [[ "${tests_to_run[*]}" =~ "cluster-metrics-only" ]]; then
-    echo "==================== Running fake_proxy cluster-metrics-only test ===================="
+    green "\n==================== Running fake_proxy cluster-metrics-only test ===================="
     run_fake_proxy_test "cluster-metrics-only" "base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "node-metrics-only" ]]; then
-    echo "==================== Running fake_proxy node-metrics-only test ===================="
+    green "\n==================== Running fake_proxy node-metrics-only test ===================="
     run_fake_proxy_test "node-metrics-only" "base/deploy/collector-deployments/5-collector-node-metrics-only.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "combined" ]]; then
-    echo "==================== Running fake_proxy combined test ===================="
+    green "\n==================== Running fake_proxy combined test ===================="
     run_fake_proxy_test "all-metrics" "base/deploy/collector-deployments/5-collector-combined.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "single-deployment" ]]; then
-    echo "==================== Running fake_proxy single-deployment test ===================="
+    green "\n==================== Running fake_proxy single-deployment test ===================="
     run_fake_proxy_test "all-metrics" "base/deploy/collector-deployments/5-collector-single-deployment.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "histogram-conversion" ]]; then
-    echo "==================== Running fake_proxy histogram-conversion test ===================="
+    green "\n==================== Running fake_proxy histogram-conversion test ===================="
     run_fake_proxy_test "all-metrics" "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "default" ]]; then
-    echo "==================== Running fake_proxy default test ===================="
+    green "\n==================== Running fake_proxy default test ===================="
     run_fake_proxy_test "all-metrics" "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "real-proxy-metrics" ]]; then
-    echo "==================== Running real-proxy-metrics test ===================="
+    green "\n==================== Running real-proxy-metrics test ===================="
     run_real_proxy_metrics_test
   fi
   if [[ " ${tests_to_run[*]} " =~ " real-proxy " ]]; then
-    echo "==================== Starting real proxy ===================="
+    green "\n==================== Starting real proxy ===================="
     run_real_proxy
   fi
 }
