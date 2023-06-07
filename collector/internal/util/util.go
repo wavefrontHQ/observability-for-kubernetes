@@ -24,6 +24,7 @@ const (
 	NodeNameEnvVar           = "POD_NODE_NAME"
 	NamespaceNameEnvVar      = "POD_NAMESPACE_NAME"
 	InstallationMethodEnvVar = "INSTALLATION_METHOD"
+	ClusterUUIDEnvVar        = "CLUSTER_UUID"
 	ForceGC                  = "FORCE_GC"
 	KubernetesVersionEnvVar  = "KUBERNETES_VERSION"
 	KubernetesProviderEnvVar = "KUBERNETES_PROVIDER"
@@ -167,6 +168,10 @@ func GetInstallationMethod() string {
 		return "unknown"
 	}
 	return installationMethod
+}
+
+func GetClusterUUID() string {
+	return os.Getenv(ClusterUUIDEnvVar)
 }
 
 func GetKubernetesProvider() string {
