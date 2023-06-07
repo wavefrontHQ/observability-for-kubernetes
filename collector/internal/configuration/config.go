@@ -147,6 +147,9 @@ type SinkConfig struct {
 	// Internal: Cluster name pulled in from the top level property.
 	ClusterName string `yaml:"-"`
 
+	// Internal: Cluster UUID pulled in from the top level property.
+	ClusterUUID string `yaml:"-"`
+
 	// Internal: Collector version pulled in from top level. Used for the heartbeat metric.
 	Version float64 `yaml:"-"`
 

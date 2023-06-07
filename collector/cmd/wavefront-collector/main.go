@@ -217,6 +217,7 @@ func setInternalSinkProperties(cfg *configuration.Config) {
 	version := getVersion()
 	for _, sink := range cfg.Sinks {
 		sink.ClusterName = cfg.ClusterName
+		sink.ClusterUUID = util.GetClusterUUID()
 		sink.InternalStatsPrefix = prefix
 		sink.Version = version
 		sink.EventsEnabled = cfg.EnableEvents

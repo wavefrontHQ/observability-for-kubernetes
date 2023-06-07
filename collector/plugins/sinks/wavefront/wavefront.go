@@ -232,8 +232,6 @@ func (sink *wavefrontSink) Export(batch *metrics.Batch) {
 func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
 	ev.Options = append(ev.Options, event.Annotate("cluster", sink.ClusterName))
 	host := sink.ClusterName
-	ev.ClusterName = sink.ClusterName
-	ev.ClusterUUID = util.GetClusterUUID()
 
 	err := sink.WavefrontClient.SendEvent(
 		ev.Message,

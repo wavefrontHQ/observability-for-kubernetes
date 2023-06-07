@@ -31,12 +31,9 @@ func TestName(t *testing.T) {
 
 func TestCreateWavefrontSinkWithEventsExternalEndpointURL(t *testing.T) {
 	cfg := configuration.SinkConfig{
-		ProxyAddress: "wavefront-proxy:2878",
-		ClusterName:  "testCluster",
-		TestMode:     true,
-		Transforms: configuration.Transforms{
-			Prefix: "testPrefix",
-		},
+		Type:                      configuration.K8sEventsSinkType,
+		ClusterName:               "testCluster",
+		ClusterUUID:               "12345-1",
 		EventsExternalEndpointURL: "https://example.com",
 	}
 	sink, err := NewK8sEventsOnlySink(cfg)
@@ -58,11 +55,9 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 	defer server.Close()
 
 	cfg := configuration.SinkConfig{
-		ProxyAddress: "wavefront-proxy:2878",
-		ClusterName:  "testCluster",
-		Transforms: configuration.Transforms{
-			Prefix: "testPrefix",
-		},
+		Type:                      configuration.K8sEventsSinkType,
+		ClusterName:               "testCluster",
+		ClusterUUID:               "12345-1",
 		EventsExternalEndpointURL: server.URL,
 	}
 
@@ -103,4 +98,5 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 	assert.Contains(t, requestBody, "\"kind\":\"Pod\"")
 	assert.Contains(t, requestBody, "\"name\":\"wavefront-proxy-66b4d9dd94-cfqrr.1764aab366800a9c\"")
 	assert.Contains(t, requestBody, "\"clusterName\":\"testCluster\"")
+	assert.Contains(t, requestBody, "\"clusterUUID\":\"12345-1\"")
 }

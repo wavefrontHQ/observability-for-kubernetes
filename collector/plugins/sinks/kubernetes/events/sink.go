@@ -10,11 +10,11 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
-	"github.com/wavefronthq/wavefront-sdk-go/event"
 )
 
 type k8sEventSink struct {
 	ClusterName               string
+	ClusterUUID               string
 	eventsExternalEndpointURL string
 }
 
@@ -29,9 +29,10 @@ func (sink *k8sEventSink) Export(batch *metrics.Batch) {
 }
 
 func (sink *k8sEventSink) ExportEvent(ev *events.Event) {
-	ev.Options = append(ev.Options, event.Annotate("cluster", sink.ClusterName))
 	ev.ClusterName = sink.ClusterName
+	ev.ClusterUUID = sink.ClusterUUID
 
+	// TODO: don't ignore errors. Log them.
 	b, _ := json.Marshal(ev)
 	req, _ := http.NewRequest("POST", sink.eventsExternalEndpointURL, bytes.NewBuffer(b))
 	req.Header.Set("Content-Type", "text/plain")
@@ -49,5 +50,9 @@ func (sink *k8sEventSink) ExportEvent(ev *events.Event) {
 }
 
 func NewK8sEventsOnlySink(cfg configuration.SinkConfig) (sinks.Sink, error) {
-	return &k8sEventSink{ClusterName: cfg.ClusterName, eventsExternalEndpointURL: cfg.EventsExternalEndpointURL}, nil
+	return &k8sEventSink{
+		ClusterName:               cfg.ClusterName,
+		ClusterUUID:               cfg.ClusterUUID,
+		eventsExternalEndpointURL: cfg.EventsExternalEndpointURL,
+	}, nil
 }
