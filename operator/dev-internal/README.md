@@ -153,6 +153,16 @@ We have templates for common scenarios. See the comments in each file for usage 
 
 You can see all configuration options in the [wavefront-full-config.yaml](deploy/scenarios/wavefront-full-config.yaml).
 
+# Creating Alerts
+
+We have alerts on common Kubernetes issues. For details on creating alerts, see [alerts.md](docs/alerts/alerts.md).
+
+### Pod Failure
+
+| Alert name | Description |
+|---|---|
+| [Pods Stuck in Pending](docs/alerts/templates/pods-stuck-in-pending.json.tmpl) | Workload has pods stuck in pending. |
+
 ## Bring Your Own Logs Shipper
 
 The operator deploys a data export component (wavefront-proxy) which can receive log data and forward it to the Operations for Applications service.
