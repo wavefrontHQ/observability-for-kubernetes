@@ -99,6 +99,7 @@ function run_health_checks() {
   proxyLogErrorCount=$(kubectl logs deployment/wavefront-proxy -n $NS | grep " ERROR " | wc -l | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
   if [[ $proxyLogErrorCount -gt 0 ]]; then
     red "Expected proxy log error count of 0, but got $proxyLogErrorCount"
+    kubectl logs deployment/wavefront-proxy -n $NS | grep " ERROR " | tail
     exit 1
   fi
 }
