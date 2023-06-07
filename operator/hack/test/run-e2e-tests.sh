@@ -132,6 +132,7 @@ function run_proxy_checks() {
   blocked_input_count=$(kubectl logs deployment/wavefront-proxy -n $NS | grep "WF-410: Too many point tags" | wc -l | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
   if [[ $blocked_input_count -gt 0 ]]; then
     red "Expected 'WF-410: Too many point tags' logs received to be zero, but got $blocked_input_count"
+    kubectl logs deployment/wavefront-proxy -n $NS | grep "WF-410: Too many point tags" | tail
     exit 1
   fi
 
