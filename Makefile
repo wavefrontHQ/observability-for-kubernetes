@@ -65,6 +65,7 @@ GCP_PROJECT?=wavefront-gcp-dev
 GCP_REGION=us-central1
 GCP_ZONE?=b
 NUMBER_OF_NODES?=3
+GCP_CLUSTER_VERSION?=1.25
 
 target-gke: connect-to-gke gke-connect-to-cluster
 
@@ -85,7 +86,8 @@ delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 create-gke-cluster: gke-cluster-name-check
 	echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=e2-standard-2 \
-		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 --num-nodes=$(NUMBER_OF_NODES) --logging=NONE
+		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 --num-nodes=$(NUMBER_OF_NODES) --logging=NONE \
+		--cluster-version ${GCP_CLUSTER_VERSION}
 	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
 	kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
