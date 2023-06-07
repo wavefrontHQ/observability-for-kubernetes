@@ -26,7 +26,7 @@ func TestSinkFactoryBuild(t *testing.T) {
 
 	t.Run("build with k8s event sink configuration", func(t *testing.T) {
 		cfg := configuration.SinkConfig{
-			Type:                      configuration.K8sEventsSinkType,
+			Type:                      configuration.ExternalSinkType,
 			EventsExternalEndpointURL: "http://example.com",
 		}
 		sink, err := factory.Build(cfg)
@@ -65,7 +65,7 @@ func TestSinkFactoryBuildAll(t *testing.T) {
 		sinkConfigs = append(sinkConfigs, cfg)
 
 		cfg = &configuration.SinkConfig{
-			Type:                      configuration.K8sEventsSinkType,
+			Type:                      configuration.ExternalSinkType,
 			EventsExternalEndpointURL: "http://example.com",
 		}
 		sinkConfigs = append(sinkConfigs, cfg)

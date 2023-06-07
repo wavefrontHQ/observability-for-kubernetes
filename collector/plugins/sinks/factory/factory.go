@@ -20,7 +20,7 @@ package factory
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/kubernetes/events"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/external"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
@@ -30,8 +30,8 @@ type SinkFactory struct {
 }
 
 func (factory *SinkFactory) Build(cfg configuration.SinkConfig) (sinks.Sink, error) {
-	if cfg.Type == configuration.K8sEventsSinkType {
-		return events.NewK8sEventsOnlySink(cfg)
+	if cfg.Type == configuration.ExternalSinkType {
+		return external.NewExternalSink(cfg)
 	} else {
 		return wavefront.NewWavefrontSink(cfg)
 	}

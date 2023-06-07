@@ -1,4 +1,4 @@
-package events
+package external
 
 import (
 	"io"
@@ -16,8 +16,8 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 )
 
-func NewTestSink() *k8sEventSink {
-	return &k8sEventSink{
+func NewTestSink() *ExternalSink {
+	return &ExternalSink{
 		ClusterName:               "testCluster",
 		eventsExternalEndpointURL: "test",
 	}
@@ -31,15 +31,15 @@ func TestName(t *testing.T) {
 
 func TestCreateWavefrontSinkWithEventsExternalEndpointURL(t *testing.T) {
 	cfg := configuration.SinkConfig{
-		Type:                      configuration.K8sEventsSinkType,
+		Type:                      configuration.ExternalSinkType,
 		ClusterName:               "testCluster",
 		ClusterUUID:               "12345-1",
 		EventsExternalEndpointURL: "https://example.com",
 	}
-	sink, err := NewK8sEventsOnlySink(cfg)
+	sink, err := NewExternalSink(cfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, sink)
-	k8sSink, ok := sink.(*k8sEventSink)
+	k8sSink, ok := sink.(*ExternalSink)
 	assert.Equal(t, true, ok)
 	assert.Equal(t, "testCluster", k8sSink.ClusterName)
 	assert.Equal(t, "https://example.com", k8sSink.eventsExternalEndpointURL)
@@ -55,7 +55,7 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 	defer server.Close()
 
 	cfg := configuration.SinkConfig{
-		Type:                      configuration.K8sEventsSinkType,
+		Type:                      configuration.ExternalSinkType,
 		ClusterName:               "testCluster",
 		ClusterUUID:               "12345-1",
 		EventsExternalEndpointURL: server.URL,
@@ -91,7 +91,7 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 	},
 	}
 
-	sink, err := NewK8sEventsOnlySink(cfg)
+	sink, err := NewExternalSink(cfg)
 	assert.NoError(t, err)
 
 	sink.ExportEvent(event)

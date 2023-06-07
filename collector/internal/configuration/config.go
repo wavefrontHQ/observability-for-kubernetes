@@ -16,9 +16,8 @@ import (
 type SinkType string
 
 const (
-	DefaultSinkType   SinkType = ""
-	WavefrontSinkType SinkType = "wavefront"
-	K8sEventsSinkType SinkType = "k8sEvents"
+	WavefrontSinkType SinkType = ""
+	ExternalSinkType  SinkType = "external"
 )
 
 // The main configuration struct that drives the Wavefront collector
@@ -114,8 +113,8 @@ type Transforms struct {
 type SinkConfig struct {
 	Transforms `yaml:",inline"`
 
-	// Sink type, possible options ('wavefront' or 'k8sEvents'). Defaults to 'wavefront'.
-	Type SinkType `yaml:"type"`
+	// Sink type, possible options ('' or 'external'). Defaults to '' which is the Wavefront sink.
+	Type SinkType `yaml:"type,omitempty"`
 
 	//  The Wavefront URL of the form https://YOUR_INSTANCE.wavefront.com. Only required for direct ingestion.
 	Server string `yaml:"server"`

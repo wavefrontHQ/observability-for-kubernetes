@@ -35,7 +35,7 @@ sinks:
     tagInclude:
     - 'nodename'
 - eventsExternalEndpointURL: 'https://example.com'
-  type: k8sEvents
+  type: external
 
 events:
   filters:
@@ -119,8 +119,8 @@ func TestFromYAML(t *testing.T) {
 	assert.Equal(t, "kube.apiserver.", cfg.Sources.PrometheusConfigs[0].Prefix)
 	assert.Equal(t, "kubernetes.cadvisor.", cfg.Sources.CadvisorConfig.Prefix)
 	assert.Equal(t, "histogram-conversion", cfg.Experimental[0])
-	assert.Equal(t, DefaultSinkType, cfg.Sinks[0].Type)
-	assert.Equal(t, K8sEventsSinkType, cfg.Sinks[1].Type)
+	assert.Equal(t, WavefrontSinkType, cfg.Sinks[0].Type)
+	assert.Equal(t, ExternalSinkType, cfg.Sinks[1].Type)
 	assert.Equal(t, "https://example.com", cfg.Sinks[1].EventsExternalEndpointURL)
 
 	assert.Equal(t, cfg.DiscoveryConfig.AnnotationExcludes[0].Images, []string{"not-redis:*", "*not-redis*"})
