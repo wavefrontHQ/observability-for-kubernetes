@@ -162,11 +162,22 @@ function clean_up_test() {
 }
 
 function clean_up_port_forward() {
-  echo "PF_OUT: $(cat "$PF_OUT")"
-  echo "CURL_OUT: $(cat "$CURL_OUT")"
-  echo "CURL_ERR: $(cat "$CURL_ERR")"
-  echo "Killing jobs: $(jobs -l)"
-  kill $(jobs -p) &>/dev/null || true
+  if [[ $? -ne 0 ]]; then
+    echo "PF_OUT:"
+    cat "$PF_OUT"
+    echo "CURL_OUT:"
+    jq '.' "$CURL_OUT"
+  fi
+
+  if [[ -n "$(cat "$CURL_ERR")" ]]; then
+    echo "CURL_ERR:"
+    cat "$CURL_ERR"
+  fi
+
+  if [[ -n "$(jobs -l)" ]]; then
+    echo "Killing jobs: $(jobs -l)"
+    kill $(jobs -p) &>/dev/null || true
+  fi
 }
 
 function checks_to_remove() {
