@@ -21,5 +21,6 @@ type Event struct {
 	Options     []event.Option    `json:"-"`
 	ClusterName string            `json:"clusterName,omitempty"`
 	ClusterUUID string            `json:"clusterUUID,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
 	v1.Event    `json:",inline"`
 }
