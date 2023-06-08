@@ -34,7 +34,7 @@ const (
 	nodes                    = "nodes"
 	nonRunningPods           = "pods"
 	pvc                      = "persistentvolumeclaims"
-	pv                       = "persistentvolume"
+	pv                       = "persistentvolumes"
 )
 
 var (
