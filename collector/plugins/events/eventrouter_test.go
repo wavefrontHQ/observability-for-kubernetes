@@ -41,12 +41,11 @@ func TestAddEvent(t *testing.T) {
 	assert.Equal(t, "some-component", sink.Annotations["component"])
 	assert.Equal(t, "test-name", sink.Annotations["resource_name"])
 	assert.Equal(t, "test-namespace", event.InvolvedObject.Namespace)
+	assert.Equal(t, "a-deployment", sink.Labels["workloadName"])
 }
 
 type MockExport struct {
-	Message     string
-	Ts          time.Time
-	Host        string
+	events.Event
 	Annotations map[string]string
 }
 
@@ -61,6 +60,7 @@ func (m *MockExport) ExportEvent(event *events.Event) {
 	m.Ts = event.Ts
 	m.Host = event.Host
 	m.Annotations = tagMap["annotations"].(map[string]string)
+	m.Labels = event.Labels
 }
 func (m *MockExport) Export(batch *metrics.Batch) {}
 func (m *MockExport) Name() string                { return "" }

@@ -4,7 +4,9 @@
 package util
 
 import (
+	"context"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net"
 	"os"
 	"strings"
@@ -118,6 +120,22 @@ func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
 	reflector := cache.NewReflector(lw, &kube_api.Namespace{}, nsStore, time.Hour)
 	go reflector.Run(NeverStop)
 	return nsStore
+}
+
+func GetWorkloadForPod(kubeClient kubernetes.Interface, podName, ns string) (name, kind string) {
+	pod, _ := kubeClient.CoreV1().Pods(ns).Get(context.Background(), podName, metav1.GetOptions{})
+	if len(pod.OwnerReferences) == 0 {
+		return pod.ObjectMeta.Name, pod.TypeMeta.Kind
+	} else if pod.OwnerReferences[0].Kind == "ReplicaSet" {
+		rs, _ := kubeClient.AppsV1().ReplicaSets(ns).Get(context.Background(), pod.OwnerReferences[0].Name, metav1.GetOptions{})
+		if len(rs.OwnerReferences) == 0 {
+			return rs.Name, rs.Kind
+		} else {
+			return rs.OwnerReferences[0].Name, rs.OwnerReferences[0].Kind
+		}
+	} else {
+		return pod.OwnerReferences[0].Name, pod.OwnerReferences[0].Kind
+	}
 }
 
 func GetFieldSelector(resourceType string) fields.Selector {

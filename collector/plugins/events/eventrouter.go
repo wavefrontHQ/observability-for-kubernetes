@@ -119,7 +119,7 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		ns = "default"
 	}
 
-	workload, err := er.workloadFromEvent(e.InvolvedObject)
+	workloadName, workloadKind, err := er.workloadFromEvent(e.InvolvedObject)
 	if err != nil {
 		log.Info(err)
 	}
@@ -159,21 +159,23 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		e.Message,
 		e.LastTimestamp.Time,
 		e.Source.Host,
-		workload,
+		workloadName,
+		workloadKind,
 		tags,
 		*e,
 		event.Type(eType),
 	))
 }
 
-func newEvent(message string, ts time.Time, host string, workload string, tags map[string]string, coreV1Event v1.Event, options ...event.Option) *events.Event {
+func newEvent(message string, ts time.Time, host string, workloadName string, workloadKind string, tags map[string]string, coreV1Event v1.Event, options ...event.Option) *events.Event {
 	// convert tags to annotations
 	for k, v := range tags {
 		options = append(options, event.Annotate(k, v))
 	}
 
 	labels := make(map[string]string)
-	labels["workload"] = workload
+	labels["workloadName"] = workloadName
+	labels["workloadKind"] = workloadKind
 
 	return &events.Event{
 		Message: message,
@@ -185,7 +187,7 @@ func newEvent(message string, ts time.Time, host string, workload string, tags m
 	}
 }
 
-func (er *EventRouter) workloadFromEvent(o v1.ObjectReference) (string, error) {
+func (er *EventRouter) workloadFromEvent(o v1.ObjectReference) (workload string, workloadKind string, err error) {
 	name := o.Name
 	ns := o.Namespace
 	if len(ns) == 0 {
@@ -194,7 +196,7 @@ func (er *EventRouter) workloadFromEvent(o v1.ObjectReference) (string, error) {
 	kind := o.Kind
 
 	result := ""
-	var references []metav1.OwnerReference
+	var owner []metav1.OwnerReference
 
 	// TODO: error handling
 	for result == "" {
@@ -205,43 +207,39 @@ func (er *EventRouter) workloadFromEvent(o v1.ObjectReference) (string, error) {
 			if err != nil {
 				log.Infof("Object:%v /// Error:%s", obj.OwnerReferences, err)
 			}
-			references = obj.GetOwnerReferences()
+			owner = obj.GetOwnerReferences()
 		case "ReplicaSet":
 			obj, err := er.kubeClient.AppsV1().ReplicaSets(ns).Get(context.Background(), name, metav1.GetOptions{})
 			if err != nil {
 				log.Infof("Object:%v /// Error:%s", obj.OwnerReferences, err)
 			}
-			references = obj.GetOwnerReferences()
-		case "Deployment":
-			return name, nil
-		case "DaemonSet":
-			return name, nil
-		case "StatefulSet":
-			return name, nil
+			owner = obj.GetOwnerReferences()
 		case "Job":
-			// TODO: Handle CronJob and Job
+			// TODO: Handle CronJob and Job rec
 			obj, err := er.kubeClient.BatchV1().Jobs(ns).Get(context.Background(), name, metav1.GetOptions{})
 			if err != nil {
 				log.Infof("Error: %s", err)
 			} else {
 				log.Infof("Object: %v", obj.OwnerReferences)
 			}
-			references = obj.GetOwnerReferences()
+			owner = obj.GetOwnerReferences()
+		case "DaemonSet", "Deployment", "StatefulSet":
+			return name, kind, nil
 		default:
 			log.Infof("Unknown object type: %v", kind)
 			// TODO: maybe not nil
-			return name, nil
+			return name, kind, nil
 		}
 
-		if len(references) == 0 {
+		if len(owner) == 0 {
 			log.Info("DONE with our recursion wohoo")
 			log.Infof("Found workload with name: %s", name)
 			result = name
 		} else {
-			name = references[0].Name
-			kind = references[0].Kind
+			name = owner[0].Name
+			kind = owner[0].Kind
 		}
 	}
 
-	return result, nil
+	return result, kind, nil
 }
