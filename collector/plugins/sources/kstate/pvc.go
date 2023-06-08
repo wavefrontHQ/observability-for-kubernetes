@@ -90,12 +90,12 @@ func buildPVCInfo(claim *corev1.PersistentVolumeClaim, transforms configuration.
 	tags := make(map[string]string, len(sharedTags))
 	copyTags(sharedTags, tags)
 
-	tags["volumename"] = claim.Spec.VolumeName
+	tags["volume_name"] = claim.Spec.VolumeName
 	// Use beta annotation first
 	if class, found := claim.Annotations[corev1.BetaStorageClassAnnotation]; found {
-		tags["storageclassname"] = class
+		tags["storage_class_name"] = class
 	}
-	tags["storageclassname"] = *claim.Spec.StorageClassName
+	tags["storage_class_name"] = *claim.Spec.StorageClassName
 
 	return metricPoint(transforms.Prefix, "pvc.info", 1.0, now, transforms.Source, tags)
 }

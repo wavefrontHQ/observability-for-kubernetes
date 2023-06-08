@@ -87,44 +87,47 @@ Metrics collected per type:
 
 These are cluster level metrics about the state of Kubernetes objects collected by the Collector leader instance.
 
-| Resource | Metric Name | Description |
-|----------|---------|-------------|
-| Deployment | deployment.desired_replicas | Number of desired pods. |
-| Deployment | deployment.available_replicas | Total number of available pods (ready for at least minReadySeconds). |
-| Deployment | deployment.ready_replicas | Total number of ready pods. |
-| Replicaset | replicaset.desired_replicas | Number of desired replicas. |
-| Replicaset | replicaset.available_replicas | Number of available replicas (ready for at least minReadySeconds). |
-| Replicaset | replicaset.ready_replicas | Number of ready replicas. |
-| ReplicationController | replicationcontroller.desired_replicas | Number of desired replicas. |
-| ReplicationController | replicationcontroller.available_replicas | Number of available replicas (ready for at least minReadySeconds). |
-| ReplicationController | replicationcontroller.ready_replicas | Number of ready replicas. |
-| Daemonset | daemonset.desired_scheduled | Total number of nodes that should be running the daemon pod. |
-| Daemonset | daemonset.current_scheduled | Number of nodes that are running at least 1 daemon pod and are supposed to run the daemon pod. |
-| Daemonset | daemonset.misscheduled | Number of nodes that are running the daemon pod, but are not supposed to run the daemon pod. |
-| Daemonset | daemonset.ready | Number of nodes that should be running the daemon pod and have one or more of the daemon pod running and ready. |
-| Statefulset | statefulset.desired_replicas | Number of desired replicas. |
-| Statefulset | statefulset.current_replicas | Number of Pods created by the StatefulSet controller from the StatefulSet version indicated by currentRevision.
-| Statefulset | statefulset.ready_replicas | Number of Pods created by the StatefulSet controller that have a Ready Condition. |
-| Statefulset | statefulset.updated_replicas | Number of Pods created by the StatefulSet controller from the StatefulSet version indicated by updateRevision. |
-| Job | job.active | Number of actively running pods. |
-| Job | job.failed | Number of pods which reached phase Failed. |
-| Job | job.succeeded | Number of pods which reached phase Succeeded. |
-| Job | job.completions | Desired number of successfully finished pods the job should be run with. -1.0 indicates the value was not set. |
-| Job | job.parallelism | Maximum desired number of pods the job should run at any given time. -1.0 indicates the value was not set. |
-| CronJob | cronjob.active | Number of currently running jobs. |
-| HorizontalPodAutoscaler | hpa.desired_replicas | Desired number of replicas of pods managed by this autoscaler as last calculated by the autoscaler. |
-| HorizontalPodAutoscaler | hpa.min_replicas | Lower limit for the number of replicas to which the autoscaler can scale down. |
-| HorizontalPodAutoscaler | hpa.max_replicas | Upper limit for the number of replicas to which the autoscaler can scale up. |
-| HorizontalPodAutoscaler | hpa.current_replicas | Current number of replicas of pods managed by this autoscaler, as last seen by the autoscaler. |
-| Node | node.status.condition | Status of all running nodes. |
-| Node | node.spec.taint | Node taints (one metric per node taint). |
-| Node | node.info | Detailed node information (kernel version, kubelet version etc). |
-| PersistentVolumeClaim| pvc.access_mode           | The access mode(s) specified by the persistent volume claim.|
-| PersistentVolumeClaim| pvc.info                  | Information about persistent volume claim. No storageClassName tag implies pvc uses default storage class|
-| PersistentVolumeClaim| pvc.request.storage_bytes | The storage requested by the persistent volume claim in bytes. |
-| PersistentVolumeClaim| pvc.status.phase          | The phase of the persistent volume claim. |
-| PersistentVolumeClaim| pvc.status.condition      | Information about status of different conditions of persistent volume claim.|
-
+| Resource                | Metric Name                              | Description                                                                                                     |
+|-------------------------|------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| Deployment              | deployment.desired_replicas              | Number of desired pods.                                                                                         |
+| Deployment              | deployment.available_replicas            | Total number of available pods (ready for at least minReadySeconds).                                            |
+| Deployment              | deployment.ready_replicas                | Total number of ready pods.                                                                                     |
+| Replicaset              | replicaset.desired_replicas              | Number of desired replicas.                                                                                     |
+| Replicaset              | replicaset.available_replicas            | Number of available replicas (ready for at least minReadySeconds).                                              |
+| Replicaset              | replicaset.ready_replicas                | Number of ready replicas.                                                                                       |
+| ReplicationController   | replicationcontroller.desired_replicas   | Number of desired replicas.                                                                                     |
+| ReplicationController   | replicationcontroller.available_replicas | Number of available replicas (ready for at least minReadySeconds).                                              |
+| ReplicationController   | replicationcontroller.ready_replicas     | Number of ready replicas.                                                                                       |
+| Daemonset               | daemonset.desired_scheduled              | Total number of nodes that should be running the daemon pod.                                                    |
+| Daemonset               | daemonset.current_scheduled              | Number of nodes that are running at least 1 daemon pod and are supposed to run the daemon pod.                  |
+| Daemonset               | daemonset.misscheduled                   | Number of nodes that are running the daemon pod, but are not supposed to run the daemon pod.                    |
+| Daemonset               | daemonset.ready                          | Number of nodes that should be running the daemon pod and have one or more of the daemon pod running and ready. |
+| Statefulset             | statefulset.desired_replicas             | Number of desired replicas.                                                                                     |
+| Statefulset             | statefulset.current_replicas             | Number of Pods created by the StatefulSet controller from the StatefulSet version indicated by currentRevision. |
+| Statefulset             | statefulset.ready_replicas               | Number of Pods created by the StatefulSet controller that have a Ready Condition.                               |
+| Statefulset             | statefulset.updated_replicas             | Number of Pods created by the StatefulSet controller from the StatefulSet version indicated by updateRevision.  |
+| Job                     | job.active                               | Number of actively running pods.                                                                                |
+| Job                     | job.failed                               | Number of pods which reached phase Failed.                                                                      |
+| Job                     | job.succeeded                            | Number of pods which reached phase Succeeded.                                                                   |
+| Job                     | job.completions                          | Desired number of successfully finished pods the job should be run with. -1.0 indicates the value was not set.  |
+| Job                     | job.parallelism                          | Maximum desired number of pods the job should run at any given time. -1.0 indicates the value was not set.      |
+| CronJob                 | cronjob.active                           | Number of currently running jobs.                                                                               |
+| HorizontalPodAutoscaler | hpa.desired_replicas                     | Desired number of replicas of pods managed by this autoscaler as last calculated by the autoscaler.             |
+| HorizontalPodAutoscaler | hpa.min_replicas                         | Lower limit for the number of replicas to which the autoscaler can scale down.                                  |
+| HorizontalPodAutoscaler | hpa.max_replicas                         | Upper limit for the number of replicas to which the autoscaler can scale up.                                    |
+| HorizontalPodAutoscaler | hpa.current_replicas                     | Current number of replicas of pods managed by this autoscaler, as last seen by the autoscaler.                  |
+| Node                    | node.status.condition                    | Status of all running nodes.                                                                                    |
+| Node                    | node.spec.taint                          | Node taints (one metric per node taint).                                                                        |
+| Node                    | node.info                                | Detailed node information (kernel version, kubelet version etc).                                                |
+| PersistentVolumeClaim   | pvc.access_mode                          | The access mode(s) specified by the PersistentVolumeClaim.                                                      |
+| PersistentVolumeClaim   | pvc.info                                 | Information about PersistentVolumeClaim. No storage_class_name tag implies pvc uses default storage class.      |
+| PersistentVolumeClaim   | pvc.request.storage_bytes                | The storage requested by the PersistentVolumeClaim in bytes.                                                    |
+| PersistentVolumeClaim   | pvc.status.phase                         | The phase of the PersistentVolumeClaim.                                                                         |
+| PersistentVolumeClaim   | pvc.status.condition                     | Information about status of different conditions of PersistentVolumeClaim.                                      |
+| PersistentVolume        | pv.capacity_bytes                        | PersistentVolume capacity in bytes.                                                                             |
+| PersistentVolume        | pv.status.phase                          | The phase of the PersistentVolume.                                                                              |
+| PersistentVolume        | pv.claim_ref                             | Information about the PersistentVolumeClaim reference.                                                          |
+| PersistentVolume        | pv.info                                  | Information about PersistentVolume.                                                                             |
 
 ## Prometheus Source
 
@@ -271,7 +274,7 @@ Metrics collected for etcd:
 
 
 
-# PersistentVolume Metrics
+# TODO: Remove this: PersistentVolume Metrics Comparison with kube-state-metrics for acceptance
 
 | Wavefront metrics | Metric name | Metric type | Description | Unit (where applicable) | Labels/tags | Status |
 |-------| ----------- | ----------- | ----------- | ----------- | ----------- | ------------ |
