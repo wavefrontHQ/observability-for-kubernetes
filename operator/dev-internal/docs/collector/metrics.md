@@ -126,7 +126,6 @@ These are cluster level metrics about the state of Kubernetes objects collected 
 | PersistentVolumeClaim   | pvc.status.condition                     | Information about status of different conditions of PersistentVolumeClaim.                                      |
 | PersistentVolume        | pv.capacity_bytes                        | PersistentVolume capacity in bytes.                                                                             |
 | PersistentVolume        | pv.status.phase                          | The phase of the PersistentVolume.                                                                              |
-| PersistentVolume        | pv.claim_ref                             | Information about the PersistentVolumeClaim reference.                                                          |
 | PersistentVolume        | pv.info                                  | Information about PersistentVolume.                                                                             |
 
 ## Prometheus Source
@@ -257,31 +256,3 @@ Metrics collected for etcd:
 | kubernetes.controlplane.etcd.network.peer.round.trip.time.seconds.m | Round-Trip-Time between peers as an [Operations for Applications Histogram](https://docs.wavefront.com/proxies_histograms.html) | Not available in AKS, EKS, GKE |
 | kubernetes.controlplane.etcd.network.peer.sent.failures.total.counter | The total number of failures sent by peers. | Not available in AKS, EKS, GKE |
 | kubernetes.controlplane.etcd.network.peer.received.failures.total.counter | The total number of failures received by peers. | Not available in AKS, EKS, GKE |
-
-
-### TODO: Remove this: PersistentVolumeClaim Metrics Comparison with kube-state-metrics for acceptance
-
-| Wavefront Collector metric name| kube state metric name | Metric type | Description | Unit (where applicable) | Labels/tags | Status |
-|--- | ----------- | ------------- | ----------- | ----------- | ----------- | ----------- |
-| kubernetes.pvc.access_mode| kube_persistentvolumeclaim_access_mode | Gauge | | | `access_mode`=&lt;persistentvolumeclaim-access-mode&gt; <br>`namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; | STABLE |
-| kubernetes.pvc.info                 | kube_persistentvolumeclaim_info | Gauge | | | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `storageclass`=&lt;persistentvolumeclaim-storageclassname&gt;<br>`volumename`=&lt;volumename&gt; | STABLE |
-| kubernetes.pvc.request.storage_bytes| kube_persistentvolumeclaim_resource_requests_storage_bytes | Gauge | | | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; | STABLE |
-| kubernetes.pvc.status.condition     | kube_persistentvolumeclaim_status_condition | Gauge | | | `namespace` =&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `type`=&lt;persistentvolumeclaim-condition-type&gt; <br> `status`=&lt;true\false\unknown&gt; | EXPERIMENTAL |
-| kubernetes.pvc.status.phase         | kube_persistentvolumeclaim_status_phase | Gauge | | | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `phase`=&lt;Pending\Bound\Lost&gt; | STABLE |
-| Excluded| kube_persistentvolumeclaim_created | Gauge | Unix Creation Timestamp | seconds | `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; | EXPERIMENTAL |
-| Excluded| kube_persistentvolumeclaim_labels | Gauge | | | `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `label_PERSISTENTVOLUMECLAIM_LABEL`=&lt;PERSISTENTVOLUMECLAIM_LABEL&gt; | STABLE |
-| Excluded| kube_persistentvolumeclaim_annotations | Gauge | | | `persistentvolumeclaim`=&lt;persistentvolumeclaim-name&gt; <br> `namespace`=&lt;persistentvolumeclaim-namespace&gt; <br> `annotation_PERSISTENTVOLUMECLAIM_ANNOTATION`=&lt;PERSISTENTVOLUMECLAIM_ANNOATION&gt; | EXPERIMENTAL |
-
-
-
-# TODO: Remove this: PersistentVolume Metrics Comparison with kube-state-metrics for acceptance
-
-| Wavefront metrics | Metric name | Metric type | Description | Unit (where applicable) | Labels/tags | Status |
-|-------| ----------- | ----------- | ----------- | ----------- | ----------- | ------------ |
-| kubernetes.pv.capacity_bytes | kube_persistentvolume_capacity_bytes | Gauge | | | `persistentvolume`=&lt;pv-name&gt; | STABLE |
-| kubernetes.pv.status.phase | kube_persistentvolume_status_phase | Gauge | | | `persistentvolume`=&lt;pv-name&gt; <br>`phase`=&lt;Bound\|Failed\|Pending\|Available\|Released&gt; | STABLE |
-| kubernetes.pv.status.claim_ref | kube_persistentvolume_claim_ref | Gauge | | | `persistentvolume`=&lt;pv-name&gt; <br>`claim_namespace`=&lt;<namespace>&gt; <br>`name`=&lt;<name>&gt; | STABLE |
-| kubernetes.pv.info | kube_persistentvolume_info | Gauge | | | `persistentvolume`=&lt;pv-name&gt; <br> `storageclass`=&lt;storageclass-name&gt; <br> `gce_persistent_disk_name`=&lt;pd-name&gt; <br> `host_path`=&lt;path-of-a-host-volume&gt; <br> `host_path_type`=&lt;host-mount-type&gt; <br> `ebs_volume_id`=&lt;ebs-volume-id&gt; <br> `azure_disk_name`=&lt;azure-disk-name&gt; <br> `fc_wwids`=&lt;fc-wwids-comma-separated&gt; <br> `fc_lun`=&lt;fc-lun&gt; <br> `fc_target_wwns`=&lt;fc-target-wwns-comma-separated&gt; <br> `iscsi_target_portal`=&lt;iscsi-target-portal&gt; <br> `iscsi_iqn`=&lt;iscsi-iqn&gt; <br> `iscsi_lun`=&lt;iscsi-lun&gt; <br> `iscsi_initiator_name`=&lt;iscsi-initiator-name&gt; <br> `local_path`=&lt;path-of-a-local-volume&gt; <br> `local_fs`=&lt;local-volume-fs-type&gt; <br> `nfs_server`=&lt;nfs-server&gt; <br> `nfs_path`=&lt;nfs-path&gt; <br> `csi_driver`=&lt;csi-driver&gt; <br> `csi_volume_handle`=&lt;csi-volume-handle&gt; | STABLE |
-| Excluded | kube_persistentvolume_created | Gauge | Unix Creation Timestamp | seconds | `persistentvolume`=&lt;persistentvolume-name&gt; <br> | EXPERIMENTAL || Excluded 
-| Excluded | kube_persistentvolume_annotations | Gauge | | | `persistentvolume`=&lt;persistentvolume-name&gt; <br> `annotation_PERSISTENTVOLUME_ANNOTATION`=&lt;PERSISTENTVOLUME_ANNOTATION&gt; | EXPERIMENTAL |
-| Excluded | kube_persistentvolume_labels | Gauge | | | `persistentvolume`=&lt;persistentvolume-name&gt; <br> `label_PERSISTENTVOLUME_LABEL`=&lt;PERSISTENTVOLUME_LABEL&gt; | STABLE |

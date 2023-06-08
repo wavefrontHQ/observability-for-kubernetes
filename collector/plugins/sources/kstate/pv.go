@@ -33,7 +33,6 @@ func pointsForPV(item interface{}, transforms configuration.Transforms) []wf.Met
 	points := buildPVCapacityBytes(persistentVolume, transforms, now, sharedTags)
 	points = append(points, buildPVInfo(persistentVolume, transforms, now, sharedTags))
 	points = append(points, buildPVPhase(persistentVolume, transforms, now, sharedTags))
-	points = append(points, buildPVClaimRef(persistentVolume, transforms, now, sharedTags))
 
 	return points
 }
@@ -44,21 +43,13 @@ func buildPVPhase(persistentVolume *corev1.PersistentVolume, transforms configur
 
 	tags["phase"] = string(persistentVolume.Status.Phase)
 	phaseValue := util.ConvertPVPhase(persistentVolume.Status.Phase)
-	return metricPoint(transforms.Prefix, "pv.status.phase", float64(phaseValue), now, transforms.Source, tags)
-}
-
-func buildPVClaimRef(persistentVolume *corev1.PersistentVolume, transforms configuration.Transforms, now int64, sharedTags map[string]string) wf.Metric {
-	tags := make(map[string]string, len(sharedTags))
-	copyTags(sharedTags, tags)
 
 	claimRef := persistentVolume.Spec.ClaimRef
-
 	if claimRef != nil {
 		tags["claim_ref_name"] = claimRef.Name
 		tags["claim_ref_namespace"] = claimRef.Namespace
 	}
-	return metricPoint(transforms.Prefix, "pv.claim_ref",
-		1.0, now, transforms.Source, tags)
+	return metricPoint(transforms.Prefix, "pv.status.phase", float64(phaseValue), now, transforms.Source, tags)
 }
 
 func buildPVCapacityBytes(persistentVolume *corev1.PersistentVolume, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {

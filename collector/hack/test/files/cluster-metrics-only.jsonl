@@ -22,7 +22,6 @@
 {"Name":"kubernetes.pvc.access_mode"}
 {"Name":"kubernetes.pv.capacity_bytes"}
 {"Name":"kubernetes.pv.status.phase"}
-{"Name":"kubernetes.pv.claim_ref"}
 {"Name":"kubernetes.pv.info"}
 ~{"Name":"linux.sysctl.fs.aio-max-nr"}
 ~{"Name":"mem.available"}

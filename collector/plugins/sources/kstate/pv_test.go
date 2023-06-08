@@ -40,12 +40,11 @@ func TestPointsForPV(t *testing.T) {
 	t.Run("test for basic PV", func(t *testing.T) {
 		testPV := setupBasicPV()
 		actualWFPoints := pointsForPV(testPV, configuration.Transforms{Prefix: "kubernetes."})
-		assert.Equal(t, 4, len(actualWFPoints))
+		assert.Equal(t, 3, len(actualWFPoints))
 
 		expectedMetricNames := []string{
 			"kubernetes.pv.capacity_bytes",
 			"kubernetes.pv.status.phase",
-			"kubernetes.pv.claim_ref",
 			"kubernetes.pv.info",
 		}
 
