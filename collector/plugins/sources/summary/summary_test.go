@@ -81,12 +81,13 @@ const (
 	namespace0 = "test0"
 	namespace1 = "test1"
 
-	pName0 = "pod0"
-	pName1 = "pod1"
-	pName2 = "pod0" // ensure pName2 conflicts with pName0, but is in a different namespace
-	pName3 = "pod2"
-	pName4 = "pod4" // Regression test for #1838
-	pName5 = "pod5"
+	pName0   = "pod0"
+	pName1   = "pod1"
+	pName2   = "pod0" // ensure pName2 conflicts with pName0, but is in a different namespace
+	pName3   = "pod2"
+	pName4   = "pod4" // Regression test for #1838
+	pName5   = "pod5"
+	pWithPvc = "pvc-pod"
 
 	cName00 = "c0"
 	cName01 = "c1"
@@ -98,6 +99,8 @@ const (
 	cName41 = "c4" // Terminated, has no CPU / Memory stats
 	cName42 = "c4" // Terminated, has blank CPU / Memory stats
 	cName50 = "c5"
+
+	pvcName = "pvc-claim"
 )
 
 var (
@@ -219,6 +222,26 @@ func TestAddSummaryMetrics(t *testing.T) {
 
 	for k, v := range metrics {
 		assert.Fail(t, "unexpected metric", "%q: %+v", k, v)
+	}
+}
+
+func TestAddSummaryMetricsWithPvc(t *testing.T) {
+
+	ms := testingSummaryMetricsSource(1234)
+	summary := getTestStatsSummaryWithPvc()
+
+	dataBatch := &core.Batch{
+		Timestamp: time.Now(),
+		Sets:      map[core.ResourceKey]*core.Set{},
+	}
+
+	ms.addSummaryMetricSets(dataBatch, &summary)
+	metrics := dataBatch.Sets
+
+	// Verify volume information labeled metrics
+	var volumeInformationMetricsKey = core.PodKey(namespace0, pWithPvc)
+	for _, labeledMetric := range metrics[volumeInformationMetricsKey].LabeledValues {
+		assert.Equal(t, pvcName, labeledMetric.Labels["pvc_name"])
 	}
 }
 
@@ -763,6 +786,49 @@ func getTestStatsSummary() stats.Summary {
 			Containers: []stats.ContainerStats{
 				genTestSummaryContainerWithAccelerator(cName50, seedPod5Container0),
 			},
+		}},
+	}
+	return summary
+}
+
+func getTestStatsSummaryWithPvc() stats.Summary {
+	summary := stats.Summary{
+		Node: stats.NodeStats{
+			NodeName:  nodeInfo.NodeName,
+			StartTime: metav1.NewTime(startTime),
+			CPU:       genTestSummaryCPU(seedNode),
+			Memory:    genTestSummaryMemory(seedNode),
+			Network:   genTestSummaryNetwork(seedNode),
+			SystemContainers: []stats.ContainerStats{
+				genTestSummaryContainer(stats.SystemContainerKubelet, seedKubelet),
+				genTestSummaryContainer(stats.SystemContainerRuntime, seedRuntime),
+				genTestSummaryContainer(stats.SystemContainerMisc, seedMisc),
+			},
+			Fs: genTestSummaryFsStats(seedNode),
+		},
+		Pods: []stats.PodStats{{
+			PodRef: stats.PodReference{
+				Name:      pWithPvc,
+				Namespace: namespace0,
+			},
+			Containers: []stats.ContainerStats{
+				genTestSummaryContainer(cName30, seedPod3Container0),
+			},
+			VolumeStats: []stats.VolumeStats{{
+				Name: "pvc-claim",
+				PVCRef: &stats.PVCReference{
+					Name:      pvcName,
+					Namespace: namespace0,
+				},
+				FsStats: stats.FsStats{
+					AvailableBytes: &availableFsBytes,
+					UsedBytes:      &usedFsBytes,
+					CapacityBytes:  &totalFsBytes,
+					InodesFree:     &freeInode,
+					InodesUsed:     &usedInode,
+					Inodes:         &totalInode,
+				},
+			}},
 		}},
 	}
 	return summary
