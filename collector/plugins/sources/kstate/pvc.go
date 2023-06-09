@@ -29,7 +29,9 @@ func pointsForPVC(item interface{}, transforms configuration.Transforms) []wf.Me
 	copyLabels(persistentVolumeClaim.GetLabels(), sharedTags)
 
 	now := time.Now().Unix()
-	points := buildPVCRequestStorage(persistentVolumeClaim, transforms, now, sharedTags)
+	points := []wf.Metric{
+		buildPVCRequestStorage(persistentVolumeClaim, transforms, now, sharedTags),
+	}
 	points = append(points, buildPVCInfo(persistentVolumeClaim, transforms, now, sharedTags))
 	points = append(points, buildPVCPhaseMetric(persistentVolumeClaim, transforms, now, sharedTags))
 	points = append(points, buildPVCConditions(persistentVolumeClaim, transforms, now, sharedTags)...)
@@ -38,14 +40,12 @@ func pointsForPVC(item interface{}, transforms configuration.Transforms) []wf.Me
 	return points
 }
 
-func buildPVCRequestStorage(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {
+func buildPVCRequestStorage(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) wf.Metric {
 	tags := make(map[string]string, len(sharedTags))
 	copyTags(sharedTags, tags)
 
 	var resourceStorage = claim.Spec.Resources.Requests[corev1.ResourceStorage]
-	return []wf.Metric{
-		metricPoint(transforms.Prefix, "pvc.request.storage_bytes", float64(resourceStorage.Value()), now, transforms.Source, tags),
-	}
+	return metricPoint(transforms.Prefix, "pvc.request.storage_bytes", float64(resourceStorage.Value()), now, transforms.Source, tags)
 }
 
 func buildPVCInfo(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) wf.Metric {

@@ -2,7 +2,6 @@ package kstate
 
 import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"log"
 	"sort"
@@ -46,7 +45,7 @@ func setupBasicPVC() *v1.PersistentVolumeClaim {
 	}
 }
 
-func getBasicMetricInput() (claim *v1.PersistentVolumeClaim, transforms configuration.Transforms, timestamp int64, tags map[string]string) {
+func basicPVCBuilderInput() (claim *v1.PersistentVolumeClaim, transforms configuration.Transforms, timestamp int64, tags map[string]string) {
 	return setupBasicPVC(),
 		configuration.Transforms{Prefix: "kubernetes.", Source: "test-source"},
 		0,
@@ -87,26 +86,24 @@ func TestPointsForPVC(t *testing.T) {
 
 	t.Run("metric tags and values", func(t *testing.T) {
 		t.Run("buildPVCRequestStorage has base tags and resource storage from requests", func(t *testing.T) {
-			actualMetric := buildPVCRequestStorage(getBasicMetricInput())
-			expectedMetric := []wf.Metric{
-				metricPoint(
-					"kubernetes.",
-					"pvc.request.storage_bytes",
-					7.0,
-					0.0,
-					"test-source",
-					map[string]string{
-						"tag1": "value1",
-						"tag2": "value2",
-						"tag3": "value3",
-					},
-				),
-			}
+			actualMetric := buildPVCRequestStorage(basicPVCBuilderInput())
+			expectedMetric := metricPoint(
+				"kubernetes.",
+				"pvc.request.storage_bytes",
+				7.0,
+				0.0,
+				"test-source",
+				map[string]string{
+					"tag1": "value1",
+					"tag2": "value2",
+					"tag3": "value3",
+				},
+			)
 			assert.Equal(t, expectedMetric, actualMetric)
 		})
 
 		t.Run("buildPVCInfo has base tags, volume name, storage class name by default", func(t *testing.T) {
-			actualMetric := buildPVCInfo(getBasicMetricInput())
+			actualMetric := buildPVCInfo(basicPVCBuilderInput())
 			expectedMetric := metricPoint(
 				"kubernetes.",
 				"pvc.info",
@@ -125,7 +122,7 @@ func TestPointsForPVC(t *testing.T) {
 		})
 
 		t.Run("buildPVCInfo gets storage class from beta annotation first", func(t *testing.T) {
-			claim, transforms, value, tags := getBasicMetricInput()
+			claim, transforms, value, tags := basicPVCBuilderInput()
 			claim.Annotations = map[string]string{
 				v1.BetaStorageClassAnnotation: "test-beta-storage-class-name",
 			}
@@ -149,7 +146,7 @@ func TestPointsForPVC(t *testing.T) {
 		})
 
 		t.Run("buildPVCPhaseMetric has phase and converted value", func(t *testing.T) {
-			actualMetric := buildPVCPhaseMetric(getBasicMetricInput())
+			actualMetric := buildPVCPhaseMetric(basicPVCBuilderInput())
 			expectedMetric := metricPoint(
 				"kubernetes.",
 				"pvc.status.phase",
@@ -167,7 +164,7 @@ func TestPointsForPVC(t *testing.T) {
 		})
 
 		t.Run("buildPVCConditions has a metric with status and condition for each condition", func(t *testing.T) {
-			actualMetrics := buildPVCConditions(getBasicMetricInput())
+			actualMetrics := buildPVCConditions(basicPVCBuilderInput())
 			resizingMetric := metricPoint(
 				"kubernetes.",
 				"pvc.status.condition",
@@ -203,7 +200,7 @@ func TestPointsForPVC(t *testing.T) {
 		})
 
 		t.Run("buildPVCAccessModes has a metric with access mode tag for each access mode", func(t *testing.T) {
-			actualMetrics := buildPVCAccessModes(getBasicMetricInput())
+			actualMetrics := buildPVCAccessModes(basicPVCBuilderInput())
 			rwoMetric := metricPoint(
 				"kubernetes.",
 				"pvc.access_mode",

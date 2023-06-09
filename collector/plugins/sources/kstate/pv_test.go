@@ -2,6 +2,7 @@ package kstate
 
 import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	"log"
 	"sort"
 	"testing"
