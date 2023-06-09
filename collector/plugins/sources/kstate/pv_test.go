@@ -33,7 +33,7 @@ func setupBasicPV() *v1.PersistentVolume {
 			NodeAffinity:                  nil,
 		},
 		Status: v1.PersistentVolumeStatus{
-			Phase:   "",
+			Phase:   v1.VolumeFailed,
 			Message: "",
 			Reason:  "",
 		},
@@ -118,7 +118,7 @@ func TestPointsForPV(t *testing.T) {
 				volume.Spec.PersistentVolumeSource.CephFS = &v1.CephFSPersistentVolumeSource{
 					Path: "test-path",
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"cephfs_path": "test-path"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"cephfs_path": "test-path"})
 			})
 
 			t.Run("CSI.Driver", func(t *testing.T) {
@@ -127,8 +127,8 @@ func TestPointsForPV(t *testing.T) {
 					Driver:       "test-driver",
 					VolumeHandle: "test-volume-handle",
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"csi_driver": "test-driver"})
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"csi_volume_handle": "test-volume-handle"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"csi_driver": "test-driver"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"csi_volume_handle": "test-volume-handle"})
 			})
 
 			t.Run("HostPath, with type only if it is set", func(t *testing.T) {
@@ -137,12 +137,12 @@ func TestPointsForPV(t *testing.T) {
 					Path: "test-host-path",
 					Type: nil,
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"host_path": "test-host-path"})
-				buildAndAssertTagsNotPresent(volume, transforms, value, tags)(t, []string{"host_path_type"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"host_path": "test-host-path"})
+				buildPVInfoAndAssertTagsNotPresent(volume, transforms, value, tags)(t, []string{"host_path_type"})
 
 				testHostPath := v1.HostPathDirectoryOrCreate
 				volume.Spec.PersistentVolumeSource.HostPath.Type = &testHostPath
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"host_path_type": string(v1.HostPathDirectoryOrCreate)})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"host_path_type": string(v1.HostPathDirectoryOrCreate)})
 			})
 
 			t.Run("ISCSI, with initiator name only if it is set", func(t *testing.T) {
@@ -153,14 +153,14 @@ func TestPointsForPV(t *testing.T) {
 					Lun:           15,
 					InitiatorName: nil,
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"iscsi_target_portal": "test-target-portal"})
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"iscsi_iqn": "test-iqn"})
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"iscsi_lun": "15"})
-				buildAndAssertTagsNotPresent(volume, transforms, value, tags)(t, []string{"iscsi_initiator_name"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"iscsi_target_portal": "test-target-portal"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"iscsi_iqn": "test-iqn"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"iscsi_lun": "15"})
+				buildPVInfoAndAssertTagsNotPresent(volume, transforms, value, tags)(t, []string{"iscsi_initiator_name"})
 
 				testInitiatorName := "test-initiator-name"
 				volume.Spec.PersistentVolumeSource.ISCSI.InitiatorName = &testInitiatorName
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"iscsi_initiator_name": "test-initiator-name"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"iscsi_initiator_name": "test-initiator-name"})
 			})
 
 			t.Run("Local, with fs type only if it is set", func(t *testing.T) {
@@ -169,12 +169,12 @@ func TestPointsForPV(t *testing.T) {
 					Path:   "test-local-path",
 					FSType: nil,
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"local_path": "test-local-path"})
-				buildAndAssertTagsNotPresent(volume, transforms, value, tags)(t, []string{"local_fs_type"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"local_path": "test-local-path"})
+				buildPVInfoAndAssertTagsNotPresent(volume, transforms, value, tags)(t, []string{"local_fs_type"})
 
 				testLocalFSType := "test-local-fs-type"
 				volume.Spec.PersistentVolumeSource.Local.FSType = &testLocalFSType
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"local_fs_type": "test-local-fs-type"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"local_fs_type": "test-local-fs-type"})
 			})
 
 			t.Run("NFS", func(t *testing.T) {
@@ -183,8 +183,8 @@ func TestPointsForPV(t *testing.T) {
 					Server: "test-nfs-server",
 					Path:   "test-nfs-path",
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"nfs_server": "test-nfs-server"})
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"nfs_path": "test-nfs-path"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"nfs_server": "test-nfs-server"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"nfs_path": "test-nfs-path"})
 			})
 
 			t.Run("RBD", func(t *testing.T) {
@@ -193,8 +193,8 @@ func TestPointsForPV(t *testing.T) {
 					RBDImage: "test-rbd-image",
 					FSType:   "test-rbd-fs-type",
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"rbd_image": "test-rbd-image"})
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"rbd_fs_type": "test-rbd-fs-type"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"rbd_image": "test-rbd-image"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"rbd_fs_type": "test-rbd-fs-type"})
 			})
 
 			t.Run("PortworxVolume", func(t *testing.T) {
@@ -203,8 +203,8 @@ func TestPointsForPV(t *testing.T) {
 					VolumeID: "test-portworx-volume-id",
 					FSType:   "test-portworx-fs-type",
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"portworx_volume_id": "test-portworx-volume-id"})
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"portworx_fs_type": "test-portworx-fs-type"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"portworx_volume_id": "test-portworx-volume-id"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"portworx_fs_type": "test-portworx-fs-type"})
 			})
 
 			t.Run("FlexVolume", func(t *testing.T) {
@@ -213,8 +213,8 @@ func TestPointsForPV(t *testing.T) {
 					Driver: "test-flex-volume-driver",
 					FSType: "test-flex-volume-fs-type",
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"flex_volume_driver": "test-flex-volume-driver"})
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"flex_volume_fs_type": "test-flex-volume-fs-type"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"flex_volume_driver": "test-flex-volume-driver"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"flex_volume_fs_type": "test-flex-volume-fs-type"})
 			})
 
 			t.Run("GCEPersistentDisk", func(t *testing.T) {
@@ -222,7 +222,7 @@ func TestPointsForPV(t *testing.T) {
 				volume.Spec.PersistentVolumeSource.GCEPersistentDisk = &v1.GCEPersistentDiskVolumeSource{
 					PDName: "test-gce-pd-name",
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"gce_persistent_disk_name": "test-gce-pd-name"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"gce_persistent_disk_name": "test-gce-pd-name"})
 			})
 
 			t.Run("AWSElasticBlockStore", func(t *testing.T) {
@@ -230,7 +230,7 @@ func TestPointsForPV(t *testing.T) {
 				volume.Spec.PersistentVolumeSource.AWSElasticBlockStore = &v1.AWSElasticBlockStoreVolumeSource{
 					VolumeID: "test-aws-ebs-volume-id",
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"ebs_volume_id": "test-aws-ebs-volume-id"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"ebs_volume_id": "test-aws-ebs-volume-id"})
 			})
 
 			t.Run("AzureDisk", func(t *testing.T) {
@@ -238,7 +238,7 @@ func TestPointsForPV(t *testing.T) {
 				volume.Spec.PersistentVolumeSource.AzureDisk = &v1.AzureDiskVolumeSource{
 					DiskName: "test-azure-disk-name",
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"azure_disk_name": "test-azure-disk-name"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"azure_disk_name": "test-azure-disk-name"})
 			})
 
 			t.Run("FC, with Lun only if it is set", func(t *testing.T) {
@@ -254,19 +254,49 @@ func TestPointsForPV(t *testing.T) {
 					},
 					Lun: nil,
 				}
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"fc_target_wwns": "test-target-wwn-1,test-target-wwn-2"})
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"fc_wwids": "test-wwid-1,test-wwid-2"})
-				buildAndAssertTagsNotPresent(volume, transforms, value, tags)(t, []string{"fc_lun"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"fc_target_wwns": "test-target-wwn-1,test-target-wwn-2"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"fc_wwids": "test-wwid-1,test-wwid-2"})
+				buildPVInfoAndAssertTagsNotPresent(volume, transforms, value, tags)(t, []string{"fc_lun"})
 
 				testLun := int32(47)
 				volume.Spec.PersistentVolumeSource.FC.Lun = &testLun
-				buildAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"fc_lun": "47"})
+				buildPVInfoAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"fc_lun": "47"})
 			})
+		})
+
+		t.Run("buildPVPhase has base tags and phase by default", func(t *testing.T) {
+			actualMetric := buildPVPhase(basicPVBuilderInput())
+			expectedMetric := metricPoint(
+				"kubernetes.",
+				"pv.status.phase",
+				5.0,
+				0.0,
+				"test-source-for-pv",
+				map[string]string{
+					"pv-tag1": "value1",
+					"pv-tag2": "value2",
+					"pv-tag3": "value3",
+					"phase":   "Failed",
+				},
+			)
+			assert.Equal(t, expectedMetric, actualMetric)
+		})
+
+		t.Run("buildPVPhase has claim ref only if set", func(t *testing.T) {
+			volume, transforms, value, tags := basicPVBuilderInput()
+			buildPVPhaseAndAssertTagsNotPresent(volume, transforms, value, tags)(t, []string{"claim_ref_name", "claim_ref_namespace"})
+
+			volume.Spec.ClaimRef = &v1.ObjectReference{
+				Name:      "test-claim-ref-name",
+				Namespace: "test-claim-ref-namespace",
+			}
+			buildPVPhaseAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"claim_ref_name": "test-claim-ref-name"})
+			buildPVPhaseAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"claim_ref_namespace": "test-claim-ref-namespace"})
 		})
 	})
 }
 
-func buildAndAssertTags(volume *v1.PersistentVolume, transforms configuration.Transforms, timestamp int64, baseTags map[string]string) func(*testing.T, map[string]string) {
+func buildPVInfoAndAssertTags(volume *v1.PersistentVolume, transforms configuration.Transforms, timestamp int64, baseTags map[string]string) func(*testing.T, map[string]string) {
 	actualMetric := buildPVInfo(volume, transforms, timestamp, baseTags)
 
 	return func(t *testing.T, assertTags map[string]string) {
@@ -276,8 +306,29 @@ func buildAndAssertTags(volume *v1.PersistentVolume, transforms configuration.Tr
 	}
 }
 
-func buildAndAssertTagsNotPresent(volume *v1.PersistentVolume, transforms configuration.Transforms, timestamp int64, baseTags map[string]string) func(*testing.T, []string) {
+func buildPVInfoAndAssertTagsNotPresent(volume *v1.PersistentVolume, transforms configuration.Transforms, timestamp int64, baseTags map[string]string) func(*testing.T, []string) {
 	actualMetric := buildPVInfo(volume, transforms, timestamp, baseTags)
+
+	return func(t *testing.T, assertTagKeys []string) {
+		for _, tagKey := range assertTagKeys {
+			_, found := actualMetric.Tags()[tagKey]
+			assert.False(t, found)
+		}
+	}
+}
+
+func buildPVPhaseAndAssertTags(volume *v1.PersistentVolume, transforms configuration.Transforms, timestamp int64, baseTags map[string]string) func(*testing.T, map[string]string) {
+	actualMetric := buildPVPhase(volume, transforms, timestamp, baseTags)
+
+	return func(t *testing.T, assertTags map[string]string) {
+		for tagKey, tagVal := range assertTags {
+			assert.Equal(t, tagVal, actualMetric.Tags()[tagKey])
+		}
+	}
+}
+
+func buildPVPhaseAndAssertTagsNotPresent(volume *v1.PersistentVolume, transforms configuration.Transforms, timestamp int64, baseTags map[string]string) func(*testing.T, []string) {
+	actualMetric := buildPVPhase(volume, transforms, timestamp, baseTags)
 
 	return func(t *testing.T, assertTagKeys []string) {
 		for _, tagKey := range assertTagKeys {
