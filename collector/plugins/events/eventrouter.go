@@ -4,9 +4,11 @@ package events
 
 import (
 	"context"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
 	"time"
+
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
@@ -120,6 +122,9 @@ func (er *EventRouter) addEvent(obj interface{}) {
 	}
 
 	workloadName, workloadKind, err := er.workloadFromEvent(e.InvolvedObject)
+	if e.InvolvedObject.Kind == "Pod" { // TODO: can we make this a constant?
+		workloadName, workloadKind = util.GetWorkloadForPod(er.kubeClient, e.InvolvedObject.Name, ns)
+	}
 	if err != nil {
 		log.Info(err)
 	}
