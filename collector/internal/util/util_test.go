@@ -105,6 +105,14 @@ func TestGetPodWorkload(t *testing.T) {
 		assert.Equal(t, "a-cronjob", name)
 		assert.Equal(t, "CronJob", kind)
 	})
+
+	t.Run("Returns empty strings on error", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+
+		name, kind := GetWorkloadForPod(fakeClient, "not-exist", "default")
+		assert.Empty(t, name)
+		assert.Empty(t, kind)
+	})
 }
 
 func createFakeJob(t *testing.T, fakeClient *fake.Clientset, owner *metav1.OwnerReference) *batchv1.Job {

@@ -126,7 +126,7 @@ func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
 func GetWorkloadForPod(kubeClient kubernetes.Interface, podName, ns string) (name, kind string) {
 	pod, err := kubeClient.CoreV1().Pods(ns).Get(context.Background(), podName, metav1.GetOptions{})
 	if err != nil {
-		println(err)
+		log.Errorf("Error querying Kubernetes API for '%s' Pod: %s", podName, err.Error())
 		return "", ""
 	}
 	if len(pod.OwnerReferences) == 0 {
@@ -138,10 +138,18 @@ func GetWorkloadForPod(kubeClient kubernetes.Interface, podName, ns string) (nam
 
 	switch podOwner.Kind {
 	case "ReplicaSet":
-		rs, _ := kubeClient.AppsV1().ReplicaSets(ns).Get(context.Background(), podOwner.Name, metav1.GetOptions{})
+		rs, err := kubeClient.AppsV1().ReplicaSets(ns).Get(context.Background(), podOwner.Name, metav1.GetOptions{})
+		if err != nil {
+			log.Errorf("Error querying Kubernetes API for '%s' ReplicaSet: %s", podOwner.Name, err.Error())
+			return "", ""
+		}
 		parentOwners = rs.OwnerReferences
 	case "Job":
-		job, _ := kubeClient.BatchV1().Jobs(ns).Get(context.Background(), podOwner.Name, metav1.GetOptions{})
+		job, err := kubeClient.BatchV1().Jobs(ns).Get(context.Background(), podOwner.Name, metav1.GetOptions{})
+		if err != nil {
+			log.Errorf("Error querying Kubernetes API for '%s' Job: %s", podOwner.Name, err.Error())
+			return "", ""
+		}
 		parentOwners = job.OwnerReferences
 	}
 

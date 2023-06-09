@@ -1,8 +1,11 @@
 package events
 
 import (
+	"context"
 	"testing"
 	"time"
+
+	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
@@ -40,8 +43,49 @@ func TestAddEvent(t *testing.T) {
 	assert.Equal(t, "some-reason", sink.Annotations["reason"])
 	assert.Equal(t, "some-component", sink.Annotations["component"])
 	assert.Equal(t, "test-name", sink.Annotations["resource_name"])
+	assert.NotContains(t, sink.Annotations, "pod_name")
 	assert.Equal(t, "test-namespace", event.InvolvedObject.Namespace)
-	assert.Equal(t, "a-deployment", sink.Labels["workloadName"])
+	assert.NotContains(t, sink.Labels, "workloadName")
+	assert.NotContains(t, sink.Labels, "workloadKind")
+}
+
+func TestAddEventHasWorkload(t *testing.T) {
+	fakeClient := fake.NewSimpleClientset()
+	fakePod := createFakePod(t, fakeClient, nil)
+
+	sink := &MockExport{}
+
+	er := &EventRouter{
+		kubeClient: fakeClient,
+		sink:       sink,
+	}
+	event := &v1.Event{
+		Message:       "Test message for events",
+		LastTimestamp: metav1.NewTime(time.Now()),
+		Source: v1.EventSource{
+			Host:      "test Host",
+			Component: "some-component",
+		},
+		InvolvedObject: v1.ObjectReference{
+			Namespace: fakePod.Namespace,
+			Kind:      fakePod.Kind,
+			Name:      fakePod.Name,
+		},
+		Reason: "some-reason",
+	}
+	er.addEvent(event)
+	assert.Equal(t, event.Message, sink.Message)
+	assert.Equal(t, event.LastTimestamp, metav1.NewTime(sink.Ts))
+	assert.Equal(t, event.Source.Host, sink.Host)
+	assert.Equal(t, "Normal", sink.Annotations["type"])
+	assert.Equal(t, fakePod.Kind, sink.Annotations["kind"])
+	assert.Equal(t, "some-reason", sink.Annotations["reason"])
+	assert.Equal(t, "some-component", sink.Annotations["component"])
+	assert.Equal(t, fakePod.Name, sink.Annotations["pod_name"])
+	assert.NotContains(t, sink.Annotations, "resource_name")
+	assert.Equal(t, fakePod.Namespace, event.InvolvedObject.Namespace)
+	assert.Equal(t, fakePod.Name, sink.Labels["workloadName"])
+	assert.Equal(t, fakePod.Kind, sink.Labels["workloadKind"])
 }
 
 type MockExport struct {
@@ -65,3 +109,24 @@ func (m *MockExport) ExportEvent(event *events.Event) {
 func (m *MockExport) Export(batch *metrics.Batch) {}
 func (m *MockExport) Name() string                { return "" }
 func (m *MockExport) Stop()                       {}
+
+func createFakePod(t *testing.T, fakeClient *fake.Clientset, owner *metav1.OwnerReference) *v1.Pod {
+	podSpec := &v1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "a-pod",
+			Namespace: "a-ns",
+		},
+	}
+	if owner != nil {
+		podSpec.OwnerReferences = []metav1.OwnerReference{*owner}
+	}
+
+	podsClient := fakeClient.CoreV1().Pods("a-ns")
+	pod, err := podsClient.Create(context.Background(), podSpec, metav1.CreateOptions{})
+	assert.NoError(t, err)
+	return pod
+}

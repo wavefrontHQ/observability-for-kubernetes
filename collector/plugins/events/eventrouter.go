@@ -3,12 +3,10 @@
 package events
 
 import (
-	"context"
 	"strings"
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
@@ -121,12 +119,9 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		ns = "default"
 	}
 
-	workloadName, workloadKind, err := er.workloadFromEvent(e.InvolvedObject)
-	if e.InvolvedObject.Kind == "Pod" { // TODO: can we make this a constant?
+	var workloadName, workloadKind string
+	if e.InvolvedObject.Kind == "Pod" {
 		workloadName, workloadKind = util.GetWorkloadForPod(er.kubeClient, e.InvolvedObject.Name, ns)
-	}
-	if err != nil {
-		log.Info(err)
 	}
 
 	tags := map[string]string{
@@ -179,8 +174,12 @@ func newEvent(message string, ts time.Time, host string, workloadName string, wo
 	}
 
 	labels := make(map[string]string)
-	labels["workloadName"] = workloadName
-	labels["workloadKind"] = workloadKind
+	if workloadName != "" {
+		labels["workloadName"] = workloadName
+	}
+	if workloadKind != "" {
+		labels["workloadKind"] = workloadKind
+	}
 
 	return &events.Event{
 		Message: message,
@@ -190,61 +189,4 @@ func newEvent(message string, ts time.Time, host string, workloadName string, wo
 		Event:   coreV1Event,
 		Labels:  labels,
 	}
-}
-
-func (er *EventRouter) workloadFromEvent(o v1.ObjectReference) (workload string, workloadKind string, err error) {
-	name := o.Name
-	ns := o.Namespace
-	if len(ns) == 0 {
-		ns = "default"
-	}
-	kind := o.Kind
-
-	result := ""
-	var owner []metav1.OwnerReference
-
-	// TODO: error handling
-	for result == "" {
-		log.Infof("NAME:%s", name)
-		switch kind {
-		case "Pod":
-			obj, err := er.kubeClient.CoreV1().Pods(ns).Get(context.Background(), name, metav1.GetOptions{})
-			if err != nil {
-				log.Infof("Object:%v /// Error:%s", obj.OwnerReferences, err)
-			}
-			owner = obj.GetOwnerReferences()
-		case "ReplicaSet":
-			obj, err := er.kubeClient.AppsV1().ReplicaSets(ns).Get(context.Background(), name, metav1.GetOptions{})
-			if err != nil {
-				log.Infof("Object:%v /// Error:%s", obj.OwnerReferences, err)
-			}
-			owner = obj.GetOwnerReferences()
-		case "Job":
-			// TODO: Handle CronJob and Job rec
-			obj, err := er.kubeClient.BatchV1().Jobs(ns).Get(context.Background(), name, metav1.GetOptions{})
-			if err != nil {
-				log.Infof("Error: %s", err)
-			} else {
-				log.Infof("Object: %v", obj.OwnerReferences)
-			}
-			owner = obj.GetOwnerReferences()
-		case "DaemonSet", "Deployment", "StatefulSet":
-			return name, kind, nil
-		default:
-			log.Infof("Unknown object type: %v", kind)
-			// TODO: maybe not nil
-			return name, kind, nil
-		}
-
-		if len(owner) == 0 {
-			log.Info("DONE with our recursion wohoo")
-			log.Infof("Found workload with name: %s", name)
-			result = name
-		} else {
-			name = owner[0].Name
-			kind = owner[0].Kind
-		}
-	}
-
-	return result, kind, nil
 }
