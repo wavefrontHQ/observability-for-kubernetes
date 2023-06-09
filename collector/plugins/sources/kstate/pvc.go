@@ -31,33 +31,10 @@ func pointsForPVC(item interface{}, transforms configuration.Transforms) []wf.Me
 	now := time.Now().Unix()
 	points := buildPVCRequestStorage(persistentVolumeClaim, transforms, now, sharedTags)
 	points = append(points, buildPVCInfo(persistentVolumeClaim, transforms, now, sharedTags))
-	points = append(points, buildPVCPhaseMetrics(persistentVolumeClaim, transforms, now, sharedTags))
+	points = append(points, buildPVCPhaseMetric(persistentVolumeClaim, transforms, now, sharedTags))
 	points = append(points, buildPVCConditions(persistentVolumeClaim, transforms, now, sharedTags)...)
 	points = append(points, buildPVCAccessModes(persistentVolumeClaim, transforms, now, sharedTags)...)
 
-	return points
-}
-
-func buildPVCPhaseMetrics(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) wf.Metric {
-	tags := make(map[string]string, len(sharedTags))
-	copyTags(sharedTags, tags)
-
-	tags["phase"] = string(claim.Status.Phase)
-	phaseValue := util.ConvertPVCPhase(claim.Status.Phase)
-	return metricPoint(transforms.Prefix, "pvc.status.phase", float64(phaseValue), now, transforms.Source, tags)
-}
-
-func buildPVCAccessModes(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {
-	tags := make(map[string]string, len(sharedTags))
-	copyTags(sharedTags, tags)
-
-	points := make([]wf.Metric, len(claim.Spec.AccessModes))
-	for i, accessMode := range claim.Spec.AccessModes {
-		tags["access_mode"] = string(accessMode)
-
-		points[i] = metricPoint(transforms.Prefix, "pvc.access_mode",
-			1.0, now, transforms.Source, tags)
-	}
 	return points
 }
 
@@ -71,12 +48,36 @@ func buildPVCRequestStorage(claim *corev1.PersistentVolumeClaim, transforms conf
 	}
 }
 
-func buildPVCConditions(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {
+func buildPVCInfo(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) wf.Metric {
 	tags := make(map[string]string, len(sharedTags))
 	copyTags(sharedTags, tags)
 
+	tags["volume_name"] = claim.Spec.VolumeName
+	// Use beta annotation first
+
+	tags["storage_class_name"] = *claim.Spec.StorageClassName
+	if class, found := claim.Annotations[corev1.BetaStorageClassAnnotation]; found {
+		tags["storage_class_name"] = class
+	}
+
+	return metricPoint(transforms.Prefix, "pvc.info", 1.0, now, transforms.Source, tags)
+}
+
+func buildPVCPhaseMetric(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) wf.Metric {
+	tags := make(map[string]string, len(sharedTags))
+	copyTags(sharedTags, tags)
+
+	tags["phase"] = string(claim.Status.Phase)
+	phaseValue := util.ConvertPVCPhase(claim.Status.Phase)
+	return metricPoint(transforms.Prefix, "pvc.status.phase", float64(phaseValue), now, transforms.Source, tags)
+}
+
+func buildPVCConditions(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {
 	points := make([]wf.Metric, len(claim.Status.Conditions))
 	for i, condition := range claim.Status.Conditions {
+		tags := make(map[string]string, len(sharedTags))
+		copyTags(sharedTags, tags)
+
 		tags["status"] = string(condition.Status)
 		tags["condition"] = string(condition.Type)
 
@@ -86,16 +87,16 @@ func buildPVCConditions(claim *corev1.PersistentVolumeClaim, transforms configur
 	return points
 }
 
-func buildPVCInfo(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) wf.Metric {
-	tags := make(map[string]string, len(sharedTags))
-	copyTags(sharedTags, tags)
+func buildPVCAccessModes(claim *corev1.PersistentVolumeClaim, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {
+	points := make([]wf.Metric, len(claim.Spec.AccessModes))
+	for i, accessMode := range claim.Spec.AccessModes {
+		tags := make(map[string]string, len(sharedTags))
+		copyTags(sharedTags, tags)
 
-	tags["volume_name"] = claim.Spec.VolumeName
-	// Use beta annotation first
-	if class, found := claim.Annotations[corev1.BetaStorageClassAnnotation]; found {
-		tags["storage_class_name"] = class
+		tags["access_mode"] = string(accessMode)
+
+		points[i] = metricPoint(transforms.Prefix, "pvc.access_mode",
+			1.0, now, transforms.Source, tags)
 	}
-	tags["storage_class_name"] = *claim.Spec.StorageClassName
-
-	return metricPoint(transforms.Prefix, "pvc.info", 1.0, now, transforms.Source, tags)
+	return points
 }
