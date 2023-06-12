@@ -259,7 +259,7 @@ func (src *summaryMetricsSource) decodeNodeStats(metrics map[ResourceKey]*Set, l
 	src.decodeCPUStats(nodeMetrics, node.CPU)
 	src.decodeMemoryStats(nodeMetrics, node.Memory)
 	src.decodeNetworkStats(nodeMetrics, node.Network)
-	src.decodeFsStats(nodeMetrics, RootFsKey, node.Fs)
+	src.decodeFsStats(nodeMetrics, RootFsKey, node.Fs, nil)
 	src.decodeEphemeralStorageStats(nodeMetrics, node.Fs)
 	metrics[NodeKey(node.NodeName)] = nodeMetrics
 
@@ -292,7 +292,7 @@ func (src *summaryMetricsSource) decodePodStats(metrics map[ResourceKey]*Set, no
 	src.decodeMemoryStats(podMetrics, pod.Memory)
 	src.decodeEphemeralStorageStats(podMetrics, pod.EphemeralStorage)
 	for _, vol := range pod.VolumeStats {
-		src.decodeFsStats(podMetrics, VolumeResourcePrefix+vol.Name, &vol.FsStats)
+		src.decodeFsStats(podMetrics, VolumeResourcePrefix+vol.Name, &vol.FsStats, vol.PVCRef)
 	}
 	metrics[PodKey(ref.Namespace, ref.Name)] = podMetrics
 
@@ -332,8 +332,8 @@ func (src *summaryMetricsSource) decodeContainerStats(podLabels map[string]strin
 	src.decodeCPUStats(containerMetrics, container.CPU)
 	src.decodeMemoryStats(containerMetrics, container.Memory)
 	src.decodeAcceleratorStats(containerMetrics, container.Accelerators)
-	src.decodeFsStats(containerMetrics, RootFsKey, container.Rootfs)
-	src.decodeFsStats(containerMetrics, LogsKey, container.Logs)
+	src.decodeFsStats(containerMetrics, RootFsKey, container.Rootfs, nil)
+	src.decodeFsStats(containerMetrics, LogsKey, container.Logs, nil)
 	src.decodeEphemeralStorageStatsForContainer(containerMetrics, container.Rootfs, container.Logs)
 	src.decodeUserDefinedMetrics(containerMetrics, container.UserDefinedMetrics)
 
@@ -426,13 +426,18 @@ func (src *summaryMetricsSource) decodeNetworkStats(metrics *Set, network *stats
 	src.addIntMetric(metrics, &MetricNetworkTxErrors, network.TxErrors)
 }
 
-func (src *summaryMetricsSource) decodeFsStats(metrics *Set, fsKey string, fs *stats.FsStats) {
+func (src *summaryMetricsSource) decodeFsStats(metrics *Set, fsKey string, fs *stats.FsStats, pvcRef *stats.PVCReference) {
 	if fs == nil {
 		log.Trace("missing fs metrics!")
 		return
 	}
 
 	fsLabels := map[string]string{LabelResourceID.Key: fsKey}
+
+	if pvcRef != nil && len(pvcRef.Name) > 0 {
+		fsLabels[LabelPVCName.Key] = pvcRef.Name
+	}
+
 	src.addLabeledIntMetric(metrics, &MetricFilesystemUsage, fsLabels, fs.UsedBytes)
 	src.addLabeledIntMetric(metrics, &MetricFilesystemLimit, fsLabels, fs.CapacityBytes)
 	src.addLabeledIntMetric(metrics, &MetricFilesystemAvailable, fsLabels, fs.AvailableBytes)
