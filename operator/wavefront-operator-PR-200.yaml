@@ -222,7 +222,7 @@ spec:
                           enable:
                             default: true
                             description: Enable is whether to include kubernetes.controlplane.*
-                              metrics and whether to include kubernetes_control_plane_source
+                              metrics
                             type: boolean
                         required:
                         - enable
@@ -607,7 +607,25 @@ spec:
                       enable:
                         type: boolean
                     type: object
+                  kubernetesEvents:
+                    properties:
+                      enable:
+                        default: false
+                        description: Enable is whether to enable events. Defaults
+                          to false.
+                        type: boolean
+                      externalEndpointURL:
+                        type: string
+                    required:
+                    - externalEndpointURL
+                    type: object
                 type: object
+              imagePullSecret:
+                description: ImagePullSecret is the name of the secret to authenticate
+                  with a private custom registry.
+                maxLength: 253
+                pattern: ^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$
+                type: string
               wavefrontTokenSecret:
                 default: wavefront-secret
                 description: WavefrontTokenSecret is the name of the secret that contains
@@ -1059,7 +1077,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.20.0-alpha-a0660a83
+  collector: 1.20.0-alpha-b3a45c7f
   logging: 2.1.2
   proxy: 12.4.1
 kind: ConfigMap
@@ -1131,7 +1149,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.8.0-alpha-a0660a83
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.8.0-alpha-b3a45c7f
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
