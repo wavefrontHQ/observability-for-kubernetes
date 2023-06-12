@@ -1,7 +1,6 @@
 package kstate
 
 import (
-	"log"
 	"sort"
 	"testing"
 
@@ -76,7 +75,6 @@ func TestPointsForPVC(t *testing.T) {
 		var actualMetricNames []string
 
 		for _, point := range actualWFPoints {
-			log.Printf("Point name: %s\n", point.Name())
 			actualMetricNames = append(actualMetricNames, point.Name())
 		}
 
@@ -85,8 +83,8 @@ func TestPointsForPVC(t *testing.T) {
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
 	})
 
-	t.Run("metric tags and values", func(t *testing.T) {
-		t.Run("buildPVCRequestStorage has base tags and resource storage from requests", func(t *testing.T) {
+	t.Run("Test individual PVC metric tags and values", func(t *testing.T) {
+		t.Run("buildPVCRequestStorage has shared tags and resource storage from requests", func(t *testing.T) {
 			actualMetric := buildPVCRequestStorage(basicPVCBuilderInput())
 			expectedMetric := metricPoint(
 				"kubernetes.",
@@ -103,7 +101,7 @@ func TestPointsForPVC(t *testing.T) {
 			assert.Equal(t, expectedMetric, actualMetric)
 		})
 
-		t.Run("buildPVCInfo has base tags, volume name, storage class name by default", func(t *testing.T) {
+		t.Run("buildPVCInfo has shared tags, volume name, storage class name by default", func(t *testing.T) {
 			actualMetric := buildPVCInfo(basicPVCBuilderInput())
 			expectedMetric := metricPoint(
 				"kubernetes.",
@@ -146,7 +144,27 @@ func TestPointsForPVC(t *testing.T) {
 			assert.Equal(t, expectedMetric, actualMetric)
 		})
 
-		t.Run("buildPVCPhaseMetric has phase and converted value", func(t *testing.T) {
+		t.Run("buildPVCInfo has no storage class name tag if storage class name is empty.", func(t *testing.T) {
+			claim, transforms, value, tags := basicPVCBuilderInput()
+			claim.Spec.StorageClassName = nil
+			actualMetric := buildPVCInfo(claim, transforms, value, tags)
+			expectedMetric := metricPoint(
+				"kubernetes.",
+				"pvc.info",
+				1.0,
+				0.0,
+				"test-source",
+				map[string]string{
+					"tag1":               "value1",
+					"tag2":               "value2",
+					"tag3":               "value3",
+					"volume_name":        "pvc-volume-1",
+				},
+			)
+			assert.Equal(t, expectedMetric, actualMetric)
+		})
+
+		t.Run("buildPVCPhaseMetric has phase tag and appropriate metric value based on phase value.", func(t *testing.T) {
 			actualMetric := buildPVCPhaseMetric(basicPVCBuilderInput())
 			expectedMetric := metricPoint(
 				"kubernetes.",
@@ -164,9 +182,9 @@ func TestPointsForPVC(t *testing.T) {
 			assert.Equal(t, expectedMetric, actualMetric)
 		})
 
-		t.Run("buildPVCConditions has a metric with status and condition for each condition", func(t *testing.T) {
+		t.Run("buildPVCConditions has a metric with condition status and condition type for each condition.", func(t *testing.T) {
 			actualMetrics := buildPVCConditions(basicPVCBuilderInput())
-			resizingMetric := metricPoint(
+			expectedResizingMetric := metricPoint(
 				"kubernetes.",
 				"pvc.status.condition",
 				1.0,
@@ -181,7 +199,7 @@ func TestPointsForPVC(t *testing.T) {
 				},
 			)
 
-			fsResizePending := metricPoint(
+			expectedFsResizePendingMetric := metricPoint(
 				"kubernetes.",
 				"pvc.status.condition",
 				0.0,
@@ -196,13 +214,13 @@ func TestPointsForPVC(t *testing.T) {
 				},
 			)
 
-			assert.Contains(t, actualMetrics, resizingMetric)
-			assert.Contains(t, actualMetrics, fsResizePending)
+			assert.Contains(t, actualMetrics, expectedResizingMetric)
+			assert.Contains(t, actualMetrics, expectedFsResizePendingMetric)
 		})
 
 		t.Run("buildPVCAccessModes has a metric with access mode tag for each access mode", func(t *testing.T) {
 			actualMetrics := buildPVCAccessModes(basicPVCBuilderInput())
-			rwoMetric := metricPoint(
+			expectedRWOMetric := metricPoint(
 				"kubernetes.",
 				"pvc.access_mode",
 				1.0,
@@ -216,7 +234,7 @@ func TestPointsForPVC(t *testing.T) {
 				},
 			)
 
-			romMetric := metricPoint(
+			expectedROMMetric := metricPoint(
 				"kubernetes.",
 				"pvc.access_mode",
 				1.0,
@@ -230,8 +248,8 @@ func TestPointsForPVC(t *testing.T) {
 				},
 			)
 
-			assert.Contains(t, actualMetrics, rwoMetric)
-			assert.Contains(t, actualMetrics, romMetric)
+			assert.Contains(t, actualMetrics, expectedRWOMetric)
+			assert.Contains(t, actualMetrics, expectedROMMetric)
 		})
 	})
 }

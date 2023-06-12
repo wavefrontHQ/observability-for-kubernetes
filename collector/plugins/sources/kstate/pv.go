@@ -33,6 +33,7 @@ func pointsForPV(item interface{}, transforms configuration.Transforms) []wf.Met
 	points := buildPVCapacityBytes(persistentVolume, transforms, now, sharedTags)
 	points = append(points, buildPVInfo(persistentVolume, transforms, now, sharedTags))
 	points = append(points, buildPVPhase(persistentVolume, transforms, now, sharedTags))
+	points = append(points, buildPVAccessModes(persistentVolume, transforms, now, sharedTags)...)
 
 	return points
 }
@@ -60,6 +61,21 @@ func buildPVCapacityBytes(persistentVolume *corev1.PersistentVolume, transforms 
 	return []wf.Metric{
 		metricPoint(transforms.Prefix, "pv.capacity_bytes", float64(capacity.Value()), now, transforms.Source, tags),
 	}
+}
+
+
+func buildPVAccessModes(persistentVolume *corev1.PersistentVolume, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {
+	points := make([]wf.Metric, len(persistentVolume.Spec.AccessModes))
+	for i, accessMode := range persistentVolume.Spec.AccessModes {
+		tags := make(map[string]string, len(sharedTags))
+		copyTags(sharedTags, tags)
+
+		tags["access_mode"] = string(accessMode)
+
+		points[i] = metricPoint(transforms.Prefix, "pv.access_mode",
+			1.0, now, transforms.Source, tags)
+	}
+	return points
 }
 
 func buildPVInfo(persistentVolume *corev1.PersistentVolume, transforms configuration.Transforms, now int64, sharedTags map[string]string) wf.Metric {

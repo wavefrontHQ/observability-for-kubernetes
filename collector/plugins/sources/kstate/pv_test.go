@@ -1,7 +1,6 @@
 package kstate
 
 import (
-	"log"
 	"sort"
 	"testing"
 
@@ -24,8 +23,11 @@ func setupBasicPV() *v1.PersistentVolume {
 			Capacity: map[v1.ResourceName]resource.Quantity{
 				v1.ResourceStorage: *resource.NewQuantity(4, resource.BinarySI),
 			},
-			PersistentVolumeSource:        v1.PersistentVolumeSource{},
-			AccessModes:                   nil,
+			PersistentVolumeSource: v1.PersistentVolumeSource{},
+			AccessModes: []v1.PersistentVolumeAccessMode{
+				v1.ReadWriteOnce,
+				v1.ReadOnlyMany,
+			},
 			ClaimRef:                      nil,
 			PersistentVolumeReclaimPolicy: "",
 			StorageClassName:              "",
@@ -56,18 +58,19 @@ func TestPointsForPV(t *testing.T) {
 	t.Run("test for basic PV", func(t *testing.T) {
 		testPV := setupBasicPV()
 		actualWFPoints := pointsForPV(testPV, configuration.Transforms{Prefix: "kubernetes."})
-		assert.Equal(t, 3, len(actualWFPoints))
+		assert.Equal(t, 5, len(actualWFPoints))
 
 		expectedMetricNames := []string{
 			"kubernetes.pv.capacity_bytes",
 			"kubernetes.pv.status.phase",
 			"kubernetes.pv.info",
+			"kubernetes.pv.access_mode",
+			"kubernetes.pv.access_mode",
 		}
 
 		var actualMetricNames []string
 
 		for _, point := range actualWFPoints {
-			log.Printf("Point name: %s\n", point.Name())
 			actualMetricNames = append(actualMetricNames, point.Name())
 		}
 
@@ -96,7 +99,7 @@ func TestPointsForPV(t *testing.T) {
 			assert.Equal(t, expectedMetric, actualMetric)
 		})
 
-		t.Run("buildPVInfo has base tags by default", func(t *testing.T) {
+		t.Run("buildPVInfo has shared tags by default", func(t *testing.T) {
 			actualMetric := buildPVInfo(basicPVBuilderInput())
 			expectedMetric := metricPoint(
 				"kubernetes.",
@@ -265,7 +268,7 @@ func TestPointsForPV(t *testing.T) {
 			})
 		})
 
-		t.Run("buildPVPhase has base tags and phase by default", func(t *testing.T) {
+		t.Run("buildPVPhase has shared tags and phase by default", func(t *testing.T) {
 			actualMetric := buildPVPhase(basicPVBuilderInput())
 			expectedMetric := metricPoint(
 				"kubernetes.",
@@ -293,6 +296,40 @@ func TestPointsForPV(t *testing.T) {
 			}
 			buildPVPhaseAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"claim_ref_name": "test-claim-ref-name"})
 			buildPVPhaseAndAssertTags(volume, transforms, value, tags)(t, map[string]string{"claim_ref_namespace": "test-claim-ref-namespace"})
+		})
+
+		t.Run("buildPVAccessModes has a metric with access mode tag for each access mode", func(t *testing.T) {
+			actualMetrics := buildPVAccessModes(basicPVBuilderInput())
+			expectedRWOMetric := metricPoint(
+				"kubernetes.",
+				"pv.access_mode",
+				1.0,
+				0.0,
+				"test-source-for-pv",
+				map[string]string{
+					"pv-tag1":     "value1",
+					"pv-tag2":     "value2",
+					"pv-tag3":     "value3",
+					"access_mode": string(v1.ReadWriteOnce),
+				},
+			)
+
+			expectedROMMetric := metricPoint(
+				"kubernetes.",
+				"pv.access_mode",
+				1.0,
+				0.0,
+				"test-source-for-pv",
+				map[string]string{
+					"pv-tag1":     "value1",
+					"pv-tag2":     "value2",
+					"pv-tag3":     "value3",
+					"access_mode": string(v1.ReadOnlyMany),
+				},
+			)
+
+			assert.Contains(t, actualMetrics, expectedRWOMetric)
+			assert.Contains(t, actualMetrics, expectedROMMetric)
 		})
 	})
 }
