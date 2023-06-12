@@ -33,8 +33,11 @@ type Config struct {
 	// whether auto-discovery is enabled.
 	EnableDiscovery bool `yaml:"enableDiscovery"`
 
-	// whether Events is enabled.
+	// whether exporting Kubernetes Events to Wavefront is enabled.
 	EnableEvents bool `yaml:"enableEvents"`
+
+	// whether exporting Kubernetes Events to external endpoint is enabled.
+	EnableEventsExternal bool `yaml:"enableEventsExternal"`
 
 	// A unique identifier for your Kubernetes cluster. Defaults to k8s-cluster.
 	// Included as a point tag on all metrics sent to Wavefront.
@@ -109,7 +112,7 @@ type Transforms struct {
 	ConvertHistograms bool `yaml:"convertHistograms"`
 }
 
-// Configuration options for the Wavefront sink
+// Configuration options for sinks (either Wavefront or External)
 type SinkConfig struct {
 	Transforms `yaml:",inline"`
 

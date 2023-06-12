@@ -47,7 +47,7 @@ function replace_placeholders_in_template_yaml() {
       -e "s/YOUR_EXPERIMENTAL_FEATURES/[${EXPERIMENTAL_FEATURES}]/g" \
       -e "s/FLUSH_INTERVAL/${FLUSH_INTERVAL}/g" \
       -e "s/COLLECTION_INTERVAL/${COLLECTION_INTERVAL}/g" \
-      base/collector-config.template.yaml > base/deploy/4-collector-config.yaml
+      "${COLLECTOR_CONFIG_YAML}" > base/deploy/4-collector-config.yaml
 }
 
 function print_usage_and_exit() {
@@ -84,10 +84,11 @@ function main() {
   local K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
   local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
   local COLLECTOR_YAML="${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
+  local COLLECTOR_CONFIG_YAML="${COLLECTOR_REPO_ROOT}/hack/test/base/collector-config.template.yaml"
   local USE_TEST_PROXY="false"
   local EXPERIMENTAL_FEATURES=
 
-  while getopts "c:t:v:k:n:e:y:p:" opt; do
+  while getopts "c:t:v:k:n:e:y:p:z:" opt; do
     case $opt in
       c)  WF_CLUSTER="$OPTARG" ;;
       t)  WAVEFRONT_TOKEN="$OPTARG" ;;
@@ -97,6 +98,7 @@ function main() {
       y)  COLLECTOR_YAML="$OPTARG" ;;
       p)  USE_TEST_PROXY="$OPTARG" ;;
       e)  EXPERIMENTAL_FEATURES="$OPTARG" ;;
+      z)  COLLECTOR_CONFIG_YAML="$OPTARG" ;;
       \?) print_usage_and_exit "Invalid option: -$OPTARG" ;;
     esac
   done

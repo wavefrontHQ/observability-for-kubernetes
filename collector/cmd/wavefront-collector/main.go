@@ -120,13 +120,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	// Events
 	var eventRouter *events.EventRouter
-	enableEventRouter := false
-	for _, sink := range cfg.Sinks {
-		if sink.EventsEnabled {
-			enableEventRouter = true
-		}
-	}
-	if enableEventRouter {
+	if cfg.EnableEvents || cfg.EnableEventsExternal {
 		events.Log.Info("Events collection enabled")
 		eventRouter = events.NewEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.ScrapeCluster)
 	} else {
@@ -227,7 +221,7 @@ func setInternalSinkProperties(cfg *configuration.Config) {
 		sink.InternalStatsPrefix = prefix
 		sink.Version = version
 		if sink.Type == configuration.ExternalSinkType {
-			sink.EventsEnabled = true
+			sink.EventsEnabled = cfg.EnableEventsExternal
 		} else {
 			sink.EventsEnabled = cfg.EnableEvents
 		}
