@@ -155,10 +155,10 @@ func TestPointsForPVC(t *testing.T) {
 				0.0,
 				"test-source",
 				map[string]string{
-					"tag1":               "value1",
-					"tag2":               "value2",
-					"tag3":               "value3",
-					"volume_name":        "pvc-volume-1",
+					"tag1":        "value1",
+					"tag2":        "value2",
+					"tag3":        "value3",
+					"volume_name": "pvc-volume-1",
 				},
 			)
 			assert.Equal(t, expectedMetric, actualMetric)

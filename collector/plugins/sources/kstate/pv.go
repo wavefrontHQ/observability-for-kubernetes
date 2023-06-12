@@ -63,7 +63,6 @@ func buildPVCapacityBytes(persistentVolume *corev1.PersistentVolume, transforms 
 	}
 }
 
-
 func buildPVAccessModes(persistentVolume *corev1.PersistentVolume, transforms configuration.Transforms, now int64, sharedTags map[string]string) []wf.Metric {
 	points := make([]wf.Metric, len(persistentVolume.Spec.AccessModes))
 	for i, accessMode := range persistentVolume.Spec.AccessModes {
