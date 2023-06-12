@@ -127,7 +127,7 @@ These are cluster level metrics about the state of Kubernetes objects collected 
 | PersistentVolume        | pv.capacity_bytes                        | PersistentVolume capacity in bytes.                                                                             |
 | PersistentVolume        | pv.status.phase                          | The phase of the PersistentVolume.                                                                              |
 | PersistentVolume        | pv.info                                  | Information about PersistentVolume.                                                                             |
-
+| PersistentVolume        | pv.access_mode                           | The access mode(s) specified by the PersistentVolume.                                                           |
 ## Prometheus Source
 
 Varies by scrape target.
