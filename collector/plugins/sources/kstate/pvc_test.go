@@ -1,11 +1,12 @@
 package kstate
 
 import (
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"log"
 	"sort"
 	"testing"
+
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
