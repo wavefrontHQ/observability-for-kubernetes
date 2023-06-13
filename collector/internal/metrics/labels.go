@@ -104,6 +104,10 @@ var (
 		Key:         "volume_name",
 		Description: "The name of the volume.",
 	}
+	LabelPVCName = LabelDescriptor{
+		Key:         "pvc_name",
+		Description: "The name of the persistent volume claim.",
+	}
 	LabelAcceleratorMake = LabelDescriptor{
 		Key:         "make",
 		Description: "Make of the accelerator (nvidia, amd, google etc.)",

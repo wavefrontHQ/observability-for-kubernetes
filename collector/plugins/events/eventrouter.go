@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
@@ -117,6 +119,11 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		ns = "default"
 	}
 
+	var workloadName, workloadKind string
+	if e.InvolvedObject.Kind == "Pod" {
+		workloadName, workloadKind = util.GetWorkloadForPod(er.kubeClient, e.InvolvedObject.Name, ns)
+	}
+
 	tags := map[string]string{
 		"namespace_name": ns,
 		"kind":           e.InvolvedObject.Kind,
@@ -152,16 +159,26 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		e.Message,
 		e.LastTimestamp.Time,
 		e.Source.Host,
+		workloadName,
+		workloadKind,
 		tags,
 		*e,
 		event.Type(eType),
 	))
 }
 
-func newEvent(message string, ts time.Time, host string, tags map[string]string, coreV1Event v1.Event, options ...event.Option) *events.Event {
+func newEvent(message string, ts time.Time, host string, workloadName string, workloadKind string, tags map[string]string, coreV1Event v1.Event, options ...event.Option) *events.Event {
 	// convert tags to annotations
 	for k, v := range tags {
 		options = append(options, event.Annotate(k, v))
+	}
+
+	labels := make(map[string]string)
+	if workloadName != "" {
+		labels["workloadName"] = workloadName
+	}
+	if workloadKind != "" {
+		labels["workloadKind"] = workloadKind
 	}
 
 	return &events.Event{
@@ -170,5 +187,6 @@ func newEvent(message string, ts time.Time, host string, tags map[string]string,
 		Host:    host,
 		Options: options,
 		Event:   coreV1Event,
+		Labels:  labels,
 	}
 }
