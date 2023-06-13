@@ -22,6 +22,8 @@ rules:
   - secrets
   - services
   - endpoints
+  - persistentvolumeclaims
+  - persistentvolumes
   verbs:
   - get
   - list

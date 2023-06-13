@@ -20,6 +20,15 @@
 {"Name":"kubernetes.pod_container.cpu.limit"}
 ~{"Name":"kubernetes.replicaset.available_replicas"}
 ~{"Name":"kubernetes.statefulset.current_replicas"}
+~{"Name":"kubernetes.pvc.request.storage_bytes"}
+~{"Name":"kubernetes.pvc.info"}
+~{"Name":"kubernetes.pvc.status.phase"}
+~{"Name":"kubernetes.pvc.status.condition"}
+~{"Name":"kubernetes.pvc.access_mode"}
+~{"Name":"kubernetes.pv.capacity_bytes"}
+~{"Name":"kubernetes.pv.status.phase"}
+~{"Name":"kubernetes.pv.info"}
+~{"Name":"kubernetes.pv.access_mode"}
 {"Name":"linux.sysctl.fs.aio-max-nr"}
 {"Name":"mem.available"}
 {"Name":"memcached.accepting.conns"}

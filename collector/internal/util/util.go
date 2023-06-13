@@ -47,6 +47,22 @@ const (
 	CONTAINER_STATE_TERMINATED
 )
 
+const (
+	PVC_PHASE_PENDING = iota + 1
+	PVC_PHASE_BOUND
+	PVC_PHASE_LOST
+	PVC_PHASE_UNKNOWN
+)
+
+const (
+	PV_PHASE_PENDING = iota + 1
+	PV_PHASE_AVAILABLE
+	PV_PHASE_BOUND
+	PV_PHASE_RELEASED
+	PV_PHASE_FAILED
+	PV_PHASE_UNKNOWN
+)
+
 var (
 	lock       sync.Mutex
 	nodeLister v1listers.NodeLister
@@ -351,5 +367,46 @@ func ConvertPodPhase(phase kube_api.PodPhase) int64 {
 		return POD_PHASE_UNKNOWN
 	default:
 		return POD_PHASE_UNKNOWN
+	}
+}
+
+func ConvertPVCPhase(phase kube_api.PersistentVolumeClaimPhase) int64 {
+	switch phase {
+	case kube_api.ClaimPending:
+		return PVC_PHASE_PENDING
+	case kube_api.ClaimBound:
+		return PVC_PHASE_BOUND
+	case kube_api.ClaimLost:
+		return PVC_PHASE_LOST
+	default:
+		return PVC_PHASE_UNKNOWN
+	}
+}
+
+func ConvertPVPhase(phase kube_api.PersistentVolumePhase) int64 {
+	switch phase {
+	case kube_api.VolumePending:
+		return PV_PHASE_PENDING
+	case kube_api.VolumeAvailable:
+		return PV_PHASE_AVAILABLE
+	case kube_api.VolumeBound:
+		return PV_PHASE_BOUND
+	case kube_api.VolumeReleased:
+		return PV_PHASE_RELEASED
+	case kube_api.VolumeFailed:
+		return PV_PHASE_FAILED
+	default:
+		return PVC_PHASE_UNKNOWN
+	}
+}
+
+func ConditionStatusFloat64(status kube_api.ConditionStatus) float64 {
+	switch status {
+	case kube_api.ConditionTrue:
+		return 1.0
+	case kube_api.ConditionFalse:
+		return 0.0
+	default:
+		return -1.0
 	}
 }
