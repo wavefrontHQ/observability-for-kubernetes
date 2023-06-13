@@ -16,6 +16,7 @@ data:
     sinks:
       - externalEndpointURL: http://localhost
         type: external 
+        eventsEnabled: true
 
     sources: 
       kubernetes_source: {}

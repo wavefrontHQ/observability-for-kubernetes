@@ -36,9 +36,6 @@ type Config struct {
 	// whether exporting Kubernetes Events to Wavefront is enabled.
 	EnableEvents bool `yaml:"enableEvents"`
 
-	// whether exporting Kubernetes Events to external endpoint is enabled.
-	EnableEventsExternal bool `yaml:"enableEventsExternal"`
-
 	// A unique identifier for your Kubernetes cluster. Defaults to k8s-cluster.
 	// Included as a point tag on all metrics sent to Wavefront.
 	ClusterName string `yaml:"clusterName"`
@@ -112,12 +109,15 @@ type Transforms struct {
 	ConvertHistograms bool `yaml:"convertHistograms"`
 }
 
-// Configuration options for sinks (either Wavefront or External)
+// SinkConfig Configuration options for sinks (either Wavefront or External)
 type SinkConfig struct {
 	Transforms `yaml:",inline"`
 
 	// Sink type, possible options ('' or 'external'). Defaults to '' which is the Wavefront sink.
 	Type SinkType `yaml:"type,omitempty"`
+
+	// Whether event collection has been enabled
+	EventsEnabled *bool `yaml:"eventsEnabled"`
 
 	//  The Wavefront URL of the form https://YOUR_INSTANCE.wavefront.com. Only required for direct ingestion.
 	Server string `yaml:"server"`
@@ -157,9 +157,6 @@ type SinkConfig struct {
 
 	// Internal: The prefix used for internal stats. Used for the heartbeat metric.
 	InternalStatsPrefix string `yaml:"-"`
-
-	// Internal: Whether event collection has been enabled
-	EventsEnabled bool `yaml:"-"`
 }
 
 type CollectionConfig struct {

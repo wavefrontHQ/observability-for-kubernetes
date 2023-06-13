@@ -7,12 +7,10 @@ package stats
 import (
 	"sync"
 
+	gometrics "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
-
-	gometrics "github.com/rcrowley/go-metrics"
 )
 
 var doOnce sync.Once
@@ -31,10 +29,6 @@ func (h *statsProvider) Name() string {
 }
 
 func NewInternalStatsProvider(cfg configuration.StatsSourceConfig) (metrics.SourceProvider, error) {
-	if util.OnlyExportKubernetesEvents() {
-		return &statsProvider{}, nil
-	}
-
 	prefix := configuration.GetStringValue(cfg.Prefix, "kubernetes.")
 	tags := cfg.Tags
 	filters := filter.FromConfig(cfg.Filters)

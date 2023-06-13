@@ -115,12 +115,16 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// Create sink managers. Must be done before creating event router.
-	setInternalSinkProperties(cfg)
+	setSinkProperties(cfg)
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
 	// Events
 	var eventRouter *events.EventRouter
-	if cfg.EnableEvents || cfg.EnableEventsExternal {
+	eventsEnabled := false
+	for _, sinkCfg := range cfg.Sinks {
+		eventsEnabled = eventsEnabled || *sinkCfg.EventsEnabled
+	}
+	if eventsEnabled {
 		events.Log.Info("Events collection enabled")
 		eventRouter = events.NewEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.ScrapeCluster)
 	} else {
@@ -208,22 +212,20 @@ func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *
 	return optsCfg
 }
 
-func setInternalSinkProperties(cfg *configuration.Config) {
+func setSinkProperties(cfg *configuration.Config) {
 	log.Infof("using clusterName: %s", cfg.ClusterName)
 	prefix := ""
 	if cfg.Sources.StatsConfig != nil {
 		prefix = configuration.GetStringValue(cfg.Sources.StatsConfig.Prefix, "kubernetes.")
 	}
 	version := getVersion()
-	for _, sink := range cfg.Sinks {
-		sink.ClusterName = cfg.ClusterName
-		sink.ClusterUUID = util.GetClusterUUID()
-		sink.InternalStatsPrefix = prefix
-		sink.Version = version
-		if sink.Type == configuration.ExternalSinkType {
-			sink.EventsEnabled = cfg.EnableEventsExternal
-		} else {
-			sink.EventsEnabled = cfg.EnableEvents
+	for _, sinkCfg := range cfg.Sinks {
+		sinkCfg.ClusterName = cfg.ClusterName
+		sinkCfg.ClusterUUID = util.GetClusterUUID()
+		sinkCfg.InternalStatsPrefix = prefix
+		sinkCfg.Version = version
+		if sinkCfg.EventsEnabled == nil {
+			*sinkCfg.EventsEnabled = cfg.EnableEvents
 		}
 	}
 }

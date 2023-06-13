@@ -18,19 +18,21 @@ type ExternalSink struct {
 	ClusterName         string
 	ClusterUUID         string
 	externalEndpointURL string
+	eventsEnabled       bool
 }
 
 func (sink *ExternalSink) Name() string {
 	return "k8s_events_sink"
 }
 
-func (sink *ExternalSink) Stop() {
-}
+func (sink *ExternalSink) Stop() {}
 
-func (sink *ExternalSink) Export(batch *metrics.Batch) {
-}
+func (sink *ExternalSink) Export(_ *metrics.Batch) {}
 
 func (sink *ExternalSink) ExportEvent(ev *events.Event) {
+	if !sink.eventsEnabled {
+		return
+	}
 	ev.ClusterName = sink.ClusterName
 	ev.ClusterUUID = sink.ClusterUUID
 
@@ -61,5 +63,6 @@ func NewExternalSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 		ClusterName:         cfg.ClusterName,
 		ClusterUUID:         cfg.ClusterUUID,
 		externalEndpointURL: cfg.ExternalEndpointURL,
+		eventsEnabled:       *cfg.EventsEnabled,
 	}, nil
 }

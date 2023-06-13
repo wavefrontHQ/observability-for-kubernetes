@@ -31,13 +31,7 @@ func TestName(t *testing.T) {
 }
 
 func TestCreateWavefrontSinkWithEventsExternalEndpointURL(t *testing.T) {
-	cfg := configuration.SinkConfig{
-		Type:                configuration.ExternalSinkType,
-		ClusterName:         "testCluster",
-		ClusterUUID:         "12345-1",
-		ExternalEndpointURL: "https://example.com",
-	}
-	sink, err := NewExternalSink(cfg)
+	sink, err := NewExternalSink(defaultSyncConfig("https://example.com"))
 	require.NoError(t, err)
 	require.NotNil(t, sink)
 	k8sSink, ok := sink.(*ExternalSink)
@@ -56,13 +50,6 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 			requestContentType = r.Header.Get("Content-Type")
 		}))
 		defer server.Close()
-
-		cfg := configuration.SinkConfig{
-			Type:                configuration.ExternalSinkType,
-			ClusterName:         "testCluster",
-			ClusterUUID:         "12345-1",
-			ExternalEndpointURL: server.URL,
-		}
 
 		event := &events.Event{Event: v1.Event{
 			ObjectMeta: metav1.ObjectMeta{
@@ -93,7 +80,7 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 			},
 		}}
 
-		sink, err := NewExternalSink(cfg)
+		sink, err := NewExternalSink(defaultSyncConfig(server.URL))
 		require.NoError(t, err)
 
 		sink.ExportEvent(event)
@@ -108,14 +95,7 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 		server := httptest.NewServer(nil)
 		server.Close()
 
-		cfg := configuration.SinkConfig{
-			Type:                configuration.ExternalSinkType,
-			ClusterName:         "testCluster",
-			ClusterUUID:         "12345-1",
-			ExternalEndpointURL: server.URL,
-		}
-
-		sink, err := NewExternalSink(cfg)
+		sink, err := NewExternalSink(defaultSyncConfig(server.URL))
 		require.NoError(t, err)
 
 		initialCount := gm.GetOrRegisterCounter("wavefront.events.errors.count", gm.DefaultRegistry).Count()
@@ -125,12 +105,7 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 	})
 
 	t.Run("Increments error count when the URL is invalid", func(t *testing.T) {
-		cfg := configuration.SinkConfig{
-			Type:                configuration.ExternalSinkType,
-			ClusterName:         "testCluster",
-			ClusterUUID:         "12345-1",
-			ExternalEndpointURL: "\x00",
-		}
+		cfg := defaultSyncConfig("\x00")
 
 		sink, err := NewExternalSink(cfg)
 		require.NoError(t, err)
@@ -141,4 +116,60 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 		require.Equal(t, initialCount+1, gm.GetOrRegisterCounter("wavefront.events.errors.count", gm.DefaultRegistry).Count())
 	})
 
+}
+
+func TestDisablingEvents(t *testing.T) {
+	called := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+	defer server.Close()
+
+	cfg := defaultSyncConfig(server.URL)
+	*cfg.EventsEnabled = false
+
+	event := &events.Event{Event: v1.Event{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "wavefront-proxy-66b4d9dd94-cfqrr.1764aab366800a9c",
+			Namespace:         "observability-system",
+			UID:               "37122603-ee03-4ecc-b866-5a2122703207",
+			ResourceVersion:   "737",
+			CreationTimestamp: metav1.NewTime(time.Now()),
+		},
+		InvolvedObject: v1.ObjectReference{
+			Namespace:       "observability-system",
+			Kind:            "Pod",
+			Name:            "wavefront-proxy-66b4d9dd94-cfqrr",
+			UID:             "0a3c1f18-4680-479b-bb54-9a82b9e3f997",
+			APIVersion:      "v1",
+			ResourceVersion: "662",
+			FieldPath:       "spec.containers{wavefront-proxy}",
+		},
+		Reason:         "Pulled",
+		Message:        "Successfully pulled image projects.registry.vmware.com/tanzu_observability_keights_saas/proxy:12.4.1 in 52.454993525s",
+		FirstTimestamp: metav1.NewTime(time.Now()),
+		LastTimestamp:  metav1.NewTime(time.Now()),
+		Count:          1,
+		Type:           "Normal",
+		Source: v1.EventSource{
+			Host:      "kind-control-plane",
+			Component: "kubelet",
+		},
+	}}
+
+	sink, _ := NewExternalSink(cfg)
+
+	sink.ExportEvent(event)
+	require.False(t, called, "expect event to not be exported")
+}
+
+func defaultSyncConfig(url string) configuration.SinkConfig {
+	eventsEnabled := true
+	return configuration.SinkConfig{
+		Type:                configuration.ExternalSinkType,
+		ClusterName:         "testCluster",
+		ClusterUUID:         "12345-1",
+		ExternalEndpointURL: url,
+		EventsEnabled:       &eventsEnabled,
+	}
 }

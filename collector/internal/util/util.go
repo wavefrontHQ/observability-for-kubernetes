@@ -77,7 +77,6 @@ type AgentType interface {
 	ScrapeAnyNodes() bool
 	ScrapeOnlyOwnNode() bool
 	ClusterCollector() bool
-	OnlyExportKubernetesEvents() bool
 }
 
 func GetNodeLister(kubeClient kubernetes.Interface) (v1listers.NodeLister, *cache.Reflector, error) {
@@ -203,10 +202,6 @@ func ScrapeCluster() bool {
 
 func ClusterCollector() bool {
 	return agentType.ClusterCollector()
-}
-
-func OnlyExportKubernetesEvents() bool {
-	return agentType.OnlyExportKubernetesEvents()
 }
 
 func SetAgentType(value AgentType) {

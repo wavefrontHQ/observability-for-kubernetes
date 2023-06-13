@@ -5,11 +5,10 @@ import "errors"
 type AgentType string
 
 const (
-	AllAgentType       AgentType = "all"
-	ClusterAgentType   AgentType = "cluster"
-	K8sEventsAgentType AgentType = "k8s-events"
-	LegacyAgentType    AgentType = "legacy"
-	NodeAgentType      AgentType = "node"
+	AllAgentType     AgentType = "all"
+	ClusterAgentType AgentType = "cluster"
+	LegacyAgentType  AgentType = "legacy"
+	NodeAgentType    AgentType = "node"
 )
 
 var InvalidAgentTypeErr = errors.New("--agent can only be node, cluster, k8s-events, all or legacy")
@@ -20,8 +19,6 @@ func NewAgentType(value string) (AgentType, error) {
 		return AllAgentType, nil
 	case "cluster":
 		return ClusterAgentType, nil
-	case "k8s-events":
-		return K8sEventsAgentType, nil
 	case "node":
 		return NodeAgentType, nil
 	case "legacy":
@@ -44,16 +41,12 @@ func (a AgentType) Type() string {
 	return "string"
 }
 
-func (a AgentType) OnlyExportKubernetesEvents() bool {
-	return a == K8sEventsAgentType
-}
-
 func (a AgentType) ScrapeCluster() bool {
 	return a == AllAgentType || a == LegacyAgentType || a == ClusterAgentType
 }
 
 func (a AgentType) ClusterCollector() bool {
-	return a.ScrapeCluster() || a.OnlyExportKubernetesEvents()
+	return a.ScrapeCluster()
 }
 
 func (a AgentType) ScrapeNodes() string {
@@ -74,7 +67,7 @@ func (a AgentType) ScrapeNodes() string {
 }
 
 func (a AgentType) ScrapeAnyNodes() bool {
-	return a != ClusterAgentType && a != K8sEventsAgentType
+	return a != ClusterAgentType
 }
 
 func (a AgentType) ScrapeOnlyOwnNode() bool {

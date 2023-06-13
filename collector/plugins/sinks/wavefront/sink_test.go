@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
@@ -27,44 +27,33 @@ func TestStoreTimeseriesEmptyInput(t *testing.T) {
 	fakeSink := NewTestWavefrontSink()
 	db := metrics.Batch{}
 	fakeSink.Export(&db)
-	assert.Equal(t, 0, len(getReceivedLines(fakeSink)))
+	require.Equal(t, 0, len(getReceivedLines(fakeSink)))
 }
 
 func TestName(t *testing.T) {
 	fakeSink := NewTestWavefrontSink()
 	name := fakeSink.Name()
-	assert.Equal(t, name, "wavefront_sink")
+	require.Equal(t, name, "wavefront_sink")
 }
 
 func TestCreateWavefrontSinkWithNoEmptyInputs(t *testing.T) {
-	cfg := configuration.SinkConfig{
-		ProxyAddress: "wavefront-proxy:2878",
-		ClusterName:  "testCluster",
-		TestMode:     true,
-		Transforms: configuration.Transforms{
-			Prefix: "testPrefix",
-		},
-	}
-	sink, err := NewWavefrontSink(cfg)
-	assert.NoError(t, err)
-	assert.NotNil(t, sink)
+	config := defaultSinkConfig()
+	config.Prefix = "testPrefix"
+	sink, err := NewWavefrontSink(config)
+	require.NoError(t, err)
+	require.NotNil(t, sink)
 	wfSink, ok := sink.(*wavefrontSink)
-	assert.Equal(t, true, ok)
-	assert.NotNil(t, wfSink.WavefrontClient)
-	assert.Equal(t, "testCluster", wfSink.ClusterName)
-	assert.Equal(t, "testPrefix", wfSink.Prefix)
+	require.Equal(t, true, ok)
+	require.NotNil(t, wfSink.WavefrontClient)
+	require.Equal(t, "testCluster", wfSink.ClusterName)
+	require.Equal(t, "testPrefix", wfSink.Prefix)
 }
 
 func TestPrefix(t *testing.T) {
-	cfg := configuration.SinkConfig{
-		ProxyAddress: "wavefront-proxy:2878",
-		TestMode:     true,
-		Transforms: configuration.Transforms{
-			Prefix: "test.",
-		},
-	}
+	cfg := defaultSinkConfig()
+	cfg.Transforms.Prefix = "test."
 	sink, err := NewWavefrontSink(cfg)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	db := metrics.Batch{
 		Metrics: []wf.Metric{
@@ -72,19 +61,12 @@ func TestPrefix(t *testing.T) {
 		},
 	}
 	sink.Export(&db)
-	assert.True(t, strings.Contains(getReceivedLines(sink), "test.cpu.idle"))
+	require.True(t, strings.Contains(getReceivedLines(sink), "test.cpu.idle"))
 }
 
 func TestNilPointDataBatch(t *testing.T) {
-	cfg := configuration.SinkConfig{
-		ProxyAddress: "wavefront-proxy:2878",
-		TestMode:     true,
-		Transforms: configuration.Transforms{
-			Prefix: "test.",
-		},
-	}
-	sink, err := NewWavefrontSink(cfg)
-	assert.NoError(t, err)
+	sink, err := NewWavefrontSink(defaultSinkConfig())
+	require.NoError(t, err)
 
 	db := metrics.Batch{
 		Metrics: []wf.Metric{
@@ -93,19 +75,12 @@ func TestNilPointDataBatch(t *testing.T) {
 		},
 	}
 	sink.Export(&db)
-	assert.True(t, strings.Contains(getReceivedLines(sink), "test.cpu.idle"))
+	require.Contains(t, getReceivedLines(sink), "cpu.idle")
 }
 
 func TestCleansTagsBeforeSending(t *testing.T) {
-	cfg := configuration.SinkConfig{
-		ProxyAddress: "wavefront-proxy:2878",
-		TestMode:     true,
-		Transforms: configuration.Transforms{
-			Prefix: "test.",
-		},
-	}
-	sink, err := NewWavefrontSink(cfg)
-	assert.NoError(t, err)
+	sink, err := NewWavefrontSink(defaultSinkConfig())
+	require.NoError(t, err)
 
 	db := metrics.Batch{
 		Metrics: []wf.Metric{
@@ -119,39 +94,46 @@ func TestCleansTagsBeforeSending(t *testing.T) {
 		},
 	}
 	sink.Export(&db)
-	assert.NotContains(t, getReceivedLines(sink), "emptyTag")
+	require.NotContains(t, getReceivedLines(sink), "emptyTag")
 }
 
 func TestEvents(t *testing.T) {
-	cfg := configuration.SinkConfig{
-		ProxyAddress: "wavefront-proxy:2878",
-		TestMode:     true,
-	}
-
 	event := &events.Event{
 		Message: "Pulled image",
 	}
 
 	t.Run("events disabled", func(t *testing.T) {
-		cfg.EventsEnabled = false
+		cfg := defaultSinkConfig()
 		sink, err := NewWavefrontSink(cfg)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		sink.ExportEvent(event)
 
-		assert.Empty(t, getReceivedLines(sink))
+		require.Empty(t, getReceivedLines(sink))
 	})
 
 	t.Run("events enabled", func(t *testing.T) {
-		cfg.EventsEnabled = true
+		cfg := defaultSinkConfig()
+		*cfg.EventsEnabled = true
 		sink, err := NewWavefrontSink(cfg)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		sink.ExportEvent(event)
 
-		assert.NotEmpty(t, getReceivedLines(sink))
-		assert.Contains(t, getReceivedLines(sink), "Pulled image")
+		require.NotEmpty(t, getReceivedLines(sink))
+		require.Contains(t, getReceivedLines(sink), "Pulled image")
 	})
+}
+
+func defaultSinkConfig() configuration.SinkConfig {
+	eventsEnabled := false
+	cfg := configuration.SinkConfig{
+		ProxyAddress:  "wavefront-proxy:2878",
+		ClusterName:   "testCluster",
+		TestMode:      true,
+		EventsEnabled: &eventsEnabled,
+	}
+	return cfg
 }
 
 func getReceivedLines(sink sinks.Sink) string {

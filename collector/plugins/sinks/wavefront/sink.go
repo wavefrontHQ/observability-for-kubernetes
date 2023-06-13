@@ -82,14 +82,14 @@ func (sink *wavefrontSink) SendDistribution(name string, centroids []histogram.C
 }
 
 func NewWavefrontSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
-	storage := &wavefrontSink{
+	sink := &wavefrontSink{
 		ClusterName: configuration.GetStringValue(cfg.ClusterName, "k8s-cluster"),
 		logPercent:  0.01,
 	}
 
 	if cfg.TestMode {
 		log.Info("TEST MODE")
-		storage.WavefrontClient = NewTestSender()
+		sink.WavefrontClient = NewTestSender()
 		clientType.Update(testClient)
 	} else if cfg.ProxyAddress != "" {
 		s := strings.Split(cfg.ProxyAddress, ":")
@@ -99,7 +99,7 @@ func NewWavefrontSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error parsing proxy port: %s", err.Error())
 		}
-		storage.WavefrontClient, err = senders.NewProxySender(&senders.ProxyConfiguration{
+		sink.WavefrontClient, err = senders.NewProxySender(&senders.ProxyConfiguration{
 			Host:             host,
 			MetricsPort:      port,
 			DistributionPort: port,
@@ -114,7 +114,7 @@ func NewWavefrontSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 			return nil, fmt.Errorf("token missing for Wavefront sink")
 		}
 		var err error
-		storage.WavefrontClient, err = senders.NewDirectSender(&senders.DirectConfiguration{
+		sink.WavefrontClient, err = senders.NewDirectSender(&senders.DirectConfiguration{
 			Server:        cfg.Server,
 			Token:         cfg.Token,
 			BatchSize:     cfg.BatchSize,
@@ -125,29 +125,29 @@ func NewWavefrontSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 		}
 		clientType.Update(directClient)
 	}
-	if storage.WavefrontClient == nil {
+	if sink.WavefrontClient == nil {
 		return nil, fmt.Errorf("proxyAddress or server property required for Wavefront sink")
 	}
 
-	storage.globalTags = cfg.Tags
+	sink.globalTags = cfg.Tags
 	if cfg.Prefix != "" {
-		storage.Prefix = strings.Trim(cfg.Prefix, ".")
+		sink.Prefix = strings.Trim(cfg.Prefix, ".")
 	}
-	storage.eventsEnabled = cfg.EventsEnabled
-	storage.filters = filter.FromConfig(cfg.Filters)
+	sink.eventsEnabled = *cfg.EventsEnabled
+	sink.filters = filter.FromConfig(cfg.Filters)
 
 	// force garbage collection if experimental flag enabled
-	storage.forceGC = os.Getenv(util.ForceGC) != ""
+	sink.forceGC = os.Getenv(util.ForceGC) != ""
 
 	// configure error logging percentage
 	if cfg.ErrorLogPercent > 0.0 && cfg.ErrorLogPercent <= 1.0 {
-		storage.logPercent = cfg.ErrorLogPercent
+		sink.logPercent = cfg.ErrorLogPercent
 	}
 
 	// emit heartbeat metric
-	storage.emitHeartbeat(storage.WavefrontClient, cfg)
+	sink.emitHeartbeat(sink.WavefrontClient, cfg)
 
-	return storage, nil
+	return sink, nil
 }
 
 func (sink *wavefrontSink) Name() string {
@@ -269,7 +269,7 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 	}
 
 	eventsEnabled := 0.0
-	if cfg.EventsEnabled {
+	if sink.eventsEnabled {
 		eventsEnabled = 1.0
 	}
 
