@@ -44,8 +44,9 @@ spec:
             - kube-system
     metrics:
       enable: true
-      # Note on Custom Configuration Precedence
+      # See example at https://github.com/wavefrontHQ/observability-for-kubernetes/blob/main/deploy/scenarios/wavefront-collector-existing-configmap.yaml for when to use this.
       #
+      # Note on Custom Configuration Precedence:
       # customConfig will override all top-level metrics config (filters, etc.) except for clusterCollector and nodeCollector
       customConfig: wavefront-collector-config
       # Can be any key value pair that users can add to all metrics emitted.
