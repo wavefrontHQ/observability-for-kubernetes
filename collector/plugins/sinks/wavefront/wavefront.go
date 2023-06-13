@@ -238,12 +238,7 @@ func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
 	ev.ClusterUUID = util.GetClusterUUID()
 
 	if sink.eventsExternalEndpointURL != "" {
-		b, _ := json.Marshal(ev)
-		req, _ := http.NewRequest("POST", sink.eventsExternalEndpointURL, bytes.NewBuffer(b))
-		req.Header.Set("Content-Type", "text/plain")
-
-		client := &http.Client{}
-		_, err := client.Do(req)
+		err := sink.sendExternalEvent(ev)
 		if err != nil {
 			sink.logVerboseError(log.Fields{
 				"message": ev.Message,
@@ -268,6 +263,16 @@ func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
 			sentEvents.Inc(1)
 		}
 	}
+}
+
+func (sink *wavefrontSink) sendExternalEvent(ev *events.Event) error {
+	b, _ := json.Marshal(ev)
+	req, _ := http.NewRequest("POST", sink.eventsExternalEndpointURL, bytes.NewBuffer(b))
+	req.Header.Set("Content-Type", "text/plain")
+
+	client := &http.Client{}
+	_, err := client.Do(req)
+	return err
 }
 
 func getDefault(val, defaultVal string) string {

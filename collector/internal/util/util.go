@@ -4,12 +4,15 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	log "github.com/sirupsen/logrus"
 
@@ -118,6 +121,45 @@ func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
 	reflector := cache.NewReflector(lw, &kube_api.Namespace{}, nsStore, time.Hour)
 	go reflector.Run(NeverStop)
 	return nsStore
+}
+
+func GetWorkloadForPod(kubeClient kubernetes.Interface, podName, ns string) (name, kind string) {
+	pod, err := kubeClient.CoreV1().Pods(ns).Get(context.Background(), podName, metav1.GetOptions{})
+	if err != nil {
+		log.Errorf("Error querying Kubernetes API for '%s' Pod: %s", podName, err.Error())
+		return "", ""
+	}
+	if len(pod.OwnerReferences) == 0 {
+		return pod.Name, pod.Kind
+	}
+
+	podOwner := pod.OwnerReferences[0]
+	var parentOwners []metav1.OwnerReference
+
+	switch podOwner.Kind {
+	case "ReplicaSet":
+		rs, err := kubeClient.AppsV1().ReplicaSets(ns).Get(context.Background(), podOwner.Name, metav1.GetOptions{})
+		if err != nil {
+			log.Errorf("Error querying Kubernetes API for '%s' ReplicaSet: %s", podOwner.Name, err.Error())
+			return "", ""
+		}
+		parentOwners = rs.OwnerReferences
+	case "Job":
+		job, err := kubeClient.BatchV1().Jobs(ns).Get(context.Background(), podOwner.Name, metav1.GetOptions{})
+		if err != nil {
+			log.Errorf("Error querying Kubernetes API for '%s' Job: %s", podOwner.Name, err.Error())
+			return "", ""
+		}
+		parentOwners = job.OwnerReferences
+	}
+
+	if len(parentOwners) != 0 {
+		// the ReplicaSet or Job has a parent (likely a Deployment or CronJob), so return that
+		return parentOwners[0].Name, parentOwners[0].Kind
+	} else {
+		// Otherwise return the owner of the Pod
+		return podOwner.Name, podOwner.Kind
+	}
 }
 
 func GetFieldSelector(resourceType string) fields.Selector {
