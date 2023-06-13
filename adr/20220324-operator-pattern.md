@@ -14,7 +14,7 @@
 - We built an operator POC using Kubebuilder as it is well maintained and it is also what most other frameworks(operator-sdk and operator-builder) rely on internally.
 - We also found that moving from Kubebuilder to operator-sdk is an easier transition than vice-versa.
 - We prefer using yaml and/or go templates for resource definition (collector, proxy, etc) over coding resource definitions
-- We prefer a single new resource / api / crd over multiple.  That is one crd/controller/api that manages the collector and proxy.
+- We prefer a single new resource/api/crd over multiple. That is one crd/controller/api that manages the collector and proxy.
 
 ## Future concerns
 - Kubebuilder framework compatibility to list operator on operator hub.
