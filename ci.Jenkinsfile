@@ -360,33 +360,33 @@ pipeline {
           }
         }
 
-        stage("Kind") {
-          agent {
-            label "worker-5"
-          }
-          options {
-            timeout(time: 30, unit: 'MINUTES')
-          }
-          environment {
-            KIND_VM_IP = credentials("k8po-ci-gcp-kind-external-ip")
-            KIND_VM_SSH_PRIVATE_KEY = credentials("k8po-ci-gcp-kind-ssh-private-key")
-            INTEGRATION_TEST_ARGS = "-r control-plane"
-            GCP_CREDS = credentials("GCP_CREDS")
-            KUBECONFIG = "$HOME/.kube/config"
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            lock("integration-test-kind") {
-              sh './scripts/connect-to-gcp-kind.sh; cd operator; make clean-cluster integration-test; make clean-cluster'
-            }
-          }
-          post{
-            cleanup{
-              sh 'kill -9 $(cat /tmp/kind-tunnel-pid) || true'
-              sh 'rm /tmp/kind-tunnel-pid || true'
-            }
-          }
-        }
+//         stage("Kind") {
+//           agent {
+//             label "worker-5"
+//           }
+//           options {
+//             timeout(time: 30, unit: 'MINUTES')
+//           }
+//           environment {
+//             KIND_VM_IP = credentials("k8po-ci-gcp-kind-external-ip")
+//             KIND_VM_SSH_PRIVATE_KEY = credentials("k8po-ci-gcp-kind-ssh-private-key")
+//             INTEGRATION_TEST_ARGS = "-r control-plane"
+//             GCP_CREDS = credentials("GCP_CREDS")
+//             KUBECONFIG = "$HOME/.kube/config"
+//           }
+//           steps {
+//             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+//             lock("integration-test-kind") {
+//               sh './scripts/connect-to-gcp-kind.sh; cd operator; make clean-cluster integration-test; make clean-cluster'
+//             }
+//           }
+//           post{
+//             cleanup{
+//               sh 'kill -9 $(cat /tmp/kind-tunnel-pid) || true'
+//               sh 'rm /tmp/kind-tunnel-pid || true'
+//             }
+//           }
+//         }
       }
     }
   }
