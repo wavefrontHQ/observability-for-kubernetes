@@ -4,6 +4,7 @@ This page contains the steps to create an alert template.
 We have alert templates on common Kubernetes issues.
 
 * [Detect pods stuck in pending](templates/pods-stuck-in-pending.json.tmpl)
+* [Detect pod backoff events](templates/pod-backoff-events.json.tmpl)
 
 ## Flags
 
