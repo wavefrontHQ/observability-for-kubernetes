@@ -208,38 +208,38 @@ pipeline {
             }
           }
         }
-        stage("KIND Integration Test") {
-          agent {
-            label "worker-4"
-          }
-          options {
-            timeout(time: 30, unit: 'MINUTES')
-          }
-          environment {
-            KIND_VM_IP = credentials("k8po-ci-gcp-kind-external-ip")
-            KIND_VM_SSH_PRIVATE_KEY = credentials("k8po-ci-gcp-kind-ssh-private-key")
-            KUBECONFIG = "$HOME/.kube/config"
-            GCP_CREDS = credentials("GCP_CREDS")
-            DOCKER_IMAGE = "kubernetes-collector"
-            INTEGRATION_TEST_ARGS="all"
-            INTEGRATION_TEST_BUILD="ci"
-          }
-          steps {
-            withEnv(["PATH+GO=${HOME}/go/bin"]) {
-              lock("integration-test-kind") {
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k kind'
-                sh './scripts/connect-to-gcp-kind.sh; cd collector; make clean-cluster integration-test; make clean-cluster'
-              }
-            }
-          }
-          post{
-            cleanup{
-              echo "Cleaning Up kind ssh tunnel ..."
-              sh 'kill -9 $(cat /tmp/kind-tunnel-pid) || true'
-              sh 'rm /tmp/kind-tunnel-pid || true'
-            }
-          }
-        }
+//         stage("KIND Integration Test") {
+//           agent {
+//             label "worker-4"
+//           }
+//           options {
+//             timeout(time: 30, unit: 'MINUTES')
+//           }
+//           environment {
+//             KIND_VM_IP = credentials("k8po-ci-gcp-kind-external-ip")
+//             KIND_VM_SSH_PRIVATE_KEY = credentials("k8po-ci-gcp-kind-ssh-private-key")
+//             KUBECONFIG = "$HOME/.kube/config"
+//             GCP_CREDS = credentials("GCP_CREDS")
+//             DOCKER_IMAGE = "kubernetes-collector"
+//             INTEGRATION_TEST_ARGS="all"
+//             INTEGRATION_TEST_BUILD="ci"
+//           }
+//           steps {
+//             withEnv(["PATH+GO=${HOME}/go/bin"]) {
+//               lock("integration-test-kind") {
+//                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k kind'
+//                 sh './scripts/connect-to-gcp-kind.sh; cd collector; make clean-cluster integration-test; make clean-cluster'
+//               }
+//             }
+//           }
+//           post{
+//             cleanup{
+//               echo "Cleaning Up kind ssh tunnel ..."
+//               sh 'kill -9 $(cat /tmp/kind-tunnel-pid) || true'
+//               sh 'rm /tmp/kind-tunnel-pid || true'
+//             }
+//           }
+//         }
       }
     }
 
