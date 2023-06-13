@@ -16,6 +16,13 @@ spec:
   dataCollection:
     metrics:
       enable: true
+      # Why and When to use this:
+      # This config option is useful if you have an existing custom collector config file that you would like to use as-is,
+      # For Ex:
+      # 1. You were using an older helm/manual collector install where you customized your [collector config](TODO-link to custom collector config from collector/...).
+      #    You now want to migrate to using the new operator. Set this parameter to the collector configmap name to use your existing collector config.
+      # 2. You want to use a configuration available in the collector directly but not yet supported in the operator. 
+      #    Customize your collector config and set this parameter to the collector configmap name.
       customConfig: wavefront-collector-config
 ---
 apiVersion: v1
