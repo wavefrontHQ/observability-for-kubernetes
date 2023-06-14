@@ -215,7 +215,7 @@ spec:
                           enable:
                             default: true
                             description: Enable is whether to include kubernetes.controlplane.*
-                              metrics and whether to include kubernetes_control_plane_source
+                              metrics
                             type: boolean
                         required:
                         - enable
@@ -588,6 +588,35 @@ spec:
                                 type: integer
                             type: object
                         type: object
+                    type: object
+                type: object
+              imagePullSecret:
+                description: ImagePullSecret is the name of the secret to authenticate
+                  with a private custom registry.
+                maxLength: 253
+                pattern: ^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$
+                type: string
+              experimental:
+                description: Experimental features
+                properties:
+                  autoInstrumentation:
+                    properties:
+                      deployKey:
+                        type: string
+                      enable:
+                        type: boolean
+                    type: object
+                  kubernetesEvents:
+                    properties:
+                      enable:
+                        default: false
+                        description: Enable is whether to enable events. Defaults
+                          to false.
+                        type: boolean
+                      externalEndpointURL:
+                        type: string
+                    required:
+                    - externalEndpointURL
                     type: object
                 type: object
               wavefrontTokenSecret:

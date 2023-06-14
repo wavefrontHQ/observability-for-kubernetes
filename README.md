@@ -135,6 +135,7 @@ See below for configuration options.
 
 We have templates for common scenarios. See the comments in each file for usage instructions.
 
+ * [Using a custom private registry](deploy/scenarios/wavefront-custom-private-registry.yaml)
  * [Using an existing Collector ConfigMap](deploy/scenarios/wavefront-collector-existing-configmap.yaml)
  * [With plugin configuration in a secret](deploy/scenarios/wavefront-collector-with-plugin-secret.yaml)
  * [Filtering metrics upon collection](deploy/scenarios/wavefront-collector-filtering.yaml)
@@ -151,6 +152,16 @@ We have templates for common scenarios. See the comments in each file for usage 
  * [Bring your own logs shipper](deploy/scenarios/wavefront-bring-your-own-logs-shipper.yaml)
 
 You can see all configuration options in the [wavefront-full-config.yaml](deploy/scenarios/wavefront-full-config.yaml).
+
+# Creating Alerts
+
+We have alerts on common Kubernetes issues. For details on creating alerts, see [alerts.md](docs/alerts/alerts.md).
+
+### Pod Failure
+
+| Alert name | Description |
+|---|---|
+| [Pods Stuck in Pending](docs/alerts/templates/pods-stuck-in-pending.json.tmpl) | Workload has pods stuck in pending. |
 
 ## Bring Your Own Logs Shipper
 
