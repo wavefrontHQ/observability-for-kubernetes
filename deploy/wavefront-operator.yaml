@@ -222,7 +222,7 @@ spec:
                           enable:
                             default: true
                             description: Enable is whether to include kubernetes.controlplane.*
-                              metrics and whether to include kubernetes_control_plane_source
+                              metrics
                             type: boolean
                         required:
                         - enable
@@ -597,6 +597,35 @@ spec:
                         type: object
                     type: object
                 type: object
+              experimental:
+                description: Experimental features
+                properties:
+                  autoInstrumentation:
+                    properties:
+                      deployKey:
+                        type: string
+                      enable:
+                        type: boolean
+                    type: object
+                  kubernetesEvents:
+                    properties:
+                      enable:
+                        default: false
+                        description: Enable is whether to enable events. Defaults
+                          to false.
+                        type: boolean
+                      externalEndpointURL:
+                        type: string
+                    required:
+                    - externalEndpointURL
+                    type: object
+                type: object
+              imagePullSecret:
+                description: ImagePullSecret is the name of the secret to authenticate
+                  with a private custom registry.
+                maxLength: 253
+                pattern: ^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$
+                type: string
               wavefrontTokenSecret:
                 default: wavefront-secret
                 description: WavefrontTokenSecret is the name of the secret that contains
@@ -671,6 +700,16 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - get
@@ -681,8 +720,12 @@ rules:
   resources:
   - secrets
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - ""
@@ -692,8 +735,10 @@ rules:
   - create
   - delete
   - get
+  - list
   - patch
   - update
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -718,6 +763,39 @@ rules:
   - apps
   resources:
   - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
   verbs:
   - create
   - delete
@@ -843,6 +921,8 @@ rules:
   - pods
   - services
   - replicationcontrollers
+  - persistentvolumeclaims
+  - persistentvolumes
   verbs:
   - get
   - list
@@ -999,7 +1079,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.19.0
+  collector: 1.20.0
   logging: 2.1.2
   proxy: 12.4.1
 kind: ConfigMap
@@ -1071,7 +1151,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.7.0
+        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.8.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

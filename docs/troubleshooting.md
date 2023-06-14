@@ -8,8 +8,6 @@ Get help when you have problems with your Kubernetes setup. This page is divided
 
 For an in depth overview of the integration and how it is deployed, please refer to our [GitHub page](https://github.com/wavefrontHQ/observability-for-kubernetes).
 
-**Note:** If you are currently using the Helm managed and installed version of the Wavefront proxy and Collector, please refer to our legacy troubleshooting guide for instructions on how to troubleshoot your integration.
-
 ## No Data Flowing into Operations for Applications
 
 If you have identified that there is a problem with data flowing into Operations for Applications, please follow the steps below.
