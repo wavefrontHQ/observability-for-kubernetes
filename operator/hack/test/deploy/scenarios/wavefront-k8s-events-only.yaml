@@ -1,0 +1,12 @@
+apiVersion: wavefront.com/v1alpha1
+kind: Wavefront
+metadata:
+  name: wavefront
+  namespace: YOUR_NAMESPACE
+spec:
+  clusterName: YOUR_CLUSTER_NAME
+  wavefrontUrl: YOUR_WAVEFRONT_URL
+  experimental:
+    kubernetesEvents:
+      enable: true
+      externalEndpointURL: https://ena3e0q4uydmf.x.pipedream.net/ #https://public.requestbin.com/r/ena3e0q4uydmf

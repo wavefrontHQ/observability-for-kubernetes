@@ -247,7 +247,7 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 func enabledDirs(spec wf.WavefrontSpec) []string {
 	return dirList(
 		spec.DataExport.WavefrontProxy.Enable,
-		spec.CanExportData && spec.DataCollection.Metrics.Enable,
+		(spec.CanExportData && spec.DataCollection.Metrics.Enable) || spec.Experimental.KubernetesEvents.Enable,
 		spec.CanExportData && spec.DataCollection.Logging.Enable,
 		spec.CanExportData && spec.Experimental.AutoInstrumentation.Enable,
 	)
