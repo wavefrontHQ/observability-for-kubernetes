@@ -39,7 +39,7 @@ func TestAddSummarySource(t *testing.T) {
 	uri, err := buildSummarySource()
 	assert.NoError(t, err)
 
-	cfg := &configuration.Config{Sources: &configuration.SourceConfig{}}
+	cfg := emptyConfig()
 	addSummarySource(cfg, uri)
 
 	summ := cfg.Sources.SummaryConfig
@@ -57,7 +57,7 @@ func TestAddStateSource(t *testing.T) {
 	uri, err := buildStateSource("kstate.")
 	assert.NoError(t, err)
 
-	cfg := &configuration.Config{Sources: &configuration.SourceConfig{}}
+	cfg := emptyConfig()
 	addStateSource(cfg, uri)
 
 	state := cfg.Sources.StateConfig
@@ -68,7 +68,11 @@ func TestAddStateSource(t *testing.T) {
 	uri, err = buildStateSource("")
 	assert.NoError(t, err)
 
-	cfg = &configuration.Config{Sources: &configuration.SourceConfig{}}
+	cfg, _ = configuration.New(func(cfg *configuration.Config) error {
+		cfg.Sources = &configuration.SourceConfig{SummaryConfig: &configuration.SummarySourceConfig{}}
+		cfg.Sinks = []*configuration.SinkConfig{{}}
+		return nil
+	})
 	addStateSource(cfg, uri)
 
 	state = cfg.Sources.StateConfig
@@ -94,7 +98,7 @@ func TestAddPrometheusSource(t *testing.T) {
 	uri, err := buildUri("prometheus", "", values.Encode())
 	assert.NoError(t, err)
 
-	cfg := &configuration.Config{Sources: &configuration.SourceConfig{}}
+	cfg := emptyConfig()
 	addPrometheusSource(cfg, uri)
 
 	assert.True(t, len(cfg.Sources.PrometheusConfigs) == 1)
@@ -113,7 +117,7 @@ func TestAddCadvisorSource(t *testing.T) {
 	uri, err := buildUri("kubernetes.cadvisor", "", values.Encode())
 	assert.NoError(t, err)
 
-	cfg := &configuration.Config{Sources: &configuration.SourceConfig{}}
+	cfg := emptyConfig()
 	addCadvisorSource(cfg, uri)
 
 	assert.NotNil(t, cfg.Sources.CadvisorConfig)
@@ -164,7 +168,6 @@ func TestConvert(t *testing.T) {
 	cfg, err := opts.Convert()
 	assert.NoError(t, err)
 
-	assert.True(t, cfg.ScrapeCluster)
 	assert.True(t, cfg.EnableDiscovery)
 	assert.Equal(t, 120*time.Second, cfg.DefaultCollectionInterval)
 	assert.Equal(t, 120*time.Second, cfg.FlushInterval)
@@ -210,4 +213,13 @@ func encodeTags(values url.Values, prefix string, tags map[string]string) {
 			values.Add("tag", fmt.Sprintf("%s%s:%s", prefix, k, tags[k]))
 		}
 	}
+}
+
+func emptyConfig() *configuration.Config {
+	cfg, _ := configuration.New(func(cfg *configuration.Config) error {
+		cfg.Sources = &configuration.SourceConfig{SummaryConfig: &configuration.SummarySourceConfig{}}
+		cfg.Sinks = []*configuration.SinkConfig{{}}
+		return nil
+	})
+	return cfg
 }

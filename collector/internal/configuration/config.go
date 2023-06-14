@@ -4,12 +4,14 @@
 package configuration
 
 import (
+	"fmt"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/httputil"
-
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -55,9 +57,15 @@ type Config struct {
 	OmitBucketSuffix bool `yaml:"omitBucketSuffix"`
 
 	Experimental []string `yaml:"experimental"`
+}
 
-	// Internal use only
-	ScrapeCluster bool `yaml:"-"`
+func (c *Config) EventsAreEnabled() bool {
+	for _, sinkCfg := range c.Sinks {
+		if sinkCfg.EventsEnabled != nil && *sinkCfg.EventsEnabled {
+			return true
+		}
+	}
+	return false
 }
 
 type EventsConfig struct {
@@ -151,9 +159,6 @@ type SinkConfig struct {
 
 	// Internal: Cluster UUID pulled in from the top level property.
 	ClusterUUID string `yaml:"-"`
-
-	// Internal: Collector version pulled in from top level. Used for the heartbeat metric.
-	Version float64 `yaml:"-"`
 
 	// Internal: The prefix used for internal stats. Used for the heartbeat metric.
 	InternalStatsPrefix string `yaml:"-"`
@@ -267,4 +272,71 @@ type KubernetesStateSourceConfig struct {
 
 	// internal use only
 	KubeClient *kubernetes.Clientset `yaml:"-"`
+}
+
+// New creates a Config with defaults
+func New(initialize func(*Config) error) (*Config, error) {
+	cfg := &Config{
+		FlushInterval:             60 * time.Second,
+		DefaultCollectionInterval: 60 * time.Second,
+		SinkExportDataTimeout:     20 * time.Second,
+		ClusterName:               "k8s-cluster",
+		DiscoveryConfig: discovery.Config{
+			DiscoveryInterval: 5 * time.Minute,
+		},
+	}
+	if err := initialize(cfg); err != nil {
+		return nil, err
+	}
+	if err := validateCfg(cfg); err != nil {
+		return nil, err
+	}
+	reconcileGlobalProperties(cfg)
+	return cfg, nil
+}
+
+func reconcileGlobalProperties(cfg *Config) {
+	log.Infof("using clusterName: %s", cfg.ClusterName)
+	prefix := ""
+	if cfg.Sources.StatsConfig != nil {
+		prefix = GetStringValue(cfg.Sources.StatsConfig.Prefix, "kubernetes.")
+	}
+	enableEvents := cfg.EnableEvents
+	for _, sinkCfg := range cfg.Sinks {
+		sinkCfg.ClusterName = cfg.ClusterName
+		sinkCfg.ClusterUUID = util.GetClusterUUID()
+		sinkCfg.InternalStatsPrefix = prefix
+		if sinkCfg.EventsEnabled == nil {
+			sinkCfg.EventsEnabled = &enableEvents
+		}
+	}
+}
+
+func validateCfg(cfg *Config) error {
+	if cfg.FlushInterval < 5*time.Second {
+		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.FlushInterval)
+	}
+	if cfg.Sources == nil {
+		return fmt.Errorf("missing sources")
+	}
+	if cfg.Sources.SummaryConfig == nil {
+		return fmt.Errorf("kubernetes_source is missing")
+	}
+	if len(cfg.Sinks) == 0 {
+		return fmt.Errorf("missing sink")
+	}
+	return nil
+}
+
+func LoadOrDie(file string) *Config {
+	if file == "" {
+		return nil
+	}
+	log.Infof("loading config: %s", file)
+	cfg, err := FromFile(file)
+	if err != nil {
+		log.Fatalf("invalid configuration file: %v", err)
+		return nil
+	}
+	return cfg
 }

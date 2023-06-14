@@ -6,8 +6,6 @@ metadata:
 data:
   collector.yaml: |
     clusterName: YOUR_CLUSTER_NAME
-    enableEvents: false
-    enableEventsExternal: true
     enableDiscovery: true
     flushInterval: FLUSH_INTERVALs
     defaultCollectionInterval: COLLECTION_INTERVALs

@@ -58,7 +58,7 @@ func (opts *CollectorRunOptions) Parse(fs *pflag.FlagSet, args []string) error {
 	fs.BoolVar(&opts.Version, "version", false, "print version info and exit")
 	fs.BoolVar(&opts.EnableProfiling, "profile", false, "enable pprof")
 	fs.BoolVar(&opts.daemon, "daemon", false, "enable daemon mode")
-	fs.Var(&opts.AgentType, "agent", "the agent type (node, cluster, k8s-events, all, legacy)")
+	fs.Var(&opts.AgentType, "agent", "the agent type (node, cluster, all, legacy)")
 	fs.StringVar(&opts.ConfigFile, "config-file", "", "required configuration file")
 	fs.StringVar(&opts.LogLevel, "log-level", "info", "one of info, debug or trace")
 	fs.IntVar(&opts.MaxProcs, "max-procs", 0, "max number of CPUs that can be used simultaneously. Less than 1 for default (number of cores)")

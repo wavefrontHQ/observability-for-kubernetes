@@ -64,14 +64,6 @@ func TestDaemonFlag(t *testing.T) {
 		assert.Equal(t, ClusterAgentType, opts.AgentType)
 	})
 
-	t.Run("--agent=k8s-events is a valid option", func(t *testing.T) {
-		fs := pflag.NewFlagSet("fake-collector", pflag.ContinueOnError)
-		opts := NewCollectorRunOptions()
-
-		assert.Nil(t, opts.Parse(fs, []string{"--agent=k8s-events"}))
-		assert.Equal(t, K8sEventsAgentType, opts.AgentType)
-	})
-
 	t.Run("returns an error when both --daemon and --agent are set", func(t *testing.T) {
 		opts := NewCollectorRunOptions()
 

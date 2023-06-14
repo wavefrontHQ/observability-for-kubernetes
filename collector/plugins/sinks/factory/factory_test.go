@@ -11,68 +11,70 @@ func TestSinkFactoryBuild(t *testing.T) {
 	factory := NewSinkFactory()
 
 	t.Run("build with wavefront sink configuration", func(t *testing.T) {
-		cfg := configuration.SinkConfig{
-			ProxyAddress: "wavefront-proxy:2878",
-			TestMode:     true,
-			Transforms: configuration.Transforms{
-				Prefix: "test.",
-			},
-		}
-		sink, err := factory.Build(cfg)
+		cfg := defaultWavefrontConfig()
+
+		sink, err := factory.Build(*cfg)
+
 		require.NoError(t, err)
 		require.NotNil(t, sink)
 		require.Equal(t, "wavefront_sink", sink.Name())
 	})
 
 	t.Run("build with k8s event sink configuration", func(t *testing.T) {
-		cfg := configuration.SinkConfig{
-			Type:                configuration.ExternalSinkType,
-			ExternalEndpointURL: "http://example.com",
-		}
-		sink, err := factory.Build(cfg)
+		cfg := defaultExternalSinkConfig()
+
+		sink, err := factory.Build(*cfg)
+
 		require.NoError(t, err)
 		require.NotNil(t, sink)
 		require.Equal(t, "k8s_events_sink", sink.Name())
 	})
 
 }
+
 func TestSinkFactoryBuildAll(t *testing.T) {
 	factory := NewSinkFactory()
 
 	t.Run("build with wavefront only sink", func(t *testing.T) {
-		sinkConfigs := make([]*configuration.SinkConfig, 0)
-		cfg := &configuration.SinkConfig{
-			ProxyAddress: "wavefront-proxy:2878",
-			TestMode:     true,
-			Transforms: configuration.Transforms{
-				Prefix: "test.",
-			},
+		sinkConfigs := []*configuration.SinkConfig{
+			defaultWavefrontConfig(),
 		}
-		sinkConfigs = append(sinkConfigs, cfg)
+
 		sinks := factory.BuildAll(sinkConfigs)
+
 		require.Equal(t, "wavefront_sink", sinks[0].Name())
 	})
 
 	t.Run("build with multiple sinks", func(t *testing.T) {
-		sinkConfigs := make([]*configuration.SinkConfig, 0)
-		cfg := &configuration.SinkConfig{
-			ProxyAddress: "wavefront-proxy:2878",
-			TestMode:     true,
-			Transforms: configuration.Transforms{
-				Prefix: "test.",
-			},
+		sinkConfigs := []*configuration.SinkConfig{
+			defaultWavefrontConfig(),
+			defaultExternalSinkConfig(),
 		}
-		sinkConfigs = append(sinkConfigs, cfg)
-
-		cfg = &configuration.SinkConfig{
-			Type:                configuration.ExternalSinkType,
-			ExternalEndpointURL: "http://example.com",
-		}
-		sinkConfigs = append(sinkConfigs, cfg)
 
 		sinks := factory.BuildAll(sinkConfigs)
+
 		require.Equal(t, 2, len(sinks))
 		require.Equal(t, "wavefront_sink", sinks[0].Name())
 		require.Equal(t, "k8s_events_sink", sinks[1].Name())
 	})
+}
+
+func defaultWavefrontConfig() *configuration.SinkConfig {
+	eventsEnabled := true
+	return &configuration.SinkConfig{
+		ProxyAddress:  "wavefront-proxy:2878",
+		TestMode:      true,
+		EventsEnabled: &eventsEnabled,
+		Transforms: configuration.Transforms{
+			Prefix: "test.",
+		},
+	}
+}
+func defaultExternalSinkConfig() *configuration.SinkConfig {
+	eventsEnabled := false
+	return &configuration.SinkConfig{
+		Type:                configuration.ExternalSinkType,
+		ExternalEndpointURL: "http://example.com",
+		EventsEnabled:       &eventsEnabled,
+	}
 }

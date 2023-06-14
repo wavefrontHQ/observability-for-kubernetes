@@ -197,7 +197,7 @@ func GetFieldSelector(resourceType string) fields.Selector {
 }
 
 func ScrapeCluster() bool {
-	return agentType.ScrapeCluster()
+	return agentType != nil && agentType.ScrapeCluster()
 }
 
 func ClusterCollector() bool {

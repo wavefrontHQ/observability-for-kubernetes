@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/version"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
@@ -276,7 +277,7 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 	go func() {
 		log.Debug("emitting heartbeat metric")
 		util.AddK8sTags(tags)
-		err := sender.SendMetric("~wavefront.kubernetes.collector.version", cfg.Version, 0, source, tags)
+		err := sender.SendMetric("~wavefront.kubernetes.collector.version", version.Float64(), 0, source, tags)
 		if err != nil {
 			log.Debugf("error emitting heartbeat metric :%v", err)
 		}
@@ -284,7 +285,7 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 			select {
 			case <-ticker.C:
 				util.AddK8sTags(tags)
-				_ = sender.SendMetric("~wavefront.kubernetes.collector.version", cfg.Version, 0, source, tags)
+				_ = sender.SendMetric("~wavefront.kubernetes.collector.version", version.Float64(), 0, source, tags)
 				_ = sender.SendMetric("~wavefront.kubernetes.collector.config.events.enabled", eventsEnabled, 0, source, tags)
 				sink.logStatus()
 			case <-sink.stopHeartbeat:
