@@ -72,8 +72,8 @@ func main() {
 	enableForcedGC(opt.ForceGC)
 
 	preRegister(opt)
-	cfg := loadConfigOrDie(opt.ConfigFile)
-	cfg = convertOrDie(opt, cfg)
+	cfg := configuration.LoadConfigOrDie(opt.ConfigFile)
+	cfg = configuration.ConvertOrDie(opt, cfg)
 	ag := createAgentOrDie(cfg)
 	registerListeners(ag, opt)
 	waitForStop()
@@ -153,63 +153,6 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	ag := agent.NewAgent(man, dm, eventRouter)
 	ag.Start()
 	return ag
-}
-
-func loadConfigOrDie(file string) *configuration.Config {
-	if file == "" {
-		return nil
-	}
-	log.Infof("loading config: %s", file)
-
-	cfg, err := configuration.FromFile(file)
-	if err != nil {
-		log.Fatalf("error parsing configuration: %v", err)
-		return nil
-	}
-	fillDefaults(cfg)
-
-	if err := validateCfg(cfg); err != nil {
-		log.Fatalf("invalid configuration file: %v", err)
-		return nil
-	}
-
-	return cfg
-}
-
-// use defaults if no values specified in config file
-func fillDefaults(cfg *configuration.Config) {
-	if cfg.FlushInterval == 0 {
-		cfg.FlushInterval = 60 * time.Second
-	}
-	if cfg.DefaultCollectionInterval == 0 {
-		cfg.DefaultCollectionInterval = 60 * time.Second
-	}
-	if cfg.SinkExportDataTimeout == 0 {
-		cfg.SinkExportDataTimeout = 20 * time.Second
-	}
-	if cfg.ClusterName == "" {
-		cfg.ClusterName = "k8s-cluster"
-	}
-	if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
-		cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
-	}
-
-	cfg.ScrapeCluster = util.ScrapeCluster()
-}
-
-// converts flags to configuration for backwards compatibility support
-func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *configuration.Config {
-	// omit flags if config file is provided
-	if cfg != nil {
-		log.Info("using configuration file, omitting flags")
-		return cfg
-	}
-	optsCfg, err := opt.Convert()
-	if err != nil {
-		log.Fatalf("error converting flags to config: %v", err)
-	}
-	fillDefaults(optsCfg)
-	return optsCfg
 }
 
 func setSinkProperties(cfg *configuration.Config) {
@@ -393,22 +336,6 @@ func getNodeListerOrDie(kubeClient *kube_client.Clientset) v1listers.NodeLister 
 		log.Fatalf("Failed to create nodeLister: %v", err)
 	}
 	return nodeLister
-}
-
-func validateCfg(cfg *configuration.Config) error {
-	if cfg.FlushInterval < 5*time.Second {
-		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.FlushInterval)
-	}
-	if cfg.Sources == nil {
-		return fmt.Errorf("missing sources")
-	}
-	if cfg.Sources.SummaryConfig == nil {
-		return fmt.Errorf("kubernetes_source is missing")
-	}
-	if len(cfg.Sinks) == 0 {
-		return fmt.Errorf("missing sink")
-	}
-	return nil
 }
 
 func setMaxProcs(opt *options.CollectorRunOptions) {
