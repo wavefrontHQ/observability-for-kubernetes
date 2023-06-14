@@ -61,7 +61,7 @@ type Config struct {
 
 func (c *Config) EventsAreEnabled() bool {
 	for _, sinkCfg := range c.Sinks {
-		if sinkCfg.EventsEnabled != nil && *sinkCfg.EventsEnabled {
+		if sinkCfg.EnableEvents != nil && *sinkCfg.EnableEvents {
 			return true
 		}
 	}
@@ -125,7 +125,7 @@ type SinkConfig struct {
 	Type SinkType `yaml:"type,omitempty"`
 
 	// Whether event collection has been enabled
-	EventsEnabled *bool `yaml:"eventsEnabled"`
+	EnableEvents *bool `yaml:"enableEvents"`
 
 	//  The Wavefront URL of the form https://YOUR_INSTANCE.wavefront.com. Only required for direct ingestion.
 	Server string `yaml:"server"`
@@ -306,8 +306,8 @@ func reconcileGlobalProperties(cfg *Config) {
 		sinkCfg.ClusterName = cfg.ClusterName
 		sinkCfg.ClusterUUID = util.GetClusterUUID()
 		sinkCfg.InternalStatsPrefix = prefix
-		if sinkCfg.EventsEnabled == nil {
-			sinkCfg.EventsEnabled = &enableEvents
+		if sinkCfg.EnableEvents == nil {
+			sinkCfg.EnableEvents = &enableEvents
 		}
 	}
 }

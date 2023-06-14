@@ -62,9 +62,9 @@ func TestSinkFactoryBuildAll(t *testing.T) {
 func defaultWavefrontConfig() *configuration.SinkConfig {
 	eventsEnabled := true
 	return &configuration.SinkConfig{
-		ProxyAddress:  "wavefront-proxy:2878",
-		TestMode:      true,
-		EventsEnabled: &eventsEnabled,
+		ProxyAddress: "wavefront-proxy:2878",
+		TestMode:     true,
+		EnableEvents: &eventsEnabled,
 		Transforms: configuration.Transforms{
 			Prefix: "test.",
 		},
@@ -75,6 +75,6 @@ func defaultExternalSinkConfig() *configuration.SinkConfig {
 	return &configuration.SinkConfig{
 		Type:                configuration.ExternalSinkType,
 		ExternalEndpointURL: "http://example.com",
-		EventsEnabled:       &eventsEnabled,
+		EnableEvents:        &eventsEnabled,
 	}
 }

@@ -126,7 +126,7 @@ func TestDisablingEvents(t *testing.T) {
 	defer server.Close()
 
 	cfg := defaultSyncConfig(server.URL)
-	*cfg.EventsEnabled = false
+	*cfg.EnableEvents = false
 
 	event := &events.Event{Event: v1.Event{
 		ObjectMeta: metav1.ObjectMeta{
@@ -170,6 +170,6 @@ func defaultSyncConfig(url string) configuration.SinkConfig {
 		ClusterName:         "testCluster",
 		ClusterUUID:         "12345-1",
 		ExternalEndpointURL: url,
-		EventsEnabled:       &eventsEnabled,
+		EnableEvents:        &eventsEnabled,
 	}
 }

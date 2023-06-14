@@ -17,13 +17,13 @@ data:
   config.yaml: |
     clusterName: {{.ClusterName}}
     enableDiscovery: false
-    enableEvents: false
     defaultCollectionInterval: {{.DataCollection.Metrics.DefaultCollectionInterval}}
     flushInterval: 10s
     sinkExportDataTimeout: 20s
 
     sinks:
     - type: "external"
+      enableEvents: true
       externalEndpointURL: "{{ .Experimental.KubernetesEvents.ExternalEndpointURL }}"
     sources:
       kubernetes_source: {}

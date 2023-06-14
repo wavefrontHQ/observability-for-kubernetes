@@ -114,7 +114,7 @@ func TestEvents(t *testing.T) {
 
 	t.Run("events enabled", func(t *testing.T) {
 		cfg := defaultSinkConfig()
-		*cfg.EventsEnabled = true
+		*cfg.EnableEvents = true
 		sink, err := NewWavefrontSink(cfg)
 		require.NoError(t, err)
 
@@ -128,10 +128,10 @@ func TestEvents(t *testing.T) {
 func defaultSinkConfig() configuration.SinkConfig {
 	eventsEnabled := false
 	cfg := configuration.SinkConfig{
-		ProxyAddress:  "wavefront-proxy:2878",
-		ClusterName:   "testCluster",
-		TestMode:      true,
-		EventsEnabled: &eventsEnabled,
+		ProxyAddress: "wavefront-proxy:2878",
+		ClusterName:  "testCluster",
+		TestMode:     true,
+		EnableEvents: &eventsEnabled,
 	}
 	return cfg
 }

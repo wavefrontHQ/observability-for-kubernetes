@@ -145,7 +145,7 @@ func TestNew(t *testing.T) {
 		require.Equal(t, expectedUUID, cfg.Sinks[0].ClusterUUID)
 	})
 
-	t.Run("overrides unset EventsEnabled on sinks with the global EnableEvents", func(t *testing.T) {
+	t.Run("overrides unset EnableEvents on sinks with the global EnableEvents", func(t *testing.T) {
 		expectedUUID := "c246955e-21ff-4bc6-9b30-8479ea7f218c"
 		_ = os.Setenv(util.ClusterUUIDEnvVar, expectedUUID)
 		defer os.Unsetenv(util.ClusterUUIDEnvVar)
@@ -156,10 +156,10 @@ func TestNew(t *testing.T) {
 			return nil
 		})
 
-		require.Equal(t, true, *cfg.Sinks[0].EventsEnabled)
+		require.Equal(t, true, *cfg.Sinks[0].EnableEvents)
 	})
 
-	t.Run("does not override EventsEnabled on sinks when they are set", func(t *testing.T) {
+	t.Run("does not override EnableEvents on sinks when they are set", func(t *testing.T) {
 		expectedUUID := "c246955e-21ff-4bc6-9b30-8479ea7f218c"
 		_ = os.Setenv(util.ClusterUUIDEnvVar, expectedUUID)
 		defer os.Unsetenv(util.ClusterUUIDEnvVar)
@@ -167,11 +167,11 @@ func TestNew(t *testing.T) {
 		cfg, _ := New(func(config *Config) error {
 			config.Sources = &SourceConfig{SummaryConfig: &SummarySourceConfig{}}
 			config.EnableEvents = false
-			config.Sinks = []*SinkConfig{{EventsEnabled: &enabled}}
+			config.Sinks = []*SinkConfig{{EnableEvents: &enabled}}
 			return nil
 		})
 
-		require.Equal(t, true, *cfg.Sinks[0].EventsEnabled)
+		require.Equal(t, true, *cfg.Sinks[0].EnableEvents)
 	})
 }
 

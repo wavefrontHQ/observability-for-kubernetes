@@ -6,6 +6,9 @@ metadata:
 spec:
   clusterName: YOUR_CLUSTER_NAME
   wavefrontUrl: YOUR_WAVEFRONT_URL
+  dataCollection:
+    metrics:
+      enable: false
   experimental:
     kubernetesEvents:
       enable: true

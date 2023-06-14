@@ -1321,8 +1321,8 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 
 		require.True(t, mockKM.CollectorServiceAccountContains())
 		require.True(t, mockKM.ClusterCollectorDeploymentContains())
-		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "enableEvents: false"))
 		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "externalEndpointURL: \"https://example.com\""))
+		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "enableEvents: true"))
 		require.False(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "proxyAddress", "kubeletHttps", "kubernetes_state_source"))
 		require.False(t, mockKM.CollectorConfigMapContains())
 
@@ -1331,6 +1331,7 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 		require.False(t, mockKM.ProxyServiceContains())
 		require.False(t, mockKM.ProxyDeploymentContains())
 	})
+
 	t.Run("can enable kubernetes events", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.KubernetesEvents.Enable = true
@@ -1342,6 +1343,7 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 		require.NoError(t, err)
 
 		require.True(t, mockKM.CollectorConfigMapContains("enableEvents: false"))
+		require.True(t, mockKM.CollectorConfigMapContains("type: \"external\"\n      enableEvents: true"))
 		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \"https://example.com\""))
 	})
 }

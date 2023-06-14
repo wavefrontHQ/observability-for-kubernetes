@@ -63,6 +63,6 @@ func NewExternalSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 		ClusterName:         cfg.ClusterName,
 		ClusterUUID:         cfg.ClusterUUID,
 		externalEndpointURL: cfg.ExternalEndpointURL,
-		eventsEnabled:       *cfg.EventsEnabled,
+		eventsEnabled:       *cfg.EnableEvents,
 	}, nil
 }

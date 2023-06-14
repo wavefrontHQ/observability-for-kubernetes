@@ -68,6 +68,11 @@ spec:
                 minLength: 3
                 type: string
               dataCollection:
+                default:
+                  logging:
+                    enable: false
+                  metrics:
+                    enable: true
                 description: DataCollection options
                 properties:
                   logging:

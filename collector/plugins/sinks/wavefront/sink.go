@@ -134,7 +134,7 @@ func NewWavefrontSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 	if cfg.Prefix != "" {
 		sink.Prefix = strings.Trim(cfg.Prefix, ".")
 	}
-	sink.eventsEnabled = *cfg.EventsEnabled
+	sink.eventsEnabled = *cfg.EnableEvents
 	sink.filters = filter.FromConfig(cfg.Filters)
 
 	// force garbage collection if experimental flag enabled
