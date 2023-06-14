@@ -405,6 +405,8 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		} else {
 			wavefront.Spec.DataCollection.Metrics.CollectorConfigName = wavefront.Spec.DataCollection.Metrics.CustomConfig
 		}
+	} else if wavefront.Spec.Experimental.KubernetesEvents.Enable {
+		wavefront.Spec.DataCollection.Metrics.CollectorConfigName = "k8s-events-only-wavefront-collector-config"
 	}
 
 	wavefront.Spec.DataExport.WavefrontProxy.AvailableReplicas = 1
