@@ -5,6 +5,7 @@ package configuration
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -100,28 +101,59 @@ discovery:
       password = bar
 `
 
+const sampleFileEmptyDefaultCollectionInterval = `
+clusterName: new-collector
+enableDiscovery: true
+enableEvents: true
+defaultCollectionInterval:
+flushInterval:
+sinkExportDataTimeout:
+
+sinks: 
+- proxyAddress: wavefront-proxy.default.svc.cluster.local:2878
+
+sources:
+  kubernetes_source: {}
+`
+
 func TestFromYAML(t *testing.T) {
-	cfg, err := FromYAML([]byte(sampleFile))
-	if err != nil {
-		t.Errorf("error loading yaml: %q", err)
-		return
-	}
-	if len(cfg.Sinks) == 0 {
-		t.Errorf("invalid sinks")
-	}
+	t.Run("full config options", func(t *testing.T) {
+		cfg, err := FromYAML([]byte(sampleFile))
+		if err != nil {
+			t.Errorf("error loading yaml: %q", err)
+			return
+		}
+		if len(cfg.Sinks) == 0 {
+			t.Errorf("invalid sinks")
+		}
 
-	require.True(t, cfg.EnableEvents)
-	require.Equal(t, "default", cfg.EventsConfig.Filters.TagAllowList["namespace"][0])
-	require.Equal(t, "pp", cfg.EventsConfig.Filters.TagAllowList["component"][0])
+		require.True(t, cfg.EnableEvents)
+		require.Equal(t, "default", cfg.EventsConfig.Filters.TagAllowList["namespace"][0])
+		require.Equal(t, "pp", cfg.EventsConfig.Filters.TagAllowList["component"][0])
 
-	require.True(t, len(cfg.Sources.PrometheusConfigs) > 0)
-	require.Equal(t, "kubernetes.", cfg.Sources.SummaryConfig.Prefix)
-	require.Equal(t, "kube.apiserver.", cfg.Sources.PrometheusConfigs[0].Prefix)
-	require.Equal(t, "kubernetes.cadvisor.", cfg.Sources.CadvisorConfig.Prefix)
-	require.Equal(t, "histogram-conversion", cfg.Experimental[0])
-	require.Equal(t, WavefrontSinkType, cfg.Sinks[0].Type)
-	require.Equal(t, ExternalSinkType, cfg.Sinks[1].Type)
-	require.Equal(t, "https://example.com", cfg.Sinks[1].ExternalEndpointURL)
+		require.True(t, len(cfg.Sources.PrometheusConfigs) > 0)
+		require.Equal(t, "kubernetes.", cfg.Sources.SummaryConfig.Prefix)
+		require.Equal(t, "kube.apiserver.", cfg.Sources.PrometheusConfigs[0].Prefix)
+		require.Equal(t, "kubernetes.cadvisor.", cfg.Sources.CadvisorConfig.Prefix)
+		require.Equal(t, "histogram-conversion", cfg.Experimental[0])
+		require.Equal(t, WavefrontSinkType, cfg.Sinks[0].Type)
+		require.Equal(t, ExternalSinkType, cfg.Sinks[1].Type)
+		require.Equal(t, "https://example.com", cfg.Sinks[1].ExternalEndpointURL)
 
-	require.Equal(t, cfg.DiscoveryConfig.AnnotationExcludes[0].Images, []string{"not-redis:*", "*not-redis*"})
+		require.Equal(t, cfg.DiscoveryConfig.AnnotationExcludes[0].Images, []string{"not-redis:*", "*not-redis*"})
+	})
+
+	t.Run("test defaults", func(t *testing.T) {
+		cfg, err := FromYAML([]byte(sampleFileEmptyDefaultCollectionInterval))
+
+		if err != nil {
+			t.Errorf("error loading yaml: %q", err)
+			return
+		}
+
+		require.Equal(t, 60*time.Second, cfg.DefaultCollectionInterval)
+		require.Equal(t, 30*time.Second, cfg.FlushInterval)
+		require.Equal(t, 20*time.Second, cfg.SinkExportDataTimeout)
+	})
+
 }

@@ -277,7 +277,7 @@ type KubernetesStateSourceConfig struct {
 // New creates a Config with defaults
 func New(initialize func(*Config) error) (*Config, error) {
 	cfg := &Config{
-		FlushInterval:             60 * time.Second,
+		FlushInterval:             30 * time.Second,
 		DefaultCollectionInterval: 60 * time.Second,
 		SinkExportDataTimeout:     20 * time.Second,
 		ClusterName:               "k8s-cluster",

@@ -51,7 +51,6 @@ type WavefrontSpec struct {
 	DataExport DataExport `json:"dataExport,omitempty"`
 
 	// DataCollection options
-	// +kubebuilder:default:={metrics:{enable: true},logging:{enable: false}}
 	DataCollection DataCollection `json:"dataCollection,omitempty"`
 
 	//  Allows the operator based Wavefront installation to be run in parallel with a legacy Wavefront (helm or manual) installation. Defaults to false.
