@@ -75,11 +75,6 @@ spec:
                 minLength: 3
                 type: string
               dataCollection:
-                default:
-                  logging:
-                    enable: false
-                  metrics:
-                    enable: true
                 description: DataCollection options
                 properties:
                   logging:
@@ -1084,7 +1079,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.20.0-alpha-8441d682
+  collector: 1.20.0-alpha-f79d082e
   logging: 2.1.2
   proxy: 12.4.1
 kind: ConfigMap
@@ -1156,7 +1151,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.8.0-alpha-8441d682
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.8.0-alpha-f79d082e
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
