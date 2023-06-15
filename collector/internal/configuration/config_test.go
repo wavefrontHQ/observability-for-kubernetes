@@ -21,7 +21,7 @@ func TestNew(t *testing.T) {
 			return nil
 		})
 
-		require.Equal(t, 60*time.Second, cfg.FlushInterval, "default cfg.FlushInterval")
+		require.Equal(t, 30*time.Second, cfg.FlushInterval, "default cfg.FlushInterval")
 		require.Equal(t, 60*time.Second, cfg.DefaultCollectionInterval, "default cfg.DefaultCollectionInterval")
 		require.Equal(t, 20*time.Second, cfg.SinkExportDataTimeout, "default cfg.SinkExportDataTimeout")
 		require.Equal(t, "k8s-cluster", cfg.ClusterName, "default cfg.ClusterName")
