@@ -553,6 +553,7 @@ function main() {
       "advanced"
       "logging-integration"
       "with-http-proxy"
+      "k8s-events-only"
     )
   fi
 
