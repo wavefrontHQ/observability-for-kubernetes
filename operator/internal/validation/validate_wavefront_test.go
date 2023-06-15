@@ -202,6 +202,14 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		require.Nilf(t, validationError, "expected no validation error")
 	})
 
+	t.Run("Test custom config with kubernetes events enabled", func(t *testing.T) {
+		wfCR := defaultWFCR()
+		wfCR.Spec.DataCollection.Metrics.CustomConfig = "my-custom-config"
+		wfCR.Spec.Experimental.KubernetesEvents.Enable = true
+		validationError := validateWavefrontSpec(wfCR)
+		require.NotNilf(t, validationError, "expected validation error")
+	})
+
 	t.Run("Test No Proxy configuration with kubernetes events and metrics enabled", func(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
