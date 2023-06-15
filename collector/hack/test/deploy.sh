@@ -79,7 +79,6 @@ function main() {
       -k "$K8S_ENV" \
       -n "$K8S_CLUSTER_NAME" \
       -p "$USE_TEST_PROXY" \
-      -z "$COLLECTOR_CONFIG_YAML" \
       $additional_args
 
   kustomize build "overlays/test-$K8S_ENV" | kubectl apply -f -
