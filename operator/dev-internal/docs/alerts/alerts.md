@@ -3,8 +3,8 @@ This page contains the steps to create an alert template.
 
 We have alert templates on common Kubernetes issues.
 
-* [Detect pods stuck in pending](templates/pods-stuck-in-pending.json.tmpl)
-* [Detect pod backoff events](templates/pod-backoff-events.json.tmpl)
+* [Detect pod stuck in pending](templates/pod-stuck-in-pending.json.tmpl)
+* [Detect pod backoff event](templates/pod-backoff-event.json.tmpl)
 
 ## Flags
 
@@ -21,8 +21,8 @@ Usage of ./create-alert.sh:
 
 ### Step 1: Download the alert template file.
 
-1. Replace `<alert_file_output_path>`, (ex: `/tmp/pods-stuck-in-pending.json`).
-2. Replace `<alert_template_file.json.tmpl>`, (ex: `pods-stuck-in-pending.json.tmpl`).
+1. Replace `<alert_file_output_path>`, (ex: `/tmp/pod-stuck-in-pending.json`).
+2. Replace `<alert_template_file.json.tmpl>`, (ex: `pod-stuck-in-pending.json.tmpl`).
 
 ```bash
 export ALERT_FILE_OUTPUT_PATH=<alert_file_output_path>
