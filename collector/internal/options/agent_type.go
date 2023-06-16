@@ -11,7 +11,7 @@ const (
 	NodeAgentType    AgentType = "node"
 )
 
-var InvalidAgentTypeErr = errors.New("--agent can only be node, cluster, k8s-events, all or legacy")
+var InvalidAgentTypeErr = errors.New("--agent can only be node, cluster, all or legacy")
 
 func NewAgentType(value string) (AgentType, error) {
 	switch value {
