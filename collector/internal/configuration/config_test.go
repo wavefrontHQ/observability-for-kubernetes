@@ -184,10 +184,12 @@ func TestLoadOrDie(t *testing.T) {
 		configFile, _ := os.CreateTemp(os.TempDir(), "collector-config*.yaml")
 		const testConfig = `
 clusterName: new-collector
+enableEvents: true
 
 sinks:
 - externalEndpointURL: 'https://example.com'
   type: external
+- proxyAddress: "foobar"
 
 sources:
   kubernetes_source: {}
@@ -198,6 +200,8 @@ sources:
 		cfg := LoadOrDie(configFile.Name())
 
 		require.Equal(t, "new-collector", cfg.ClusterName)
+		require.Equal(t, true, *cfg.Sinks[0].EnableEvents)
+		require.Equal(t, true, *cfg.Sinks[1].EnableEvents)
 	})
 
 	t.Run("dies when the file cannot be parsed", func(t *testing.T) {

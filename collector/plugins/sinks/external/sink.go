@@ -55,6 +55,8 @@ func (sink *ExternalSink) ExportEvent(ev *events.Event) {
 			"message": ev.Message,
 			"error":   err,
 		}).Error("[sampled error] error sending event to external event endpoint")
+	} else {
+		log.WithField("name", sink.Name()).Debug("Events push complete")
 	}
 }
 

@@ -244,6 +244,7 @@ func (sink *wavefrontSink) ExportEvent(ev *events.Event) {
 		}, "error sending event")
 		errEvents.Inc(1)
 	} else {
+		log.WithField("name", sink.Name()).Debug("Events push complete")
 		sentEvents.Inc(1)
 	}
 }
