@@ -18,35 +18,35 @@ import (
 
 // Convert converts options into a configuration instance for backwards compatibility
 func (opts *CollectorRunOptions) Convert() (*configuration.Config, error) {
-	cfg := &configuration.Config{}
-	cfg.DefaultCollectionInterval = opts.MetricResolution
-	cfg.FlushInterval = opts.MetricResolution
-	cfg.SinkExportDataTimeout = opts.SinkExportDataTimeout
-	cfg.EnableDiscovery = opts.EnableDiscovery
-	cfg.ScrapeCluster = opts.AgentType.ScrapeCluster()
+	return configuration.New(func(cfg *configuration.Config) error {
+		cfg.DefaultCollectionInterval = opts.MetricResolution
+		cfg.FlushInterval = opts.MetricResolution
+		cfg.SinkExportDataTimeout = opts.SinkExportDataTimeout
+		cfg.EnableDiscovery = opts.EnableDiscovery
 
-	if len(opts.Sources) == 0 {
-		return nil, fmt.Errorf("missing sources")
-	}
-	if len(opts.Sinks) == 0 {
-		return nil, fmt.Errorf("missing sink")
-	}
-
-	addSources(cfg, opts.Sources)
-	addSinks(cfg, opts.Sinks)
-	addInternalStatsSource(cfg, opts.InternalStatsPrefix)
-	extractSinkProperties(cfg)
-
-	if opts.EnableDiscovery {
-		cfg.DiscoveryConfig.EnableRuntimePlugins = opts.EnableRuntimeConfigs
-		if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
-			cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
+		if len(opts.Sources) == 0 {
+			return fmt.Errorf("missing sources")
 		}
-		if opts.DiscoveryConfigFile != "" {
-			cfg.DiscoveryConfig.PluginConfigs = loadDiscoveryFileOrDie(opts.DiscoveryConfigFile)
+		if len(opts.Sinks) == 0 {
+			return fmt.Errorf("missing sink")
 		}
-	}
-	return cfg, nil
+
+		addSources(cfg, opts.Sources)
+		addSinks(cfg, opts.Sinks)
+		addInternalStatsSource(cfg, opts.InternalStatsPrefix)
+		extractSinkProperties(cfg)
+
+		if opts.EnableDiscovery {
+			cfg.DiscoveryConfig.EnableRuntimePlugins = opts.EnableRuntimeConfigs
+			if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
+				cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
+			}
+			if opts.DiscoveryConfigFile != "" {
+				cfg.DiscoveryConfig.PluginConfigs = loadDiscoveryFileOrDie(opts.DiscoveryConfigFile)
+			}
+		}
+		return nil
+	})
 }
 
 // backwards compatibility: discovery config used to be a separate file. Now part of main config file.
@@ -190,7 +190,7 @@ func addSinks(cfg *configuration.Config, sinks flags.Uris) {
 }
 
 func addWavefrontSink(cfg *configuration.Config, uri flags.Uri) {
-	sink := &configuration.WavefrontSinkConfig{}
+	sink := &configuration.SinkConfig{}
 	vals := uri.Val.Query()
 
 	sink.Server = flags.DecodeValue(vals, "server")

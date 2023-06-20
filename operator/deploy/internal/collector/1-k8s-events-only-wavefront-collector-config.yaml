@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: collector
+  name: k8s-events-only-wavefront-collector-config
+  namespace: {{ .Namespace }}
+  ownerReferences:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: wavefront-controller-manager
+      uid: {{ .ControllerManagerUID }}
+  annotations:
+    wavefront.com/conditionally-provision: '{{and (not .DataCollection.Metrics.Enable) .Experimental.KubernetesEvents.Enable }}'
+data:
+  config.yaml: |
+    clusterName: {{.ClusterName}}
+    enableDiscovery: false
+    defaultCollectionInterval: {{.DataCollection.Metrics.DefaultCollectionInterval}}
+    flushInterval: 10s
+    sinkExportDataTimeout: 20s
+
+    sinks:
+    - type: "external"
+      enableEvents: true
+      externalEndpointURL: "{{ .Experimental.KubernetesEvents.ExternalEndpointURL }}"
+    sources:
+      kubernetes_source: {}

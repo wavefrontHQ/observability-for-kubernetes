@@ -12,6 +12,7 @@ function run_fake_proxy_test() {
   local METRICS_FILE_NAME=$1
   local COLLECTOR_YAML=$2
   local EXPERIMENTAL_FEATURES=$3
+  local COLLECTOR_CONFIG_YAML=$4
 
   local USE_TEST_PROXY="true"
   local PROXY_NAME="wavefront-proxy"
@@ -29,6 +30,9 @@ function run_fake_proxy_test() {
   fi
   if [[ -n "${EXPERIMENTAL_FEATURES:-}" ]]; then
     additional_args="$additional_args -e $EXPERIMENTAL_FEATURES"
+  fi
+  if [[ -n "${COLLECTOR_CONFIG_YAML:-}" ]]; then
+    additional_args="$additional_args -z $COLLECTOR_CONFIG_YAML"
   fi
 
   "${SCRIPT_DIR}"/deploy.sh \
@@ -130,6 +134,11 @@ function main() {
   if [[ "${tests_to_run[*]}" =~ "cluster-metrics-only" ]]; then
     green "\n==================== Running fake_proxy cluster-metrics-only test ===================="
     run_fake_proxy_test "cluster-metrics-only" "base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml"
+    ${SCRIPT_DIR}/clean-deploy.sh
+  fi
+  if [[ "${tests_to_run[*]}" =~ "k8s-events-only" ]]; then
+    echo "==================== Running fake_proxy k8s-events-only test ===================="
+    run_fake_proxy_test "k8s-events-only" "base/deploy/collector-deployments/5-collector-k8s-events-only.yaml" "" "$COLLECTOR_REPO_ROOT/hack/test/base/external-events-collector-config.template.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "node-metrics-only" ]]; then

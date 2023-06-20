@@ -9,6 +9,7 @@ import (
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/options"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/version"
 )
 
 var collectorArgs []string
@@ -18,10 +19,10 @@ func TestMain(m *testing.M) {
 	//version = os.Getenv("VERSION")
 	//commit = os.Getenv("GIT_COMMIT")
 
-	version = "1.12.0"
-	commit = "4930b29"
+	version.Version = "1.12.0"
+	version.Commit = "4930b29"
 
-	fmt.Println(fmt.Sprintf("attempting to run test collector for coverage data with version '%s' and commit '%s'", version, commit))
+	fmt.Println(fmt.Sprintf("attempting to run test collector for coverage data with version '%s' and commit '%s'", version.Version, version.Commit))
 
 	fmt.Println(fmt.Sprintf("arg stuff BEFORE shenanigans: collectorArgs '%+v' os.Args '%+v'", collectorArgs, os.Args))
 	collectorArgs = os.Args[2:]

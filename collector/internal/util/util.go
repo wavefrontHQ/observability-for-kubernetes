@@ -76,6 +76,7 @@ type AgentType interface {
 	ScrapeCluster() bool
 	ScrapeAnyNodes() bool
 	ScrapeOnlyOwnNode() bool
+	ClusterCollector() bool
 }
 
 func GetNodeLister(kubeClient kubernetes.Interface) (v1listers.NodeLister, *cache.Reflector, error) {
@@ -196,7 +197,11 @@ func GetFieldSelector(resourceType string) fields.Selector {
 }
 
 func ScrapeCluster() bool {
-	return agentType.ScrapeCluster()
+	return agentType != nil && agentType.ScrapeCluster()
+}
+
+func ClusterCollector() bool {
+	return agentType.ClusterCollector()
 }
 
 func SetAgentType(value AgentType) {

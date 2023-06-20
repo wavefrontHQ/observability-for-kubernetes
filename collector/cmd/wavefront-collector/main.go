@@ -15,10 +15,11 @@ import (
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/experimental"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/version"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/factory"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
 
-	gm "github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/agent"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
@@ -31,7 +32,6 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/manager"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/processors"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/summary"
 
@@ -39,11 +39,7 @@ import (
 	v1listers "k8s.io/client-go/listers/core/v1"
 )
 
-var (
-	version     string
-	commit      string
-	discWatcher util.FileWatcher
-)
+var discWatcher util.FileWatcher
 
 func main() {
 	log.SetFormatter(&log.TextFormatter{})
@@ -53,7 +49,7 @@ func main() {
 	opt := options.Parse()
 
 	if opt.Version {
-		fmt.Println(fmt.Sprintf("version: %s\ncommit: %s", version, commit))
+		fmt.Println(fmt.Sprintf("version: %s\ncommit: %s", version.Version, version.Commit))
 		os.Exit(0)
 	}
 
@@ -67,12 +63,12 @@ func main() {
 	}
 
 	log.Infof(strings.Join(os.Args, " "))
-	log.Infof("wavefront-collector version %v", version)
+	log.Infof("wavefront-collector version %v", version.Version)
 	enableProfiling(opt.EnableProfiling)
 	enableForcedGC(opt.ForceGC)
 
 	preRegister(opt)
-	cfg := loadConfigOrDie(opt.ConfigFile)
+	cfg := configuration.LoadOrDie(opt.ConfigFile)
 	cfg = convertOrDie(opt, cfg)
 	ag := createAgentOrDie(cfg)
 	registerListeners(ag, opt)
@@ -86,7 +82,7 @@ func preRegister(opt *options.CollectorRunOptions) {
 	}
 
 	setMaxProcs(opt)
-	registerVersion()
+	version.RegisterMetric()
 }
 
 func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
@@ -114,15 +110,14 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 		log.Fatalf("Failed to create source manager: %v", err)
 	}
 
-	// create sink managers
-	setInternalSinkProperties(cfg)
+	// Create sink managers. Must be done before creating event router.
 	sinkManager := createSinkManagerOrDie(cfg.Sinks, cfg.SinkExportDataTimeout)
 
 	// Events
 	var eventRouter *events.EventRouter
-	if cfg.EnableEvents {
+	if cfg.EventsAreEnabled() {
 		events.Log.Info("Events collection enabled")
-		eventRouter = events.NewEventRouter(kubeClient, cfg.EventsConfig, sinkManager, cfg.ScrapeCluster)
+		eventRouter = events.NewEventRouter(kubeClient, cfg.EventsConfig, sinkManager, util.ScrapeCluster())
 	} else {
 		events.Log.Info("Events collection disabled")
 	}
@@ -138,7 +133,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// start leader-election
-	if cfg.ScrapeCluster {
+	if util.ScrapeCluster() {
 		_, err = leadership.Subscribe(kubeClient, "agent")
 	}
 	if err != nil {
@@ -149,78 +144,6 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	ag := agent.NewAgent(man, dm, eventRouter)
 	ag.Start()
 	return ag
-}
-
-func loadConfigOrDie(file string) *configuration.Config {
-	if file == "" {
-		return nil
-	}
-	log.Infof("loading config: %s", file)
-
-	cfg, err := configuration.FromFile(file)
-	if err != nil {
-		log.Fatalf("error parsing configuration: %v", err)
-		return nil
-	}
-	fillDefaults(cfg)
-
-	if err := validateCfg(cfg); err != nil {
-		log.Fatalf("invalid configuration file: %v", err)
-		return nil
-	}
-
-	return cfg
-}
-
-// use defaults if no values specified in config file
-func fillDefaults(cfg *configuration.Config) {
-	if cfg.FlushInterval == 0 {
-		cfg.FlushInterval = 60 * time.Second
-	}
-	if cfg.DefaultCollectionInterval == 0 {
-		cfg.DefaultCollectionInterval = 60 * time.Second
-	}
-	if cfg.SinkExportDataTimeout == 0 {
-		cfg.SinkExportDataTimeout = 20 * time.Second
-	}
-	if cfg.ClusterName == "" {
-		cfg.ClusterName = "k8s-cluster"
-	}
-	if cfg.DiscoveryConfig.DiscoveryInterval == 0 {
-		cfg.DiscoveryConfig.DiscoveryInterval = 5 * time.Minute
-	}
-
-	cfg.ScrapeCluster = util.ScrapeCluster()
-}
-
-// converts flags to configuration for backwards compatibility support
-func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *configuration.Config {
-	// omit flags if config file is provided
-	if cfg != nil {
-		log.Info("using configuration file, omitting flags")
-		return cfg
-	}
-	optsCfg, err := opt.Convert()
-	if err != nil {
-		log.Fatalf("error converting flags to config: %v", err)
-	}
-	fillDefaults(optsCfg)
-	return optsCfg
-}
-
-func setInternalSinkProperties(cfg *configuration.Config) {
-	log.Infof("using clusterName: %s", cfg.ClusterName)
-	prefix := ""
-	if cfg.Sources.StatsConfig != nil {
-		prefix = configuration.GetStringValue(cfg.Sources.StatsConfig.Prefix, "kubernetes.")
-	}
-	version := getVersion()
-	for _, sink := range cfg.Sinks {
-		sink.ClusterName = cfg.ClusterName
-		sink.InternalStatsPrefix = prefix
-		sink.Version = version
-		sink.EventsEnabled = cfg.EnableEvents
-	}
 }
 
 func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
@@ -247,30 +170,14 @@ func createDiscoveryManagerOrDie(
 			DiscoveryConfig: cfg.DiscoveryConfig,
 			Handler:         handler,
 			Lister:          discovery.NewResourceLister(podLister, serviceLister, nodeLister),
-			ScrapeCluster:   cfg.ScrapeCluster,
+			ScrapeCluster:   util.ScrapeCluster(),
 		})
 	}
 	return nil
 }
 
-func registerVersion() {
-	version := getVersion()
-	m := gm.GetOrRegisterGaugeFloat64("version", gm.DefaultRegistry)
-	m.Update(version)
-}
-
-func getVersion() float64 {
-	parts := strings.Split(version, ".")
-	friendly := fmt.Sprintf("%s.%s%s", parts[0], parts[1], parts[2])
-	f, err := strconv.ParseFloat(friendly, 2)
-	if err != nil {
-		f = 0.0
-	}
-	return f
-}
-
-func createSinkManagerOrDie(cfgs []*configuration.WavefrontSinkConfig, sinkExportDataTimeout time.Duration) wavefront.WavefrontSink {
-	sinksFactory := sinks.NewSinkFactory()
+func createSinkManagerOrDie(cfgs []*configuration.SinkConfig, sinkExportDataTimeout time.Duration) sinks.Sink {
+	sinksFactory := factory.NewSinkFactory()
 	sinkList := sinksFactory.BuildAll(cfgs)
 
 	for _, sink := range sinkList {
@@ -388,22 +295,6 @@ func getNodeListerOrDie(kubeClient *kube_client.Clientset) v1listers.NodeLister 
 	return nodeLister
 }
 
-func validateCfg(cfg *configuration.Config) error {
-	if cfg.FlushInterval < 5*time.Second {
-		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.FlushInterval)
-	}
-	if cfg.Sources == nil {
-		return fmt.Errorf("missing sources")
-	}
-	if cfg.Sources.SummaryConfig == nil {
-		return fmt.Errorf("kubernetes_source is missing")
-	}
-	if len(cfg.Sinks) == 0 {
-		return fmt.Errorf("missing sink")
-	}
-	return nil
-}
-
 func setMaxProcs(opt *options.CollectorRunOptions) {
 	// Allow as many threads as we have cores unless the user specified a value.
 	var numProcs int
@@ -474,9 +365,21 @@ func (r *reloader) Handle(cfg interface{}) {
 func (r *reloader) handleCollectorCfg(cfg *configuration.Config) {
 	log.Infof("collector configuration changed")
 
-	fillDefaults(cfg)
-
 	// stop the previous agent and start a new agent
 	r.ag.Stop()
 	r.ag = createAgentOrDie(cfg)
+}
+
+// converts flags to configuration for backwards compatibility support
+func convertOrDie(opt *options.CollectorRunOptions, cfg *configuration.Config) *configuration.Config {
+	// omit flags if config file is provided
+	if cfg != nil {
+		log.Info("using configuration file, omitting flags")
+		return cfg
+	}
+	optsCfg, err := opt.Convert()
+	if err != nil {
+		log.Fatalf("error converting flags to config: %v", err)
+	}
+	return optsCfg
 }

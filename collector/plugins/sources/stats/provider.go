@@ -7,11 +7,10 @@ package stats
 import (
 	"sync"
 
+	gometrics "github.com/rcrowley/go-metrics"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
-
-	gometrics "github.com/rcrowley/go-metrics"
 )
 
 var doOnce sync.Once

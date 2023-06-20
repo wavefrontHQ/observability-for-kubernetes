@@ -274,16 +274,20 @@ func (skm MockKubernetesManager) CollectorServiceAccountContains(checks ...strin
 	)
 }
 
-func (skm MockKubernetesManager) CollectorConfigMapContains(checks ...string) bool {
+func (skm MockKubernetesManager) ConfigMapContains(configMapName string, checks ...string) bool {
 	return contains(
 		skm.appliedYAMLs,
 		"v1",
 		"ConfigMap",
 		"wavefront",
 		"collector",
-		"default-wavefront-collector-config",
+		configMapName,
 		checks...,
 	)
+}
+
+func (skm MockKubernetesManager) CollectorConfigMapContains(checks ...string) bool {
+	return skm.ConfigMapContains("default-wavefront-collector-config", checks...)
 }
 
 func (skm MockKubernetesManager) ProxyPreprocessorRulesConfigMapContains(checks ...string) bool {

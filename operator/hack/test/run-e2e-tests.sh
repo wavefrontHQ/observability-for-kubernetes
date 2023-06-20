@@ -139,6 +139,20 @@ function run_proxy_checks() {
   echo " done."
 }
 
+function run_k8s_events_checks() {
+  local event_push_count=0
+  printf "Running k8s_events checks ..."
+
+  event_push_count=$(kubectl logs deployment/wavefront-cluster-collector -n $NS | grep "msg=\"Events push complete\" name=k8s_events_sink" | wc -l | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+  if [[ $event_push_count -eq 0 ]]; then
+    red "Expected Events push complete name=k8s_events_sink"
+    kubectl logs deployment/wavefront-cluster-collector -n $NS | tail
+    exit 1
+  fi
+
+  echo " done."
+}
+
 function clean_up_test() {
   local type=$1
   echo "Cleaning Up Test '$type' ..."
@@ -463,6 +477,10 @@ function run_test() {
     run_logging_integration_checks
   fi
 
+  if [[ " ${checks[*]} " =~ " k8s_events " ]]; then
+    run_k8s_events_checks
+  fi
+
 	if ! $NO_CLEANUP; then
 		clean_up_test $type
 	fi
@@ -535,6 +553,7 @@ function main() {
       "advanced"
       "logging-integration"
       "with-http-proxy"
+      "k8s-events-only"
     )
   fi
 
@@ -578,6 +597,9 @@ function main() {
   if [[ " ${tests_to_run[*]} " =~ " control-plane " ]]; then
     run_test "control-plane" "test_control_plane_metrics"
   fi
+#  if [[ " ${tests_to_run[*]} " =~ " k8s-events-only " ]]; then
+#    run_test "k8s-events-only" "k8s_events"
+#  fi
 }
 
 main "$@"

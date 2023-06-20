@@ -247,7 +247,7 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 func enabledDirs(spec wf.WavefrontSpec) []string {
 	return dirList(
 		spec.DataExport.WavefrontProxy.Enable,
-		spec.CanExportData && spec.DataCollection.Metrics.Enable,
+		(spec.CanExportData && spec.DataCollection.Metrics.Enable) || spec.Experimental.KubernetesEvents.Enable,
 		spec.CanExportData && spec.DataCollection.Logging.Enable,
 		spec.CanExportData && spec.Experimental.AutoInstrumentation.Enable,
 	)
@@ -405,6 +405,8 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		} else {
 			wavefront.Spec.DataCollection.Metrics.CollectorConfigName = wavefront.Spec.DataCollection.Metrics.CustomConfig
 		}
+	} else if wavefront.Spec.Experimental.KubernetesEvents.Enable {
+		wavefront.Spec.DataCollection.Metrics.CollectorConfigName = "k8s-events-only-wavefront-collector-config"
 	}
 
 	wavefront.Spec.DataExport.WavefrontProxy.AvailableReplicas = 1

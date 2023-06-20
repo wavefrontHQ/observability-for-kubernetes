@@ -33,7 +33,7 @@ GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 # for testing, the built image will also be tagged with this name provided via an environment variable
 OVERRIDE_IMAGE_NAME?=${COLLECTOR_TEST_IMAGE}
 
-LDFLAGS=-w -X main.version=$(NEXT_RELEASE_VERSION) -X main.commit=$(GIT_COMMIT)
+LDFLAGS=-w -X github.com/wavefronthq/observability-for-kubernetes/collector/internal/version.Version=$(NEXT_RELEASE_VERSION) -X github.com/wavefronthq/observability-for-kubernetes/collector/internal/version.Commit=$(GIT_COMMIT)
 
 .PHONY: release
 

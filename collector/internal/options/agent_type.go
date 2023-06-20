@@ -7,8 +7,8 @@ type AgentType string
 const (
 	AllAgentType     AgentType = "all"
 	ClusterAgentType AgentType = "cluster"
-	NodeAgentType    AgentType = "node"
 	LegacyAgentType  AgentType = "legacy"
+	NodeAgentType    AgentType = "node"
 )
 
 var InvalidAgentTypeErr = errors.New("--agent can only be node, cluster, all or legacy")
@@ -43,6 +43,10 @@ func (a AgentType) Type() string {
 
 func (a AgentType) ScrapeCluster() bool {
 	return a == AllAgentType || a == LegacyAgentType || a == ClusterAgentType
+}
+
+func (a AgentType) ClusterCollector() bool {
+	return a.ScrapeCluster()
 }
 
 func (a AgentType) ScrapeNodes() string {

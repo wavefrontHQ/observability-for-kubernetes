@@ -1307,6 +1307,31 @@ func TestReconcileAutoInstrumentation(t *testing.T) {
 }
 
 func TestReconcileKubernetesEvents(t *testing.T) {
+	t.Run("k8s events only", func(t *testing.T) {
+		r, mockKM := componentScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.KubernetesEvents.Enable = true
+			wavefront.Spec.Experimental.KubernetesEvents.ExternalEndpointURL = "https://example.com"
+			wavefront.Spec.DataExport.WavefrontProxy.Enable = false
+			wavefront.Spec.DataCollection.Metrics.Enable = false
+			wavefront.Spec.DataCollection.Logging.Enable = false
+		}), nil)
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.True(t, mockKM.CollectorServiceAccountContains())
+		require.True(t, mockKM.ClusterCollectorDeploymentContains())
+		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "externalEndpointURL: \"https://example.com\""))
+		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "enableEvents: true"))
+		require.False(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "proxyAddress", "kubeletHttps", "kubernetes_state_source"))
+		require.False(t, mockKM.CollectorConfigMapContains())
+
+		require.False(t, mockKM.NodeCollectorDaemonSetContains())
+		require.False(t, mockKM.LoggingDaemonSetContains())
+		require.False(t, mockKM.ProxyServiceContains())
+		require.False(t, mockKM.ProxyDeploymentContains())
+	})
+
 	t.Run("can enable kubernetes events", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.KubernetesEvents.Enable = true
@@ -1317,8 +1342,9 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 
 		require.NoError(t, err)
 
-		require.True(t, mockKM.CollectorConfigMapContains("enableEvents: true"))
-		require.True(t, mockKM.CollectorConfigMapContains("eventsExternalEndpointURL: \"https://example.com\""))
+		require.True(t, mockKM.CollectorConfigMapContains("enableEvents: false"))
+		require.True(t, mockKM.CollectorConfigMapContains("type: \"external\"\n      enableEvents: true"))
+		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \"https://example.com\""))
 	})
 }
 

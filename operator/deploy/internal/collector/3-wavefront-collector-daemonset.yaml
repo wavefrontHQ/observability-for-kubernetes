@@ -24,6 +24,7 @@ spec:
       annotations:
         installation-method: operator
         proxy-available-replicas: "{{ .DataExport.WavefrontProxy.AvailableReplicas }}"
+        wavefront.com/conditionally-provision: '{{ .DataCollection.Metrics.Enable }}'
     spec:
       securityContext:
         runAsNonRoot: true

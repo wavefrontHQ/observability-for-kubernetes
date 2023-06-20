@@ -45,8 +45,6 @@ func TestAddEvent(t *testing.T) {
 	assert.Equal(t, "test-name", sink.Annotations["resource_name"])
 	assert.NotContains(t, sink.Annotations, "pod_name")
 	assert.Equal(t, "test-namespace", event.InvolvedObject.Namespace)
-	assert.NotContains(t, sink.Labels, "workloadName")
-	assert.NotContains(t, sink.Labels, "workloadKind")
 }
 
 func TestAddEventHasWorkload(t *testing.T) {
@@ -84,8 +82,6 @@ func TestAddEventHasWorkload(t *testing.T) {
 	assert.Equal(t, fakePod.Name, sink.Annotations["pod_name"])
 	assert.NotContains(t, sink.Annotations, "resource_name")
 	assert.Equal(t, fakePod.Namespace, event.InvolvedObject.Namespace)
-	assert.Equal(t, fakePod.Name, sink.Labels["workloadName"])
-	assert.Equal(t, fakePod.Kind, sink.Labels["workloadKind"])
 }
 
 type MockExport struct {

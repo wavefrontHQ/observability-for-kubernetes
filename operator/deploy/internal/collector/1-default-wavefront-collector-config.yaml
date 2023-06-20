@@ -12,12 +12,12 @@ metadata:
       name: wavefront-controller-manager
       uid: {{ .ControllerManagerUID }}
   annotations:
-    wavefront.com/conditionally-provision: '{{ not .DataCollection.Metrics.CustomConfig }}'
+    wavefront.com/conditionally-provision: '{{and (not .DataCollection.Metrics.CustomConfig) .DataCollection.Metrics.Enable }}'
 data:
   config.yaml: |
     clusterName: {{.ClusterName}}
     enableDiscovery: {{.DataCollection.Metrics.EnableDiscovery}}
-    enableEvents: {{.Experimental.KubernetesEvents.Enable}}
+    enableEvents: false
     defaultCollectionInterval: {{.DataCollection.Metrics.DefaultCollectionInterval}}
     flushInterval: 10s
     sinkExportDataTimeout: 20s
@@ -46,7 +46,9 @@ data:
         - label?pod?template*
         - annotation_kubectl_kubernetes_io_last_applied_configuration
     {{- if .Experimental.KubernetesEvents.Enable }}
-      eventsExternalEndpointURL: "{{ .Experimental.KubernetesEvents.ExternalEndpointURL }}"
+    - type: "external"
+      enableEvents: true
+      externalEndpointURL: "{{ .Experimental.KubernetesEvents.ExternalEndpointURL }}"
     {{- end }}
     sources:
       kubernetes_source:

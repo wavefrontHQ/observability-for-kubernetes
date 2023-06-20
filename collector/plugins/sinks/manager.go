@@ -24,8 +24,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
-
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
@@ -47,7 +45,7 @@ func init() {
 }
 
 type sinkHolder struct {
-	sink              wavefront.WavefrontSink
+	sink              Sink
 	dataBatchChannel  chan *metrics.Batch
 	eventBatchChannel chan *events.Event
 	stopChannel       chan bool
@@ -62,7 +60,7 @@ type sinkManager struct {
 	stopTimeout       time.Duration
 }
 
-func NewSinkManager(sinks []wavefront.WavefrontSink, exportDataTimeout, stopTimeout time.Duration) (wavefront.WavefrontSink, error) {
+func NewSinkManager(sinks []Sink, exportDataTimeout, stopTimeout time.Duration) (Sink, error) {
 	var sinkHolders []sinkHolder
 	for _, sink := range sinks {
 		sh := sinkHolder{
@@ -103,14 +101,14 @@ func (sm *sinkManager) Export(data *metrics.Batch) {
 		wg.Add(1)
 		go func(sh sinkHolder, wg *sync.WaitGroup) {
 			defer wg.Done()
-			log.WithField("name", sh.sink.Name()).Debug("Pushing data to sink")
+			log.WithField("name", sh.sink.Name()).Debug("Pushing metrics to sink")
 			select {
 			case sh.dataBatchChannel <- data:
-				log.WithField("name", sh.sink.Name()).Info("Data push complete")
+				log.WithField("name", sh.sink.Name()).Info("Pushing metrics to sink complete")
 				// everything ok
 			case <-time.After(sm.exportDataTimeout):
 				sinkTimeouts.Inc(1)
-				log.WithField("name", sh.sink.Name()).Info("Data push timed out. Increasing sinkExportDataTimeout may help.")
+				log.WithField("name", sh.sink.Name()).Error("Pushing metrics to sink timed out. Increasing sinkExportDataTimeout may help.")
 			}
 		}(sh, &wg)
 	}
@@ -127,11 +125,11 @@ func (sm *sinkManager) ExportEvent(event *events.Event) {
 			log.WithField("name", sh.sink.Name()).Debug("Pushing Events to sink")
 			select {
 			case sh.eventBatchChannel <- event:
-				log.WithField("name", sh.sink.Name()).Info("Events push complete")
+				log.WithField("name", sh.sink.Name()).Debug("Pushing Events to sink complete")
 				// everything ok
 			case <-time.After(sm.exportDataTimeout):
 				sinkTimeouts.Inc(1)
-				log.WithField("name", sh.sink.Name()).Info("Events push failed")
+				log.WithField("name", sh.sink.Name()).Error("Pushing Events to sink timed out")
 			}
 		}(sh, &wg)
 	}

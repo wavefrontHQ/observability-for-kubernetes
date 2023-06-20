@@ -27,4 +27,12 @@ func TestAgentType(t *testing.T) {
 		assert.True(t, NodeAgentType.ScrapeOnlyOwnNode())
 		assert.False(t, ClusterAgentType.ScrapeOnlyOwnNode())
 	})
+
+	t.Run("ClusterCollector", func(t *testing.T) {
+		assert.True(t, AllAgentType.ClusterCollector())
+		assert.True(t, LegacyAgentType.ClusterCollector())
+		assert.False(t, NodeAgentType.ClusterCollector())
+		assert.True(t, ClusterAgentType.ClusterCollector())
+	})
+
 }

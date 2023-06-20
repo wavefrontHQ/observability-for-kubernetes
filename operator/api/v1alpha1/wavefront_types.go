@@ -34,7 +34,7 @@ type WavefrontSpec struct {
 
 	// Wavefront URL for your cluster
 	// +kubebuilder:validation:Pattern:=`^https:\/\/.*.wavefront.com`
-	WavefrontUrl string `json:"wavefrontUrl,required"`
+	WavefrontUrl string `json:"wavefrontUrl,omitempty"`
 
 	// WavefrontTokenSecret is the name of the secret that contains a wavefront API Token.
 	// +kubebuilder:validation:MaxLength:=253

@@ -6,12 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
-
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/wavefront"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 
 	gometrics "github.com/rcrowley/go-metrics"
@@ -35,7 +33,7 @@ type EventRouter struct {
 	kubeClient        kubernetes.Interface
 	eLister           corelisters.EventLister
 	eListerSynced     cache.InformerSynced
-	sink              wavefront.WavefrontSink
+	sink              sinks.Sink
 	sharedInformers   informers.SharedInformerFactory
 	stop              chan struct{}
 	scrapeCluster     bool
@@ -43,7 +41,7 @@ type EventRouter struct {
 	filters           eventFilter
 }
 
-func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink wavefront.WavefrontSink, scrapeCluster bool) *EventRouter {
+func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink sinks.Sink, scrapeCluster bool) *EventRouter {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
 
@@ -119,11 +117,6 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		ns = "default"
 	}
 
-	var workloadName, workloadKind string
-	if e.InvolvedObject.Kind == "Pod" {
-		workloadName, workloadKind = util.GetWorkloadForPod(er.kubeClient, e.InvolvedObject.Name, ns)
-	}
-
 	tags := map[string]string{
 		"namespace_name": ns,
 		"kind":           e.InvolvedObject.Kind,
@@ -159,28 +152,19 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		e.Message,
 		e.LastTimestamp.Time,
 		e.Source.Host,
-		workloadName,
-		workloadKind,
 		tags,
 		*e,
 		event.Type(eType),
 	))
 }
 
-func newEvent(message string, ts time.Time, host string, workloadName string, workloadKind string, tags map[string]string, coreV1Event v1.Event, options ...event.Option) *events.Event {
+func newEvent(message string, ts time.Time, host string, tags map[string]string, coreV1Event v1.Event, options ...event.Option) *events.Event {
 	// convert tags to annotations
 	for k, v := range tags {
 		options = append(options, event.Annotate(k, v))
 	}
 
 	labels := make(map[string]string)
-	if workloadName != "" {
-		labels["workloadName"] = workloadName
-	}
-	if workloadKind != "" {
-		labels["workloadKind"] = workloadKind
-	}
-
 	return &events.Event{
 		Message: message,
 		Ts:      ts,

@@ -38,10 +38,11 @@ function main() {
   local VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)"
   local K8S_CLUSTER_NAME=
   local COLLECTOR_YAML=
+  local COLLECTOR_CONFIG_YAML=
   local USE_TEST_PROXY="false"
   local EXPERIMENTAL_FEATURES=
 
-  while getopts "c:t:v:k:n:e:y:p:" opt; do
+  while getopts "c:t:v:k:n:e:y:p:z:" opt; do
     case $opt in
       c)  WF_CLUSTER="$OPTARG" ;;
       t)  WAVEFRONT_TOKEN="$OPTARG" ;;
@@ -51,6 +52,7 @@ function main() {
       y)  COLLECTOR_YAML="$OPTARG" ;;
       p)  USE_TEST_PROXY="$OPTARG" ;;
       e)  EXPERIMENTAL_FEATURES="$OPTARG" ;;
+      z)  COLLECTOR_CONFIG_YAML="$OPTARG" ;;
       \?) print_usage_and_exit "Invalid option: -$OPTARG" ;;
     esac
   done
@@ -65,6 +67,9 @@ function main() {
   fi
   if [[ -n "${EXPERIMENTAL_FEATURES:-}" ]]; then
     additional_args="$additional_args -e $EXPERIMENTAL_FEATURES"
+  fi
+  if [[ -n "${COLLECTOR_CONFIG_YAML:-}" ]]; then
+      additional_args="$additional_args -z $COLLECTOR_CONFIG_YAML"
   fi
 
   "${SCRIPT_DIR}"/generate.sh \

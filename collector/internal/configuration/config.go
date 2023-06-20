@@ -4,13 +4,22 @@
 package configuration
 
 import (
+	"fmt"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/httputil"
-
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	"k8s.io/client-go/kubernetes"
+)
+
+type SinkType string
+
+const (
+	WavefrontSinkType SinkType = ""
+	ExternalSinkType  SinkType = "external"
 )
 
 // The main configuration struct that drives the Wavefront collector
@@ -26,7 +35,7 @@ type Config struct {
 	// whether auto-discovery is enabled.
 	EnableDiscovery bool `yaml:"enableDiscovery"`
 
-	// whether Events is enabled.
+	// whether exporting Kubernetes Events to Wavefront is enabled.
 	EnableEvents bool `yaml:"enableEvents"`
 
 	// A unique identifier for your Kubernetes cluster. Defaults to k8s-cluster.
@@ -34,7 +43,7 @@ type Config struct {
 	ClusterName string `yaml:"clusterName"`
 
 	// list of Wavefront sinks. At least 1 is required.
-	Sinks []*WavefrontSinkConfig `yaml:"sinks"`
+	Sinks []*SinkConfig `yaml:"sinks"`
 
 	// list of sources. SummarySource is mandatory. Others are optional.
 	Sources *SourceConfig `yaml:"sources"`
@@ -48,9 +57,15 @@ type Config struct {
 	OmitBucketSuffix bool `yaml:"omitBucketSuffix"`
 
 	Experimental []string `yaml:"experimental"`
+}
 
-	// Internal use only
-	ScrapeCluster bool `yaml:"-"`
+func (c *Config) EventsAreEnabled() bool {
+	for _, sinkCfg := range c.Sinks {
+		if sinkCfg.EnableEvents != nil && *sinkCfg.EnableEvents {
+			return true
+		}
+	}
+	return false
 }
 
 type EventsConfig struct {
@@ -102,9 +117,15 @@ type Transforms struct {
 	ConvertHistograms bool `yaml:"convertHistograms"`
 }
 
-// Configuration options for the Wavefront sink
-type WavefrontSinkConfig struct {
+// SinkConfig Configuration options for sinks (either Wavefront or External)
+type SinkConfig struct {
 	Transforms `yaml:",inline"`
+
+	// Sink type, possible options ('' or 'external'). Defaults to '' which is the Wavefront sink.
+	Type SinkType `yaml:"type,omitempty"`
+
+	// Whether event collection has been enabled
+	EnableEvents *bool `yaml:"enableEvents"`
 
 	//  The Wavefront URL of the form https://YOUR_INSTANCE.wavefront.com. Only required for direct ingestion.
 	Server string `yaml:"server"`
@@ -129,21 +150,18 @@ type WavefrontSinkConfig struct {
 	ErrorLogPercent float32 `yaml:"errorLogPercent"`
 
 	// External endpoint url set for events
-	EventsExternalEndpointURL string `yaml:"eventsExternalEndpointURL"`
+	ExternalEndpointURL string `yaml:"externalEndpointURL"`
 
 	// Note: Properties below are for internal use only. These cannot be set via the configuration file.
 
 	// Internal: Cluster name pulled in from the top level property.
 	ClusterName string `yaml:"-"`
 
-	// Internal: Collector version pulled in from top level. Used for the heartbeat metric.
-	Version float64 `yaml:"-"`
+	// Internal: Cluster UUID pulled in from the top level property.
+	ClusterUUID string `yaml:"-"`
 
 	// Internal: The prefix used for internal stats. Used for the heartbeat metric.
 	InternalStatsPrefix string `yaml:"-"`
-
-	// Internal: Whether event collection has been enabled
-	EventsEnabled bool `yaml:"-"`
 }
 
 type CollectionConfig struct {
@@ -254,4 +272,71 @@ type KubernetesStateSourceConfig struct {
 
 	// internal use only
 	KubeClient *kubernetes.Clientset `yaml:"-"`
+}
+
+// New creates a Config with defaults
+func New(initialize func(*Config) error) (*Config, error) {
+	cfg := &Config{
+		FlushInterval:             30 * time.Second,
+		DefaultCollectionInterval: 60 * time.Second,
+		SinkExportDataTimeout:     20 * time.Second,
+		ClusterName:               "k8s-cluster",
+		DiscoveryConfig: discovery.Config{
+			DiscoveryInterval: 5 * time.Minute,
+		},
+	}
+	if err := initialize(cfg); err != nil {
+		return nil, err
+	}
+	if err := validateCfg(cfg); err != nil {
+		return nil, err
+	}
+	reconcileGlobalProperties(cfg)
+	return cfg, nil
+}
+
+func reconcileGlobalProperties(cfg *Config) {
+	log.Infof("using clusterName: %s", cfg.ClusterName)
+	prefix := ""
+	if cfg.Sources.StatsConfig != nil {
+		prefix = GetStringValue(cfg.Sources.StatsConfig.Prefix, "kubernetes.")
+	}
+	enableEvents := cfg.EnableEvents
+	for _, sinkCfg := range cfg.Sinks {
+		sinkCfg.ClusterName = cfg.ClusterName
+		sinkCfg.ClusterUUID = util.GetClusterUUID()
+		sinkCfg.InternalStatsPrefix = prefix
+		if sinkCfg.EnableEvents == nil {
+			sinkCfg.EnableEvents = &enableEvents
+		}
+	}
+}
+
+func validateCfg(cfg *Config) error {
+	if cfg.FlushInterval < 5*time.Second {
+		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.FlushInterval)
+	}
+	if cfg.Sources == nil {
+		return fmt.Errorf("missing sources")
+	}
+	if cfg.Sources.SummaryConfig == nil {
+		return fmt.Errorf("kubernetes_source is missing")
+	}
+	if len(cfg.Sinks) == 0 {
+		return fmt.Errorf("missing sink")
+	}
+	return nil
+}
+
+func LoadOrDie(file string) *Config {
+	if file == "" {
+		return nil
+	}
+	log.Infof("loading config: %s", file)
+	cfg, err := FromFile(file)
+	if err != nil {
+		log.Fatalf("invalid configuration file: %v", err)
+		return nil
+	}
+	return cfg
 }
