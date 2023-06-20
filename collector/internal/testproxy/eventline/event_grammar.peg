@@ -1,4 +1,4 @@
-package events
+package eventline
 
 type EventGrammar Peg {
     Name string

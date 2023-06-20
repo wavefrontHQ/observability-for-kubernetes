@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/handlers"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/logs"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metricline"
 )
 
 var (
@@ -69,7 +69,7 @@ func main() {
 		log.SetLevel(log.InfoLevel)
 	}
 
-	metricStore := metrics.NewMetricStore()
+	metricStore := metricline.NewStore()
 
 	logStore := logs.NewLogResults(copyStringMap(optionalTags))
 
@@ -100,7 +100,7 @@ func main() {
 	log.Println("Server gracefully shutdown")
 }
 
-func serveMetrics(store *metrics.MetricStore) {
+func serveMetrics(store *metricline.Store) {
 	log.Infof("tcp metrics server listening on %s", proxyAddr)
 	listener, err := net.Listen("tcp", proxyAddr)
 	if err != nil {
@@ -132,7 +132,7 @@ func serveLogs(store *logs.Results) {
 	}
 }
 
-func serveControl(metricStore *metrics.MetricStore, logStore *logs.Results) {
+func serveControl(metricStore *metricline.Store, logStore *logs.Results) {
 	controlServeMux := http.NewServeMux()
 
 	controlServeMux.HandleFunc("/metrics", handlers.DumpMetricsHandler(metricStore))

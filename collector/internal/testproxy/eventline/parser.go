@@ -1,4 +1,4 @@
-package events
+package eventline
 
 type Event struct {
 	Name        string

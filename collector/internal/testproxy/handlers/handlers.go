@@ -10,7 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/logs"
-	metrics2 "github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metricline"
 )
 
 func LogJsonArrayHandler(logVerifier *logs.LogVerifier) http.HandlerFunc {
@@ -104,7 +104,7 @@ func LogAssertionHandler(store *logs.Results) http.HandlerFunc {
 	}
 }
 
-func HandleIncomingMetrics(store *metrics2.MetricStore, conn net.Conn) {
+func HandleIncomingMetrics(store *metricline.Store, conn net.Conn) {
 	defer conn.Close()
 	lines := bufio.NewScanner(conn)
 
@@ -114,7 +114,7 @@ func HandleIncomingMetrics(store *metrics2.MetricStore, conn net.Conn) {
 		}
 		str := lines.Text()
 
-		metric, err := metrics2.ParseMetric(str)
+		metric, err := metricline.Parse(str)
 		if err != nil {
 			log.Error(err.Error())
 			log.Error(lines.Text())
@@ -139,7 +139,7 @@ func HandleIncomingMetrics(store *metrics2.MetricStore, conn net.Conn) {
 	return
 }
 
-func DumpMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
+func DumpMetricsHandler(store *metricline.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Infof("******* req received in DumpMetricsHandler: '%+v'", req)
 		if req.Method != http.MethodGet {
@@ -167,7 +167,7 @@ func DumpMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
 	}
 }
 
-func DiffMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
+func DiffMetricsHandler(store *metricline.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -185,8 +185,8 @@ func DiffMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
 			return
 		}
 
-		var expectedMetrics []*metrics2.Metric
-		var excludedMetrics []*metrics2.Metric
+		var expectedMetrics []*metricline.Metric
+		var excludedMetrics []*metricline.Metric
 		lines := bufio.NewScanner(req.Body)
 		defer req.Body.Close()
 
@@ -196,11 +196,11 @@ func DiffMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
 			}
 			var err error
 			if lines.Bytes()[0] == '~' {
-				var excludedMetric *metrics2.Metric
+				var excludedMetric *metricline.Metric
 				excludedMetric, err = decodeMetric(lines.Bytes()[1:])
 				excludedMetrics = append(excludedMetrics, excludedMetric)
 			} else {
-				var expectedMetric *metrics2.Metric
+				var expectedMetric *metricline.Metric
 				expectedMetric, err = decodeMetric(lines.Bytes())
 				expectedMetrics = append(expectedMetrics, expectedMetric)
 			}
@@ -226,15 +226,15 @@ func DiffMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 
-		linesErr = json.NewEncoder(w).Encode(metrics2.DiffMetrics(expectedMetrics, excludedMetrics, store.Metrics()))
+		linesErr = json.NewEncoder(w).Encode(metricline.DiffMetrics(expectedMetrics, excludedMetrics, store.Metrics()))
 		if linesErr != nil {
 			log.Error(linesErr.Error())
 		}
 	}
 }
 
-func decodeMetric(bytes []byte) (*metrics2.Metric, error) {
-	var metric *metrics2.Metric
+func decodeMetric(bytes []byte) (*metricline.Metric, error) {
+	var metric *metricline.Metric
 	err := json.Unmarshal(bytes, &metric)
 	return metric, err
 }
