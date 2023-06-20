@@ -68,4 +68,16 @@ func TestParse(t *testing.T) {
 		event, _ := Parse("@Event 123 456 name someannotation=\"!@#$%^&*()abcd1231241234\"")
 		require.Equal(t, "!@#$%^&*()abcd1231241234", event.Annotations["someannotation"])
 	})
+
+	t.Run("parses escaped quotes in annotations properly", func(t *testing.T) {
+		event, _ := Parse(`@Event 123 456 name someannotation="foo\"bar"`)
+		require.Equal(t, `foo"bar`, event.Annotations["someannotation"])
+	})
+
+	t.Run("fails to parse annotations which do not end with a quote", func(t *testing.T) {
+		_, err := Parse(`@Event 123 456 name someannotation="foo`)
+		require.ErrorContains(t, err, "invalid annotation value")
+	})
+
+	// TODO support tags
 }

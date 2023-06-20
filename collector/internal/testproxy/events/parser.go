@@ -74,24 +74,39 @@ func parseToken(isToken func(rune) bool, line string) (token string, rest string
 	return token, line[len(token):]
 }
 
-func surroundedBy(isToken func(rune) bool, isSeparator func(rune) bool, line string) (string, string) {
+// Returns token and rest of line
+func surroundedBy(isToken func(rune) bool, isBoundary func(rune) bool, line string) (string, string) {
 	if len(line) == 0 {
 		return "", line
 	}
 	runes := []rune(line)
-	if !isSeparator(runes[0]) {
+	if !isBoundary(runes[0]) {
 		return "", line
 	}
-	return endsWith(isToken, isSeparator, string(runes[1:]))
+
+	var token string
+	runesConsumed := 2 // boundary characters
+	for i, r := range runes[1:] {
+		if isBoundary(r) {
+			if runes[i] == '\\' {
+				token = token[:len(token)-1]
+			} else {
+				break
+			}
+		}
+		runesConsumed += 1
+		token += string(r)
+	}
+	return token, line[runesConsumed:]
 }
 
-func endsWith(isToken func(rune) bool, isSeparator func(rune) bool, line string) (string, string) {
+func endsWith(isToken func(rune) bool, isBoundary func(rune) bool, line string) (string, string) {
 	token, rest := parseToken(isToken, line)
 	if len(rest) == 0 {
 		return "", line
 	}
 	runes := []rune(rest)
-	if !isSeparator(runes[0]) {
+	if !isBoundary(runes[0]) {
 		return "", line
 	}
 	return token, string(runes[1:])
