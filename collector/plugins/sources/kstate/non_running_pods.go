@@ -18,21 +18,26 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 )
 
-func pointsForNonRunningPods(item interface{}, transforms configuration.Transforms) []wf.Metric {
-	pod, ok := item.(*v1.Pod)
-	if !ok {
-		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
-		return nil
+func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interface{}, transforms configuration.Transforms) []wf.Metric {
+	return func(item interface{}, transforms configuration.Transforms) []wf.Metric {
+		pod, ok := item.(*v1.Pod)
+		if !ok {
+			log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
+			return nil
+		}
+
+		workloadName, _ := workloadCache.GetWorkloadForPod(pod)
+		sharedTags := make(map[string]string, len(pod.GetLabels())+1)
+		sharedTags["workload_name"] = workloadName
+
+		copyLabels(pod.GetLabels(), sharedTags)
+		now := time.Now().Unix()
+
+		points := buildPodPhaseMetrics(pod, transforms, sharedTags, now)
+
+		points = append(points, buildContainerStatusMetrics(pod, sharedTags, transforms, now)...)
+		return points
 	}
-
-	sharedTags := make(map[string]string, len(pod.GetLabels())+1)
-	copyLabels(pod.GetLabels(), sharedTags)
-	now := time.Now().Unix()
-
-	points := buildPodPhaseMetrics(pod, transforms, sharedTags, now)
-
-	points = append(points, buildContainerStatusMetrics(pod, sharedTags, transforms, now)...)
-	return points
 }
 
 func truncateMessage(message string) string {

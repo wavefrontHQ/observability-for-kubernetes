@@ -36,7 +36,7 @@ type stateMetricsSource struct {
 	fps gometrics.Counter
 }
 
-func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) (metrics.Source, error) {
+func NewStateMetricsSource(lister *lister, workloadCache util.WorkloadCache, transforms configuration.Transforms) (metrics.Source, error) {
 	pt := map[string]string{"type": "kubernetes.state"}
 	ppsKey := reporting.EncodeKey("source.points.collected", pt)
 	epsKey := reporting.EncodeKey("source.collect.errors", pt)
@@ -55,7 +55,7 @@ func NewStateMetricsSource(lister *lister, transforms configuration.Transforms) 
 	funcs[statefulSets] = pointsForStatefulSet
 	funcs[horizontalPodAutoscalers] = pointsForHPA
 	funcs[nodes] = pointsForNode
-	funcs[nonRunningPods] = pointsForNonRunningPods
+	funcs[nonRunningPods] = pointsForNonRunningPods(workloadCache)
 	funcs[pvc] = pointsForPVC
 	funcs[pv] = pointsForPV
 
@@ -153,9 +153,12 @@ func NewStateProvider(cfg configuration.KubernetesStateSourceConfig) (metrics.So
 	if cfg.KubeClient == nil {
 		return nil, fmt.Errorf("kubeclient not initialized")
 	}
+	if cfg.WorkloadCache == nil {
+		return nil, fmt.Errorf("workload cache not initialized")
+	}
 
 	var sources []metrics.Source
-	metricsSource, err := NewStateMetricsSource(newLister(cfg.KubeClient), cfg.Transforms)
+	metricsSource, err := NewStateMetricsSource(newLister(cfg.KubeClient), cfg.WorkloadCache, cfg.Transforms)
 	if err == nil {
 		sources = append(sources, metricsSource)
 	} else {

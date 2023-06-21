@@ -60,20 +60,20 @@ func newLister(kubeClient kubernetes.Interface) *lister {
 }
 
 func buildInformers(kubeClient kubernetes.Interface) map[string]cache.SharedInformer {
-	m := make(map[string]cache.SharedInformer)
-	m[daemonSets] = buildInformer(daemonSets, &appsv1.DaemonSet{}, kubeClient.AppsV1().RESTClient())
-	m[deployments] = buildInformer(deployments, &appsv1.Deployment{}, kubeClient.AppsV1().RESTClient())
-	m[statefulSets] = buildInformer(statefulSets, &appsv1.StatefulSet{}, kubeClient.AppsV1().RESTClient())
-	m[replicaSets] = buildInformer(replicaSets, &appsv1.ReplicaSet{}, kubeClient.AppsV1().RESTClient())
-	m[jobs] = buildInformer(jobs, &batchv1.Job{}, kubeClient.BatchV1().RESTClient())
-	m[cronJobs] = buildInformer(cronJobs, &batchv1.CronJob{}, kubeClient.BatchV1().RESTClient())
-	m[horizontalPodAutoscalers] = buildInformer(horizontalPodAutoscalers, &autoscalingv2.HorizontalPodAutoscaler{}, kubeClient.AutoscalingV2().RESTClient())
-	m[nodes] = buildInformer(nodes, &v1.Node{}, kubeClient.CoreV1().RESTClient())
-	m[replicationControllers] = buildInformer(replicationControllers, &v1.ReplicationController{}, kubeClient.CoreV1().RESTClient())
-	m[nonRunningPods] = buildInformerWithFieldsSelector(nonRunningPods, &v1.Pod{}, kubeClient.CoreV1().RESTClient(), fields.OneTermNotEqualSelector("status.phase", "Running"))
-	m[pvc] = buildInformer(pvc, &v1.PersistentVolumeClaim{}, kubeClient.CoreV1().RESTClient())
-	m[pv] = buildInformer(pv, &v1.PersistentVolume{}, kubeClient.CoreV1().RESTClient())
-	return m
+	sharedInformers := make(map[string]cache.SharedInformer)
+	sharedInformers[daemonSets] = buildInformer(daemonSets, &appsv1.DaemonSet{}, kubeClient.AppsV1().RESTClient())
+	sharedInformers[deployments] = buildInformer(deployments, &appsv1.Deployment{}, kubeClient.AppsV1().RESTClient())
+	sharedInformers[statefulSets] = buildInformer(statefulSets, &appsv1.StatefulSet{}, kubeClient.AppsV1().RESTClient())
+	sharedInformers[replicaSets] = buildInformer(replicaSets, &appsv1.ReplicaSet{}, kubeClient.AppsV1().RESTClient())
+	sharedInformers[jobs] = buildInformer(jobs, &batchv1.Job{}, kubeClient.BatchV1().RESTClient())
+	sharedInformers[cronJobs] = buildInformer(cronJobs, &batchv1.CronJob{}, kubeClient.BatchV1().RESTClient())
+	sharedInformers[horizontalPodAutoscalers] = buildInformer(horizontalPodAutoscalers, &autoscalingv2.HorizontalPodAutoscaler{}, kubeClient.AutoscalingV2().RESTClient())
+	sharedInformers[nodes] = buildInformer(nodes, &v1.Node{}, kubeClient.CoreV1().RESTClient())
+	sharedInformers[replicationControllers] = buildInformer(replicationControllers, &v1.ReplicationController{}, kubeClient.CoreV1().RESTClient())
+	sharedInformers[nonRunningPods] = buildInformerWithFieldsSelector(nonRunningPods, &v1.Pod{}, kubeClient.CoreV1().RESTClient(), fields.OneTermNotEqualSelector("status.phase", "Running"))
+	sharedInformers[pvc] = buildInformer(pvc, &v1.PersistentVolumeClaim{}, kubeClient.CoreV1().RESTClient())
+	sharedInformers[pv] = buildInformer(pv, &v1.PersistentVolume{}, kubeClient.CoreV1().RESTClient())
+	return sharedInformers
 }
 
 func buildInformer(resource string, resType runtime.Object, getter cache.Getter) cache.SharedInformer {

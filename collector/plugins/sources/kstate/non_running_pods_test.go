@@ -191,7 +191,8 @@ func TestPointsForNonRunningPods(t *testing.T) {
 
 	t.Run("test for pending pod", func(t *testing.T) {
 		testPod := setupPendingPod()
-		actualWFPoints := pointsForNonRunningPods(testPod, testTransform)
+		workloadCache := fakeWorkloadCache{}
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 1, len(actualWFPoints))
 		point := actualWFPoints[0].(*wf.Point)
 		assert.Equal(t, float64(util.POD_PHASE_PENDING), point.Value)
@@ -201,11 +202,13 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "Unschedulable", point.Tags()["reason"])
 		assert.Equal(t, "none", point.Tags()["nodename"])
 		assert.Equal(t, "0/1 nodes are available: 1 Insufficient memory.", point.Tags()["message"])
+		assert.Equal(t, "some-workload", point.Tags()["workload_name"])
 	})
 
 	t.Run("test for completed pod", func(t *testing.T) {
 		testPod := setupCompletedPod()
-		actualWFPoints := pointsForNonRunningPods(testPod, testTransform)
+		workloadCache := fakeWorkloadCache{}
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 2, len(actualWFPoints))
 
 		// check for pod metrics
@@ -214,6 +217,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, string(v1.PodSucceeded), podPoint.Tags()["phase"])
 		assert.Equal(t, "", podPoint.Tags()["reason"])
 		assert.Equal(t, "node1", podPoint.Tags()["nodename"])
+		assert.Equal(t, "some-workload", podPoint.Tags()["workload_name"])
 
 		// check for container metrics
 		containerPoint := actualWFPoints[1].(*wf.Point)
@@ -221,11 +225,13 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "0", containerPoint.Tags()["exit_code"])
 		assert.Equal(t, "Completed", containerPoint.Tags()["reason"])
 		assert.Equal(t, "terminated", containerPoint.Tags()["status"])
+		assert.Equal(t, "some-workload", containerPoint.Tags()["workload_name"])
 	})
 
 	t.Run("test for failed pod", func(t *testing.T) {
 		testPod := setupFailedPod()
-		actualWFPoints := pointsForNonRunningPods(testPod, testTransform)
+		workloadCache := fakeWorkloadCache{}
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 2, len(actualWFPoints))
 
 		// check for pod metrics
@@ -236,6 +242,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, 255, len(podPoint.Tags()["message"])+len("message")+len("="))
 		assert.Contains(t, podPoint.Tags()["message"], "containers with unready status: [hello]")
 		assert.Equal(t, "node1", podPoint.Tags()["nodename"])
+		assert.Equal(t, "some-workload", podPoint.Tags()["workload_name"])
 
 		// check for container metrics
 		containerMetric := actualWFPoints[1].(*wf.Point)
@@ -243,11 +250,13 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "1", containerMetric.Tags()["exit_code"])
 		assert.Equal(t, "Error", containerMetric.Tags()["reason"])
 		assert.Equal(t, "terminated", containerMetric.Tags()["status"])
+		assert.Equal(t, "some-workload", containerMetric.Tags()["workload_name"])
 	})
 
 	t.Run("test for container creating pod", func(t *testing.T) {
 		testPod := setupContainerCreatingPod()
-		actualWFPoints := pointsForNonRunningPods(testPod, testTransform)
+		workloadCache := fakeWorkloadCache{}
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 2, len(actualWFPoints))
 
 		// check for pod metrics
@@ -257,11 +266,23 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "ContainersNotReady", podMetric.Tags()["reason"])
 		assert.Equal(t, "containers with unready status: [wavefront-proxy]", podMetric.Tags()["message"])
 		assert.Equal(t, "node1", podMetric.Tags()["nodename"])
+		assert.Equal(t, "some-workload", podMetric.Tags()["workload_name"])
 
 		// check for container metrics
 		containerMetric := actualWFPoints[1].(*wf.Point)
 		assert.Equal(t, float64(util.CONTAINER_STATE_WAITING), containerMetric.Value)
 		assert.Equal(t, "ContainerCreating", containerMetric.Tags()["reason"])
 		assert.Equal(t, "waiting", containerMetric.Tags()["status"])
+		assert.Equal(t, "some-workload", containerMetric.Tags()["workload_name"])
 	})
+}
+
+type fakeWorkloadCache struct{}
+
+func (f fakeWorkloadCache) GetWorkloadForPod(pod *v1.Pod) (string, string) {
+	return "some-workload", ""
+}
+
+func (f fakeWorkloadCache) GetWorkloadForPodName(podName, ns string) (string, string) {
+	return "some-workload", ""
 }

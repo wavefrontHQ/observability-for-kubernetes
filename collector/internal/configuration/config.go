@@ -272,6 +272,8 @@ type KubernetesStateSourceConfig struct {
 
 	// internal use only
 	KubeClient *kubernetes.Clientset `yaml:"-"`
+
+	WorkloadCache util.WorkloadCache `yaml:"-"`
 }
 
 // New creates a Config with defaults

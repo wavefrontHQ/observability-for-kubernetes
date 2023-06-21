@@ -34,6 +34,7 @@ type PodBasedEnricher struct {
 	podLister          v1listers.PodLister
 	labelCopier        *util.LabelCopier
 	collectionInterval time.Duration
+	workloadCache      util.WorkloadCache
 }
 
 func (pbe *PodBasedEnricher) Name() string {
@@ -42,28 +43,28 @@ func (pbe *PodBasedEnricher) Name() string {
 
 func (pbe *PodBasedEnricher) Process(batch *metrics.Batch) (*metrics.Batch, error) {
 	newMs := make(map[metrics.ResourceKey]*metrics.Set, len(batch.Sets))
-	for k, v := range batch.Sets {
-		switch v.Labels[metrics.LabelMetricSetType.Key] {
+	for resourceKey, metricSet := range batch.Sets {
+		switch metricSet.Labels[metrics.LabelMetricSetType.Key] {
 		case metrics.MetricSetTypePod:
-			namespace := v.Labels[metrics.LabelNamespaceName.Key]
-			podName := v.Labels[metrics.LabelPodName.Key]
+			namespace := metricSet.Labels[metrics.LabelNamespaceName.Key]
+			podName := metricSet.Labels[metrics.LabelPodName.Key]
 			pod, err := pbe.getPod(namespace, podName)
 			if err != nil {
-				delete(batch.Sets, k)
+				delete(batch.Sets, resourceKey)
 				log.Debugf("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
 				continue
 			}
-			pbe.addPodInfo(v, pod, batch, newMs)
+			pbe.addPodInfo(metricSet, pod, batch, newMs)
 		case metrics.MetricSetTypePodContainer:
-			namespace := v.Labels[metrics.LabelNamespaceName.Key]
-			podName := v.Labels[metrics.LabelPodName.Key]
+			namespace := metricSet.Labels[metrics.LabelNamespaceName.Key]
+			podName := metricSet.Labels[metrics.LabelPodName.Key]
 			pod, err := pbe.getPod(namespace, podName)
 			if err != nil {
-				delete(batch.Sets, k)
+				delete(batch.Sets, resourceKey)
 				log.Debugf("Failed to get pod %s from cache: %v", metrics.PodKey(namespace, podName), err)
 				continue
 			}
-			pbe.addContainerInfo(k, v, pod, batch, newMs)
+			pbe.addContainerInfo(resourceKey, metricSet, pod, batch, newMs)
 		}
 	}
 
@@ -109,6 +110,9 @@ func (pbe *PodBasedEnricher) addContainerInfo(key metrics.ResourceKey, container
 		}
 	}
 
+	workloadName, _ := pbe.workloadCache.GetWorkloadForPod(pod)
+	containerMs.Labels[metrics.LabelWorkloadName.Key] = workloadName
+
 	containerMs.Labels[metrics.LabelPodId.Key] = string(pod.UID)
 	pbe.labelCopier.Copy(pod.Labels, containerMs.Labels)
 
@@ -149,6 +153,7 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 	}
 	// Add UID and create time to pod
 	podMs.Labels[metrics.LabelPodId.Key] = string(pod.UID)
+
 	if !pod.Status.StartTime.IsZero() {
 		podMs.EntityCreateTime = pod.Status.StartTime.Time
 	}
@@ -156,6 +161,10 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 
 	// Add pod phase
 	addLabeledIntMetric(podMs, &metrics.MetricPodPhase, map[string]string{"phase": string(pod.Status.Phase)}, util.ConvertPodPhase(pod.Status.Phase))
+
+	// Add workload name
+	workloadName, _ := pbe.workloadCache.GetWorkloadForPod(pod)
+	podMs.Labels[metrics.LabelWorkloadName.Key] = workloadName
 
 	// Add cpu/mem requests and limits to containers
 	for _, container := range pod.Spec.Containers {
@@ -179,6 +188,7 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 				metrics.LabelNodename.Key:           podMs.Labels[metrics.LabelNodename.Key],
 				metrics.LabelHostname.Key:           podMs.Labels[metrics.LabelHostname.Key],
 				metrics.LabelHostID.Key:             podMs.Labels[metrics.LabelHostID.Key],
+				metrics.LabelWorkloadName.Key:       podMs.Labels[metrics.LabelWorkloadName.Key],
 			},
 			EntityCreateTime: podMs.CollectionStartTime,
 		}
@@ -305,10 +315,11 @@ func intValue(value int64) metrics.Value {
 	}
 }
 
-func NewPodBasedEnricher(podLister v1listers.PodLister, labelCopier *util.LabelCopier, collectionInterval time.Duration) *PodBasedEnricher {
+func NewPodBasedEnricher(podLister v1listers.PodLister, workloadCache util.WorkloadCache, labelCopier *util.LabelCopier, collectionInterval time.Duration) *PodBasedEnricher {
 	return &PodBasedEnricher{
 		podLister:          podLister,
 		labelCopier:        labelCopier,
 		collectionInterval: collectionInterval,
+		workloadCache:      workloadCache,
 	}
 }
