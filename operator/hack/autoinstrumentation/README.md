@@ -14,6 +14,8 @@ A Kubernetes cluster:
 - x86-64 CPU architecture. ARM is not supported.
 - 600MB free memory per node to enabled Pixie data collection.
 
+> **Note**: Aria Hub & Graph's Kubernetes Integration can _not_ be attached to the Kubernetes cluster.
+
 Refer to Pixie's [Setting up Kubernetes](https://docs.px.dev/installing-pixie/setting-up-k8s/) and [Requirements](https://docs.px.dev/installing-pixie/requirements/) documentation for more details.
 
 
