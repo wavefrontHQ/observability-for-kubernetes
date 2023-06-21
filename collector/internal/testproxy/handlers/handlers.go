@@ -7,8 +7,11 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/broadcaster"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/eventline"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/logs"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metricline"
 )
@@ -104,7 +107,7 @@ func LogAssertionHandler(store *logs.Results) http.HandlerFunc {
 	}
 }
 
-func HandleIncomingMetrics(store *metricline.Store, conn net.Conn) {
+func HandleIncomingMetrics(proxylines *broadcaster.Broadcaster[string], conn net.Conn) {
 	defer conn.Close()
 	lines := bufio.NewScanner(conn)
 
@@ -112,24 +115,7 @@ func HandleIncomingMetrics(store *metricline.Store, conn net.Conn) {
 		if len(lines.Text()) == 0 {
 			continue
 		}
-		str := lines.Text()
-
-		metric, err := metricline.Parse(str)
-		if err != nil {
-			log.Error(err.Error())
-			log.Error(lines.Text())
-			store.LogBadMetric(lines.Text())
-			continue
-		}
-		if metric == nil { // we got a histogram
-			continue
-		}
-		if len(metric.Tags) > 20 {
-			log.Error(fmt.Sprintf("[WF-410: Too many point tags (%d, max 20): %s %#v", len(metric.Tags), metric.Name, metric.Tags))
-			continue
-		}
-		log.Debugf("%#v", metric)
-		store.LogMetric(metric)
+		proxylines.Publish(1*time.Second, lines.Text())
 	}
 
 	if err := lines.Err(); err != nil {
@@ -237,4 +223,13 @@ func decodeMetric(bytes []byte) (*metricline.Metric, error) {
 	var metric *metricline.Metric
 	err := json.Unmarshal(bytes, &metric)
 	return metric, err
+}
+
+func EventAssertionHandler(eventStore *eventline.Store) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(eventStore); err != nil {
+			log.Errorf("error encoding event results: %s", err.Error())
+		}
+	}
 }

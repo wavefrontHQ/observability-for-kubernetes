@@ -15,6 +15,7 @@ data:
       - externalEndpointURL: http://localhost
         type: external 
         eventsEnabled: true
+      - proxyAddress: wavefront-proxy.NAMESPACE.svc.cluster.local:2878
 
     sources: 
       kubernetes_source: {}

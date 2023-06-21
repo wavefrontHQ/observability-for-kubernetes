@@ -1,6 +1,13 @@
 package metricline
 
-import "sync"
+import (
+	"fmt"
+	"strings"
+	"sync"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/broadcaster"
+)
 
 type Store struct {
 	metrics     []*Metric
@@ -44,4 +51,36 @@ func (s *Store) LogBadMetric(metric string) {
 	s.badMetricMu.Lock()
 	defer s.badMetricMu.Unlock()
 	s.badMetrics = append(s.badMetrics, metric)
+}
+
+func (s *Store) Subscribe(b *broadcaster.Broadcaster[string]) {
+	lines, _ := b.Subscribe()
+	go func() {
+		for line := range lines {
+			if isEvent(line) || isHistogram(line) {
+				continue
+			}
+			metric, err := Parse(line)
+			if err != nil {
+				log.Error(err.Error())
+				log.Error(line)
+				s.LogBadMetric(line)
+				continue
+			}
+			if len(metric.Tags) > 20 {
+				log.Error(fmt.Sprintf("[WF-410: Too many point tags (%d, max 20): %s %#v", len(metric.Tags), metric.Name, metric.Tags))
+				continue
+			}
+			log.Debugf("%#v", metric)
+			s.LogMetric(metric)
+		}
+	}()
+}
+
+func isEvent(line string) bool {
+	return strings.HasPrefix(line, "@Event")
+}
+
+func isHistogram(line string) bool {
+	return strings.HasPrefix(line, "!M") || strings.HasPrefix(line, "!H") || strings.HasPrefix(line, "!D")
 }

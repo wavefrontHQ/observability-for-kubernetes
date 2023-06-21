@@ -8,6 +8,8 @@ import (
 	"os"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/broadcaster"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/eventline"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/handlers"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/logs"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metricline"
@@ -69,7 +71,13 @@ func main() {
 		log.SetLevel(log.InfoLevel)
 	}
 
+	proxylines := broadcaster.New[string]()
+
 	metricStore := metricline.NewStore()
+	metricStore.Subscribe(proxylines)
+
+	eventStore := eventline.NewStore()
+	eventStore.Subscribe(proxylines)
 
 	logStore := logs.NewLogResults(copyStringMap(optionalTags))
 
@@ -87,7 +95,7 @@ func main() {
 
 	switch runMode {
 	case "metrics":
-		go serveMetrics(metricStore)
+		go serveMetrics(proxylines)
 	case "logs":
 		go serveLogs(logStore)
 	default:
@@ -96,11 +104,11 @@ func main() {
 	}
 
 	// Blocking call to start up the control server
-	serveControl(metricStore, logStore)
+	serveControl(metricStore, eventStore, logStore)
 	log.Println("Server gracefully shutdown")
 }
 
-func serveMetrics(store *metricline.Store) {
+func serveMetrics(proxylines *broadcaster.Broadcaster[string]) {
 	log.Infof("tcp metrics server listening on %s", proxyAddr)
 	listener, err := net.Listen("tcp", proxyAddr)
 	if err != nil {
@@ -114,7 +122,7 @@ func serveMetrics(store *metricline.Store) {
 			log.Error(err.Error())
 			continue
 		}
-		go handlers.HandleIncomingMetrics(store, conn)
+		go handlers.HandleIncomingMetrics(proxylines, conn)
 	}
 }
 
@@ -132,7 +140,7 @@ func serveLogs(store *logs.Results) {
 	}
 }
 
-func serveControl(metricStore *metricline.Store, logStore *logs.Results) {
+func serveControl(metricStore *metricline.Store, eventStore *eventline.Store, logStore *logs.Results) {
 	controlServeMux := http.NewServeMux()
 
 	controlServeMux.HandleFunc("/metrics", handlers.DumpMetricsHandler(metricStore))
@@ -140,6 +148,7 @@ func serveControl(metricStore *metricline.Store, logStore *logs.Results) {
 	// Based on logs already sent, perform checks on store logs
 	// Start by supporting POST parameter expected_log_format
 	controlServeMux.HandleFunc("/logs/assert", handlers.LogAssertionHandler(logStore))
+	controlServeMux.HandleFunc("/events/assert", handlers.EventAssertionHandler(eventStore))
 	// NOTE: these handler functions attach to the control HTTP server, NOT the TCP server that actually receives data
 
 	log.Infof("http control server listening on %s", controlAddr)

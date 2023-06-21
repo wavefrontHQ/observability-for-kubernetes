@@ -174,7 +174,7 @@ publish-test-proxy:  test-proxy-container
 	docker push $(PREFIX)/test-proxy:$(VERSION)
 
 .PHONY: test-proxy
-test-proxy: peg $(COLLECTOR_REPO_ROOT)/internal/testproxy/metrics/metric_grammar.peg.go $(COLLECTOR_REPO_ROOT)/internal/testproxy/events/event_grammar.peg.go clean fmt vet
+test-proxy: peg $(COLLECTOR_REPO_ROOT)/internal/testproxy/metricline/metric_grammar.peg.go $(COLLECTOR_REPO_ROOT)/internal/testproxy/eventline/event_grammar.peg.go clean fmt vet
 	GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(GOARCH)/test-proxy ./cmd/test-proxy/...
 
 .PHONY: peg
