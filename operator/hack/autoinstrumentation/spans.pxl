@@ -163,12 +163,12 @@ px.export(
             # While other Pixie entities use `service.name=source_service`,
             # the Services-OpenTelemetry entity is set up to only show clients so we use `service.name=destination_service`.
 
-            # OTEL Resource Conventions
+            # OTel Resource Conventions
             'service.name': df.destination_service,
             'service.instance.id': df.destination_pod,
 
-            # OTEL Scope Exporter Conventions
-            'otel.scope.name': 'opapps-auto',
+            # Field used in OpApps cluster to differentiate between manual DT instrumentation and auto-instrumentation
+            'origin': 'opapps-auto',
 
         },
         data=[
