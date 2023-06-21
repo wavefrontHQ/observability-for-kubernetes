@@ -87,12 +87,6 @@ Refer to Pixie's [Setting up Kubernetes](https://docs.px.dev/installing-pixie/se
    For alternate installation options, refer to the [Pixie CLI installation docs](https://docs.px.dev/installing-pixie/install-schemes/cli/).
 
 3. Deploy Pixie
-
-   Pixie uses Operator Lifecycle Manager, and it is assumed your Kubernetes cluster does not have an existing OLM installed. To check for an existing OLM installation:
-
-   ```bash
-   kubectl --namespace olm get pods
-   ```
    
    Run the command below to install Pixie, being sure to change `YOUR_CLUSTER_NAME` to the same value that was set in `wavefront.yaml` above.
 
@@ -106,27 +100,32 @@ Refer to Pixie's [Setting up Kubernetes](https://docs.px.dev/installing-pixie/se
    > **Note**: The options above tune Pixie for the specific use-case of OpApps, and disable some features that are unused. This is done to reduce the memory required by Pixie per Kubernetes node to 600MB. The above configuration only enables `http_event` Pixie eBPF probes, and disables all others.
 
 5. Check the status of the Pixie installation.
-   Pixie deploys the following pods to your cluster. Note that the number of `vizier-pem` pods correlates with the number of nodes in your cluster, so your  deployment may contain more PEM pods.
 
-   ```bash
-   NAMESPACE           NAME
-   olm                 catalog-operator
-   olm                 olm-operator
-   pl                  kelvin
-   pl                  nats-operator
-   pl                  pl-nats-1
-   pl                  vizier-certmgr
-   pl                  vizier-cloud-connector
-   pl                  vizier-metadata
-   pl                  vizier-pem
-   pl                  vizier-pem
-   pl                  vizier-proxy
-   pl                  vizier-query-broker
-   px-operator         77003c9dbf251055f0bb3e36308fe05d818164208a466a15d27acfddeejt7tq
-   px-operator         pixie-operator-index
-   px-operator         vizier-operator
+   ```
+   kubectl -n pl describe vizier
+   ```
+   The `Status` section should report `Healthy` in the `Vizier Phase`:
+   ```
+   Status:
+     Checksum:                        jX7VZmcDZXJQXtZY8wT9OogHz79z+nHGcEhhgqhY4/k=
+     Last Reconciliation Phase Time:  2023-06-21T05:47:06Z
+     Operator Version:                0.1.4+Distribution.01fedbe.20230620220143.1.jenkins
+     Reconciliation Phase:            Ready
+     Version:                         0.13.8
+     Vizier Phase:                    Healthy
    ```
 
+   If it isn't healthy, try looking for unhealthy pods and inspecting the logs:
+
+   ```
+   kubectl -n pl get pods
+   ```
+
+   An alternative for collecting logs is using the `px` CLI:
+
+   ```
+   px collect-logs
+   ```
 
 ## Enable the OpenTelemetry Pixie Plugin
 
