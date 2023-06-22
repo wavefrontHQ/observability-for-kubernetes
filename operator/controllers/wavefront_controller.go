@@ -396,8 +396,8 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	}
 
 	wavefront.Spec.Namespace = r.namespace
-
 	wavefront.Spec.ImageRegistry = filepath.Dir(deployment.Spec.Template.Spec.Containers[0].Image)
+	wavefront.Spec.ClusterUUID = r.ClusterUUID
 
 	if wavefront.Spec.DataCollection.Metrics.Enable {
 		if len(wavefront.Spec.DataCollection.Metrics.CustomConfig) == 0 {
@@ -483,16 +483,10 @@ func (r *WavefrontReconciler) preprocessProxy(wavefront *wf.Wavefront, ctx conte
 		wavefront.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort = 4317
 		wavefront.Spec.DataExport.WavefrontProxy.OTLP.ResourceAttrsOnMetricsIncluded = true
 	}
-
-	wavefront.Spec.ClusterUUID = r.ClusterUUID
-	var result preprocessor.Result
-	result, err = preprocessor.Process(r.Client, wavefront)
+	err = preprocessor.Process(r.Client, wavefront)
 	if err != nil {
 		return err
 	}
-	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts = result.EnabledPorts
-	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules = result.UserDefinedPortRules
-	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules = result.UserDefinedGlobalRules
 
 	return nil
 }
@@ -530,7 +524,7 @@ func (r *WavefrontReconciler) shouldEnableEtcdCollection(wavefront *wf.Wavefront
 
 func (r *WavefrontReconciler) parseHttpProxyConfigs(wavefront *wf.Wavefront, ctx context.Context) error {
 	if len(wavefront.Spec.DataExport.WavefrontProxy.HttpProxy.Secret) != 0 {
-		httpProxySecret, err := r.findHttpProxySecret(wavefront, ctx)
+		httpProxySecret, err := r.findSecret(wavefront.Spec.DataExport.WavefrontProxy.HttpProxy.Secret, ctx)
 		if err != nil {
 			return err
 		}
@@ -543,10 +537,10 @@ func (r *WavefrontReconciler) parseHttpProxyConfigs(wavefront *wf.Wavefront, ctx
 	return nil
 }
 
-func (r *WavefrontReconciler) findHttpProxySecret(wavefront *wf.Wavefront, ctx context.Context) (*corev1.Secret, error) {
+func (r *WavefrontReconciler) findSecret(name string, ctx context.Context) (*corev1.Secret, error) {
 	secret := client.ObjectKey{
 		Namespace: r.namespace,
-		Name:      wavefront.Spec.DataExport.WavefrontProxy.HttpProxy.Secret,
+		Name:      name,
 	}
 	httpProxySecret := &corev1.Secret{}
 	err := r.Client.Get(ctx, secret, httpProxySecret)

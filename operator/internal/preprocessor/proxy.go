@@ -20,17 +20,13 @@ type rule struct {
 	Value  string `yaml:",omitempty"`
 }
 
-type Result struct {
-	EnabledPorts           string
-	UserDefinedPortRules   string
-	UserDefinedGlobalRules string
-}
-
-func Process(client client.Client, wavefront *wf.Wavefront) (Result, error) {
+func Process(client client.Client, wavefront *wf.Wavefront) error {
 	var err error
-	result := Result{EnabledPorts: getEnabledPorts(wavefront)}
-	result.UserDefinedPortRules, result.UserDefinedGlobalRules, err = getUserDefinedRules(client, wavefront)
-	return result, err
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts = getEnabledPorts(wavefront)
+	wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules,
+		wavefront.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules,
+		err = getUserDefinedRules(client, wavefront)
+	return err
 }
 
 func getEnabledPorts(wavefront *wf.Wavefront) string {
