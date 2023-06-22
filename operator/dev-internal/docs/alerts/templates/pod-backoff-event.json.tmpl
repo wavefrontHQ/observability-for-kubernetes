@@ -4,7 +4,7 @@
   "alertSources": [
     {
       "name": "Alert Condition",
-      "query": "(mcount(10m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND (reason=\"ImagePullBackOff\" OR reason=\"CrashLoopBackOff\")), pod_name, namespace_name, cluster, nodename, reason)) >= 5)",
+      "query": "(mcount(10m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND (reason=\"ImagePullBackOff\" OR reason=\"CrashLoopBackOff\")), sources, workload_name, pod_name, namespace_name, cluster, nodename, reason)) >= 5)",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
@@ -18,7 +18,7 @@
     }
   ],
   "conditions": {
-    "warn": "(mcount(10m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND (reason=\"ImagePullBackOff\" OR reason=\"CrashLoopBackOff\")), pod_name, namespace_name, cluster, nodename, reason)) >= 5) >= 1"
+    "warn": "(mcount(10m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND (reason=\"ImagePullBackOff\" OR reason=\"CrashLoopBackOff\")), sources, workload_name, pod_name, namespace_name, cluster, nodename, reason)) >= 5) >= 1"
   },
   "displayExpression": "${Display Condition}",
   "minutes": 10,
