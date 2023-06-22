@@ -12,10 +12,9 @@ data:
     experimental: YOUR_EXPERIMENTAL_FEATURES
 
     sinks:
-      - externalEndpointURL: http://localhost
+      - externalEndpointURL: http://wavefront-proxy.NAMESPACE.svc.cluster.local:9999/events
         type: external 
-        eventsEnabled: true
-      - proxyAddress: wavefront-proxy.NAMESPACE.svc.cluster.local:2878
+        enableEvents: true
 
     sources: 
       kubernetes_source: {}

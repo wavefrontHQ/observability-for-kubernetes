@@ -10,17 +10,19 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/broadcaster"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/eventline"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/externalevent"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/handlers"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/logs"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metricline"
 )
 
 var (
-	proxyAddr   = ":7777"
-	controlAddr = ":8888"
-	runMode     = "metrics"
-	logFilePath string
-	logLevel    = log.InfoLevel.String()
+	externalEventAddr = ":9999"
+	proxyAddr         = ":7777"
+	controlAddr       = ":8888"
+	runMode           = "metrics"
+	logFilePath       string
+	logLevel          = log.InfoLevel.String()
 
 	// Needs to match what is set up in log sender
 	expectedTags = []string{
@@ -55,6 +57,7 @@ var (
 
 func init() {
 	flag.StringVar(&proxyAddr, "proxy", proxyAddr, "host and port for the test \"wavefront proxy\" to listen on")
+	flag.StringVar(&externalEventAddr, "external-events", externalEventAddr, "host and port for the http external event server to listen on")
 	flag.StringVar(&controlAddr, "control", controlAddr, "host and port for the http control server to listen on")
 	flag.StringVar(&runMode, "mode", runMode, "which mode to run in. Valid options are \"metrics\", and \"logs\"")
 	flag.StringVar(&logFilePath, "logFilePath", logFilePath, "the full path to output logs to instead of using stdout")
@@ -81,6 +84,10 @@ func main() {
 
 	logStore := logs.NewLogResults(copyStringMap(optionalTags))
 
+	externalEvents := broadcaster.New[[]byte]()
+	externalEventsStore := externalevent.NewStore()
+	externalEventsStore.Subscribe(externalEvents)
+
 	if logFilePath != "" {
 		// Set log output to file to prevent our logging component from picking up stdout/stderr logs
 		// and sending them back to us over and over.
@@ -93,6 +100,8 @@ func main() {
 		log.SetOutput(file)
 	}
 
+	go serveExternalEvents(externalEvents)
+
 	switch runMode {
 	case "metrics":
 		go serveMetrics(proxylines)
@@ -104,16 +113,25 @@ func main() {
 	}
 
 	// Blocking call to start up the control server
-	serveControl(metricStore, eventStore, logStore)
+	serveControl(metricStore, eventStore, externalEventsStore, logStore)
 	log.Println("Server gracefully shutdown")
+}
+
+func serveExternalEvents(externalEvents *broadcaster.Broadcaster[[]byte]) {
+	routes := http.NewServeMux()
+	routes.HandleFunc("/events", handlers.ExternalEventsHandler(externalEvents))
+
+	log.Infof("http external events server listening on %s", externalEventAddr)
+	if err := http.ListenAndServe(externalEventAddr, routes); err != nil {
+		log.Fatal(err.Error())
+	}
 }
 
 func serveMetrics(proxylines *broadcaster.Broadcaster[string]) {
 	log.Infof("tcp metrics server listening on %s", proxyAddr)
 	listener, err := net.Listen("tcp", proxyAddr)
 	if err != nil {
-		log.Error(err.Error())
-		os.Exit(1)
+		log.Fatal(err.Error())
 	}
 
 	for {
@@ -135,12 +153,11 @@ func serveLogs(store *logs.Results) {
 
 	log.Infof("http logs server listening on %s", proxyAddr)
 	if err := http.ListenAndServe(proxyAddr, logsServeMux); err != nil {
-		log.Error(err.Error())
-		os.Exit(1)
+		log.Fatal(err.Error())
 	}
 }
 
-func serveControl(metricStore *metricline.Store, eventStore *eventline.Store, logStore *logs.Results) {
+func serveControl(metricStore *metricline.Store, eventStore *eventline.Store, externalEventStore *externalevent.Store, logStore *logs.Results) {
 	controlServeMux := http.NewServeMux()
 
 	controlServeMux.HandleFunc("/metrics", handlers.DumpMetricsHandler(metricStore))
@@ -149,6 +166,7 @@ func serveControl(metricStore *metricline.Store, eventStore *eventline.Store, lo
 	// Start by supporting POST parameter expected_log_format
 	controlServeMux.HandleFunc("/logs/assert", handlers.LogAssertionHandler(logStore))
 	controlServeMux.HandleFunc("/events/assert", handlers.EventAssertionHandler(eventStore))
+	controlServeMux.HandleFunc("/events/external/assert", handlers.ExternalEventAssertionHandler(externalEventStore))
 	// NOTE: these handler functions attach to the control HTTP server, NOT the TCP server that actually receives data
 
 	log.Infof("http control server listening on %s", controlAddr)

@@ -57,7 +57,7 @@ func (s *Store) Subscribe(b *broadcaster.Broadcaster[string]) {
 	lines, _ := b.Subscribe()
 	go func() {
 		for line := range lines {
-			if isEvent(line) || isHistogram(line) {
+			if isEvent(line) {
 				continue
 			}
 			metric, err := Parse(line)

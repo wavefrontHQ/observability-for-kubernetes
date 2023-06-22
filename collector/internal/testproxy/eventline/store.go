@@ -42,12 +42,10 @@ func (s *Store) Subscribe(proxylines *broadcaster.Broadcaster[string]) {
 			}
 			event, err := Parse(line)
 			if err != nil {
-				if err != nil {
-					log.Error(err.Error())
-					log.Error(line)
-					s.RecordBadLine(line)
-					continue
-				}
+				log.Error(err.Error())
+				log.Error(line)
+				s.RecordBadLine(line)
+				continue
 			}
 			s.Record(event)
 		}

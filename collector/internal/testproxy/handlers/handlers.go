@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/broadcaster"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/eventline"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/externalevent"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/logs"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metricline"
 )
@@ -225,11 +227,36 @@ func decodeMetric(bytes []byte) (*metricline.Metric, error) {
 	return metric, err
 }
 
-func EventAssertionHandler(eventStore *eventline.Store) func(w http.ResponseWriter, req *http.Request) {
+func JSONEncodeHandler[D any](data D) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(eventStore); err != nil {
+		if err := json.NewEncoder(w).Encode(data); err != nil {
 			log.Errorf("error encoding event results: %s", err.Error())
 		}
+	}
+}
+
+func EventAssertionHandler(eventStore *eventline.Store) http.HandlerFunc {
+	return JSONEncodeHandler(eventStore)
+}
+
+func ExternalEventAssertionHandler(externalEventStore *externalevent.Store) http.HandlerFunc {
+	return JSONEncodeHandler(externalEventStore)
+}
+
+func ExternalEventsHandler(externalEvents *broadcaster.Broadcaster[[]byte]) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Content-Type") != "application/json" {
+			w.WriteHeader(http.StatusUnsupportedMediaType)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+		buf := bytes.NewBuffer(make([]byte, 0, r.ContentLength))
+		_, err := io.Copy(buf, r.Body)
+		log.Debug(buf.String())
+		if err != nil {
+			log.Errorf("error reading external event body: %s", err.Error())
+		}
+		externalEvents.Publish(time.Second, buf.Bytes())
 	}
 }

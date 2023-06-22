@@ -73,6 +73,26 @@ if [[ $EVENTS_FAIL_COUNT -gt 0 ]]; then
   exit 1
 fi
 
+EXTERNAL_EVENTS_RESULTS_FILE=$(mktemp)
+while true; do # wait until we get a good connection
+  RES_CODE=$(curl --silent --output "$EXTERNAL_EVENTS_RESULTS_FILE" --write-out "%{http_code}" "http://localhost:8888/events/external/assert")
+  [[ $RES_CODE -lt 200 ]] || break
+done
+
+EXTERNAL_EVENTS_FAIL_COUNT=$(jq "(.BadEventJSONs | length) + (.MissingFields | length) + (.FirstTimestampsMissing | length) + (.LastTimestampsInvalid | length)" "$EXTERNAL_EVENTS_RESULTS_FILE")
+
+echo "$EXTERNAL_EVENTS_RESULTS_FILE"
+if [[ $EXTERNAL_EVENTS_FAIL_COUNT -gt 0 ]]; then
+  red "BadEventJSONs: $(jq "(.BadEventJSONs | length)" "$EXTERNAL_EVENTS_RESULTS_FILE")"
+  red "MissingFields: $(jq "(.MissingFields | length)" "$EXTERNAL_EVENTS_RESULTS_FILE")"
+  red "FirstTimestampsMissing: $(jq "(.FirstTimestampsMissing | length)" "$EXTERNAL_EVENTS_RESULTS_FILE")"
+  red "LastTimestampsInvalid: $(jq "(.LastTimestampsInvalid | length)" "$EXTERNAL_EVENTS_RESULTS_FILE")"
+  if which pbcopy >/dev/null; then
+      echo "$EXTERNAL_EVENTS_RESULTS_FILE" | pbcopy
+    fi
+  exit 1
+fi
+
 green "SUCCEEDED"
 
 kill $(jobs -p) &>/dev/null || true
