@@ -238,7 +238,8 @@ func TestPointsForNonRunningPods(t *testing.T) {
 	t.Run("test for terminating pod without nodename", func(t *testing.T) {
 		deletionTime := "2023-06-08T18:35:37Z"
 		testPod := setupTerminatingPod(t, deletionTime, "")
-		actualWFPoints := pointsForNonRunningPods(testPod, testTransform)
+		workloadCache := fakeWorkloadCache{}
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 2, len(actualWFPoints))
 		point := actualWFPoints[1].(*wf.Point)
 		assert.Equal(t, fmt.Sprintf("%spod.terminating", testTransform.Prefix), point.Metric)
@@ -252,7 +253,8 @@ func TestPointsForNonRunningPods(t *testing.T) {
 	t.Run("test for terminating pod with nodename", func(t *testing.T) {
 		deletionTime := "2023-06-08T18:35:37Z"
 		testPod := setupTerminatingPod(t, deletionTime, "some-node")
-		actualWFPoints := pointsForNonRunningPods(testPod, testTransform)
+		workloadCache := fakeWorkloadCache{}
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 2, len(actualWFPoints))
 		point := actualWFPoints[1].(*wf.Point)
 		assert.Equal(t, fmt.Sprintf("%spod.terminating", testTransform.Prefix), point.Metric)
