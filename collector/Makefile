@@ -44,7 +44,7 @@ all: container
 fmt: $(GO_IMPORTS_BIN)
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
 
-COLLECTOR_REPO_ROOT=$(shell git rev-parse --show-toplevel)/collector
+.PHONY: deploy-targets clean-targets clean-deployment
 
 deploy-targets:
 	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/deploy-targets.sh)
