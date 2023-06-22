@@ -639,7 +639,6 @@ spec:
                 type: string
             required:
             - clusterName
-            - wavefrontUrl
             type: object
           status:
             description: WavefrontStatus defines the observed state of Wavefront
@@ -1079,7 +1078,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.21.0-alpha-e5e3cc50
+  collector: 1.21.0-alpha-2e6e38cc
   logging: 2.1.2
   proxy: 12.4.1
 kind: ConfigMap
@@ -1151,7 +1150,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.9.0-alpha-e5e3cc50
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.9.0-alpha-2e6e38cc
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
