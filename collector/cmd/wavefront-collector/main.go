@@ -255,10 +255,16 @@ func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string
 		metrics.MetricEphemeralStorageLimit.Name,
 	}
 
-	metricsToSkip := metricsToAggregate
+	podMetricsToNotAggregate := []string{
+		metrics.MetricCpuRequest.Name,
+		metrics.MetricCpuLimit.Name,
+		metrics.MetricMemoryRequest.Name,
+		metrics.MetricMemoryLimit.Name,
+	}
+
 	dataProcessors = append(dataProcessors,
 		processors.NewPodResourceAggregator(podLister),
-		processors.NewPodAggregator(metricsToSkip),
+		processors.NewPodAggregator(podMetricsToNotAggregate),
 		processors.NewNamespaceAggregator(metricsToAggregate),
 		processors.NewNodeAggregator(metricsToAggregateForNode),
 		processors.NewClusterAggregator(metricsToAggregate),
