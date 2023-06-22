@@ -25,10 +25,9 @@ promote-internal:
 	mkdir -p $(MONOREPO_DIR)/deploy/crd/
 	cp $(MONOREPO_DIR)/operator/config/crd/bases/wavefront.com_wavefronts.yaml $(MONOREPO_DIR)/deploy/crd/
 
-
 .PHONY: combined-deploy
 combined-deploy:
-	cd $(MONOREPO_DIR) && ./scripts/combined-deploy.sh
+	cd $(MONOREPO_DIR) && ./scripts/combined-deploy.sh $(COMBINED_DEPLOY_ARGS)
 
 .PHONY: combined-integration-tests
 combined-integration-tests:

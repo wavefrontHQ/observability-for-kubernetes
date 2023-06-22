@@ -4,15 +4,12 @@
 package util
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"os"
 	"strings"
 	"sync"
 	"time"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	log "github.com/sirupsen/logrus"
 
@@ -64,12 +61,14 @@ const (
 )
 
 var (
-	lock       sync.Mutex
+	listerLock sync.Mutex
+	cacheLock  sync.Mutex
 	nodeLister v1listers.NodeLister
 	reflector  *cache.Reflector
 	podLister  v1listers.PodLister
 	nsStore    cache.Store
 	agentType  AgentType
+	wlCache    WorkloadCache
 )
 
 type AgentType interface {
@@ -79,9 +78,24 @@ type AgentType interface {
 	ClusterCollector() bool
 }
 
+func GetWorkloadCache(kubeClient kubernetes.Interface) (WorkloadCache, error) {
+	var err error
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+
+	// init just one instance per collector agent
+	if wlCache != nil {
+		return wlCache, nil
+	}
+
+	wlCache, err = NewWorkloadCache(kubeClient)
+	return wlCache, err
+}
+
 func GetNodeLister(kubeClient kubernetes.Interface) (v1listers.NodeLister, *cache.Reflector, error) {
-	lock.Lock()
-	defer lock.Unlock()
+	listerLock.Lock()
+	defer listerLock.Unlock()
 
 	// init just one instance per collector agent
 	if nodeLister != nil {
@@ -98,8 +112,8 @@ func GetNodeLister(kubeClient kubernetes.Interface) (v1listers.NodeLister, *cach
 }
 
 func GetPodLister(kubeClient kubernetes.Interface) (v1listers.PodLister, error) {
-	lock.Lock()
-	defer lock.Unlock()
+	listerLock.Lock()
+	defer listerLock.Unlock()
 
 	// init just one instance per collector agent
 	if podLister != nil {
@@ -125,8 +139,8 @@ func GetServiceLister(kubeClient kubernetes.Interface) (v1listers.ServiceLister,
 }
 
 func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
-	lock.Lock()
-	defer lock.Unlock()
+	listerLock.Lock()
+	defer listerLock.Unlock()
 
 	// init just once per collector agent
 	if nsStore != nil {
@@ -138,45 +152,6 @@ func GetNamespaceStore(kubeClient kubernetes.Interface) cache.Store {
 	reflector := cache.NewReflector(lw, &kube_api.Namespace{}, nsStore, time.Hour)
 	go reflector.Run(NeverStop)
 	return nsStore
-}
-
-func GetWorkloadForPod(kubeClient kubernetes.Interface, podName, ns string) (name, kind string) {
-	pod, err := kubeClient.CoreV1().Pods(ns).Get(context.Background(), podName, metav1.GetOptions{})
-	if err != nil {
-		log.Errorf("Error querying Kubernetes API for '%s' Pod: %s", podName, err.Error())
-		return "", ""
-	}
-	if len(pod.OwnerReferences) == 0 {
-		return pod.Name, pod.Kind
-	}
-
-	podOwner := pod.OwnerReferences[0]
-	var parentOwners []metav1.OwnerReference
-
-	switch podOwner.Kind {
-	case "ReplicaSet":
-		rs, err := kubeClient.AppsV1().ReplicaSets(ns).Get(context.Background(), podOwner.Name, metav1.GetOptions{})
-		if err != nil {
-			log.Errorf("Error querying Kubernetes API for '%s' ReplicaSet: %s", podOwner.Name, err.Error())
-			return "", ""
-		}
-		parentOwners = rs.OwnerReferences
-	case "Job":
-		job, err := kubeClient.BatchV1().Jobs(ns).Get(context.Background(), podOwner.Name, metav1.GetOptions{})
-		if err != nil {
-			log.Errorf("Error querying Kubernetes API for '%s' Job: %s", podOwner.Name, err.Error())
-			return "", ""
-		}
-		parentOwners = job.OwnerReferences
-	}
-
-	if len(parentOwners) != 0 {
-		// the ReplicaSet or Job has a parent (likely a Deployment or CronJob), so return that
-		return parentOwners[0].Name, parentOwners[0].Kind
-	} else {
-		// Otherwise return the owner of the Pod
-		return podOwner.Name, podOwner.Kind
-	}
 }
 
 func GetFieldSelector(resourceType string) fields.Selector {
@@ -209,11 +184,11 @@ func SetAgentType(value AgentType) {
 }
 
 func ScrapeAnyNodes() bool {
-	return agentType.ScrapeAnyNodes()
+	return agentType != nil && agentType.ScrapeAnyNodes()
 }
 
 func ScrapeOnlyOwnNode() bool {
-	return agentType.ScrapeOnlyOwnNode()
+	return agentType != nil && agentType.ScrapeOnlyOwnNode()
 }
 
 func GetNodeName() string {

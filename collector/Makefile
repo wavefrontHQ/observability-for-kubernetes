@@ -63,7 +63,7 @@ k8s-nodes-arch:
 	kubectl get nodes --label-columns='kubernetes.io/arch'
 
 delete-images:
-ifeq ($(K8S_ENV)$(KIND_RUNNING_LOCALLY), Kind-local)
+ifeq ($(K8S_ENV)-$(KIND_RUNNING_LOCALLY), Kind-local)
 	make delete-images-kind
 endif
 
@@ -81,14 +81,14 @@ delete-images-kind:
 	@docker exec -it kind-control-plane crictl rmi $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) || true
 
 push-images:
-ifeq ($(K8S_ENV)$(KIND_RUNNING_LOCALLY), Kind-local)
+ifeq ($(K8S_ENV)-$(KIND_RUNNING_LOCALLY), Kind-local)
 	make push-to-kind
 else
 	make docker-xplatform-build
 endif
 
 cover-push-images:
-ifeq ($(K8S_ENV)$(KIND_RUNNING_LOCALLY), Kind-local)
+ifeq ($(K8S_ENV)-$(KIND_RUNNING_LOCALLY), Kind-local)
 	make cover-push-to-kind
 else
 	make docker-xplatform-build

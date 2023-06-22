@@ -97,8 +97,10 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	clusterName := cfg.ClusterName
 
 	kubeClient := createKubeClientOrDie(*cfg.Sources.SummaryConfig)
+	workloadCache := getWorkloadCacheOrDie(kubeClient)
 	if cfg.Sources.StateConfig != nil {
 		cfg.Sources.StateConfig.KubeClient = kubeClient
+		cfg.Sources.StateConfig.WorkloadCache = workloadCache
 	}
 
 	// create sources manager
@@ -124,10 +126,9 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 
 	podLister := getPodListerOrDie(kubeClient)
 
-	dm := createDiscoveryManagerOrDie(kubeClient, cfg, sourceManager, podLister)
-
-	dataProcessors := createDataProcessorsOrDie(kubeClient, clusterName, podLister, cfg)
-	man, err := manager.NewFlushManager(dataProcessors, sinkManager, cfg.FlushInterval)
+	discoveryManager := createDiscoveryManagerOrDie(kubeClient, cfg, sourceManager, podLister)
+	dataProcessors := createDataProcessorsOrDie(kubeClient, clusterName, podLister, workloadCache, cfg)
+	flushManager, err := manager.NewFlushManager(dataProcessors, sinkManager, cfg.FlushInterval)
 	if err != nil {
 		log.Fatalf("Failed to create main manager: %v", err)
 	}
@@ -141,7 +142,7 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	}
 
 	// create and start agent
-	ag := agent.NewAgent(man, dm, eventRouter)
+	ag := agent.NewAgent(flushManager, discoveryManager, eventRouter)
 	ag.Start()
 	return ag
 }
@@ -198,6 +199,14 @@ func getPodListerOrDie(kubeClient *kube_client.Clientset) v1listers.PodLister {
 	return podLister
 }
 
+func getWorkloadCacheOrDie(kubeClient *kube_client.Clientset) util.WorkloadCache {
+	workloadCache, err := util.GetWorkloadCache(kubeClient)
+	if err != nil {
+		log.Fatalf("Failed to initialize workload cache: %v", err)
+	}
+	return workloadCache
+}
+
 func createKubeClientOrDie(cfg configuration.SummarySourceConfig) *kube_client.Clientset {
 	kubeConfig, err := kube_config.GetKubeClientConfig(cfg)
 	if err != nil {
@@ -206,7 +215,7 @@ func createKubeClientOrDie(cfg configuration.SummarySourceConfig) *kube_client.C
 	return kube_client.NewForConfigOrDie(kubeConfig)
 }
 
-func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister, cfg *configuration.Config) []metrics.Processor {
+func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister, workloadCache util.WorkloadCache, cfg *configuration.Config) []metrics.Processor {
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	if err != nil {
 		log.Fatalf("Failed to initialize label copier: %v", err)
@@ -219,7 +228,7 @@ func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string
 	}
 
 	collectionInterval := calculateCollectionInterval(cfg)
-	podBasedEnricher := processors.NewPodBasedEnricher(podLister, labelCopier, collectionInterval)
+	podBasedEnricher := processors.NewPodBasedEnricher(podLister, workloadCache, labelCopier, collectionInterval)
 	dataProcessors = append(dataProcessors, podBasedEnricher)
 
 	namespaceBasedEnricher, err := processors.NewNamespaceBasedEnricher(kubeClient)

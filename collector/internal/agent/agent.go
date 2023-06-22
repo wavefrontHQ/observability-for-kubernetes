@@ -13,43 +13,43 @@ import (
 )
 
 type Agent struct {
-	pm manager.FlushManager
-	dm *discovery.Manager
-	er *events.EventRouter
+	flushManager     manager.FlushManager
+	discoveryManager *discovery.Manager
+	eventRouter      *events.EventRouter
 }
 
-func NewAgent(pm manager.FlushManager, dm *discovery.Manager, er *events.EventRouter) *Agent {
+func NewAgent(fm manager.FlushManager, dm *discovery.Manager, er *events.EventRouter) *Agent {
 	return &Agent{
-		pm: pm,
-		dm: dm,
-		er: er,
+		flushManager:     fm,
+		discoveryManager: dm,
+		eventRouter:      er,
 	}
 }
 
 func (a *Agent) Start() {
 	log.Infof("Starting agent")
-	a.pm.Start()
-	if a.dm != nil {
-		a.dm.Start()
+	a.flushManager.Start()
+	if a.discoveryManager != nil {
+		a.discoveryManager.Start()
 	}
 
-	if a.er != nil {
+	if a.eventRouter != nil {
 		log.Infof("Starting Events collector")
-		a.er.Start()
+		a.eventRouter.Start()
 		log.Infof("Done Starting Events collector")
 	}
 }
 
 func (a *Agent) Stop() {
 	log.Infof("Stopping agent")
-	a.pm.Stop()
-	if a.dm != nil {
-		a.dm.Stop()
+	a.flushManager.Stop()
+	if a.discoveryManager != nil {
+		a.discoveryManager.Stop()
 	}
 
-	if a.er != nil {
+	if a.eventRouter != nil {
 		log.Infof("Stopping Events collector")
-		a.er.Stop()
+		a.eventRouter.Stop()
 		log.Infof("Done Stopping Events collector")
 	}
 

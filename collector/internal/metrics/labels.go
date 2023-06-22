@@ -47,6 +47,10 @@ var (
 		Key:         "namespace_name",
 		Description: "The name of the namespace",
 	}
+	LabelWorkloadName = LabelDescriptor{
+		Key:         "workload_name",
+		Description: "Workload name, derived from top level Deployment or DaemonSet",
+	}
 	LabelPodNamespaceUID = LabelDescriptor{
 		Key:         "namespace_id",
 		Description: "The UID of namespace of the pod",
