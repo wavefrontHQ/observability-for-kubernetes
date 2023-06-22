@@ -50,7 +50,7 @@ curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubern
 ### Step 3: Customize the alert.
 
 1. Log in to your service instance `https://<your_instance>.wavefront.com` as a user with the Alerts permission. Click **Alerting** > **All Alerts** from the toolbar to display the Alerts Browser.
-2. Click the alert name, or click the ellipsis icon next to the alert and select **Edit**.  You can search for the alert by by typing the alert name in the search field.
+2. Click the alert name, or click the ellipsis icon next to the alert and select **Edit**.  You can search for the alert by typing the alert name in the search field.
 3. Change the alert properties when you edit the alert.
 4. Specify alert recipients to receive notifications when the alert changes state.
 5. Click **Save** in the top right to save your changes.
