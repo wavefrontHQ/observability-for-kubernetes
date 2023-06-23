@@ -80,15 +80,16 @@ func TestReconcileAll(t *testing.T) {
 
 		require.Equal(t, ctrl.Result{Requeue: true}, results)
 
-		require.True(t, mockKM.CollectorServiceAccountContains())
-		require.True(t, mockKM.CollectorConfigMapContains("clusterName: testClusterName", "proxyAddress: wavefront-proxy:2878"))
-		require.True(t, mockKM.NodeCollectorDaemonSetContains(fmt.Sprintf("kubernetes-collector:%s", r.Versions.CollectorVersion)))
-		require.True(t, mockKM.ClusterCollectorDeploymentContains(fmt.Sprintf("kubernetes-collector:%s", r.Versions.CollectorVersion)))
-		require.True(t, mockKM.LoggingDaemonSetContains(fmt.Sprintf("kubernetes-operator-fluentbit:%s", r.Versions.LoggingVersion)))
+		require.True(t, mockKM.CollectorServiceAccountContains("OperatorUUID"))
+		require.True(t, mockKM.CollectorConfigMapContains("clusterName: testClusterName", "proxyAddress: wavefront-proxy:2878", "OperatorUUID"))
+		require.True(t, mockKM.NodeCollectorDaemonSetContains(fmt.Sprintf("kubernetes-collector:%s", r.Versions.CollectorVersion), "OperatorUUID"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains(fmt.Sprintf("kubernetes-collector:%s", r.Versions.CollectorVersion), "OperatorUUID"))
+		require.True(t, mockKM.LoggingDaemonSetContains(fmt.Sprintf("kubernetes-operator-fluentbit:%s", r.Versions.LoggingVersion), "OperatorUUID"))
+		require.True(t, mockKM.ProxyDeploymentContains(fmt.Sprintf("proxy:%s", r.Versions.ProxyVersion), "OperatorUUID"))
+		//auto instrumentation tests
 		require.True(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "StatefulSet", "pl-nats"))
 		require.True(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
 		require.True(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "Deployment", "kelvin"))
-		require.True(t, mockKM.ProxyDeploymentContains(fmt.Sprintf("proxy:%s", r.Versions.ProxyVersion)))
 
 		require.Greater(t, len(mockSender.SentMetrics), 0, "should not have sent metrics")
 		require.Equal(t, 99.9999, VersionSent(mockSender), "should send OperatorVersion")

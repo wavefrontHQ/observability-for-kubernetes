@@ -19,10 +19,8 @@ package controllers
 import (
 	"bytes"
 	"context"
-	"crypto/sha1"
 	"fmt"
 	"io/fs"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -52,8 +50,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/json"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -191,12 +187,6 @@ func NewWavefrontReconciler(versions Versions, client client.Client, discoveryCl
 
 // Read, Create, Update and Delete Resources.
 func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) error {
-	controllerManagerUID, err := r.getControllerManagerUID()
-	if err != nil {
-		return err
-	}
-	spec.ControllerManagerUID = string(controllerManagerUID)
-
 	toApply, toDelete, err := r.readAndInterpolateResources(spec)
 	if err != nil {
 		return err
@@ -314,15 +304,6 @@ func (r *WavefrontReconciler) deployment(name string) (*appsv1.Deployment, error
 	return &deployment, err
 }
 
-func (r *WavefrontReconciler) getControllerManagerUID() (types.UID, error) {
-	deployment, err := r.deployment(util.OperatorName)
-	if err != nil {
-		return "", err
-	}
-
-	return deployment.UID, nil
-}
-
 func contains(s []string, str string) bool {
 	for _, v := range s {
 		if v == str {
@@ -381,68 +362,20 @@ func newTemplate(resourceFile string) *template.Template {
 	return template.New(resourceFile).Funcs(fMap)
 }
 
-func hashValue(bytes []byte) string {
-	h := sha1.New()
-	h.Write(bytes)
-
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
 // Preprocessing Wavefront Spec
 func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Context) error {
-	deployment, err := r.deployment(util.OperatorName)
+
+	wavefront.Spec.Namespace = r.namespace
+	wavefront.Spec.ClusterUUID = r.ClusterUUID
+
+	err := preprocessor.ProcessSpec(r.Client, wavefront)
 	if err != nil {
 		return err
 	}
 
-	wavefront.Spec.Namespace = r.namespace
-	wavefront.Spec.ImageRegistry = filepath.Dir(deployment.Spec.Template.Spec.Containers[0].Image)
-	wavefront.Spec.ClusterUUID = r.ClusterUUID
-
-	if wavefront.Spec.DataCollection.Metrics.Enable {
-		if len(wavefront.Spec.DataCollection.Metrics.CustomConfig) == 0 {
-			wavefront.Spec.DataCollection.Metrics.CollectorConfigName = "default-wavefront-collector-config"
-		} else {
-			wavefront.Spec.DataCollection.Metrics.CollectorConfigName = wavefront.Spec.DataCollection.Metrics.CustomConfig
-		}
-	} else if wavefront.Spec.Experimental.KubernetesEvents.Enable {
-		wavefront.Spec.DataCollection.Metrics.CollectorConfigName = "k8s-events-only-wavefront-collector-config"
-	}
-
-	wavefront.Spec.DataExport.WavefrontProxy.AvailableReplicas = 1
-	if wavefront.Spec.DataExport.WavefrontProxy.Enable {
-		err = r.preprocessProxy(wavefront, ctx)
-		if err != nil {
-			return err
-		}
-	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
-		wavefront.Spec.CanExportData = true
-		wavefront.Spec.DataCollection.Metrics.ProxyAddress = wavefront.Spec.DataExport.ExternalWavefrontProxy.Url
-
-		if strings.HasPrefix(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url, "http") {
-			wavefront.Spec.DataCollection.Logging.ProxyAddress = wavefront.Spec.DataExport.ExternalWavefrontProxy.Url
-			// The endpoint for collector requires it to be in the hostname:port format
-			wavefront.Spec.DataCollection.Metrics.ProxyAddress = strings.TrimPrefix(wavefront.Spec.DataCollection.Metrics.ProxyAddress, "http://")
-		} else {
-			// The endpoint for logging requires the http:// prefix
-			wavefront.Spec.DataCollection.Logging.ProxyAddress = fmt.Sprintf("http://%s", wavefront.Spec.DataExport.ExternalWavefrontProxy.Url)
-		}
-	}
-
-	if wavefront.Spec.DataCollection.Logging.Enable {
-		configHashBytes, err := json.Marshal(wavefront.Spec.DataCollection.Logging)
-		if err != nil {
-			return err
-		}
-		wavefront.Spec.DataCollection.Logging.ConfigHash = hashValue(configHashBytes)
-	}
-
-	if r.shouldEnableEtcdCollection(wavefront, ctx) {
-		wavefront.Spec.DataCollection.Metrics.ControlPlane.EnableEtcd = true
-	}
-
-	wavefront.Spec.DataExport.WavefrontProxy.Args = strings.ReplaceAll(wavefront.Spec.DataExport.WavefrontProxy.Args, "\r", "")
-	wavefront.Spec.DataExport.WavefrontProxy.Args = strings.ReplaceAll(wavefront.Spec.DataExport.WavefrontProxy.Args, "\n", "")
+	wavefront.Spec.DataCollection.Metrics.CollectorVersion = r.Versions.CollectorVersion
+	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
+	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
 
 	if wavefront.Spec.CanExportData {
 		err := r.MetricConnection.Connect(wavefront.Spec.DataCollection.Metrics.ProxyAddress)
@@ -451,41 +384,12 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		}
 	}
 
-	wavefront.Spec.DataCollection.Metrics.CollectorVersion = r.Versions.CollectorVersion
-	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
-	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
+	if r.shouldEnableEtcdCollection(wavefront, ctx) {
+		wavefront.Spec.DataCollection.Metrics.ControlPlane.EnableEtcd = true
+	}
 
 	if r.isAnOpenshiftEnvironment() {
 		wavefront.Spec.Openshift = true
-	}
-
-	return nil
-}
-
-func (r *WavefrontReconciler) preprocessProxy(wavefront *wf.Wavefront, ctx context.Context) error {
-	deployment, err := r.deployment(util.ProxyName)
-	if err == nil && deployment.Status.AvailableReplicas > 0 {
-		wavefront.Spec.DataExport.WavefrontProxy.AvailableReplicas = int(deployment.Status.AvailableReplicas)
-		wavefront.Spec.CanExportData = true
-	}
-	wavefront.Spec.DataExport.WavefrontProxy.ConfigHash = ""
-	wavefront.Spec.DataCollection.Metrics.ProxyAddress = fmt.Sprintf("%s:%d", util.ProxyName, wavefront.Spec.DataExport.WavefrontProxy.MetricPort)
-
-	// The endpoint for logging requires the "http://" prefix
-	wavefront.Spec.DataCollection.Logging.ProxyAddress = fmt.Sprintf("http://%s:%d", util.ProxyName, wavefront.Spec.DataExport.WavefrontProxy.MetricPort)
-
-	err = r.parseHttpProxyConfigs(wavefront, ctx)
-	if err != nil {
-		return err
-	}
-
-	if wavefront.Spec.Experimental.AutoInstrumentation.Enable {
-		wavefront.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort = 4317
-		wavefront.Spec.DataExport.WavefrontProxy.OTLP.ResourceAttrsOnMetricsIncluded = true
-	}
-	err = preprocessor.Process(r.Client, wavefront)
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -520,72 +424,6 @@ func (r *WavefrontReconciler) shouldEnableEtcdCollection(wavefront *wf.Wavefront
 	err := r.Client.Get(ctx, key, &corev1.Secret{})
 
 	return err == nil
-}
-
-func (r *WavefrontReconciler) parseHttpProxyConfigs(wavefront *wf.Wavefront, ctx context.Context) error {
-	if len(wavefront.Spec.DataExport.WavefrontProxy.HttpProxy.Secret) != 0 {
-		httpProxySecret, err := r.findSecret(wavefront.Spec.DataExport.WavefrontProxy.HttpProxy.Secret, ctx)
-		if err != nil {
-			return err
-		}
-		err = setHttpProxyConfigs(httpProxySecret, wavefront)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (r *WavefrontReconciler) findSecret(name string, ctx context.Context) (*corev1.Secret, error) {
-	secret := client.ObjectKey{
-		Namespace: r.namespace,
-		Name:      name,
-	}
-	httpProxySecret := &corev1.Secret{}
-	err := r.Client.Get(ctx, secret, httpProxySecret)
-	if err != nil {
-		return nil, err
-	}
-
-	return httpProxySecret, nil
-}
-
-func setHttpProxyConfigs(httpProxySecret *corev1.Secret, wavefront *wf.Wavefront) error {
-	httpProxySecretData := map[string]string{}
-	for k, v := range httpProxySecret.Data {
-		httpProxySecretData[k] = string(v)
-	}
-
-	rawHttpUrl := httpProxySecretData["http-url"]
-
-	// append http:// if we receive a service in order to correctly parse it -- only the hostname is used, not the scheme
-	if !strings.Contains(rawHttpUrl, "http://") && !strings.Contains(rawHttpUrl, "https://") {
-		rawHttpUrl = "http://" + rawHttpUrl
-	}
-
-	httpUrl, err := url.Parse(rawHttpUrl)
-	if err != nil {
-		return err
-	}
-	wavefront.Spec.DataExport.WavefrontProxy.HttpProxy.HttpProxyHost = httpUrl.Hostname()
-	wavefront.Spec.DataExport.WavefrontProxy.HttpProxy.HttpProxyPort = httpUrl.Port()
-	wavefront.Spec.DataExport.WavefrontProxy.HttpProxy.HttpProxyUser = httpProxySecretData["basic-auth-username"]
-	wavefront.Spec.DataExport.WavefrontProxy.HttpProxy.HttpProxyPassword = httpProxySecretData["basic-auth-password"]
-
-	configHashBytes, err := json.Marshal(wavefront.Spec.DataExport.WavefrontProxy.HttpProxy)
-	if err != nil {
-		return err
-	}
-
-	if len(httpProxySecretData["tls-root-ca-bundle"]) != 0 {
-		wavefront.Spec.DataExport.WavefrontProxy.HttpProxy.UseHttpProxyCAcert = true
-		configHashBytes = append(configHashBytes, httpProxySecret.Data["tls-root-ca-bundle"]...)
-	}
-
-	wavefront.Spec.DataExport.WavefrontProxy.ConfigHash = hashValue(configHashBytes)
-
-	return nil
 }
 
 // Reporting Health Status

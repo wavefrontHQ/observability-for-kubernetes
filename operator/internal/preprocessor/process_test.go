@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,7 +16,7 @@ import (
 func TestProcess(t *testing.T) {
 	t.Run("computes default proxy ports", func(t *testing.T) {
 		wfcr := defaultWFCR()
-		err := Process(setup(), wfcr)
+		err := ProcessSpec(setup(), wfcr)
 		require.NoError(t, err)
 		require.Equal(t, "2878", wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts)
 	})
@@ -24,7 +25,7 @@ func TestProcess(t *testing.T) {
 		wfcr := defaultWFCR()
 		wfcr.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort = 4317
 		wfcr.Spec.DataExport.WavefrontProxy.Histogram.Port = 9999
-		err := Process(setup(), wfcr)
+		err := ProcessSpec(setup(), wfcr)
 		require.NoError(t, err)
 		require.Equal(t, "2878,4317,9999", wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts)
 	})
@@ -45,7 +46,7 @@ func TestProcess(t *testing.T) {
 		}
 
 		client := setup(rulesConfigMap)
-		err := Process(client, wfcr)
+		err := ProcessSpec(client, wfcr)
 
 		require.NoError(t, err)
 		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: tag1\n  action: addTag\n  tag: tag1\n  value: \"true\"\n")
@@ -69,7 +70,7 @@ func TestProcess(t *testing.T) {
 		}
 
 		client := setup(rulesConfigMap)
-		err := Process(client, wfcr)
+		err := ProcessSpec(client, wfcr)
 
 		require.Error(t, err)
 	})
@@ -90,7 +91,7 @@ func TestProcess(t *testing.T) {
 		}
 
 		client := setup(rulesConfigMap)
-		err := Process(client, wfcr)
+		err := ProcessSpec(client, wfcr)
 
 		require.Error(t, err)
 		require.Equal(t, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port '2878', overriding metric tag 'cluster' is disallowed", err.Error())
@@ -112,7 +113,7 @@ func TestProcess(t *testing.T) {
 		}
 
 		client := setup(rulesConfigMap)
-		err := Process(client, wfcr)
+		err := ProcessSpec(client, wfcr)
 
 		require.Error(t, err)
 		require.Equal(t, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port '2878', overriding span tag 'cluster_uuid' is disallowed", err.Error())
@@ -134,7 +135,7 @@ func TestProcess(t *testing.T) {
 		}
 
 		client := setup(rulesConfigMap)
-		err := Process(client, wfcr)
+		err := ProcessSpec(client, wfcr)
 
 		require.Error(t, err)
 		require.Equal(t, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port 'global', overriding span tag 'cluster_uuid' is disallowed", err.Error())
@@ -156,7 +157,7 @@ func TestProcess(t *testing.T) {
 		}
 
 		client := setup(rulesConfigMap)
-		err := Process(client, wfcr)
+		err := ProcessSpec(client, wfcr)
 
 		require.Error(t, err)
 		require.Equal(t, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port 'global', overriding metric tag 'cluster' is disallowed", err.Error())
@@ -165,6 +166,10 @@ func TestProcess(t *testing.T) {
 }
 
 func setup(initObjs ...runtime.Object) client.Client {
+	operator := wftest.Operator()
+	operator.SetNamespace("testNamespace")
+	initObjs = append(initObjs, operator)
+
 	return fake.NewClientBuilder().
 		WithRuntimeObjects(initObjs...).
 		Build()

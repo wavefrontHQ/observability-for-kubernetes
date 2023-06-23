@@ -16,7 +16,7 @@ func Operator(options ...func(*appsv1.Deployment)) *appsv1.Deployment {
 				"app.kubernetes.io/name":      "wavefront",
 				"app.kubernetes.io/component": "controller-manager",
 			},
-			UID: "testUID",
+			UID: "OperatorUUID",
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
