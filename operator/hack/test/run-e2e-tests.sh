@@ -584,6 +584,9 @@ function main() {
 
   cd "$OPERATOR_REPO_ROOT"
 
+  if [[ " ${tests_to_run[*]} " =~ " k8s-events-only " ]]; then
+    run_test "k8s-events-only" "k8s_events"
+  fi
   if [[ " ${tests_to_run[*]} " =~ " validation-errors " ]]; then
     run_test "validation-errors" "unhealthy"
   fi
@@ -613,9 +616,6 @@ function main() {
   fi
   if [[ " ${tests_to_run[*]} " =~ " control-plane " ]]; then
     run_test "control-plane" "test_control_plane_metrics"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " k8s-events-only " ]]; then
-    run_test "k8s-events-only" "k8s_events"
   fi
 }
 
