@@ -28,7 +28,7 @@ spec:
                       - amd64
       containers:
       - name: wavefront-proxy
-        image:  projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:1.21.0-dev-matthewco-230622154321
+        image:  projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:2.4.3
         imagePullPolicy: Always
         command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info" ]
         ports:
