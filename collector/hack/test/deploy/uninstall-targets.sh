@@ -17,6 +17,7 @@ kubectl delete -f running-pod-small-init-container.yaml &>/dev/null || true
 kubectl delete -f pod-stuck-in-terminating.yaml &>/dev/null || true
 kubectl delete -f jobs.yaml &>/dev/null || true
 kubectl delete -f workload-not-ready.yaml &>/dev/null || true
+kubectl delete -f replicaset-no-owner.yaml &>/dev/null || true
 
 helm uninstall memcached-release --namespace collector-targets &>/dev/null || true
 
