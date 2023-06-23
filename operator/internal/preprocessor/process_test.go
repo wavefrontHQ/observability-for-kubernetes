@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -165,6 +166,91 @@ func TestProcess(t *testing.T) {
 
 }
 
+func TestProcessWavefrontProxyAuth(t *testing.T) {
+	t.Run("defaults to API token auth if no secret is found", func(t *testing.T) {
+		fakeClient := setup()
+		wfcr := defaultWFCR()
+		err := PreProcess(fakeClient, wfcr)
+		require.NoError(t, err)
+		require.Equal(t, util.WavefrontTokenAuthType, wfcr.Spec.DataExport.WavefrontProxy.Auth.Type)
+	})
+
+	t.Run("supports wavefront api token auth", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"token": []byte("some-token"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		err := PreProcess(fakeClient, wfcr)
+		require.NoError(t, err)
+		require.Equal(t, util.WavefrontTokenAuthType, wfcr.Spec.DataExport.WavefrontProxy.Auth.Type)
+	})
+
+	t.Run("supports csp api token auth", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"csp-api-token": []byte("some-token"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		err := PreProcess(fakeClient, wfcr)
+		require.NoError(t, err)
+		require.Equal(t, util.CSPTokenAuthType, wfcr.Spec.DataExport.WavefrontProxy.Auth.Type)
+	})
+
+	t.Run("supports csp app secret auth", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"csp-app-id":     []byte("some-app-id"),
+				"csp-app-secret": []byte("some-app-secret"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		err := PreProcess(fakeClient, wfcr)
+		require.NoError(t, err)
+		require.Equal(t, util.CSPAppAuthType, wfcr.Spec.DataExport.WavefrontProxy.Auth.Type)
+		require.Equal(t, "some-app-id", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPAppID)
+		require.Equal(t, "", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPOrgId)
+	})
+
+	t.Run("supports csp app secret auth with org id", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"csp-app-id":     []byte("some-app-id"),
+				"csp-org-id":     []byte("some-org-id"),
+				"csp-app-secret": []byte("some-app-secret"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		err := PreProcess(fakeClient, wfcr)
+		require.NoError(t, err)
+		require.Equal(t, util.CSPAppAuthType, wfcr.Spec.DataExport.WavefrontProxy.Auth.Type)
+		require.Equal(t, "some-app-id", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPAppID)
+		require.Equal(t, "some-org-id", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPOrgId)
+	})
+}
+
 func setup(initObjs ...runtime.Object) client.Client {
 	operator := wftest.Operator()
 	operator.SetNamespace("testNamespace")
@@ -183,9 +269,10 @@ func defaultWFCR() *wf.Wavefront {
 			Name:      "wavefront",
 		},
 		Spec: wf.WavefrontSpec{
-			ClusterName:  "testClusterName",
-			WavefrontUrl: "testWavefrontUrl",
-			Namespace:    "testNamespace",
+			ClusterName:          "testClusterName",
+			WavefrontTokenSecret: "testWavefrontSecret",
+			WavefrontUrl:         "testWavefrontUrl",
+			Namespace:            "testNamespace",
 			DataExport: wf.DataExport{
 				WavefrontProxy: wf.WavefrontProxy{
 					Enable:     true,

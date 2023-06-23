@@ -34,19 +34,36 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 	wfSpec.ControllerManagerUID = string(operator.UID)
 	wfSpec.ImageRegistry = filepath.Dir(operator.Spec.Template.Spec.Containers[0].Image)
 
-	if wfSpec.DataCollection.Metrics.Enable {
-		if len(wfSpec.DataCollection.Metrics.CustomConfig) == 0 {
-			wfSpec.DataCollection.Metrics.CollectorConfigName = "default-wavefront-collector-config"
-		} else {
-			wfSpec.DataCollection.Metrics.CollectorConfigName = wfSpec.DataCollection.Metrics.CustomConfig
-		}
-	} else if wfSpec.Experimental.KubernetesEvents.Enable {
-		wfSpec.DataCollection.Metrics.CollectorConfigName = "k8s-events-only-wavefront-collector-config"
+	preProcessDataCollection(wfSpec)
+
+	err = preProcessDataExport(client, wfSpec, err)
+	if err != nil {
+		return err
 	}
 
+	err = preProcessLogging(wfSpec)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func preProcessLogging(wfSpec *wf.WavefrontSpec) error {
+	if wfSpec.DataCollection.Logging.Enable {
+		configHashBytes, err := json.Marshal(wfSpec.DataCollection.Logging)
+		if err != nil {
+			return err
+		}
+		wfSpec.DataCollection.Logging.ConfigHash = hashValue(configHashBytes)
+	}
+	return nil
+}
+
+func preProcessDataExport(client crClient.Client, wfSpec *wf.WavefrontSpec, err error) error {
 	wfSpec.DataExport.WavefrontProxy.AvailableReplicas = 1
 	if wfSpec.DataExport.WavefrontProxy.Enable {
-		err = processProxyConfig(client, wfSpec)
+		err = preProcessProxyConfig(client, wfSpec)
 		if err != nil {
 			return err
 		}
@@ -64,21 +81,25 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 		}
 	}
 
-	if wfSpec.DataCollection.Logging.Enable {
-		configHashBytes, err := json.Marshal(wfSpec.DataCollection.Logging)
-		if err != nil {
-			return err
-		}
-		wfSpec.DataCollection.Logging.ConfigHash = hashValue(configHashBytes)
-	}
-
 	wfSpec.DataExport.WavefrontProxy.Args = strings.ReplaceAll(wfSpec.DataExport.WavefrontProxy.Args, "\r", "")
 	wfSpec.DataExport.WavefrontProxy.Args = strings.ReplaceAll(wfSpec.DataExport.WavefrontProxy.Args, "\n", "")
 
 	return nil
 }
 
-func processProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
+func preProcessDataCollection(wfSpec *wf.WavefrontSpec) {
+	if wfSpec.DataCollection.Metrics.Enable {
+		if len(wfSpec.DataCollection.Metrics.CustomConfig) == 0 {
+			wfSpec.DataCollection.Metrics.CollectorConfigName = "default-wavefront-collector-config"
+		} else {
+			wfSpec.DataCollection.Metrics.CollectorConfigName = wfSpec.DataCollection.Metrics.CustomConfig
+		}
+	} else if wfSpec.Experimental.KubernetesEvents.Enable {
+		wfSpec.DataCollection.Metrics.CollectorConfigName = "k8s-events-only-wavefront-collector-config"
+	}
+}
+
+func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
 	deployment, err := deployment(client, util.ProxyName, wfSpec.Namespace)
 	if err == nil && deployment.Status.AvailableReplicas > 0 {
 		wfSpec.DataExport.WavefrontProxy.AvailableReplicas = int(deployment.Status.AvailableReplicas)
@@ -103,7 +124,37 @@ func processProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) error 
 	wfSpec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules,
 		wfSpec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules,
 		err = getUserDefinedRules(client, wfSpec)
-	return err
+
+	if err != nil {
+		return err
+	}
+
+	err = processWavefrontSecret(client, wfSpec, err)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec, err error) error {
+	secret, err := findSecret(client, wfSpec.WavefrontTokenSecret, wfSpec.Namespace)
+	if err != nil {
+		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.WavefrontTokenAuthType
+		return nil
+	}
+	if _, found := secret.Data["token"]; found {
+		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.WavefrontTokenAuthType
+	}
+	if _, found := secret.Data["csp-api-token"]; found {
+		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.CSPTokenAuthType
+	}
+	if _, found := secret.Data["csp-app-id"]; found {
+		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.CSPAppAuthType
+		wfSpec.DataExport.WavefrontProxy.Auth.CSPAppID = string(secret.Data["csp-app-id"])
+		wfSpec.DataExport.WavefrontProxy.Auth.CSPOrgId = string(secret.Data["csp-org-id"])
+	}
+	return nil
 }
 
 func getEnabledPorts(wfSpec *wf.WavefrontSpec) string {

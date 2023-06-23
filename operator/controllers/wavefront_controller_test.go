@@ -671,7 +671,7 @@ func TestReconcileProxy(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
-		require.True(t, mockKM.ProxyDeploymentContains("value: testWavefrontUrl/api/", "name: testToken", "containerPort: 2878", "configHash: \"\""))
+		require.True(t, mockKM.ProxyDeploymentContains("value: testWavefrontUrl/api/", "name: testToken", "name: WAVEFRONT_TOKEN", "containerPort: 2878", "configHash: \"\""))
 
 		require.True(t, mockKM.ProxyServiceContains("port: 2878"))
 	})

@@ -69,11 +69,13 @@ spec:
           env:
             - name: WAVEFRONT_URL
               value: {{ .WavefrontUrl }}/api/
+          {{- if eq .DataExport.WavefrontProxy.Auth.Type "wavefront-token"}}
             - name: WAVEFRONT_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ .WavefrontTokenSecret }}
                   key: token
+          {{- end }}
             - name: WAVEFRONT_PROXY_ARGS
               value: >
                 --pushListenerPorts {{ .DataExport.WavefrontProxy.MetricPort }}
