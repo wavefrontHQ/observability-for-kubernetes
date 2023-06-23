@@ -368,7 +368,7 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	wavefront.Spec.Namespace = r.namespace
 	wavefront.Spec.ClusterUUID = r.ClusterUUID
 
-	err := preprocessor.ProcessSpec(r.Client, wavefront)
+	err := preprocessor.PreProcess(r.Client, wavefront)
 	if err != nil {
 		return err
 	}

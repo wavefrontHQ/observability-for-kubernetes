@@ -25,7 +25,7 @@ type rule struct {
 	Value  string `yaml:",omitempty"`
 }
 
-func ProcessSpec(client crClient.Client, wavefront *wf.Wavefront) error {
+func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 	wfSpec := &wavefront.Spec
 	operator, err := deployment(client, util.OperatorName, wfSpec.Namespace)
 	if err != nil {
