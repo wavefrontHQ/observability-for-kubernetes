@@ -8,6 +8,7 @@
 {"Name":"kubernetes.collector.discovery.enabled"}
 ~{"Name":"kubernetes.daemonset.current_scheduled"}
 ~{"Name":"kubernetes.deployment.available_replicas"}
+~{"Name":"kubernetes.workload.status"}
 ~{"Name":"kubernetes.job.active"}
 {"Name":"kubernetes.node.cpu.limit"}
 ~{"Name":"kubernetes.node.info"}
