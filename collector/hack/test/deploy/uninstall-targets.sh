@@ -3,7 +3,7 @@ if [ -z ${NS} ]; then exit 0; fi
 
 echo "Uninstalling targets..."
 
-kubectl patch -n collector-targets pod/pod-stuck-in-terminating --type=json -p '[{"op": "remove", "path": "/metadata/finalizers" }]' || true
+kubectl patch -n collector-targets pod/pod-stuck-in-terminating --type=json -p '[{"op": "remove", "path": "/metadata/finalizers" }]' &>/dev/null || true
 
 kubectl delete -f prom-example.yaml &>/dev/null || true
 kubectl delete -f exclude-prom-example.yaml &>/dev/null || true

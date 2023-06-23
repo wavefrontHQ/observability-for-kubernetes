@@ -162,8 +162,8 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | Alert name | Description |
 |---|---|
 | [Pod Stuck in Pending](docs/alerts/templates/pod-stuck-in-pending.json.tmpl) | Workload has pod stuck in pending. |
+| [Pod Stuck in Terminating](docs/alerts/templates/pod-stuck-in-terminating.json.tmpl) | Workload has pod stuck in terminating. |
 | [Pod Backoff Event](docs/alerts/templates/pod-backoff-event.json.tmpl) | Workload has pod with container status `ImagePullBackOff` or `CrashLoopBackOff`. |
-| [Pod Stuck in Terminating](docs/alerts/templates/pod-stuck-in-terminating.json.tmpl)   | Workload has pod stuck in terminating.  |
 
 ## Bring Your Own Logs Shipper
 

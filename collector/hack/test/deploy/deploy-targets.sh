@@ -10,7 +10,7 @@ cd "$SCRIPT_DIR"
 
 echo "Deploying targets..."
 
-kubectl patch -n collector-targets pod/pod-stuck-in-terminating --type=json -p '[{"op": "remove", "path": "/metadata/finalizers" }]' || true
+kubectl patch -n collector-targets pod/pod-stuck-in-terminating --type=json -p '[{"op": "remove", "path": "/metadata/finalizers" }]' &>/dev/null || true
 
 kubectl delete --ignore-not-found=true namespace collector-targets &> /dev/null || true
 

@@ -20,9 +20,7 @@ function delete_namespaces() {
 
   if [[ -n "${ns}" ]]; then
     echo -e "Found Namespaces:\n${ns}"
-    if kubectl get -n collector-targets pod/pod-stuck-in-terminating &>/dev/null; then
-      kubectl patch -n collector-targets pod/pod-stuck-in-terminating --type=json -p '[{"op": "remove", "path": "/metadata/finalizers" }]' || true
-    fi
+    kubectl patch -n collector-targets pod/pod-stuck-in-terminating --type=json -p '[{"op": "remove", "path": "/metadata/finalizers" }]' &>/dev/null || true
     kubectl delete --ignore-not-found=true --wait=false namespace ${ns} || true
   fi
 }
