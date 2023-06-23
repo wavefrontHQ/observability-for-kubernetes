@@ -161,7 +161,7 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 
 | Alert name | Description |
 |---|---|
-| [Pods Stuck in Pending](docs/alerts/templates/pods-stuck-in-pending.json.tmpl) | Workload has pods stuck in pending. |
+| [Pod Stuck in Pending](docs/alerts/templates/pod-stuck-in-pending.json.tmpl) | Workload has pod stuck in pending. |
 
 ## Bring Your Own Logs Shipper
 
