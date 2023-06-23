@@ -142,6 +142,7 @@ function run_proxy_checks() {
 function run_k8s_events_checks() {
   printf "Running k8s_events checks ..."
 
+  sleep 30
   # trigger events to be sent to the test-proxy
   kubectl --namespace "$NS" rollout restart deploy wavefront-controller-manager &>/dev/null
   sleep 10
@@ -162,9 +163,6 @@ function run_k8s_events_checks() {
   if [[ $external_event_count -eq 0 ]]; then
     red "missing external events."
     echo "$external_events_results_file"
-    if which pbcopy >/dev/null; then
-        echo "$external_events_results_file" | pbcopy
-    fi
     exit 1
   fi
 
