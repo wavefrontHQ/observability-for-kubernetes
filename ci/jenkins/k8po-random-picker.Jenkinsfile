@@ -11,7 +11,31 @@ pipeline {
 44 16 * * 1-5'''
   }
   stages {
-    stage('Randomize Team') {
+    stage('Randomize Team Helios') {
+      steps {
+        script {
+          team_name = '*Team Helios* :awesome_sun:'
+          team_members = ['Devon', 'Ginwoo', 'Glenn', 'Matt']
+
+          // Prevent the same person from being selected twice in a row.
+          rotating_off = currentBuild.getPreviousBuild().description
+          team_members -= rotating_off
+          Collections.shuffle team_members
+          team_members += rotating_off
+
+          currentBuild.description = "${team_members[0]}"
+          SLACK_MSG = """
+The results are in from <${env.BUILD_URL}|${env.JOB_NAME}> :dice-9823:
+
+${team_name}
+${team_members.join('\n')}
+"""
+          println SLACK_MSG
+        }
+        slackSend (channel: '#tobs-k8po-team', message: SLACK_MSG)
+      }
+    }
+    stage('Randomize Team Raven') {
       steps {
         script {
           team_name = '*Team Raven* :disco_raven:'
