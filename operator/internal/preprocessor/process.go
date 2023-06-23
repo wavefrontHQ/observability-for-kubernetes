@@ -143,10 +143,16 @@ func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec, er
 		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.WavefrontTokenAuthType
 		return nil
 	}
-	if _, found := secret.Data["token"]; found {
+	_, wavefrontTokenAuth := secret.Data["token"]
+	_, cspTokenAuth := secret.Data["csp-api-token"]
+
+	if wavefrontTokenAuth && cspTokenAuth {
+		return fmt.Errorf("Invalid Authentication configured in Secret 'wavefront-secret'. Only one authentication type is allowed. Wavefront API Token or CSP API Token or CSP App OAuth")
+	}
+	if wavefrontTokenAuth {
 		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.WavefrontTokenAuthType
 	}
-	if _, found := secret.Data["csp-api-token"]; found {
+	if cspTokenAuth {
 		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.CSPTokenAuthType
 	}
 	if _, found := secret.Data["csp-app-id"]; found {

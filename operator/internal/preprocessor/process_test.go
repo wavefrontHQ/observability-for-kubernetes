@@ -249,6 +249,42 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 		require.Equal(t, "some-app-id", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPAppID)
 		require.Equal(t, "some-org-id", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPOrgId)
 	})
+
+	t.Run("returns validation error if wavefront token and csp api token are given", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"token":         []byte("some-token"),
+				"csp-api-token": []byte("some-other-token"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		err := PreProcess(fakeClient, wfcr)
+		require.Error(t, err)
+		require.Equal(t, "Invalid Authentication configured in Secret 'wavefront-secret'. Only one authentication type is allowed. Wavefront API Token or CSP API Token or CSP App OAuth", err.Error())
+	})
+
+	t.Run("returns validation error if empty wavefront token and csp api token are given", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"token":         []byte(""),
+				"csp-api-token": []byte("some-other-token"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		err := PreProcess(fakeClient, wfcr)
+		require.Error(t, err)
+		require.Equal(t, "Invalid Authentication configured in Secret 'wavefront-secret'. Only one authentication type is allowed. Wavefront API Token or CSP API Token or CSP App OAuth", err.Error())
+	})
 }
 
 func setup(initObjs ...runtime.Object) client.Client {
