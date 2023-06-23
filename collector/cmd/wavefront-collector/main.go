@@ -215,6 +215,7 @@ func createKubeClientOrDie(cfg configuration.SummarySourceConfig) *kube_client.C
 	return kube_client.NewForConfigOrDie(kubeConfig)
 }
 
+// TODO unit test and refactor
 func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister, workloadCache util.WorkloadCache, cfg *configuration.Config) []metrics.Processor {
 	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
 	if err != nil {
@@ -237,38 +238,7 @@ func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string
 	}
 	dataProcessors = append(dataProcessors, namespaceBasedEnricher)
 
-	metricsToAggregate := []string{
-		metrics.MetricCpuUsageRate.Name,
-		metrics.MetricMemoryUsage.Name,
-		metrics.MetricCpuRequest.Name,
-		metrics.MetricCpuLimit.Name,
-		metrics.MetricMemoryRequest.Name,
-		metrics.MetricMemoryLimit.Name,
-	}
-
-	metricsToAggregateForNode := []string{
-		metrics.MetricCpuRequest.Name,
-		metrics.MetricCpuLimit.Name,
-		metrics.MetricMemoryRequest.Name,
-		metrics.MetricMemoryLimit.Name,
-		metrics.MetricEphemeralStorageRequest.Name,
-		metrics.MetricEphemeralStorageLimit.Name,
-	}
-
-	podMetricsToNotAggregate := []string{
-		metrics.MetricCpuRequest.Name,
-		metrics.MetricCpuLimit.Name,
-		metrics.MetricMemoryRequest.Name,
-		metrics.MetricMemoryLimit.Name,
-	}
-
-	dataProcessors = append(dataProcessors,
-		processors.NewPodResourceAggregator(podLister),
-		processors.NewPodAggregator(podMetricsToNotAggregate),
-		processors.NewNamespaceAggregator(metricsToAggregate),
-		processors.NewNodeAggregator(metricsToAggregateForNode),
-		processors.NewClusterAggregator(metricsToAggregate),
-	)
+	dataProcessors = configuration.CreateMetricAggregators(dataProcessors, podLister)
 
 	nodeAutoscalingEnricher, err := processors.NewNodeAutoscalingEnricher(kubeClient, labelCopier)
 	if err != nil {
