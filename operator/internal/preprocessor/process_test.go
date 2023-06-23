@@ -265,10 +265,10 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 		wfcr := defaultWFCR()
 		err := PreProcess(fakeClient, wfcr)
 		require.Error(t, err)
-		require.Equal(t, "Invalid Authentication configured in Secret 'wavefront-secret'. Only one authentication type is allowed. Wavefront API Token or CSP API Token or CSP App OAuth", err.Error())
+		require.Equal(t, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", err.Error())
 	})
 
-	t.Run("returns validation error if empty wavefront token and csp api token are given", func(t *testing.T) {
+	t.Run("returns validation error if empty auth key and non empty auth key given", func(t *testing.T) {
 		secret := &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "testWavefrontSecret",
@@ -283,7 +283,76 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 		wfcr := defaultWFCR()
 		err := PreProcess(fakeClient, wfcr)
 		require.Error(t, err)
-		require.Equal(t, "Invalid Authentication configured in Secret 'wavefront-secret'. Only one authentication type is allowed. Wavefront API Token or CSP API Token or CSP App OAuth", err.Error())
+		require.Equal(t, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", err.Error())
+	})
+
+	t.Run("returns validation error if wavefront token and csp app oauth are given", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"token":      []byte("some-token"),
+				"csp-app-id": []byte("some-id"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		err := PreProcess(fakeClient, wfcr)
+		require.Error(t, err)
+		require.Equal(t, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", err.Error())
+	})
+
+	t.Run("returns validation error if csp api token and csp app oauth are given", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"csp-api-token": []byte("some-token"),
+				"csp-app-id":    []byte("some-id"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		err := PreProcess(fakeClient, wfcr)
+		require.Error(t, err)
+		require.Equal(t, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", err.Error())
+	})
+
+	t.Run("returns correct secret name", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-secret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"csp-api-token": []byte("some-token"),
+				"csp-app-id":    []byte("some-id"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		wfcr.Spec.WavefrontTokenSecret = "my-secret"
+		err := PreProcess(fakeClient, wfcr)
+		require.Error(t, err)
+		require.Equal(t, "Invalid Authentication configured in Secret 'my-secret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", err.Error())
+	})
+
+	t.Run("returns error if no auth type given", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		err := PreProcess(fakeClient, wfcr)
+		require.Error(t, err)
+		require.Equal(t, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Missing Authentication type. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", err.Error())
 	})
 }
 

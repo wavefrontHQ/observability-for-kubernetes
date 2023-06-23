@@ -145,9 +145,14 @@ func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec, er
 	}
 	_, wavefrontTokenAuth := secret.Data["token"]
 	_, cspTokenAuth := secret.Data["csp-api-token"]
+	_, cspAppID := secret.Data["csp-app-id"]
 
-	if wavefrontTokenAuth && cspTokenAuth {
-		return fmt.Errorf("Invalid Authentication configured in Secret 'wavefront-secret'. Only one authentication type is allowed. Wavefront API Token or CSP API Token or CSP App OAuth")
+	checkTotal := checkVal(wavefrontTokenAuth) + checkVal(cspTokenAuth) + checkVal(cspAppID)
+	if checkTotal == 0 {
+		return fmt.Errorf("Invalid Authentication configured in Secret '%s'. Missing Authentication type. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", wfSpec.WavefrontTokenSecret)
+	}
+	if checkTotal > 1 {
+		return fmt.Errorf("Invalid Authentication configured in Secret '%s'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", wfSpec.WavefrontTokenSecret)
 	}
 	if wavefrontTokenAuth {
 		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.WavefrontTokenAuthType
@@ -155,7 +160,7 @@ func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec, er
 	if cspTokenAuth {
 		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.CSPTokenAuthType
 	}
-	if _, found := secret.Data["csp-app-id"]; found {
+	if cspAppID {
 		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.CSPAppAuthType
 		wfSpec.DataExport.WavefrontProxy.Auth.CSPAppID = string(secret.Data["csp-app-id"])
 		wfSpec.DataExport.WavefrontProxy.Auth.CSPOrgId = string(secret.Data["csp-org-id"])
@@ -163,6 +168,12 @@ func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec, er
 	return nil
 }
 
+func checkVal(check bool) int {
+	if check == true {
+		return 1
+	}
+	return 0
+}
 func getEnabledPorts(wfSpec *wf.WavefrontSpec) string {
 	allPorts := []int{wfSpec.DataExport.WavefrontProxy.MetricPort,
 		wfSpec.DataExport.WavefrontProxy.DeltaCounterPort,
