@@ -32,7 +32,7 @@ ${team_members.join('\n')}
 """
           println SLACK_MSG
         }
-        slackSend (channel: '#tobs-k8po-team', message: SLACK_MSG)
+//         slackSend (channel: '#tobs-k8po-team', message: SLACK_MSG)
       }
     }
     stage('Randomize Team Raven') {
@@ -47,7 +47,7 @@ ${team_members.join('\n')}
           Collections.shuffle team_members
           team_members += rotating_off
 
-          currentBuild.description = "${team_members[0]}"
+          currentBuild.description += ",${team_members[0]}"
           SLACK_MSG = """
 The results are in from <${env.BUILD_URL}|${env.JOB_NAME}> :dice-9823:
 
@@ -56,7 +56,7 @@ ${team_members.join('\n')}
 """
           println SLACK_MSG
         }
-        slackSend (channel: '#tobs-k8po-team', message: SLACK_MSG)
+//         slackSend (channel: '#tobs-k8po-team', message: SLACK_MSG)
       }
     }
   }
