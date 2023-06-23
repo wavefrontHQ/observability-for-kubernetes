@@ -18,7 +18,8 @@ pipeline {
           team_members = ['Devon', 'Ginwoo', 'Glenn', 'Matt']
 
           // Prevent the same person from being selected twice in a row.
-          rotating_off = currentBuild.getPreviousBuild().description
+          rotating_off_list = currentBuild.getPreviousBuild().description.split(',')
+          rotating_off = rotating_off_list[0]
           team_members -= rotating_off
           Collections.shuffle team_members
           team_members += rotating_off
@@ -42,7 +43,8 @@ ${team_members.join('\n')}
           team_members = ['Anil', 'Jeremy', 'Jerry', 'John', 'Yuqi']
 
           // Prevent the same person from being selected twice in a row.
-          rotating_off = currentBuild.getPreviousBuild().description
+          rotating_off_list = currentBuild.getPreviousBuild().description.split(',')
+          rotating_off = rotating_off_list[1]
           team_members -= rotating_off
           Collections.shuffle team_members
           team_members += rotating_off
