@@ -10,7 +10,9 @@ cd "$SCRIPT_DIR"
 
 echo "Deploying targets..."
 
-kubectl delete namespace collector-targets &> /dev/null || true
+kubectl patch -n collector-targets pod/pod-stuck-in-terminating --type=json -p '[{"op": "remove", "path": "/metadata/finalizers" }]' &>/dev/null || true
+
+kubectl delete --ignore-not-found=true namespace collector-targets &> /dev/null || true
 
 wait_for_namespace_created collector-targets
 
@@ -25,6 +27,8 @@ kubectl apply -f running-pod-crash-loop-backoff.yaml >/dev/null
 kubectl apply -f running-pod.yaml >/dev/null
 kubectl apply -f running-pod-large-init-container.yaml >/dev/null
 kubectl apply -f running-pod-small-init-container.yaml >/dev/null
+kubectl apply -f pod-stuck-in-terminating.yaml >/dev/null
+kubectl delete -f pod-stuck-in-terminating.yaml >/dev/null &
 
 kubectl delete -f jobs.yaml &>/dev/null || true
 kubectl apply -f jobs.yaml >/dev/null

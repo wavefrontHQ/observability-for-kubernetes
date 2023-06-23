@@ -34,6 +34,9 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 		now := time.Now().Unix()
 
 		points := buildPodPhaseMetrics(pod, transforms, sharedTags, now)
+		if pod.DeletionTimestamp != nil {
+			points = append(points, buildPodTerminatingMetrics(pod, sharedTags, transforms, now)...)
+		}
 
 		points = append(points, buildContainerStatusMetrics(pod, sharedTags, transforms, now)...)
 		return points
@@ -84,6 +87,30 @@ func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, shar
 	copyTags(sharedTags, tags)
 	points := []wf.Metric{
 		metricPoint(transforms.Prefix, "pod.status.phase", float64(phaseValue), now, transforms.Source, tags),
+	}
+	return points
+}
+
+func buildPodTerminatingMetrics(pod *v1.Pod, sharedTags map[string]string, transforms configuration.Transforms, now int64) []wf.Metric {
+	tags := buildTags("pod_name", pod.Name, pod.Namespace, transforms.Tags)
+	tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePod
+	tags[metrics.LabelPodId.Key] = string(pod.UID)
+	tags["DeletionTimestamp"] = pod.DeletionTimestamp.Format(time.RFC3339)
+
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == v1.PodScheduled && condition.Status == "False" {
+			tags[metrics.LabelNodename.Key] = "none"
+		}
+	}
+
+	nodeName := pod.Spec.NodeName
+	if len(nodeName) > 0 {
+		sharedTags[metrics.LabelNodename.Key] = nodeName
+	}
+
+	copyTags(sharedTags, tags)
+	points := []wf.Metric{
+		metricPoint(transforms.Prefix, "pod.terminating", 1, now, transforms.Source, tags),
 	}
 	return points
 }
