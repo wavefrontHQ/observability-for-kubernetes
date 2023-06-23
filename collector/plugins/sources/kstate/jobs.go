@@ -27,8 +27,8 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 	active := float64(job.Status.Active)
 	failed := float64(job.Status.Failed)
 	succeeded := float64(job.Status.Succeeded)
-	completions := floatVal(job.Spec.Completions, -1.0)
-	parallelism := floatVal(job.Spec.Parallelism, -1.0)
+	completions := floatValOrDefault(job.Spec.Completions, -1.0)
+	parallelism := floatValOrDefault(job.Spec.Parallelism, -1.0)
 
 	return []wf.Metric{
 		metricPoint(transforms.Prefix, "job.active", active, now, transforms.Source, tags),

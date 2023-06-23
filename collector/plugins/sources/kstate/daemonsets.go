@@ -16,18 +16,18 @@ import (
 )
 
 func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) []wf.Metric {
-	ds, ok := item.(*appsv1.DaemonSet)
+	daemonset, ok := item.(*appsv1.DaemonSet)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
 		return nil
 	}
 
-	tags := buildTags("daemonset", ds.Name, ds.Namespace, transforms.Tags)
+	tags := buildTags("daemonset", daemonset.Name, daemonset.Namespace, transforms.Tags)
 	now := time.Now().Unix()
-	currentScheduled := float64(ds.Status.CurrentNumberScheduled)
-	desiredScheduled := float64(ds.Status.DesiredNumberScheduled)
-	misScheduled := float64(ds.Status.NumberMisscheduled)
-	ready := float64(ds.Status.NumberReady)
+	currentScheduled := float64(daemonset.Status.CurrentNumberScheduled)
+	desiredScheduled := float64(daemonset.Status.DesiredNumberScheduled)
+	misScheduled := float64(daemonset.Status.NumberMisscheduled)
+	ready := float64(daemonset.Status.NumberReady)
 
 	return []wf.Metric{
 		metricPoint(transforms.Prefix, "daemonset.current_scheduled", currentScheduled, now, transforms.Source, tags),

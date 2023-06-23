@@ -16,19 +16,18 @@ import (
 )
 
 func pointsForStatefulSet(item interface{}, transforms configuration.Transforms) []wf.Metric {
-	ss, ok := item.(*appsv1.StatefulSet)
+	statefulset, ok := item.(*appsv1.StatefulSet)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
 		return nil
 	}
 
-	tags := buildTags("statefulset", ss.Name, ss.Namespace, transforms.Tags)
+	tags := buildTags("statefulset", statefulset.Name, statefulset.Namespace, transforms.Tags)
 	now := time.Now().Unix()
-
-	desired := floatVal(ss.Spec.Replicas, 1.0)
-	ready := float64(ss.Status.ReadyReplicas)
-	current := float64(ss.Status.CurrentReplicas)
-	updated := float64(ss.Status.UpdatedReplicas)
+	desired := floatValOrDefault(statefulset.Spec.Replicas, 1.0)
+	ready := float64(statefulset.Status.ReadyReplicas)
+	current := float64(statefulset.Status.CurrentReplicas)
+	updated := float64(statefulset.Status.UpdatedReplicas)
 
 	return []wf.Metric{
 		metricPoint(transforms.Prefix, "statefulset.desired_replicas", desired, now, transforms.Source, tags),
