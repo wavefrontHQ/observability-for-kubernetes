@@ -1,8 +1,6 @@
 package kstate
 
 import (
-	"fmt"
-
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
@@ -20,9 +18,6 @@ func buildWorkloadStatusMetric(prefix string, numberDesired float64, numberReady
 	if numberReady == numberDesired {
 		status = workloadReady
 	}
-
-	readyTagValue := fmt.Sprintf("%d/%d", int32(numberReady), int32(numberDesired))
-	tags["ready"] = readyTagValue
 
 	return metricPoint(prefix, workloadStatusMetric, status, ts, source, tags)
 }

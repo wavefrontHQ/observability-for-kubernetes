@@ -28,9 +28,15 @@ func pointsForReplicaSet(item interface{}, transforms configuration.Transforms) 
 	available := float64(rs.Status.AvailableReplicas)
 	ready := float64(rs.Status.ReadyReplicas)
 
-	return []wf.Metric{
+	points := []wf.Metric{
 		metricPoint(transforms.Prefix, "replicaset.desired_replicas", desired, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "replicaset.available_replicas", available, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "replicaset.ready_replicas", ready, now, transforms.Source, tags),
 	}
+	if rs.OwnerReferences == nil || len(rs.OwnerReferences) == 0 {
+		workloadTags := buildWorkloadTags("replicaset", rs.Name, rs.Namespace, transforms.Tags)
+		points = append(points, buildWorkloadStatusMetric(transforms.Prefix, desired, ready, now, transforms.Source, workloadTags))
+	}
+
+	return points
 }
