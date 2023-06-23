@@ -9,4 +9,68 @@ spec:
   experimental:
     kubernetesEvents:
       enable: true
-      externalEndpointURL: https://ena3e0q4uydmf.x.pipedream.net/ #https://public.requestbin.com/r/ena3e0q4uydmf
+      externalEndpointURL: http://test-proxy.YOUR_NAMESPACE.svc.cluster.local:9999/events
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: test-proxy
+    name: test-proxy
+  name: test-proxy
+  namespace: YOUR_NAMESPACE
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-proxy
+  template:
+    metadata:
+      labels:
+        app: test-proxy
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+      containers:
+      - name: test-proxy
+        image:  projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:2.4.3
+        imagePullPolicy: Always
+        command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info" ]
+        ports:
+        - name: proxy
+          containerPort: 2878
+          protocol: TCP
+        - name: control
+          containerPort: 8888
+          protocol: TCP
+        - name: external-events
+          containerPort: 9999
+          protocol: TCP
+        securityContext:
+          privileged: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-proxy
+  labels:
+    app: test-proxy
+  namespace: YOUR_NAMESPACE
+spec:
+  ports:
+  - name: wavefront
+    port: 2878
+    protocol: TCP
+  - name: external-events
+    port: 9999
+    protocol: TCP
+  selector:
+    app: test-proxy
