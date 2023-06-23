@@ -226,7 +226,7 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, util.CSPAppAuthType, wfcr.Spec.DataExport.WavefrontProxy.Auth.Type)
 		require.Equal(t, "some-app-id", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPAppID)
-		require.Equal(t, "", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPOrgId)
+		require.Equal(t, "", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPOrgID)
 	})
 
 	t.Run("supports csp app secret auth with org id", func(t *testing.T) {
@@ -247,7 +247,7 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, util.CSPAppAuthType, wfcr.Spec.DataExport.WavefrontProxy.Auth.Type)
 		require.Equal(t, "some-app-id", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPAppID)
-		require.Equal(t, "some-org-id", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPOrgId)
+		require.Equal(t, "some-org-id", wfcr.Spec.DataExport.WavefrontProxy.Auth.CSPOrgID)
 	})
 
 	t.Run("returns validation error if wavefront token and csp api token are given", func(t *testing.T) {

@@ -676,6 +676,66 @@ func TestReconcileProxy(t *testing.T) {
 		require.True(t, mockKM.ProxyServiceContains("port: 2878"))
 	})
 
+	t.Run("with csp api token auth", func(t *testing.T) {
+
+		wfCR := wftest.CR()
+		r, mockKM := emptyScenario(wfCR, nil, &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfCR.Spec.WavefrontTokenSecret,
+				Namespace: wftest.DefaultNamespace,
+			},
+			Data: map[string][]byte{
+				"csp-api-token": []byte("foo-bar"),
+			},
+		})
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.True(t, mockKM.ProxyDeploymentContains("name: CSP_API_TOKEN"))
+	})
+
+	t.Run("with csp app oauth", func(t *testing.T) {
+
+		wfCR := wftest.CR()
+		r, mockKM := emptyScenario(wfCR, nil, &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfCR.Spec.WavefrontTokenSecret,
+				Namespace: wftest.DefaultNamespace,
+			},
+			Data: map[string][]byte{
+				"csp-app-id":     []byte("my-app"),
+				"csp-app-secret": []byte("app secret"),
+			},
+		})
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.True(t, mockKM.ProxyDeploymentContains("name: CSP_APP_ID", "name: CSP_APP_SECRET"))
+	})
+
+	t.Run("with csp app oauth with org id", func(t *testing.T) {
+
+		wfCR := wftest.CR()
+		r, mockKM := emptyScenario(wfCR, nil, &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfCR.Spec.WavefrontTokenSecret,
+				Namespace: wftest.DefaultNamespace,
+			},
+			Data: map[string][]byte{
+				"csp-app-id":     []byte("my-app"),
+				"csp-app-secret": []byte("app secret"),
+				"csp-org-id":     []byte("my-org-id"),
+			},
+		})
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.True(t, mockKM.ProxyDeploymentContains("name: CSP_APP_ID", "name: CSP_APP_SECRET", "name: CSP_ORG_ID"))
+	})
+
 	t.Run("does not create proxy when it is configured to use an external proxy", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Enable = false

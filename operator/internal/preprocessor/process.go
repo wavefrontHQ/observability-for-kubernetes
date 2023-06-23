@@ -163,7 +163,7 @@ func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec, er
 	if cspAppID {
 		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.CSPAppAuthType
 		wfSpec.DataExport.WavefrontProxy.Auth.CSPAppID = string(secret.Data["csp-app-id"])
-		wfSpec.DataExport.WavefrontProxy.Auth.CSPOrgId = string(secret.Data["csp-org-id"])
+		wfSpec.DataExport.WavefrontProxy.Auth.CSPOrgID = string(secret.Data["csp-org-id"])
 	}
 	return nil
 }

@@ -220,7 +220,7 @@ type WavefrontProxy struct {
 type Auth struct {
 	Type     string `json:"-"`
 	CSPAppID string `json:"-"`
-	CSPOrgId string `json:"-"`
+	CSPOrgID string `json:"-"`
 }
 
 type PreprocessorRules struct {
