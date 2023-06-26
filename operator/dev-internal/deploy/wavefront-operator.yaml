@@ -1081,7 +1081,7 @@ apiVersion: v1
 data:
   collector: 1.20.0
   logging: 2.1.2
-  proxy: 12.4.1
+  proxy: 13.0
 kind: ConfigMap
 metadata:
   labels:
