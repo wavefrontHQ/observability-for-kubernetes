@@ -1,4 +1,4 @@
-package metrics
+package metricline
 
 type Metric struct {
 	Name      string
@@ -8,7 +8,7 @@ type Metric struct {
 	Buckets   map[string]string
 }
 
-func ParseMetric(line string) (*Metric, error) {
+func Parse(line string) (*Metric, error) {
 	g := &MetricGrammar{Buffer: line}
 	g.Init()
 	if err := g.Parse(); err != nil {

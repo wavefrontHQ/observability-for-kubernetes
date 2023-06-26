@@ -43,7 +43,7 @@ func (sink *ExternalSink) ExportEvent(ev *events.Event) {
 		log.WithFields(log.Fields{
 			"message": ev.Message,
 			"error":   err,
-		}).Error("[sampled error] error sending event to external event endpoint")
+		}).Error("[sampled error] error creating request to external event endpoint")
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")

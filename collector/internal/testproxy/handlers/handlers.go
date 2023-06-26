@@ -2,15 +2,20 @@ package handlers
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/broadcaster"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/eventline"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/externalevent"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/logs"
-	metrics2 "github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/metricline"
 )
 
 func LogJsonArrayHandler(logVerifier *logs.LogVerifier) http.HandlerFunc {
@@ -104,7 +109,7 @@ func LogAssertionHandler(store *logs.Results) http.HandlerFunc {
 	}
 }
 
-func HandleIncomingMetrics(store *metrics2.MetricStore, conn net.Conn) {
+func HandleIncomingMetrics(proxylines *broadcaster.Broadcaster[string], conn net.Conn) {
 	defer conn.Close()
 	lines := bufio.NewScanner(conn)
 
@@ -112,24 +117,7 @@ func HandleIncomingMetrics(store *metrics2.MetricStore, conn net.Conn) {
 		if len(lines.Text()) == 0 {
 			continue
 		}
-		str := lines.Text()
-
-		metric, err := metrics2.ParseMetric(str)
-		if err != nil {
-			log.Error(err.Error())
-			log.Error(lines.Text())
-			store.LogBadMetric(lines.Text())
-			continue
-		}
-		if metric == nil { // we got a histogram
-			continue
-		}
-		if len(metric.Tags) > 20 {
-			log.Error(fmt.Sprintf("[WF-410: Too many point tags (%d, max 20): %s %#v", len(metric.Tags), metric.Name, metric.Tags))
-			continue
-		}
-		log.Debugf("%#v", metric)
-		store.LogMetric(metric)
+		proxylines.Publish(1*time.Second, lines.Text())
 	}
 
 	if err := lines.Err(); err != nil {
@@ -139,7 +127,7 @@ func HandleIncomingMetrics(store *metrics2.MetricStore, conn net.Conn) {
 	return
 }
 
-func DumpMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
+func DumpMetricsHandler(store *metricline.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.Infof("******* req received in DumpMetricsHandler: '%+v'", req)
 		if req.Method != http.MethodGet {
@@ -167,7 +155,7 @@ func DumpMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
 	}
 }
 
-func DiffMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
+func DiffMetricsHandler(store *metricline.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -185,8 +173,8 @@ func DiffMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
 			return
 		}
 
-		var expectedMetrics []*metrics2.Metric
-		var excludedMetrics []*metrics2.Metric
+		var expectedMetrics []*metricline.Metric
+		var excludedMetrics []*metricline.Metric
 		lines := bufio.NewScanner(req.Body)
 		defer req.Body.Close()
 
@@ -196,11 +184,11 @@ func DiffMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
 			}
 			var err error
 			if lines.Bytes()[0] == '~' {
-				var excludedMetric *metrics2.Metric
+				var excludedMetric *metricline.Metric
 				excludedMetric, err = decodeMetric(lines.Bytes()[1:])
 				excludedMetrics = append(excludedMetrics, excludedMetric)
 			} else {
-				var expectedMetric *metrics2.Metric
+				var expectedMetric *metricline.Metric
 				expectedMetric, err = decodeMetric(lines.Bytes())
 				expectedMetrics = append(expectedMetrics, expectedMetric)
 			}
@@ -226,15 +214,49 @@ func DiffMetricsHandler(store *metrics2.MetricStore) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 
-		linesErr = json.NewEncoder(w).Encode(metrics2.DiffMetrics(expectedMetrics, excludedMetrics, store.Metrics()))
+		linesErr = json.NewEncoder(w).Encode(metricline.DiffMetrics(expectedMetrics, excludedMetrics, store.Metrics()))
 		if linesErr != nil {
 			log.Error(linesErr.Error())
 		}
 	}
 }
 
-func decodeMetric(bytes []byte) (*metrics2.Metric, error) {
-	var metric *metrics2.Metric
+func decodeMetric(bytes []byte) (*metricline.Metric, error) {
+	var metric *metricline.Metric
 	err := json.Unmarshal(bytes, &metric)
 	return metric, err
+}
+
+func JSONEncodeHandler[D any](data D) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(data); err != nil {
+			log.Errorf("error encoding event results: %s", err.Error())
+		}
+	}
+}
+
+func EventAssertionHandler(eventStore *eventline.Store) http.HandlerFunc {
+	return JSONEncodeHandler(eventStore)
+}
+
+func ExternalEventAssertionHandler(externalEventStore *externalevent.Store) http.HandlerFunc {
+	return JSONEncodeHandler(externalEventStore)
+}
+
+func ExternalEventsHandler(externalEvents *broadcaster.Broadcaster[[]byte]) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Content-Type") != "application/json" {
+			w.WriteHeader(http.StatusUnsupportedMediaType)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+		buf := bytes.NewBuffer(make([]byte, 0, r.ContentLength))
+		_, err := io.Copy(buf, r.Body)
+		log.Debug(buf.String())
+		if err != nil {
+			log.Errorf("error reading external event body: %s", err.Error())
+		}
+		externalEvents.Publish(time.Second, buf.Bytes())
+	}
 }

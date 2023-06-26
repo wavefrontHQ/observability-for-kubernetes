@@ -140,17 +140,34 @@ function run_proxy_checks() {
 }
 
 function run_k8s_events_checks() {
-  local event_push_count=0
   printf "Running k8s_events checks ..."
 
-  event_push_count=$(kubectl logs deployment/wavefront-cluster-collector -n $NS | grep "msg=\"Events push complete\" name=k8s_events_sink" | wc -l | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-  if [[ $event_push_count -eq 0 ]]; then
-    red "Expected Events push complete name=k8s_events_sink"
-    kubectl logs deployment/wavefront-cluster-collector -n $NS | tail
+  sleep 30
+  # trigger events to be sent to the test-proxy
+  kubectl --namespace "$NS" rollout restart deploy wavefront-controller-manager &>/dev/null
+  sleep 10
+
+  kubectl --namespace "$NS" port-forward "deploy/test-proxy" 8888 &>/dev/null &
+  trap 'kill $(jobs -p) &>/dev/null || true' EXIT
+  sleep 3
+
+  local external_events_results_file=$(mktemp)
+  while true; do # wait until we get a good connection
+    RES_CODE=$(curl --silent --output "$external_events_results_file" --write-out "%{http_code}" "http://localhost:8888/events/external/assert")
+    [[ $RES_CODE -lt 200 ]] || break
+  done
+
+  local external_event_count=$(jq ".EventCount" "$external_events_results_file")
+
+
+  if [[ $external_event_count -eq 0 ]]; then
+    red "missing external events."
+    echo "$external_events_results_file"
     exit 1
   fi
 
   echo " done."
+  kill $(jobs -p) &>/dev/null || true
 }
 
 function clean_up_test() {
@@ -567,6 +584,9 @@ function main() {
 
   cd "$OPERATOR_REPO_ROOT"
 
+  if [[ " ${tests_to_run[*]} " =~ " k8s-events-only " ]]; then
+    run_test "k8s-events-only" "k8s_events"
+  fi
   if [[ " ${tests_to_run[*]} " =~ " validation-errors " ]]; then
     run_test "validation-errors" "unhealthy"
   fi
@@ -597,9 +617,6 @@ function main() {
   if [[ " ${tests_to_run[*]} " =~ " control-plane " ]]; then
     run_test "control-plane" "test_control_plane_metrics"
   fi
-#  if [[ " ${tests_to_run[*]} " =~ " k8s-events-only " ]]; then
-#    run_test "k8s-events-only" "k8s_events"
-#  fi
 }
 
 main "$@"

@@ -1,0 +1,39 @@
+package eventline
+
+type EventGrammar Peg {
+    Name string
+    EndMillis string
+    StartMillis string
+    Annotations map[string]string
+    Tags map[string]string
+    currentKey string
+    currentValue string
+}
+
+EventGrammar <- '@Event' ' ' startMillis ' ' endMillis ' ' eventName ' ' annotationsOrTags END
+
+eventName <- ( '"' <NAMERUNE+> '"' /  <NAMERUNE+> ) { p.Name = text }
+
+endMillis <- <timestamp> { p.EndMillis = text }
+
+startMillis <- <timestamp> { p.StartMillis = text }
+
+timestamp <- DIGIT+
+
+annotationsOrTags <- { p.Annotations = map[string]string{} } { p.Tags = map[string]string{} } ( tag / annotation ) (' ' ( tag / annotation) )*
+
+annotation <- <NAMERUNE+> { p.currentKey = text } '=' annotationValue { p.Annotations[p.currentKey] = p.currentValue }
+
+annotationValue <- { p.currentValue = "" } '"' ( '\\"' { p.currentValue += "\"" } / <[^"]> { p.currentValue += text }  )+ '"'
+
+tag <- 'tag="\\"' <NAMERUNE+> '\\": ' { p.currentKey = text } tagValue '"' { p.Tags[p.currentKey] = p.currentValue }
+
+tagValue <- { p.currentValue = "" } '\\"' ( '\\\\"' { p.currentValue += "\"" } / <[^\\] [^"]> { p.currentValue += text }  )+ '\\"'
+
+NAMERUNE <- ALNUM / [~\-_./,]
+
+ALNUM <- [a-zA-Z0-9]
+
+DIGIT <- [0-9]
+
+END <- !.
