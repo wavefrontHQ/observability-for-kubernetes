@@ -159,7 +159,7 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Pod Stuck in Pending](docs/alerts/templates/pod-stuck-in-pending.json.tmpl) | Workload has pod stuck in pending. |
 | [Pod Stuck in Terminating](docs/alerts/templates/pod-stuck-in-terminating.json.tmpl) | Workload has pod stuck in terminating. |
 | [Pod Backoff Event](docs/alerts/templates/pod-backoff-event.json.tmpl) | Workload has pod with container status `ImagePullBackOff` or `CrashLoopBackOff`. |
-| [Pod Out-of-memory Kills](docs/alerts/templates/pod-out-of-memory-kills.json.tmpl) | Workload has pod with Out-of-memory kills. |
+| [Pod Out-of-memory Kills](docs/alerts/templates/pod-out-of-memory-kills.json.tmpl) | Workload has pod with container status `OOMKilled`. |
 
 ## Bring Your Own Logs Shipper
 
