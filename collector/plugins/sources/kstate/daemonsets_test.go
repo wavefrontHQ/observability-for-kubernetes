@@ -5,40 +5,31 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func setupBasicDaemonSet() *appsv1.DaemonSet {
-	daemonset := &appsv1.DaemonSet{
+	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "daemonsetset1",
-			Namespace: "ns1",
-			Labels:    map[string]string{"name": "testLabelName"},
+			Name:   "basic-daemonset",
+			Labels: nil,
 		},
-	}
-	return daemonset
-}
-
-func setupTestDaemonsetTransform() configuration.Transforms {
-	return configuration.Transforms{
-		Source:  "testSource",
-		Prefix:  "kubernetes.",
-		Tags:    nil,
-		Filters: filter.Config{},
+		Spec: appsv1.DaemonSetSpec{},
+		Status: appsv1.DaemonSetStatus{
+			CurrentNumberScheduled: 1,
+			DesiredNumberScheduled: 1,
+			NumberMisscheduled:     0,
+			NumberReady:            1,
+		},
 	}
 }
 
 func Test_pointsForDaemonSet(t *testing.T) {
-	testTransform := setupTestDaemonsetTransform()
+	testTransform := setupWorkloadTransform()
 
-	t.Run("test for basic DaemonSet", func(t *testing.T) {
+	t.Run("test for DaemonSet metrics", func(t *testing.T) {
 		testDaemonSet := setupBasicDaemonSet()
-		actualWFPoints := pointsForDaemonSet(testDaemonSet, testTransform)
-		assert.Equal(t, 5, len(actualWFPoints))
 		expectedMetricNames := []string{
 			"kubernetes.daemonset.current_scheduled",
 			"kubernetes.daemonset.desired_scheduled",
@@ -47,47 +38,36 @@ func Test_pointsForDaemonSet(t *testing.T) {
 			"kubernetes.workload.status",
 		}
 
-		var actualMetricNames []string
+		actualWFPoints := pointsForDaemonSet(testDaemonSet, testTransform)
+		actualMetricNames := getTestWFMetricNames(actualWFPoints)
 
-		for _, point := range actualWFPoints {
-			actualMetricNames = append(actualMetricNames, point.Name())
-		}
+		assert.Equal(t, len(expectedMetricNames), len(actualMetricNames))
 
 		sort.Strings(expectedMetricNames)
 		sort.Strings(actualMetricNames)
+
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
 	})
 
-	t.Run("test for DaemonSet healthy", func(t *testing.T) {
+	t.Run("test for DaemonSet with healthy status", func(t *testing.T) {
 		testDaemonSet := setupBasicDaemonSet()
+		workloadMetricName := "kubernetes.workload.status"
 
-		testDaemonSet.Status.CurrentNumberScheduled = 1
-		testDaemonSet.Status.DesiredNumberScheduled = 1
-		testDaemonSet.Status.NumberMisscheduled = 1
-		testDaemonSet.Status.NumberReady = 1
+		actualWFPointsMap := getWFPointsMap(pointsForDaemonSet(testDaemonSet, testTransform))
+		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
-		actualWFPoints := pointsForDaemonSet(testDaemonSet, testTransform)
-		assert.Equal(t, 5, len(actualWFPoints))
-
-		expectedPointValue := float64(1)
-		for _, point := range actualWFPoints {
-			wfpoint := point.(*wf.Point)
-			assert.Equal(t, expectedPointValue, wfpoint.Value)
-		}
+		assert.Equal(t, workloadReady, actualWFPoint.Value)
 	})
 
-	t.Run("test for DaemonSet not healthy", func(t *testing.T) {
+	t.Run("test for DaemonSet with non healthy status", func(t *testing.T) {
 		testDaemonSet := setupBasicDaemonSet()
-
+		workloadMetricName := "kubernetes.workload.status"
 		testDaemonSet.Status.CurrentNumberScheduled = 0
-		testDaemonSet.Status.DesiredNumberScheduled = 1
-		testDaemonSet.Status.NumberMisscheduled = 1
 		testDaemonSet.Status.NumberReady = 0
 
-		actualWFPoints := pointsForDaemonSet(testDaemonSet, testTransform)
-		assert.Equal(t, 5, len(actualWFPoints))
+		actualWFPointsMap := getWFPointsMap(pointsForDaemonSet(testDaemonSet, testTransform))
+		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
-		point := actualWFPoints[4].(*wf.Point)
-		assert.Zero(t, point.Value)
+		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
 	})
 }

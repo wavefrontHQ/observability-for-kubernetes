@@ -5,44 +5,30 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func setupBasicStatefulSet() *appsv1.StatefulSet {
-	specReplicahelper := int32(1)
-	statefulset := &appsv1.StatefulSet{
+	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "statefulset1",
-			Namespace: "ns1",
-			Labels:    map[string]string{"name": "testLabelName"},
+			Name:   "basic-statefulset",
+			Labels: nil,
 		},
-		Spec: appsv1.StatefulSetSpec{
-			Replicas: &specReplicahelper,
+		Spec: appsv1.StatefulSetSpec{},
+		Status: appsv1.StatefulSetStatus{
+			ReadyReplicas:   1,
+			CurrentReplicas: 1,
+			UpdatedReplicas: 0,
 		},
-	}
-	return statefulset
-}
-
-func setupTestStatefulSetTransform() configuration.Transforms {
-	return configuration.Transforms{
-		Source:  "testSource",
-		Prefix:  "kubernetes.",
-		Tags:    nil,
-		Filters: filter.Config{},
 	}
 }
 
 func Test_pointsForStatefulSet(t *testing.T) {
-	testTransform := setupTestStatefulSetTransform()
+	testTransform := setupWorkloadTransform()
 
-	t.Run("test for basic StatefulSet", func(t *testing.T) {
+	t.Run("test for StatefulSet metrics", func(t *testing.T) {
 		testStatefulSet := setupBasicStatefulSet()
-		actualWFPoints := pointsForStatefulSet(testStatefulSet, testTransform)
-		assert.Equal(t, 5, len(actualWFPoints))
 		expectedMetricNames := []string{
 			"kubernetes.statefulset.current_replicas",
 			"kubernetes.statefulset.desired_replicas",
@@ -51,50 +37,37 @@ func Test_pointsForStatefulSet(t *testing.T) {
 			"kubernetes.workload.status",
 		}
 
-		var actualMetricNames []string
+		actualWFPoints := pointsForStatefulSet(testStatefulSet, testTransform)
+		actualMetricNames := getTestWFMetricNames(actualWFPoints)
 
-		for _, point := range actualWFPoints {
-			actualMetricNames = append(actualMetricNames, point.Name())
-		}
+		assert.Equal(t, len(expectedMetricNames), len(actualMetricNames))
 
 		sort.Strings(expectedMetricNames)
 		sort.Strings(actualMetricNames)
+
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
 	})
 
-	t.Run("test for StatefulSet healthy", func(t *testing.T) {
+	t.Run("test for StatefulSet with healthy status", func(t *testing.T) {
 		testStatefulSet := setupBasicStatefulSet()
+		workloadMetricName := "kubernetes.workload.status"
 
-		testStatefulSet.Spec.Replicas = new(int32)
-		*testStatefulSet.Spec.Replicas = 1
-		testStatefulSet.Status.ReadyReplicas = 1
-		testStatefulSet.Status.CurrentReplicas = 1
-		testStatefulSet.Status.UpdatedReplicas = 1
+		actualWFPointsMap := getWFPointsMap(pointsForStatefulSet(testStatefulSet, testTransform))
+		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
-		actualWFPoints := pointsForStatefulSet(testStatefulSet, testTransform)
-		assert.Equal(t, 5, len(actualWFPoints))
-
-		expectedPointValue := float64(1)
-		for _, point := range actualWFPoints {
-			wfpoint := point.(*wf.Point)
-			assert.Equal(t, expectedPointValue, wfpoint.Value)
-		}
+		assert.Equal(t, workloadReady, actualWFPoint.Value)
 	})
 
-	t.Run("test for StatefulSet not healthy", func(t *testing.T) {
+	t.Run("test for StatefulSet with non healthy status", func(t *testing.T) {
 		testStatefulSet := setupBasicStatefulSet()
-
-		testStatefulSet.Spec.Replicas = new(int32)
-		*testStatefulSet.Spec.Replicas = 1
+		workloadMetricName := "kubernetes.workload.status"
 		testStatefulSet.Status.ReadyReplicas = 0
 		testStatefulSet.Status.CurrentReplicas = 0
-		testStatefulSet.Status.UpdatedReplicas = 0
 
-		actualWFPoints := pointsForStatefulSet(testStatefulSet, testTransform)
-		assert.Equal(t, 5, len(actualWFPoints))
+		actualWFPointsMap := getWFPointsMap(pointsForStatefulSet(testStatefulSet, testTransform))
+		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
-		point := actualWFPoints[4].(*wf.Point)
-		assert.Zero(t, point.Value)
+		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
 	})
 
 }

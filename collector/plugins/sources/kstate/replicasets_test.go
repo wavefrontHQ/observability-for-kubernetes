@@ -5,55 +5,38 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func setupBasicReplicaSet() *appsv1.ReplicaSet {
-	replicaset := &appsv1.ReplicaSet{
+	return &appsv1.ReplicaSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "replicasetset1",
-			Namespace: "ns1",
-			Labels:    map[string]string{"name": "testLabelName"},
+			Name:   "basic-replicaset",
+			Labels: nil,
+		},
+		Spec: appsv1.ReplicaSetSpec{},
+		Status: appsv1.ReplicaSetStatus{
+			AvailableReplicas: 1,
+			ReadyReplicas:     1,
 		},
 	}
-	return replicaset
 }
 
 func setupReplicaSetWithOwner() *appsv1.ReplicaSet {
-	replicaset := &appsv1.ReplicaSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "replicasetset1",
-			Namespace: "ns1",
-			Labels:    map[string]string{"name": "testLabelName"},
-			OwnerReferences: []metav1.OwnerReference{{
-				Kind: "Deployment",
-				Name: "someOwner",
-			}},
-		},
-	}
+	replicaset := setupBasicReplicaSet()
+	replicaset.OwnerReferences = []metav1.OwnerReference{{
+		Kind: "Deployment",
+		Name: "someOwner",
+	}}
 	return replicaset
 }
 
-func setupTestReplicaSetTransform() configuration.Transforms {
-	return configuration.Transforms{
-		Source:  "testSource",
-		Prefix:  "kubernetes.",
-		Tags:    nil,
-		Filters: filter.Config{},
-	}
-}
-
 func Test_pointsForReplicaSet(t *testing.T) {
-	testTransform := setupTestReplicaSetTransform()
+	testTransform := setupWorkloadTransform()
 
-	t.Run("test for basic ReplicaSet", func(t *testing.T) {
+	t.Run("test for ReplicaSet metrics with OwnerReferences", func(t *testing.T) {
 		testReplicaSet := setupBasicReplicaSet()
-		actualWFPoints := pointsForReplicaSet(testReplicaSet, testTransform)
-		assert.Equal(t, 4, len(actualWFPoints))
 		expectedMetricNames := []string{
 			"kubernetes.replicaset.desired_replicas",
 			"kubernetes.replicaset.available_replicas",
@@ -61,69 +44,56 @@ func Test_pointsForReplicaSet(t *testing.T) {
 			"kubernetes.workload.status",
 		}
 
-		var actualMetricNames []string
+		actualWFPoints := pointsForReplicaSet(testReplicaSet, testTransform)
+		actualMetricNames := getTestWFMetricNames(actualWFPoints)
 
-		for _, point := range actualWFPoints {
-			actualMetricNames = append(actualMetricNames, point.Name())
-		}
+		assert.Equal(t, len(expectedMetricNames), len(actualMetricNames))
 
 		sort.Strings(expectedMetricNames)
 		sort.Strings(actualMetricNames)
+
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
 	})
 
-	t.Run("test for ReplicaSet with OwnerReferences", func(t *testing.T) {
+	t.Run("test for ReplicaSet metrics without OwnerReferences", func(t *testing.T) {
 		testReplicaSet := setupReplicaSetWithOwner()
-		actualWFPoints := pointsForReplicaSet(testReplicaSet, testTransform)
-		assert.Equal(t, 3, len(actualWFPoints))
 		expectedMetricNames := []string{
 			"kubernetes.replicaset.desired_replicas",
 			"kubernetes.replicaset.available_replicas",
 			"kubernetes.replicaset.ready_replicas",
 		}
 
-		var actualMetricNames []string
+		actualWFPoints := pointsForReplicaSet(testReplicaSet, testTransform)
+		actualMetricNames := getTestWFMetricNames(actualWFPoints)
 
-		for _, point := range actualWFPoints {
-			actualMetricNames = append(actualMetricNames, point.Name())
-		}
+		assert.Equal(t, len(expectedMetricNames), len(actualMetricNames))
 
 		sort.Strings(expectedMetricNames)
 		sort.Strings(actualMetricNames)
+
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
 	})
 
-	t.Run("test for ReplicaSet healthy with no OwnerReferences", func(t *testing.T) {
+	t.Run("test for ReplicaSet with healthy status and no OwnerReferences", func(t *testing.T) {
 		testReplicaSet := setupBasicReplicaSet()
+		workloadMetricName := "kubernetes.workload.status"
 
-		testReplicaSet.Spec.Replicas = new(int32)
-		*testReplicaSet.Spec.Replicas = 1
-		testReplicaSet.Status.ReadyReplicas = 1
-		testReplicaSet.Status.AvailableReplicas = 1
+		actualWFPointsMap := getWFPointsMap(pointsForReplicaSet(testReplicaSet, testTransform))
+		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
-		actualWFPoints := pointsForReplicaSet(testReplicaSet, testTransform)
-		assert.Equal(t, 4, len(actualWFPoints))
-
-		expectedPointValue := float64(1)
-		for _, point := range actualWFPoints {
-			wfpoint := point.(*wf.Point)
-			assert.Equal(t, expectedPointValue, wfpoint.Value)
-		}
+		assert.Equal(t, workloadReady, actualWFPoint.Value)
 	})
 
-	t.Run("test for ReplicaSet not healthy with no OwnerReferences", func(t *testing.T) {
+	t.Run("test for ReplicaSet with non healthy status and no OwnerReferences", func(t *testing.T) {
 		testReplicaSet := setupBasicReplicaSet()
-
-		testReplicaSet.Spec.Replicas = new(int32)
-		*testReplicaSet.Spec.Replicas = 1
+		workloadMetricName := "kubernetes.workload.status"
 		testReplicaSet.Status.ReadyReplicas = 0
 		testReplicaSet.Status.AvailableReplicas = 0
 
-		actualWFPoints := pointsForReplicaSet(testReplicaSet, testTransform)
-		assert.Equal(t, 4, len(actualWFPoints))
+		actualWFPointsMap := getWFPointsMap(pointsForReplicaSet(testReplicaSet, testTransform))
+		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
-		point := actualWFPoints[3].(*wf.Point)
-		assert.Zero(t, point.Value)
+		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
 	})
 
 }

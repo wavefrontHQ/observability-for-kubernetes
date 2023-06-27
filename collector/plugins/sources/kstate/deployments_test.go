@@ -5,41 +5,29 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func setupBasicDeployment() *appsv1.Deployment {
-	deployment := &appsv1.Deployment{
+	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "deploymentset1",
-			Namespace: "ns1",
-			Labels:    map[string]string{"name": "testLabelName"},
+			Name:   "basic-deployment",
+			Labels: nil,
 		},
-	}
-	return deployment
-}
-
-func setupTestDeploymentTransform() configuration.Transforms {
-	return configuration.Transforms{
-		Source:  "testSource",
-		Prefix:  "kubernetes.",
-		Tags:    nil,
-		Filters: filter.Config{},
+		Spec: appsv1.DeploymentSpec{},
+		Status: appsv1.DeploymentStatus{
+			ReadyReplicas:     1,
+			AvailableReplicas: 1,
+		},
 	}
 }
 
 func Test_pointsForDeployment(t *testing.T) {
-	testTransform := setupTestDeploymentTransform()
+	testTransform := setupWorkloadTransform()
 
-	t.Run("test for basic Deployment", func(t *testing.T) {
+	t.Run("test for Deployment metrics", func(t *testing.T) {
 		testDeployment := setupBasicDeployment()
-
-		actualWFPoints := pointsForDeployment(testDeployment, testTransform)
-		assert.Equal(t, 4, len(actualWFPoints))
 		expectedMetricNames := []string{
 			"kubernetes.deployment.desired_replicas",
 			"kubernetes.deployment.available_replicas",
@@ -47,47 +35,36 @@ func Test_pointsForDeployment(t *testing.T) {
 			"kubernetes.workload.status",
 		}
 
-		var actualMetricNames []string
+		actualWFPoints := pointsForDeployment(testDeployment, testTransform)
+		actualMetricNames := getTestWFMetricNames(actualWFPoints)
 
-		for _, point := range actualWFPoints {
-			actualMetricNames = append(actualMetricNames, point.Name())
-		}
+		assert.Equal(t, len(expectedMetricNames), len(actualMetricNames))
 
 		sort.Strings(expectedMetricNames)
 		sort.Strings(actualMetricNames)
+
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
 	})
 
-	t.Run("test for Deployment healthy", func(t *testing.T) {
+	t.Run("test for Deployment workload with healthy status", func(t *testing.T) {
 		testDeployment := setupBasicDeployment()
+		workloadMetricName := "kubernetes.workload.status"
 
-		testDeployment.Spec.Replicas = new(int32)
-		*testDeployment.Spec.Replicas = 1
-		testDeployment.Status.ReadyReplicas = 1
-		testDeployment.Status.AvailableReplicas = 1
+		actualWFPointsMap := getWFPointsMap(pointsForDeployment(testDeployment, testTransform))
+		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
-		actualWFPoints := pointsForDeployment(testDeployment, testTransform)
-		assert.Equal(t, 4, len(actualWFPoints))
-
-		expectedPointValue := float64(1)
-		for _, point := range actualWFPoints {
-			wfpoint := point.(*wf.Point)
-			assert.Equal(t, expectedPointValue, wfpoint.Value)
-		}
+		assert.Equal(t, workloadReady, actualWFPoint.Value)
 	})
 
-	t.Run("test for Deployment not healthy", func(t *testing.T) {
+	t.Run("test for Deployment workload with non healthy status", func(t *testing.T) {
 		testDeployment := setupBasicDeployment()
-
-		testDeployment.Spec.Replicas = new(int32)
-		*testDeployment.Spec.Replicas = 1
-		testDeployment.Status.ReadyReplicas = 0
+		workloadMetricName := "kubernetes.workload.status"
 		testDeployment.Status.AvailableReplicas = 0
+		testDeployment.Status.ReadyReplicas = 0
 
-		actualWFPoints := pointsForDeployment(testDeployment, testTransform)
-		assert.Equal(t, 4, len(actualWFPoints))
+		actualWFPointsMap := getWFPointsMap(pointsForDeployment(testDeployment, testTransform))
+		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
-		point := actualWFPoints[3].(*wf.Point)
-		assert.Zero(t, point.Value)
+		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
 	})
 }
