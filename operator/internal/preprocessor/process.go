@@ -36,7 +36,7 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 
 	preProcessDataCollection(wfSpec)
 
-	err = preProcessDataExport(client, wfSpec, err)
+	err = preProcessDataExport(client, wfSpec)
 	if err != nil {
 		return err
 	}
@@ -60,10 +60,10 @@ func preProcessLogging(wfSpec *wf.WavefrontSpec) error {
 	return nil
 }
 
-func preProcessDataExport(client crClient.Client, wfSpec *wf.WavefrontSpec, err error) error {
+func preProcessDataExport(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
 	wfSpec.DataExport.WavefrontProxy.AvailableReplicas = 1
 	if wfSpec.DataExport.WavefrontProxy.Enable {
-		err = preProcessProxyConfig(client, wfSpec)
+		err := preProcessProxyConfig(client, wfSpec)
 		if err != nil {
 			return err
 		}
@@ -129,7 +129,7 @@ func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) err
 		return err
 	}
 
-	err = processWavefrontSecret(client, wfSpec, err)
+	err = processWavefrontSecret(client, wfSpec)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) err
 	return nil
 }
 
-func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec, err error) error {
+func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
 	secret, err := findSecret(client, wfSpec.WavefrontTokenSecret, wfSpec.Namespace)
 	if err != nil {
 		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.WavefrontTokenAuthType
@@ -169,7 +169,7 @@ func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec, er
 }
 
 func checkVal(check bool) int {
-	if check == true {
+	if check {
 		return 1
 	}
 	return 0

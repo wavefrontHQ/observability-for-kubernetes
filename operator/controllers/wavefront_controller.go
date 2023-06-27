@@ -31,7 +31,6 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
 	"k8s.io/client-go/discovery"
 
-	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
@@ -39,7 +38,6 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric/version"
 
 	kubernetes_manager "github.com/wavefronthq/observability-for-kubernetes/operator/internal/kubernetes"
-	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric/status"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
@@ -292,16 +290,6 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 	}
 
 	return nil
-}
-
-func (r *WavefrontReconciler) deployment(name string) (*appsv1.Deployment, error) {
-	var deployment appsv1.Deployment
-	err := r.Client.Get(context.Background(), util.ObjKey(r.namespace, name), &deployment)
-	if err != nil {
-		return nil, err
-	}
-
-	return &deployment, err
 }
 
 func contains(s []string, str string) bool {
