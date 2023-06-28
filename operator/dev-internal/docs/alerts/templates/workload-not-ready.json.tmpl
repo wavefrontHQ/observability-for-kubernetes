@@ -4,7 +4,7 @@
   "alertSources": [
     {
       "name": "Alert Condition",
-      "query": "(msum(10m, sum(ts(\"kubernetes.workload.status\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, workload_type, namespace_name, cluster) = 0) >= 10)",
+      "query": "(msum(10m, sum(ts(\"kubernetes.workload.status\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, workload_type, namespace_name, cluster, cluster_uuid, reason) = 0) >= 10)",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
@@ -18,9 +18,14 @@
     }
   ],
   "conditions": {
-    "warn": "(msum(10m, sum(ts(\"kubernetes.workload.status\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, workload_type, namespace_name, cluster) = 0) >= 10) >= 1"
+    "warn": "(msum(10m, sum(ts(\"kubernetes.workload.status\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, workload_type, namespace_name, cluster, cluster_uuid, reason) = 0) >= 10) >= 1"
   },
   "displayExpression": "${Display Condition}",
   "minutes": 5,
-  "resolveAfterMinutes": 2
+  "resolveAfterMinutes": 2,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  }
 }
