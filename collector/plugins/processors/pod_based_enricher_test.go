@@ -492,10 +492,11 @@ func createEnricher(t *testing.T, tc *enricherTestContext) *PodBasedEnricher {
 type testWorkloadCache struct {
 	workloadName string
 	workloadKind string
+	nodeName     string
 }
 
-func (wc testWorkloadCache) GetWorkloadForPodName(podName, ns string) (name, kind string) {
-	return wc.workloadName, wc.workloadKind
+func (wc testWorkloadCache) GetWorkloadForPodName(podName, ns string) (name, kind, nodeName string) {
+	return wc.workloadName, wc.workloadKind, wc.nodeName
 }
 func (wc testWorkloadCache) GetWorkloadForPod(pod *kube_api.Pod) (string, string) {
 	return wc.workloadName, wc.workloadKind

@@ -15,8 +15,6 @@ import (
 )
 
 type ExternalSink struct {
-	ClusterName         string
-	ClusterUUID         string
 	externalEndpointURL string
 	eventsEnabled       bool
 }
@@ -33,8 +31,6 @@ func (sink *ExternalSink) ExportEvent(ev *events.Event) {
 	if !sink.eventsEnabled {
 		return
 	}
-	ev.ClusterName = sink.ClusterName
-	ev.ClusterUUID = sink.ClusterUUID
 
 	b, _ := json.Marshal(ev)
 	req, err := http.NewRequest("POST", sink.externalEndpointURL, bytes.NewBuffer(b))
@@ -62,8 +58,6 @@ func (sink *ExternalSink) ExportEvent(ev *events.Event) {
 
 func NewExternalSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 	return &ExternalSink{
-		ClusterName:         cfg.ClusterName,
-		ClusterUUID:         cfg.ClusterUUID,
 		externalEndpointURL: cfg.ExternalEndpointURL,
 		eventsEnabled:       *cfg.EnableEvents,
 	}, nil

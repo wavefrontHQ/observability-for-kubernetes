@@ -160,6 +160,9 @@ func serveLogs(store *logs.Results) {
 func serveControl(metricStore *metricline.Store, eventStore *eventline.Store, externalEventStore *externalevent.Store, logStore *logs.Results) {
 	controlServeMux := http.NewServeMux()
 
+	controlServeMux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
 	controlServeMux.HandleFunc("/metrics", handlers.DumpMetricsHandler(metricStore))
 	controlServeMux.HandleFunc("/metrics/diff", handlers.DiffMetricsHandler(metricStore))
 	// Based on logs already sent, perform checks on store logs

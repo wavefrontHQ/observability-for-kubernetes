@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
@@ -55,5 +55,3 @@ helm upgrade --install mysql-release bitnami/mysql \
 --namespace collector-targets >/dev/null
 
 echo "Finished deploying targets"
-
-wait_for_cluster_ready collector-targets

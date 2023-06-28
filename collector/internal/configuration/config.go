@@ -70,6 +70,12 @@ func (c *Config) EventsAreEnabled() bool {
 
 type EventsConfig struct {
 	Filters EventsFilter `yaml:"filters"`
+
+	// Internal: Cluster name pulled in from the top level property.
+	ClusterName string `yaml:"-"`
+
+	// Internal: Cluster UUID pulled in from the top level property.
+	ClusterUUID string `yaml:"-"`
 }
 
 type EventsFilter struct {
@@ -156,9 +162,6 @@ type SinkConfig struct {
 
 	// Internal: Cluster name pulled in from the top level property.
 	ClusterName string `yaml:"-"`
-
-	// Internal: Cluster UUID pulled in from the top level property.
-	ClusterUUID string `yaml:"-"`
 
 	// Internal: The prefix used for internal stats. Used for the heartbeat metric.
 	InternalStatsPrefix string `yaml:"-"`
@@ -306,12 +309,13 @@ func reconcileGlobalProperties(cfg *Config) {
 	enableEvents := cfg.EnableEvents
 	for _, sinkCfg := range cfg.Sinks {
 		sinkCfg.ClusterName = cfg.ClusterName
-		sinkCfg.ClusterUUID = util.GetClusterUUID()
 		sinkCfg.InternalStatsPrefix = prefix
 		if sinkCfg.EnableEvents == nil {
 			sinkCfg.EnableEvents = &enableEvents
 		}
 	}
+	cfg.EventsConfig.ClusterName = cfg.ClusterName
+	cfg.EventsConfig.ClusterUUID = util.GetClusterUUID()
 }
 
 func validateCfg(cfg *Config) error {

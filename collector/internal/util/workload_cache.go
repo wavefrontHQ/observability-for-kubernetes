@@ -16,7 +16,7 @@ import (
 )
 
 type WorkloadCache interface {
-	GetWorkloadForPodName(podName, ns string) (name, kind string)
+	GetWorkloadForPodName(podName, ns string) (name, kind, nodeName string)
 	GetWorkloadForPod(pod *corev1.Pod) (string, string)
 }
 
@@ -62,21 +62,24 @@ func getJobLister(kubeClient kubernetes.Interface) (batchv1listers.JobLister, er
 	return jobLister, nil
 }
 
-func (wc workloadCache) GetWorkloadForPodName(podName, ns string) (name, kind string) {
+func (wc workloadCache) GetWorkloadForPodName(podName, ns string) (name, kind, nodeName string) {
 	pod, err := wc.podLister.Pods(ns).Get(podName)
 	if err != nil {
-		return "", ""
+		return "", "", ""
 	}
-	return wc.GetWorkloadForPod(pod)
+	name, kind = wc.GetWorkloadForPod(pod)
+	nodeName = pod.Spec.NodeName
+	return name, kind, nodeName
 }
 
+// GetWorkloadForPod determines Workload Name and Workload Kind for a Pod.
 func (wc workloadCache) GetWorkloadForPod(pod *corev1.Pod) (string, string) {
 	if len(pod.Name) == 0 {
 		return "", ""
 	}
 
+	// Hard-coding Kind due to https://github.com/kubernetes/client-go/issues/308
 	if len(pod.OwnerReferences) == 0 {
-		// Hardcode pod.Kind to "Pod" as pod.Kind can return empty sometimes.
 		return pod.Name, "Pod"
 	}
 
@@ -85,11 +88,15 @@ func (wc workloadCache) GetWorkloadForPod(pod *corev1.Pod) (string, string) {
 
 	switch podOwner.Kind {
 	case "ReplicaSet":
-		rs, _ := wc.rsLister.ReplicaSets(pod.Namespace).Get(podOwner.Name)
-		parentOwners = rs.OwnerReferences
+		rs, err := wc.rsLister.ReplicaSets(pod.Namespace).Get(podOwner.Name)
+		if err == nil {
+			parentOwners = rs.OwnerReferences
+		}
 	case "Job":
-		job, _ := wc.jobLister.Jobs(pod.Namespace).Get(podOwner.Name)
-		parentOwners = job.OwnerReferences
+		job, err := wc.jobLister.Jobs(pod.Namespace).Get(podOwner.Name)
+		if err == nil {
+			parentOwners = job.OwnerReferences
+		}
 	}
 
 	if len(parentOwners) != 0 {

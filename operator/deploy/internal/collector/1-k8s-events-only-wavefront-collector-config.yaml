@@ -25,5 +25,16 @@ data:
     - type: "external"
       enableEvents: true
       externalEndpointURL: "{{ .Experimental.KubernetesEvents.ExternalEndpointURL }}"
+    events:
+      filters:
+        tagAllowListSets:
+        - type:
+          - "Warning"
+        - type:
+          - "Normal"
+          kind:
+          - "Pod"
+          reason:
+          - "Backoff"
     sources:
       kubernetes_source: {}

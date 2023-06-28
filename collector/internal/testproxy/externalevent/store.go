@@ -72,12 +72,12 @@ type results struct {
 func (r *results) Record(event *events.Event) {
 	r.EventCount++
 
-	if event.ClusterName == "" {
-		r.MissingFields["clusterName"] = append(r.MissingFields["clusterName"], event)
+	if event.Event.ObjectMeta.Annotations["aria/cluster-name"] == "" {
+		r.MissingFields["aria/cluster-name"] = append(r.MissingFields["aria/cluster-name"], event)
 	}
 
-	if event.ClusterUUID == "" {
-		r.MissingFields["clusterUUID"] = append(r.MissingFields["clusterUUID"], event)
+	if event.Event.ObjectMeta.Annotations["aria/cluster-uuid"] == "" {
+		r.MissingFields["aria/cluster-uuid"] = append(r.MissingFields["aria/cluster-uuid"], event)
 	}
 
 	if event.Event.ObjectMeta.Name == "" {
@@ -98,10 +98,24 @@ func (r *results) Record(event *events.Event) {
 
 	if event.Event.InvolvedObject.Kind == "" {
 		r.MissingFields["involvedObject.kind"] = append(r.MissingFields["involvedObject.kind"], event)
+	} else if event.Event.InvolvedObject.Kind == "Pod" {
+		if event.Event.ObjectMeta.Annotations["aria/workload-kind"] == "" {
+			r.MissingFields["aria/workload-kind"] = append(r.MissingFields["aria/workload-kind"], event)
+		}
+		if event.Event.ObjectMeta.Annotations["aria/workload-name"] == "" {
+			r.MissingFields["aria/workload-name"] = append(r.MissingFields["aria/workload-name"], event)
+		}
 	}
-
 	if event.Event.Reason == "" {
 		r.MissingFields["reason"] = append(r.MissingFields["reason"], event)
+	} else if event.Event.Reason != "FailedScheduling" && event.Event.InvolvedObject.Kind == "Pod" {
+		if event.Event.ObjectMeta.Annotations["aria/node-name"] == "" {
+			r.MissingFields["aria/node-name"] = append(r.MissingFields["aria/node-name"], event)
+		}
+	}
+
+	if event.Type == "Normal" && event.Reason != "Backoff" {
+		r.MissingFields["unexpected-field"] = append(r.MissingFields["unexpected-field"], event)
 	}
 
 	if event.Event.Message == "" {

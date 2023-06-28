@@ -40,7 +40,7 @@ func TestGetPodWorkloadForPod(t *testing.T) {
 
 		name, kind := wc.GetWorkloadForPod(fakePod)
 		assert.Equal(t, fakePod.Name, name)
-		assert.Equal(t, fakePod.Kind, kind)
+		assert.Equal(t, "Pod", kind)
 	})
 
 	t.Run("Pod with ReplicaSet owner", func(t *testing.T) {
@@ -55,6 +55,19 @@ func TestGetPodWorkloadForPod(t *testing.T) {
 		name, kind := wc.GetWorkloadForPod(fakePod)
 		assert.Equal(t, fakeReplicaSet.Name, name)
 		assert.Equal(t, fakeReplicaSet.Kind, kind)
+	})
+
+	t.Run("Pod with deleted ReplicaSet owner", func(t *testing.T) {
+		wc, s := workloadCacheWithFakeListers()
+		podOwner := metav1.OwnerReference{
+			Kind: "ReplicaSet",
+			Name: "no-longer-exists",
+		}
+		fakePod := createFakePod(s.podStore, &podOwner)
+
+		name, kind := wc.GetWorkloadForPod(fakePod)
+		assert.Equal(t, "no-longer-exists", name)
+		assert.Equal(t, "ReplicaSet", kind)
 	})
 
 	t.Run("Pod with Deployment owner", func(t *testing.T) {
@@ -112,6 +125,19 @@ func TestGetPodWorkloadForPod(t *testing.T) {
 		assert.Equal(t, fakeJob.Kind, kind)
 	})
 
+	t.Run("Pod with deleted Job owner", func(t *testing.T) {
+		wc, s := workloadCacheWithFakeListers()
+		podOwner := metav1.OwnerReference{
+			Kind: "Job",
+			Name: "no-longer-exists",
+		}
+		fakePod := createFakePod(s.podStore, &podOwner)
+
+		name, kind := wc.GetWorkloadForPod(fakePod)
+		assert.Equal(t, "no-longer-exists", name)
+		assert.Equal(t, "Job", kind)
+	})
+
 	t.Run("Pod with CronJob owner", func(t *testing.T) {
 		wc, s := workloadCacheWithFakeListers()
 		jobOwner := metav1.OwnerReference{Kind: "CronJob", Name: "a-cronjob"}
@@ -148,17 +174,19 @@ func TestGetPodWorkloadForPodName(t *testing.T) {
 		}
 		fakePod := createFakePod(s.podStore, &podOwner)
 
-		name, kind := wc.GetWorkloadForPodName(fakePod.Name, fakePod.Namespace)
+		name, kind, nodeName := wc.GetWorkloadForPodName(fakePod.Name, fakePod.Namespace)
 		assert.Equal(t, "a-deployment", name)
 		assert.Equal(t, "Deployment", kind)
+		assert.Equal(t, "some-node-name", nodeName)
 	})
 
 	t.Run("Returns empty strings on error", func(t *testing.T) {
 		wc, _ := workloadCacheWithFakeListers()
 
-		name, kind := wc.GetWorkloadForPodName("not-exist", "default")
+		name, kind, nodeName := wc.GetWorkloadForPodName("not-exist", "default")
 		assert.Empty(t, name)
 		assert.Empty(t, kind)
+		assert.Empty(t, nodeName)
 	})
 }
 
@@ -196,14 +224,11 @@ func createFakeReplicaSet(rsStore cache.Indexer, owner *metav1.OwnerReference) *
 
 func createFakePod(podStore cache.Indexer, owner *metav1.OwnerReference) *corev1.Pod {
 	pod := &corev1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Pod",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "a-pod",
 			Namespace: "a-ns",
 		},
+		Spec: corev1.PodSpec{NodeName: "some-node-name"},
 	}
 	if owner != nil {
 		pod.OwnerReferences = []metav1.OwnerReference{*owner}

@@ -32,6 +32,7 @@ func TestAddEvent(t *testing.T) {
 			Kind:      "some-kind",
 			Name:      "test-name",
 		},
+		Type:   "Normal",
 		Reason: "some-reason",
 	}
 	er.addEvent(event)
@@ -54,9 +55,17 @@ func TestAddEventHasWorkload(t *testing.T) {
 	sink := &MockExport{}
 
 	er := &EventRouter{
-		kubeClient: fakeClient,
-		sink:       sink,
+		kubeClient:  fakeClient,
+		sink:        sink,
+		clusterName: "some-cluster-name",
+		clusterUUID: "some-cluster-uuid",
+		workloadCache: testWorkloadCache{
+			workloadName: "some-workload-name",
+			workloadKind: "some-workload-kind",
+			nodeName:     "some-node-name",
+		},
 	}
+
 	event := &v1.Event{
 		Message:       "Test message for events",
 		LastTimestamp: metav1.NewTime(time.Now()),
@@ -64,6 +73,7 @@ func TestAddEventHasWorkload(t *testing.T) {
 			Host:      "test Host",
 			Component: "some-component",
 		},
+		Type: "Normal",
 		InvolvedObject: v1.ObjectReference{
 			Namespace: fakePod.Namespace,
 			Kind:      fakePod.Kind,
@@ -82,6 +92,59 @@ func TestAddEventHasWorkload(t *testing.T) {
 	assert.Equal(t, fakePod.Name, sink.Annotations["pod_name"])
 	assert.NotContains(t, sink.Annotations, "resource_name")
 	assert.Equal(t, fakePod.Namespace, event.InvolvedObject.Namespace)
+	assert.Equal(t, "some-cluster-name", event.ObjectMeta.Annotations["aria/cluster-name"])
+	assert.Equal(t, "some-cluster-uuid", event.ObjectMeta.Annotations["aria/cluster-uuid"])
+	assert.Equal(t, "some-workload-kind", event.ObjectMeta.Annotations["aria/workload-kind"])
+	assert.Equal(t, "some-workload-name", event.ObjectMeta.Annotations["aria/workload-name"])
+	assert.Equal(t, "some-node-name", event.ObjectMeta.Annotations["aria/node-name"])
+}
+
+func TestEmptyNodeNameExcludesAnnotation(t *testing.T) {
+	fakeClient := fake.NewSimpleClientset()
+	fakePod := createFakePod(t, fakeClient, nil)
+
+	sink := &MockExport{}
+
+	er := &EventRouter{
+		kubeClient:  fakeClient,
+		sink:        sink,
+		clusterName: "some-cluster-name",
+		clusterUUID: "some-cluster-uuid",
+		workloadCache: testWorkloadCache{
+			workloadName: "some-workload-name",
+			workloadKind: "some-workload-kind",
+		},
+	}
+	event := &v1.Event{
+		Message:       "Test message for events",
+		LastTimestamp: metav1.NewTime(time.Now()),
+		Source: v1.EventSource{
+			Host:      "test Host",
+			Component: "some-component",
+		},
+		Type: "Warning",
+		InvolvedObject: v1.ObjectReference{
+			Namespace: fakePod.Namespace,
+			Kind:      fakePod.Kind,
+			Name:      fakePod.Name,
+		},
+		Reason: "some-reason",
+	}
+	er.addEvent(event)
+	assert.NotContains(t, event.ObjectMeta.Annotations, "aria/node-name")
+}
+
+type testWorkloadCache struct {
+	workloadName string
+	workloadKind string
+	nodeName     string
+}
+
+func (wc testWorkloadCache) GetWorkloadForPodName(podName, ns string) (name, kind, nodeName string) {
+	return wc.workloadName, wc.workloadKind, wc.nodeName
+}
+func (wc testWorkloadCache) GetWorkloadForPod(pod *v1.Pod) (string, string) {
+	return wc.workloadName, wc.workloadKind
 }
 
 type MockExport struct {
@@ -100,7 +163,6 @@ func (m *MockExport) ExportEvent(event *events.Event) {
 	m.Ts = event.Ts
 	m.Host = event.Host
 	m.Annotations = tagMap["annotations"].(map[string]string)
-	m.Labels = event.Labels
 }
 func (m *MockExport) Export(batch *metrics.Batch) {}
 func (m *MockExport) Name() string                { return "" }
