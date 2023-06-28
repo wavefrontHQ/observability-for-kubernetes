@@ -69,11 +69,33 @@ spec:
           env:
             - name: WAVEFRONT_URL
               value: {{ .WavefrontUrl }}/api/
+          {{- if eq .DataExport.WavefrontProxy.Auth.Type "wavefront-token"}}
             - name: WAVEFRONT_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ .WavefrontTokenSecret }}
                   key: token
+          {{- end }}
+          {{- if eq .DataExport.WavefrontProxy.Auth.Type "csp-api-token"}}
+            - name: CSP_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .WavefrontTokenSecret }}
+                  key: csp-api-token
+          {{- end }}
+          {{- if eq .DataExport.WavefrontProxy.Auth.Type "csp-app-oauth"}}
+            - name: CSP_APP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .WavefrontTokenSecret }}
+                  key: csp-app-secret
+            - name: CSP_APP_ID
+              value: {{ .DataExport.WavefrontProxy.Auth.CSPAppID }}
+          {{- if .DataExport.WavefrontProxy.Auth.CSPOrgID }}
+            - name: CSP_ORG_ID
+              value: {{ .DataExport.WavefrontProxy.Auth.CSPOrgID }}
+          {{- end }}
+          {{- end }}
             - name: WAVEFRONT_PROXY_ARGS
               value: >
                 --pushListenerPorts {{ .DataExport.WavefrontProxy.MetricPort }}

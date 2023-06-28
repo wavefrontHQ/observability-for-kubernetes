@@ -212,6 +212,15 @@ type WavefrontProxy struct {
 
 	// PreprocessorRules is for internal use only
 	PreprocessorRules PreprocessorRules `json:"-"`
+
+	// Auth is for internal use only
+	Auth Auth `json:"-"`
+}
+
+type Auth struct {
+	Type     string `json:"-"`
+	CSPAppID string `json:"-"`
+	CSPOrgID string `json:"-"`
 }
 
 type PreprocessorRules struct {
