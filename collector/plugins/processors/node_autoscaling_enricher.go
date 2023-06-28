@@ -102,7 +102,7 @@ func setFloat(metricSet *metrics.Set, metric *metrics.Metric, value float64) {
 	}
 }
 
-func NewNodeAutoscalingEnricher(kubeClient *kube_client.Clientset, labelCopier *util.LabelCopier) (*NodeAutoscalingEnricher, error) {
+func NewNodeAutoscalingEnricher(kubeClient kube_client.Interface, labelCopier *util.LabelCopier) (*NodeAutoscalingEnricher, error) {
 	// watch nodes
 	nodeLister, reflector, _ := util.GetNodeLister(kubeClient)
 
