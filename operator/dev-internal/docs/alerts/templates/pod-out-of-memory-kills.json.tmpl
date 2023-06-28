@@ -4,7 +4,7 @@
   "alertSources": [
     {
       "name": "Alert Condition",
-      "query": "(mcount(15m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, workload_name, pod_name, namespace_name, cluster, container_name)) >= 2)",
+      "query": "(mcount(15m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, workload_name, pod_name, namespace_name, cluster, container_name, cluster_uuid, reason)) >= 2)",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
@@ -18,9 +18,14 @@
     }
   ],
   "conditions": {
-    "warn": "(mcount(15m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, workload_name, pod_name, namespace_name, cluster, container_name)) >= 2) >= 1"
+    "warn": "(mcount(15m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, workload_name, pod_name, namespace_name, cluster, container_name, cluster_uuid, reason)) >= 2) >= 1"
   },
   "displayExpression": "${Display Condition}",
   "minutes": 15,
-  "resolveAfterMinutes": 2
+  "resolveAfterMinutes": 2,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  }
 }
