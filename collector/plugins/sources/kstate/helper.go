@@ -47,9 +47,9 @@ func metricPoint(prefix, name string, value float64, ts int64, source string, ta
 	)
 }
 
-func floatValOrDefault(i *int32, f float64) float64 {
+func floatValOrDefault(i *int32, defaultValue float64) float64 {
 	if i != nil {
 		return float64(*i)
 	}
-	return f
+	return defaultValue
 }

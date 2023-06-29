@@ -1,11 +1,12 @@
 package kstate
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
-	"testing"
 )
 
 func TestPointsForCronJob(t *testing.T) {
