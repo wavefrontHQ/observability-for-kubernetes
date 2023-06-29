@@ -1,0 +1,26 @@
+{
+  "name": "Pod Backoff Event",
+  "alertType": "THRESHOLD",
+  "alertSources": [
+    {
+      "name": "Alert Condition",
+      "query": "(mcount(10m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND (reason=\"ImagePullBackOff\" OR reason=\"CrashLoopBackOff\")), sources, workload_name, pod_name, namespace_name, cluster, nodename, reason)) >= 5)",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${Alert Condition}, ${Alert Condition})",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE","AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "warn": "(mcount(10m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND (reason=\"ImagePullBackOff\" OR reason=\"CrashLoopBackOff\")), sources, workload_name, pod_name, namespace_name, cluster, nodename, reason)) >= 5) >= 1"
+  },
+  "displayExpression": "${Display Condition}",
+  "minutes": 10,
+  "resolveAfterMinutes": 2
+}
