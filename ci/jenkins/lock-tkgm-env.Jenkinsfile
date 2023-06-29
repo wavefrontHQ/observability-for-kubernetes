@@ -9,7 +9,7 @@ pipeline {
 //     // MINUTE(0-59) HOUR(0-23) DOM(1-31) MONTH(1-12) DOW(0-7)
 //     cron '''TZ=America/Denver
 // 44 16 * * 1-5'''
-  }
+//   }
   stages {
 
     stage {'Find a public pool environment'} {
