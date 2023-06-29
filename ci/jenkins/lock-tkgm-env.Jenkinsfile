@@ -12,7 +12,7 @@ pipeline {
 //   }
   stages {
 
-    stage {'Find a public pool environment'} {
+    stage ('Find a public pool environment') {
       steps {
             script {
               sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
