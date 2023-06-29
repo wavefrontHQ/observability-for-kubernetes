@@ -1,14 +1,9 @@
-## Initial Availability Notice
-
-This project is in the initial availability phase.
-It is suitable for production usage.
-
-**Important:** Logs (Beta) is enabled only for selected customers. If you’d like to participate, contact your Observability account representative.
-
 # Overview of the Observability for Kubernetes Operator
 
 The Observability for Kubernetes Operator deploys the necessary agents to monitor your clusters and workloads in Kubernetes.
 This Operator is based on [kubebuilder SDK](https://book.kubebuilder.io/).
+
+**Important:** Logs (Beta) is enabled only for selected customers. If you’d like to participate, contact your Observability account representative.
 
 ## Quick Reference
 - [Operator Installation](#installation)
@@ -162,6 +157,8 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | Alert name | Description |
 |---|---|
 | [Pod Stuck in Pending](docs/alerts/templates/pod-stuck-in-pending.json.tmpl) | Workload has pod stuck in pending. |
+| [Pod Stuck in Terminating](docs/alerts/templates/pod-stuck-in-terminating.json.tmpl) | Workload has pod stuck in terminating. |
+| [Pod Backoff Event](docs/alerts/templates/pod-backoff-event.json.tmpl) | Workload has pod with container status `ImagePullBackOff` or `CrashLoopBackOff`. |
 
 ## Bring Your Own Logs Shipper
 

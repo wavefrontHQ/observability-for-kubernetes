@@ -31,6 +31,28 @@ function post_alert_to_wavefront() {
   echo "Alert has been created at: https://${wavefront_cluster}.wavefront.com/alerts/${alert_id}"
 }
 
+function check_alert_file() {
+  local alert_file=$1
+
+  if ! [ -f "${alert_file}" ]; then
+    echo "Invalid alert file: ${alert_file}"
+    exit 1
+  fi
+
+  if [ -x "$(command -v jq)" ] && ! jq -e . "${alert_file}" &>/dev/null; then
+    echo "Invalid json format for alert file: ${alert_file}"
+    exit 1
+  elif [ -x "$(command -v python)" ] \
+    && ! python -c "import sys,json;json.loads(sys.stdin.read())" < "${alert_file}" &>/dev/null; then
+    echo "Invalid json format for alert file: ${alert_file}"
+    exit 1
+  elif [ -x "$(command -v python3)" ] \
+    && ! python3 -c "import sys,json;json.loads(sys.stdin.read())" < "${alert_file}" &>/dev/null; then
+    echo "Invalid json format for alert file: ${alert_file}"
+    exit 1
+  fi
+}
+
 function check_required_argument() {
   local required_arg=$1
   local failure_msg=$2
@@ -59,7 +81,6 @@ function main() {
   local WF_CLUSTER=
   local ALERT_FILE=
   local K8S_CLUSTER_NAME=
-  local WF_CLUSTER=
 
   while getopts 'c:t:f:n:h' opt; do
     case "${opt}" in
@@ -78,6 +99,7 @@ function main() {
   check_required_argument "${ALERT_FILE}" "-f <ALERT_FILE> is required"
   check_required_argument "${K8S_CLUSTER_NAME}" "-n <K8S_CLUSTER_NAME> is required"
 
+  check_alert_file "${ALERT_FILE}"
   post_alert_to_wavefront "${WAVEFRONT_TOKEN}" "${WF_CLUSTER}" "${ALERT_FILE}" "${K8S_CLUSTER_NAME}"
 }
 
