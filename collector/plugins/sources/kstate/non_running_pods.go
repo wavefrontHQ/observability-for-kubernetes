@@ -26,9 +26,10 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 			return nil
 		}
 
-		workloadName, _ := workloadCache.GetWorkloadForPod(pod)
-		sharedTags := make(map[string]string, len(pod.GetLabels())+1)
+		workloadName, workloadKind := workloadCache.GetWorkloadForPod(pod)
+		sharedTags := make(map[string]string, len(pod.GetLabels())+2)
 		sharedTags["workload_name"] = workloadName
+		sharedTags["workload_type"] = workloadKind
 
 		copyLabels(pod.GetLabels(), sharedTags)
 		now := time.Now().Unix()

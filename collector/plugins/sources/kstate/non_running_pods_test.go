@@ -232,7 +232,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "Unschedulable", point.Tags()["reason"])
 		assert.Equal(t, "none", point.Tags()["nodename"])
 		assert.Equal(t, "0/1 nodes are available: 1 Insufficient memory.", point.Tags()["message"])
-		assert.Equal(t, "some-workload", point.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", point.Tags()["workload_name"])
 	})
 
 	t.Run("test for terminating pod without nodename", func(t *testing.T) {
@@ -277,7 +277,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, string(v1.PodSucceeded), podPoint.Tags()["phase"])
 		assert.Equal(t, "", podPoint.Tags()["reason"])
 		assert.Equal(t, "node1", podPoint.Tags()["nodename"])
-		assert.Equal(t, "some-workload", podPoint.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", podPoint.Tags()["workload_name"])
 
 		// check for container metrics
 		containerPoint := actualWFPoints[1].(*wf.Point)
@@ -285,7 +285,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "0", containerPoint.Tags()["exit_code"])
 		assert.Equal(t, "Completed", containerPoint.Tags()["reason"])
 		assert.Equal(t, "terminated", containerPoint.Tags()["status"])
-		assert.Equal(t, "some-workload", containerPoint.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", containerPoint.Tags()["workload_name"])
 	})
 
 	t.Run("test for failed pod", func(t *testing.T) {
@@ -302,7 +302,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, 255, len(podPoint.Tags()["message"])+len("message")+len("="))
 		assert.Contains(t, podPoint.Tags()["message"], "containers with unready status: [hello]")
 		assert.Equal(t, "node1", podPoint.Tags()["nodename"])
-		assert.Equal(t, "some-workload", podPoint.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", podPoint.Tags()["workload_name"])
 
 		// check for container metrics
 		containerMetric := actualWFPoints[1].(*wf.Point)
@@ -310,7 +310,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "1", containerMetric.Tags()["exit_code"])
 		assert.Equal(t, "Error", containerMetric.Tags()["reason"])
 		assert.Equal(t, "terminated", containerMetric.Tags()["status"])
-		assert.Equal(t, "some-workload", containerMetric.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", containerMetric.Tags()["workload_name"])
 	})
 
 	t.Run("test for container creating pod", func(t *testing.T) {
@@ -326,23 +326,37 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "ContainersNotReady", podMetric.Tags()["reason"])
 		assert.Equal(t, "containers with unready status: [wavefront-proxy]", podMetric.Tags()["message"])
 		assert.Equal(t, "node1", podMetric.Tags()["nodename"])
-		assert.Equal(t, "some-workload", podMetric.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", podMetric.Tags()["workload_name"])
 
 		// check for container metrics
 		containerMetric := actualWFPoints[1].(*wf.Point)
 		assert.Equal(t, float64(util.CONTAINER_STATE_WAITING), containerMetric.Value)
 		assert.Equal(t, "ContainerCreating", containerMetric.Tags()["reason"])
 		assert.Equal(t, "waiting", containerMetric.Tags()["status"])
-		assert.Equal(t, "some-workload", containerMetric.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", containerMetric.Tags()["workload_name"])
+	})
+
+	t.Run("metrics should have workload name and type", func(t *testing.T) {
+		testPod := setupContainerCreatingPod()
+		workloadCache := fakeWorkloadCache{}
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
+
+		podMetric := actualWFPoints[0].(*wf.Point)
+		assert.Equal(t, "some-workload-name", podMetric.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-kind", podMetric.Tags()["workload_type"])
+
+		containerMetric := actualWFPoints[1].(*wf.Point)
+		assert.Equal(t, "some-workload-name", containerMetric.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-kind", containerMetric.Tags()["workload_type"])
 	})
 }
 
 type fakeWorkloadCache struct{}
 
 func (f fakeWorkloadCache) GetWorkloadForPod(pod *v1.Pod) (string, string) {
-	return "some-workload", ""
+	return "some-workload-name", "some-workload-kind"
 }
 
 func (f fakeWorkloadCache) GetWorkloadForPodName(podName, ns string) (string, string) {
-	return "some-workload", ""
+	return "some-workload-name", "some-workload-kind"
 }
