@@ -75,6 +75,7 @@ function main() {
   kubectl config view --flatten > /tmp/combined-kubeconfig.yaml
   mkdir -p "${HOME}/.kube"
   mv /tmp/combined-kubeconfig.yaml "${HOME}/.kube/config"
+  chmod go-r "${HOME}/.kube/config"
 
   export KUBECONFIG="${HOME}/.kube/config"
 

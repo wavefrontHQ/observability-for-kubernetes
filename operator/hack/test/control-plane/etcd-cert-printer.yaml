@@ -32,7 +32,7 @@ spec:
                 operator: Exists
       containers:
       - name: etcd-cert-printer
-        image: busybox
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
         args:
         - /bin/sh
         - -c

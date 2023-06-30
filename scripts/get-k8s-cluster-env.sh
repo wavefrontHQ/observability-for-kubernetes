@@ -20,6 +20,9 @@ elif grep -q "eks" <<< "$CURRENT_CONTEXT"; then
   echo "EKS"
 elif grep -q "openshift" <<< "$CURRENT_CONTEXT"; then
   echo "Openshift"
+#  name for sheepctl pool enviroment
+elif grep -q "tkg-mgmt" <<< "$CURRENT_CONTEXT"; then
+  echo "tkgm"
 else
   echo "No matching env for ${CURRENT_CONTEXT}"
 fi
