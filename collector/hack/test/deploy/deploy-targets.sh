@@ -48,7 +48,8 @@ kubectl autoscale rs -n collector-targets ${MEMCACHED_RS} --max=5 --cpu-percent=
 
 helm upgrade --install mysql-release bitnami/mysql \
 --set auth.rootPassword=password123 \
---set primary.persistence.size=200Mi \
+--set primary.persistence.size=500Mi \
+--set image.debug=true \
 --namespace collector-targets >/dev/null
 
 echo "Finished deploying targets"
