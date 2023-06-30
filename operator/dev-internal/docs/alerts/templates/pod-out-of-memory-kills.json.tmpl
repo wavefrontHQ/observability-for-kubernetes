@@ -1,10 +1,10 @@
 {
-  "name": "Pod Stuck in Pending",
+  "name": "Pod Out-of-memory Kills",
   "alertType": "THRESHOLD",
   "alertSources": [
     {
       "name": "Alert Condition",
-      "query": "(mcount(10m, count(ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\"), sources, pod_name, workload_name, namespace_name, cluster, message, cluster_uuid, reason)) >= 10)",
+      "query": "(mcount(15m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, workload_name, pod_name, namespace_name, cluster, container_name, cluster_uuid, reason)) >= 2)",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
@@ -18,10 +18,10 @@
     }
   ],
   "conditions": {
-    "warn": "(mcount(10m, count(ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\"), sources, pod_name, workload_name, namespace_name, cluster, message, cluster_uuid, reason)) >= 10) >= 1"
+    "warn": "(mcount(15m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, workload_name, pod_name, namespace_name, cluster, container_name, cluster_uuid, reason)) >= 2) >= 1"
   },
   "displayExpression": "${Display Condition}",
-  "minutes": 5,
+  "minutes": 15,
   "resolveAfterMinutes": 2,
   "tags": {
     "customerTags": [
