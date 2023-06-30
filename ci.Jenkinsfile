@@ -281,13 +281,6 @@ pipeline {
               }
             }
           }
-          post{
-            cleanup{
-              echo "Cleaning Up kind ssh tunnel ..."
-              sh 'kill -9 $(cat /tmp/kind-tunnel-pid) || true'
-              sh 'rm /tmp/kind-tunnel-pid || true'
-            }
-          }
         }
       }
     }
