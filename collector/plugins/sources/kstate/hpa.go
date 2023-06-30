@@ -25,7 +25,7 @@ func pointsForHPA(item interface{}, transforms configuration.Transforms) []wf.Me
 	tags := buildTags("hpa", hpa.Name, hpa.Namespace, transforms.Tags)
 	now := time.Now().Unix()
 	maxReplicas := float64(hpa.Spec.MaxReplicas)
-	minReplicas := floatVal(hpa.Spec.MinReplicas, 1.0)
+	minReplicas := floatValOrDefault(hpa.Spec.MinReplicas, 1.0)
 	currReplicas := float64(hpa.Status.CurrentReplicas)
 	desiredReplicas := float64(hpa.Status.DesiredReplicas)
 

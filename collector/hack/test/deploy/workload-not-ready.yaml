@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workload-not-ready
+  namespace: collector-targets
+  labels:
+    app: workload-not-ready
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: workload-not-ready
+  template:
+    metadata:
+      labels:
+        app: workload-not-ready
+        exclude-me: "true"
+    spec:
+      containers:
+      - name: workload-not-ready
+        image: busybox123
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi

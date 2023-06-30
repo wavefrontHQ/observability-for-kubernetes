@@ -16,24 +16,27 @@ import (
 )
 
 func pointsForStatefulSet(item interface{}, transforms configuration.Transforms) []wf.Metric {
-	ss, ok := item.(*appsv1.StatefulSet)
+	statefulset, ok := item.(*appsv1.StatefulSet)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
 		return nil
 	}
 
-	tags := buildTags("statefulset", ss.Name, ss.Namespace, transforms.Tags)
+	tags := buildTags("statefulset", statefulset.Name, statefulset.Namespace, transforms.Tags)
 	now := time.Now().Unix()
+	desired := floatValOrDefault(statefulset.Spec.Replicas, 1.0)
+	ready := float64(statefulset.Status.ReadyReplicas)
+	current := float64(statefulset.Status.CurrentReplicas)
+	updated := float64(statefulset.Status.UpdatedReplicas)
 
-	desired := floatVal(ss.Spec.Replicas, 1.0)
-	ready := float64(ss.Status.ReadyReplicas)
-	current := float64(ss.Status.CurrentReplicas)
-	updated := float64(ss.Status.UpdatedReplicas)
+	workloadTags := buildWorkloadTags("statefulset", statefulset.Name, statefulset.Namespace, transforms.Tags)
+	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, desired, ready, now, transforms.Source, workloadTags)
 
 	return []wf.Metric{
 		metricPoint(transforms.Prefix, "statefulset.desired_replicas", desired, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "statefulset.current_replicas", current, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "statefulset.ready_replicas", ready, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "statefulset.updated_replicas", updated, now, transforms.Source, tags),
+		workloadPoint,
 	}
 }

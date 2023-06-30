@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: replicaset-no-owner
+  namespace: collector-targets
+  labels:
+    app: replicaset-no-owner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: replicaset-no-owner
+  template:
+    metadata:
+      labels:
+        app: replicaset-no-owner
+        exclude-me: "true"
+    spec:
+      containers:
+      - name: replicaset-no-owner
+        image: busybox
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+        args: [ /bin/sh, -c,
+                'i=0; while true; do echo "$i: $(date)\n"; echo "nextline"; i=$((i+1)); sleep 1; done' ]

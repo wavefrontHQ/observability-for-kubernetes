@@ -29,6 +29,8 @@ kubectl apply -f running-pod-large-init-container.yaml >/dev/null
 kubectl apply -f running-pod-small-init-container.yaml >/dev/null
 kubectl apply -f pod-stuck-in-terminating.yaml >/dev/null
 kubectl delete -f pod-stuck-in-terminating.yaml >/dev/null &
+kubectl apply -f workload-not-ready.yaml >/dev/null
+kubectl apply -f replicaset-no-owner.yaml >/dev/null
 
 kubectl delete -f jobs.yaml &>/dev/null || true
 kubectl apply -f jobs.yaml >/dev/null

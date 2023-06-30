@@ -24,7 +24,7 @@ func pointsForReplicationController(item interface{}, transforms configuration.T
 
 	tags := buildTags("replicationcontroller", rs.Name, rs.Namespace, transforms.Tags)
 	now := time.Now().Unix()
-	desired := floatVal(rs.Spec.Replicas, 1.0)
+	desired := floatValOrDefault(rs.Spec.Replicas, 1.0)
 	available := float64(rs.Status.AvailableReplicas)
 	ready := float64(rs.Status.ReadyReplicas)
 

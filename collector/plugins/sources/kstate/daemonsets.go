@@ -16,23 +16,27 @@ import (
 )
 
 func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) []wf.Metric {
-	ds, ok := item.(*appsv1.DaemonSet)
+	daemonset, ok := item.(*appsv1.DaemonSet)
 	if !ok {
 		log.Errorf("invalid type: %s", reflect.TypeOf(item).String())
 		return nil
 	}
 
-	tags := buildTags("daemonset", ds.Name, ds.Namespace, transforms.Tags)
+	tags := buildTags("daemonset", daemonset.Name, daemonset.Namespace, transforms.Tags)
 	now := time.Now().Unix()
-	currentScheduled := float64(ds.Status.CurrentNumberScheduled)
-	desiredScheduled := float64(ds.Status.DesiredNumberScheduled)
-	misScheduled := float64(ds.Status.NumberMisscheduled)
-	ready := float64(ds.Status.NumberReady)
+	currentScheduled := float64(daemonset.Status.CurrentNumberScheduled)
+	desiredScheduled := float64(daemonset.Status.DesiredNumberScheduled)
+	misScheduled := float64(daemonset.Status.NumberMisscheduled)
+	ready := float64(daemonset.Status.NumberReady)
+
+	workloadTags := buildWorkloadTags("daemonset", daemonset.Name, daemonset.Namespace, transforms.Tags)
+	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, desiredScheduled, ready, now, transforms.Source, workloadTags)
 
 	return []wf.Metric{
 		metricPoint(transforms.Prefix, "daemonset.current_scheduled", currentScheduled, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "daemonset.desired_scheduled", desiredScheduled, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "daemonset.misscheduled", misScheduled, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "daemonset.ready", ready, now, transforms.Source, tags),
+		workloadPoint,
 	}
 }
