@@ -347,7 +347,6 @@ pipeline {
           environment {
             KUBECONFIG = "$HOME/.kube/config"
             GCP_CREDS = credentials("GCP_CREDS")
-            DOCKER_IMAGE = "kubernetes-collector"
           }
           steps {
             withEnv(["PATH+GO=${HOME}/go/bin"]) {
