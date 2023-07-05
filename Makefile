@@ -128,6 +128,9 @@ target-eks: docker-login-eks
 target-tkgm:
 	@$(MONOREPO_DIR)/scripts/connect-to-tkgm.sh
 
+get-tkgm-lock:
+	@$(MONOREPO_DIR))/scripts/get-tkgm-env-lock.sh
+
 # create a new branch from main
 # usage: make branch JIRA=XXXX OR make branch NAME=YYYY
 .PHONY: branch

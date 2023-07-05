@@ -11,23 +11,11 @@ pipeline {
 0 5 * * 1-5'''
   }
   stages {
-
     stage ('Find a public pool environment') {
       steps {
-            script {
-              sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
-              sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
-              sh './sheepctl pool list --public -u shepherd.run'
-              sh './sheepctl target set -u shepherd.run -n k8po-team'
-              sh './sheepctl pool lock tkg-2.1-vcenter-7.0.0 --from-namespace shepherd-official --lifetime 15h --output lock.json 2>&1 sheepctl_output'
-            }
-      }
-    }
-  }
-  post {
-    failure {
-      script {
-        sh 'cat sheepctl_output'
+        script {
+          sh "cd ../../ && make get-tkgm-lock"
+        }
       }
     }
   }
