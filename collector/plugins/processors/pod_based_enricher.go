@@ -163,7 +163,7 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 	// Add pod phase
 	addLabeledIntMetric(podMs, &metrics.MetricPodPhase, map[string]string{"phase": string(pod.Status.Phase)}, util.ConvertPodPhase(pod.Status.Phase))
 
-	// Add workload name
+	// Add workload name and workload kind
 	workloadName, workloadKind := pbe.workloadCache.GetWorkloadForPod(pod)
 	podMs.Labels[metrics.LabelWorkloadName.Key] = workloadName
 	podMs.Labels[metrics.LabelWorkloadKind.Key] = workloadKind
@@ -191,6 +191,7 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 				metrics.LabelHostname.Key:           podMs.Labels[metrics.LabelHostname.Key],
 				metrics.LabelHostID.Key:             podMs.Labels[metrics.LabelHostID.Key],
 				metrics.LabelWorkloadName.Key:       podMs.Labels[metrics.LabelWorkloadName.Key],
+				metrics.LabelWorkloadKind.Key:       podMs.Labels[metrics.LabelWorkloadKind.Key],
 			},
 			EntityCreateTime: podMs.CollectionStartTime,
 		}

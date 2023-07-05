@@ -90,6 +90,7 @@ func TestPodEnricherHandlesContainerBatches(t *testing.T) {
 			"pod_name":             "pod1",
 			"type":                 "pod_container",
 			"workload_name":        "my-workload-name",
+			"workload_kind":        "my-workload-kind",
 		}
 		expectedContainerValues := map[string]metrics.Value{
 			"cpu/limit":                     {IntValue: 2222},
@@ -191,6 +192,7 @@ func TestPodEnricherHandlesPodBatches(t *testing.T) {
 			"pod_name":             "pod1",
 			"type":                 "pod_container",
 			"workload_name":        "my-workload-name",
+			"workload_kind":        "my-workload-kind",
 		}
 		expectedContainerValues := map[string]metrics.Value{
 			"cpu/limit":                 {IntValue: 0},
@@ -222,6 +224,7 @@ func TestPodEnricherHandlesPodBatches(t *testing.T) {
 			"pod_name":             "pod1",
 			"type":                 "pod_container",
 			"workload_name":        "my-workload-name",
+			"workload_kind":        "my-workload-kind",
 		}
 		expectedContainerValues := map[string]metrics.Value{
 			"cpu/limit":                     {IntValue: 2222},
