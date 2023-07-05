@@ -18,6 +18,14 @@ function setup_test() {
   local wf_url="${2:-${WAVEFRONT_URL}}"
   local cluster_name=${CONFIG_CLUSTER_NAME}-$type
 
+  if [[ "$type" == "control-plane" ]]; then
+    if [[ "${K8S_ENV}" != "Kind" && "${K8S_ENV}" != "TKGm" ]]; then
+      #  if we need a new environment for control plane test, pull this if check to a new function
+      echo "Skipping control-plane test as env is not Kind or TKGm"
+      return
+    fi
+  fi
+
   echo "Deploying Wavefront CR with Cluster Name: $cluster_name ..."
 
   wait_for_cluster_ready "$NS"
@@ -35,19 +43,17 @@ function setup_test() {
   fi
 
   if [[ "$type" == "control-plane" ]]; then
-    if [[ "${K8S_ENV}" == "Kind" ]]; then
-      deploy_etcd_cert_printer
-      create_etcd_cert_files
-      local operator_yaml_content=$(cat "${OPERATOR_REPO_ROOT}/build/operator/wavefront-operator.yaml")
+    deploy_etcd_cert_printer
+    create_etcd_cert_files
+    local operator_yaml_content=$(cat "${OPERATOR_REPO_ROOT}/build/operator/wavefront-operator.yaml")
 
-      echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
-      echo "${operator_yaml_content}" >> hack/test/_v1alpha1_wavefront_test.yaml
-      echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
-      yq eval '.stringData.ca_crt = "'"$(< ${OPERATOR_REPO_ROOT}/build/ca.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml" \
-        | yq eval '.stringData.server_crt = "'"$(< ${OPERATOR_REPO_ROOT}/build/server.crt)"'"' - \
-        | yq eval '.stringData.server_key = "'"$(< ${OPERATOR_REPO_ROOT}/build/server.key)"'"' - \
-        >> hack/test/_v1alpha1_wavefront_test.yaml
-    fi
+    echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
+    echo "${operator_yaml_content}" >> hack/test/_v1alpha1_wavefront_test.yaml
+    echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
+    yq eval '.stringData.ca_crt = "'"$(< ${OPERATOR_REPO_ROOT}/build/ca.crt)"'"' "${OPERATOR_REPO_ROOT}/hack/test/control-plane/etcd-certs-secret.yaml" \
+      | yq eval '.stringData.server_crt = "'"$(< ${OPERATOR_REPO_ROOT}/build/server.crt)"'"' - \
+      | yq eval '.stringData.server_key = "'"$(< ${OPERATOR_REPO_ROOT}/build/server.key)"'"' - \
+      >> hack/test/_v1alpha1_wavefront_test.yaml
   fi
 
   kubectl apply -f hack/test/_v1alpha1_wavefront_test.yaml
@@ -64,7 +70,8 @@ function run_test_wavefront_metrics() {
 
 function run_test_control_plane_metrics() {
   local type='control-plane'
-  if [[ "${K8S_ENV}" != "Kind" ]]; then
+  if [[ "${K8S_ENV}" != "Kind" && "${K8S_ENV}" != "TKGm" ]]; then
+    #  if we need a new environment for control plane test, pull this if check to a new function
     echo "Not running control plane metrics tests on env: ${K8S_ENV}"
     return
   fi
@@ -108,7 +115,7 @@ function run_unhealthy_checks() {
   local type=$1
   echo "Running unhealthy checks ..."
 
-  for _ in {1..10}; do
+  for _ in {1..20}; do
     health_status=$(kubectl get wavefront -n $NS --request-timeout=10s -o=jsonpath='{.items[0].status.status}') || true
     if [[ "$health_status" == "Unhealthy" ]]; then
       break
@@ -174,7 +181,7 @@ function clean_up_test() {
   local type=$1
   echo "Cleaning Up Test '$type' ..."
 
-  kubectl delete -f hack/test/_v1alpha1_wavefront_test.yaml
+  kubectl delete -f hack/test/_v1alpha1_wavefront_test.yaml || true
 
   if [[ "$type" == "with-http-proxy" ]]; then
     delete_egress_proxy
@@ -571,6 +578,7 @@ function main() {
       "logging-integration"
       "with-http-proxy"
       "k8s-events-only"
+      "control-plane"
     )
   fi
 

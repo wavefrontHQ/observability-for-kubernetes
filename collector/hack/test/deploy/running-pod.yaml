@@ -9,7 +9,7 @@ metadata:
 spec:
   containers:
   - name: container
-    image: busybox
+    image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
     resources:
       requests:
         memory: 50Mi

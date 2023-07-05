@@ -8,6 +8,6 @@ metadata:
 spec:
   containers:
     - name: count
-      image: busybox
+      image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
       args: [/bin/sh, -c,
              'while true; do echo "My application error line one $(date)\n" 1>&2; echo "error line two" 1>&2; sleep 1; done']

@@ -124,6 +124,13 @@ docker-login-eks:
 target-eks: docker-login-eks
 	@aws eks --region $(AWS_REGION) update-kubeconfig --name k8s-saas-team-ci --alias k8s-saas-team-ci-eks
 
+#----- TKGm -----#
+target-tkgm:
+	@$(MONOREPO_DIR)/scripts/connect-to-tkgm.sh
+
+get-tkgm-lock:
+	@$(MONOREPO_DIR))/scripts/get-tkgm-env-lock.sh
+
 # create a new branch from main
 # usage: make branch JIRA=XXXX OR make branch NAME=YYYY
 .PHONY: branch

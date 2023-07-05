@@ -100,6 +100,6 @@ metadata:
 spec:
   containers:
   - name: count
-    image: busybox
+    image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
     args: [/bin/sh, -c,
            'i=0; while true; do echo "stdout line $i: $(date)\n"; i=$((i+1)); echo "stderr line $i: $(date)\n" 1>&2; sleep 1; done']

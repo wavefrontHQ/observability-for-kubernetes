@@ -9,7 +9,7 @@ metadata:
 spec:
   initContainers:
   - name: small-init-container
-    image: busybox
+    image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
     resources:
       requests:
         memory: 50Mi
@@ -21,7 +21,7 @@ spec:
             'exit 0' ]
   containers:
   - name: container1
-    image: busybox
+    image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
     resources:
       requests:
         memory: 50Mi
@@ -31,7 +31,7 @@ spec:
     args: [ /bin/sh, -c,
             'i=0; while true; do echo "$i: $(date)\n"; echo "nextline"; i=$((i+1)); sleep 1; done' ]
   - name: container2
-    image: busybox
+    image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
     resources:
       requests:
         memory: 30Mi
