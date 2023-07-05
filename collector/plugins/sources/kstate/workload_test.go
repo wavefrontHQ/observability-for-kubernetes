@@ -26,7 +26,7 @@ func Test_buildWorkloadStatusMetric(t *testing.T) {
 		testTags := buildWorkloadTags("deployment", testDeployment.Name, "", testTransform.Tags)
 
 		assert.Equal(t, "basic-deployment", testTags[workloadNameTag])
-		assert.Equal(t, "deployment", testTags[workloadTypeTag])
+		assert.Equal(t, "deployment", testTags[workloadKindTag])
 
 		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, numberDesired, numberReady, timestamp, testTransform.Source, testTags)
 		point := actualWFPoint.(*wf.Point)
@@ -43,7 +43,7 @@ func Test_buildWorkloadStatusMetric(t *testing.T) {
 		testTags := buildWorkloadTags("deployment", testDeployment.Name, "", testTransform.Tags)
 
 		assert.Equal(t, "basic-deployment", testTags[workloadNameTag])
-		assert.Equal(t, "deployment", testTags[workloadTypeTag])
+		assert.Equal(t, "deployment", testTags[workloadKindTag])
 
 		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, numberDesired, numberReady, timestamp, testTransform.Source, testTags)
 		point := actualWFPoint.(*wf.Point)

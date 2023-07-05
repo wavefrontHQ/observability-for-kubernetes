@@ -343,11 +343,11 @@ func TestPointsForNonRunningPods(t *testing.T) {
 
 		podMetric := actualWFPoints[0].(*wf.Point)
 		assert.Equal(t, "some-workload-name", podMetric.Tags()["workload_name"])
-		assert.Equal(t, "some-workload-kind", podMetric.Tags()["workload_type"])
+		assert.Equal(t, "some-workload-kind", podMetric.Tags()["workload_kind"])
 
 		containerMetric := actualWFPoints[1].(*wf.Point)
 		assert.Equal(t, "some-workload-name", containerMetric.Tags()["workload_name"])
-		assert.Equal(t, "some-workload-kind", containerMetric.Tags()["workload_type"])
+		assert.Equal(t, "some-workload-kind", containerMetric.Tags()["workload_kind"])
 	})
 }
 

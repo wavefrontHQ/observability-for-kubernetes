@@ -7,7 +7,7 @@ import (
 const (
 	workloadStatusMetric = "workload.status"
 	workloadNameTag      = "workload_name"
-	workloadTypeTag      = "workload_type"
+	workloadKindTag      = "workload_kind"
 
 	workloadReady    = float64(1.0)
 	workloadNotReady = float64(0.0)
@@ -24,6 +24,6 @@ func buildWorkloadStatusMetric(prefix string, numberDesired float64, numberReady
 
 func buildWorkloadTags(kind string, name string, namespace string, customTags map[string]string) map[string]string {
 	tags := buildTags(workloadNameTag, name, namespace, customTags)
-	tags[workloadTypeTag] = kind
+	tags[workloadKindTag] = kind
 	return tags
 }
