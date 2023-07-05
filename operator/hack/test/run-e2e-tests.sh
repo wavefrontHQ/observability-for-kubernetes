@@ -20,6 +20,7 @@ function setup_test() {
 
   if [[ "$type" == "control-plane" ]]; then
     if [[ "${K8S_ENV}" != "Kind" && "${K8S_ENV}" != "TKGm" ]]; then
+      #  if we need a new environment for control plane test, pull this if check to a new function
       echo "Skipping control-plane test as env is not Kind or TKGm"
       return
     fi
@@ -69,7 +70,8 @@ function run_test_wavefront_metrics() {
 
 function run_test_control_plane_metrics() {
   local type='control-plane'
-  if [[ "${K8S_ENV}" != "Kind" ]]; then
+  if [[ "${K8S_ENV}" != "Kind" && "${K8S_ENV}" != "TKGm" ]]; then
+    #  if we need a new environment for control plane test, pull this if check to a new function
     echo "Not running control plane metrics tests on env: ${K8S_ENV}"
     return
   fi
