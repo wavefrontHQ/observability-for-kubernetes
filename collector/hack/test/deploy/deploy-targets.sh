@@ -53,3 +53,5 @@ helm upgrade --install mysql-release bitnami/mysql \
 --namespace collector-targets >/dev/null
 
 echo "Finished deploying targets"
+
+wait_for_cluster_ready collector-targets
