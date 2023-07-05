@@ -34,7 +34,7 @@ func pointsForReplicaSet(item interface{}, transforms configuration.Transforms) 
 		metricPoint(transforms.Prefix, "replicaset.ready_replicas", ready, now, transforms.Source, tags),
 	}
 	if rs.OwnerReferences == nil || len(rs.OwnerReferences) == 0 {
-		workloadTags := buildWorkloadTags(rs.Kind, rs.Name, rs.Namespace, transforms.Tags)
+		workloadTags := buildWorkloadTags("ReplicaSet", rs.Name, rs.Namespace, transforms.Tags)
 		points = append(points, buildWorkloadStatusMetric(transforms.Prefix, desired, ready, now, transforms.Source, workloadTags))
 	}
 
