@@ -29,7 +29,7 @@ func pointsForStatefulSet(item interface{}, transforms configuration.Transforms)
 	current := float64(statefulset.Status.CurrentReplicas)
 	updated := float64(statefulset.Status.UpdatedReplicas)
 
-	workloadTags := buildWorkloadTags("statefulset", statefulset.Name, statefulset.Namespace, transforms.Tags)
+	workloadTags := buildWorkloadTags(statefulset.Kind, statefulset.Name, statefulset.Namespace, transforms.Tags)
 	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, desired, ready, now, transforms.Source, workloadTags)
 
 	return []wf.Metric{

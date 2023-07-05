@@ -502,12 +502,12 @@
 {"Name":"kubernetes.statefulset.desired_replicas","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","statefulset":"mysql-release"}}
 {"Name":"kubernetes.statefulset.ready_replicas","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","statefulset":"mysql-release"}}
 {"Name":"kubernetes.statefulset.updated_replicas","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","statefulset":"mysql-release"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"kube-system","source":"","workload_name":"kube-proxy","workload_kind":"daemonset"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","workload_name":"wavefront-collector","workload_kind":"daemonset"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"memcached-release","workload_kind":"deployment"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","workload_name":"wavefront-proxy","workload_kind":"deployment"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"mysql-release","workload_kind":"statefulset"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"replicaset-no-owner","workload_kind":"replicaset"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"kube-system","source":"","workload_name":"kube-proxy","workload_kind":"Node"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","workload_name":"wavefront-collector","workload_kind":"DaemonSet"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"memcached-release","workload_kind":"Deployment"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","workload_name":"wavefront-proxy","workload_kind":"Deployment"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"mysql-release","workload_kind":"StatefulSet"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"replicaset-no-owner","workload_kind":"ReplicaSet"}}
 {"Name":"linux.sysctl.fs.aio-max-nr","Tags":{"cluster":"","source":""}}
 {"Name":"linux.sysctl.fs.aio-nr","Tags":{"cluster":"","source":""}}
 {"Name":"linux.sysctl.fs.dentry-age-limit","Tags":{"cluster":"","source":""}}
