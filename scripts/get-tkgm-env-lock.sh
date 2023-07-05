@@ -18,7 +18,7 @@ function main() {
   sheepctl target set -u shepherd.run -n k8po-team
 
   set +e
-  sheepctl pool lock tkg-2.1-vcenter-7.0.0 --from-namespace shepherd-official --lifetime 15h --output lock.json 2>&1 sheepctl_output
+  sheepctl pool lock tkg-2.1-vcenter-7.0.0 --from-namespace shepherd-official --lifetime 15h --output lock.json > sheepctl_output 2>&1
   local exit_code=$?
   if [[ $exit_code != 0 ]]; then
     cat sheepctl_output
