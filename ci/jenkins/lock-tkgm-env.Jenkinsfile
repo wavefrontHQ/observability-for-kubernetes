@@ -14,7 +14,7 @@ pipeline {
     stage ('Find a public pool environment') {
       steps {
         script {
-          sh "make get-tkgm-lock"
+          sh "scripts/get-tkgm-env-lock.sh"
         }
       }
     }
