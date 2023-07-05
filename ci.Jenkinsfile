@@ -354,7 +354,7 @@ pipeline {
           steps {
             withEnv(["PATH+GO=${HOME}/go/bin"]) {
               lock("integration-test-tkgm") {
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
+                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
                 sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
                 sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
                 sh "mkdir -p $KUBECONFIG_DIR"

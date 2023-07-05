@@ -92,6 +92,7 @@ function main() {
 
   local MAX_QUERY_TIMES=30
   local CURL_WAIT=15
+  local NS="wavefront-collector"
 
   # REQUIRED
   local WAVEFRONT_TOKEN=
@@ -119,7 +120,7 @@ function main() {
   local VERSION_IN_DECIMAL+="$(echo "${VERSION}" | cut -d '.' -f3)"
   local VERSION_IN_DECIMAL="$(echo "${VERSION_IN_DECIMAL}" | sed 's/0$//')"
 
-  wait_for_cluster_ready
+  wait_for_cluster_ready "${NS}"
 
   exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(kubernetes.collector.version%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22%20AND%20installation_method%3D%22manual%22))" "${VERSION_IN_DECIMAL}"
   exit_on_fail wait_for_query_non_zero "at(%22end%22%2C%202m%2C%20ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22))"
