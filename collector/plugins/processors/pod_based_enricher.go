@@ -110,8 +110,9 @@ func (pbe *PodBasedEnricher) addContainerInfo(key metrics.ResourceKey, container
 		}
 	}
 
-	workloadName, _ := pbe.workloadCache.GetWorkloadForPod(pod)
+	workloadName, workloadKind := pbe.workloadCache.GetWorkloadForPod(pod)
 	containerMs.Labels[metrics.LabelWorkloadName.Key] = workloadName
+	containerMs.Labels[metrics.LabelWorkloadKind.Key] = workloadKind
 
 	containerMs.Labels[metrics.LabelPodId.Key] = string(pod.UID)
 	pbe.labelCopier.Copy(pod.Labels, containerMs.Labels)
@@ -162,9 +163,10 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 	// Add pod phase
 	addLabeledIntMetric(podMs, &metrics.MetricPodPhase, map[string]string{"phase": string(pod.Status.Phase)}, util.ConvertPodPhase(pod.Status.Phase))
 
-	// Add workload name
-	workloadName, _ := pbe.workloadCache.GetWorkloadForPod(pod)
+	// Add workload name and workload kind
+	workloadName, workloadKind := pbe.workloadCache.GetWorkloadForPod(pod)
 	podMs.Labels[metrics.LabelWorkloadName.Key] = workloadName
+	podMs.Labels[metrics.LabelWorkloadKind.Key] = workloadKind
 
 	// Add cpu/mem requests and limits to containers
 	for _, container := range pod.Spec.Containers {
@@ -189,6 +191,7 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 				metrics.LabelHostname.Key:           podMs.Labels[metrics.LabelHostname.Key],
 				metrics.LabelHostID.Key:             podMs.Labels[metrics.LabelHostID.Key],
 				metrics.LabelWorkloadName.Key:       podMs.Labels[metrics.LabelWorkloadName.Key],
+				metrics.LabelWorkloadKind.Key:       podMs.Labels[metrics.LabelWorkloadKind.Key],
 			},
 			EntityCreateTime: podMs.CollectionStartTime,
 		}

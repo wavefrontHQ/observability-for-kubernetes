@@ -71,8 +71,13 @@ func (wc workloadCache) GetWorkloadForPodName(podName, ns string) (name, kind st
 }
 
 func (wc workloadCache) GetWorkloadForPod(pod *corev1.Pod) (string, string) {
+	if len(pod.Name) == 0 {
+		return "", ""
+	}
+
 	if len(pod.OwnerReferences) == 0 {
-		return pod.Name, pod.Kind
+		// Hardcode pod.Kind to "Pod" as pod.Kind can return empty sometimes.
+		return pod.Name, "Pod"
 	}
 
 	podOwner := pod.OwnerReferences[0]

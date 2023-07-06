@@ -8,7 +8,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/client-go/applyconfigurations/core/v1"
 	appsv1listers "k8s.io/client-go/listers/apps/v1"
 	batchv1listers "k8s.io/client-go/listers/batch/v1"
 	corev1listers "k8s.io/client-go/listers/core/v1"
@@ -128,13 +127,13 @@ func TestGetPodWorkloadForPod(t *testing.T) {
 		assert.Equal(t, "CronJob", kind)
 	})
 
-	t.Run("Returns empty strings on error", func(t *testing.T) {
-		wc, _ := workloadCacheWithFakeListers()
+	t.Run("Pod with no owner", func(t *testing.T) {
+		wc, s := workloadCacheWithFakeListers()
+		fakePod := createFakePod(s.podStore, nil)
 
-		v1.Pod("not-exist", "default")
-		name, kind := wc.GetWorkloadForPod(&corev1.Pod{})
-		assert.Empty(t, name)
-		assert.Empty(t, kind)
+		name, kind := wc.GetWorkloadForPod(fakePod)
+		assert.NotNil(t, name)
+		assert.Equal(t, "Pod", kind)
 	})
 }
 
