@@ -1,9 +1,20 @@
-.idea
 _output
-.DS_Store
 osstp_golang.yml
-hack/test/base/kustomization.yaml
-hack/test/res.txt
 callgrind.out*
 wavefront-collector.test
 /build
+
+# hack directory
+integrations/working/*.json
+hack/test/extra.jsonl
+hack/test/missing.jsonl
+hack/test/unwanted.jsonl
+hack/test/res.txt
+hack/test/base/kustomization.yaml
+hack/test/base/collector.yaml
+hack/test/base/**/proxy.yaml
+hack/test/base/deploy/*.yaml
+!hack/test/base/deploy/.gitkeep
+hack/test/base/deploy/collector-deployments/*.yaml
+!hack/test/base/deploy/collector-deployments/.gitkeep
+hack/test/files/combined-metrics.jsonl
