@@ -246,7 +246,7 @@ pipeline {
                 sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
                 sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
                 sh "mkdir -p $KUBECONFIG_DIR"
-                sh "./sheepctl -n k8po-team lock list -j | jq -r '.[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
+                sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
                 sh "chmod go-r $KUBECONFIG"
                 sh 'cd collector; make clean-cluster integration-test; make clean-cluster'
               }
@@ -358,7 +358,7 @@ pipeline {
                 sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
                 sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
                 sh "mkdir -p $KUBECONFIG_DIR"
-                sh "./sheepctl -n k8po-team lock list -j | jq -r '.[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
+                sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
                 sh "chmod go-r $KUBECONFIG"
                 sh 'cd operator; make clean-cluster integration-test; make clean-cluster'
               }
