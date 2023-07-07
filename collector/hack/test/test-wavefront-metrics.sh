@@ -27,22 +27,23 @@ function wait_for_query_match_exact() {
   local actual
   local loop_count=0
 
+  printf "checking wavefront query matches %s (max-queries=%s, query=%s)" "$expected" "$MAX_QUERY_TIMES" "$query_match_exact"
+
   while [[ $loop_count -lt $MAX_QUERY_TIMES ]]; do
     loop_count=$((loop_count + 1))
 
-    echo "===============BEGIN checking wavefront dashboard metrics for '$query_match_exact' - attempt $loop_count/$MAX_QUERY_TIMES"
+    printf "."
     actual=$(curl_query_to_wf_dashboard "${query_match_exact}" | awk '{printf "%.3f", $1}')
-    echo "Actual is: '$actual'"
-    echo "Expected is '${expected}'"
-    echo "===============END checking wavefront dashboard metrics for $query_match_exact"
 
     if echo "$actual $expected" | awk '{exit ($1 > $2 || $1 < $2)}'; then
+      echo "pass."
       return 0
     fi
 
     sleep $CURL_WAIT
   done
 
+  echo "fail."
   return 1
 }
 
@@ -51,21 +52,23 @@ function wait_for_query_non_zero() {
   local actual=0
   local loop_count=0
 
-  while [[ $actual == null || $actual == 0 ]] && [[ $loop_count -lt $MAX_QUERY_TIMES ]]; do
+  printf "checking wavefront query returns non-zero result (max-queries=%s, query=%s)" "$MAX_QUERY_TIMES" "$query_non_zero"
+  while [[ $loop_count -lt $MAX_QUERY_TIMES ]]; do
     loop_count=$((loop_count + 1))
 
-    echo "===============BEGIN checking wavefront dashboard metrics for $query_non_zero - attempt $loop_count/$MAX_QUERY_TIMES"
+    printf "."
     actual=$(curl_query_to_wf_dashboard "${query_non_zero}")
-    echo "Actual is: '$actual'"
-    echo "Expected non zero"
-    echo "===============END checking wavefront dashboard metrics for $query_non_zero"
+
+    if ! [[ $actual == null || $actual == 0 ]]; then
+      echo "pass."
+      return 0
+    fi
 
     sleep $CURL_WAIT
   done
 
-  if [[ $actual == null || $actual == 0 ]]; then
-    return 1
-  fi
+  echo "fail."
+  return 1
 }
 
 function print_usage_and_exit() {
@@ -91,7 +94,7 @@ function main() {
   cd "${SCRIPT_DIR}" # hack/test
 
   local MAX_QUERY_TIMES=30
-  local CURL_WAIT=15
+  local CURL_WAIT=7
   local NS="wavefront-collector"
 
   # REQUIRED

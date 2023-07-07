@@ -73,8 +73,6 @@ function run_real_proxy() {
       -v "$VERSION" \
       -n "$K8S_CLUSTER_NAME" \
       $additional_args
-
-  green "SUCCEEDED"
 }
 
 function print_usage_and_exit() {

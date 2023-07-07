@@ -32,14 +32,12 @@ function wait_for_cluster_ready() {
     printf "Waiting for all Pods to be 'Ready' ..."
     while ! kubectl wait --field-selector=status.phase!=Succeeded --for=condition=Ready pod --all -l exclude-me!=true --all-namespaces --timeout=10s  &> /dev/null; do
       printf "."
-      sleep 1
     done
   else
     local ns=${1}
     printf "Waiting for all Pods in \"${1}\" namespace to be 'Ready' ..."
     while ! kubectl wait --field-selector=status.phase!=Succeeded --for=condition=Ready pod --all -l exclude-me!=true -n "$ns" --timeout=10s &> /dev/null; do
       printf "."
-      sleep 1
     done
   fi
 
