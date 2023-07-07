@@ -21,10 +21,14 @@ import (
 	"encoding/json"
 	"net"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testhelper"
+	util "k8s.io/client-go/util/testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +36,6 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/summary/kubelet"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	util "k8s.io/client-go/util/testing"
 	stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
 )
 
@@ -138,12 +141,15 @@ func TestScrapeSummaryMetrics(t *testing.T) {
 	})
 	defer server.Close()
 
-	split := strings.SplitN(strings.Replace(server.URL, "http://", "", 1), ":", 2)
-	ip := net.ParseIP(split[0])
-	port, err := strconv.ParseUint(split[1], 10, 64)
+	uri, err := url.Parse(server.URL)
+	require.NoError(t, err)
+
+	port, err := strconv.Atoi(uri.Port())
+	require.NoError(t, err)
+
 	require.NoError(t, err)
 	ms := testingSummaryMetricsSource(uint(port))
-	ms.node.IP = ip
+	ms.node.IP = net.ParseIP(uri.Hostname())
 
 	res, err := ms.Scrape()
 	assert.Nil(t, err, "scrape error")
@@ -887,9 +893,9 @@ func genTestSummaryAccelerator(seed int) []stats.AcceleratorStats {
 			Make:        "nvidia",
 			Model:       "Tesla P100",
 			ID:          "GPU-deadbeef-1234-5678-90ab-feedfacecafe",
-			MemoryTotal: *uint64Val(seed, offsetAcceleratorMemoryTotal),
-			MemoryUsed:  *uint64Val(seed, offsetAcceleratorMemoryUsed),
-			DutyCycle:   *uint64Val(seed, offsetAcceleratorDutyCycle),
+			MemoryTotal: *testhelper.Uint64Val(seed, offsetAcceleratorMemoryTotal),
+			MemoryUsed:  *testhelper.Uint64Val(seed, offsetAcceleratorMemoryUsed),
+			DutyCycle:   *testhelper.Uint64Val(seed, offsetAcceleratorDutyCycle),
 		},
 	}
 }
@@ -897,8 +903,8 @@ func genTestSummaryAccelerator(seed int) []stats.AcceleratorStats {
 func genTestSummaryZeroCPU(seed int) *stats.CPUStats {
 	cpu := stats.CPUStats{
 		Time:                 metav1.NewTime(scrapeTime),
-		UsageNanoCores:       uint64Val(seed, -seed),
-		UsageCoreNanoSeconds: uint64Val(seed, offsetCPUUsageCoreSeconds),
+		UsageNanoCores:       testhelper.Uint64Val(seed, -seed),
+		UsageCoreNanoSeconds: testhelper.Uint64Val(seed, offsetCPUUsageCoreSeconds),
 	}
 	*cpu.UsageCoreNanoSeconds *= uint64(time.Millisecond.Nanoseconds())
 	return &cpu
@@ -907,8 +913,8 @@ func genTestSummaryZeroCPU(seed int) *stats.CPUStats {
 func genTestSummaryCPU(seed int) *stats.CPUStats {
 	cpu := stats.CPUStats{
 		Time:                 metav1.NewTime(scrapeTime),
-		UsageNanoCores:       uint64Val(seed, offsetCPUUsageCores),
-		UsageCoreNanoSeconds: uint64Val(seed, offsetCPUUsageCoreSeconds),
+		UsageNanoCores:       testhelper.Uint64Val(seed, offsetCPUUsageCores),
+		UsageCoreNanoSeconds: testhelper.Uint64Val(seed, offsetCPUUsageCoreSeconds),
 	}
 	*cpu.UsageNanoCores *= uint64(time.Millisecond.Nanoseconds())
 	return &cpu
@@ -923,22 +929,22 @@ func genTestSummaryBlankCPU() *stats.CPUStats {
 func genTestSummaryZeroMemory(seed int) *stats.MemoryStats {
 	return &stats.MemoryStats{
 		Time:            metav1.NewTime(scrapeTime),
-		UsageBytes:      uint64Val(seed, offsetMemUsageBytes),
-		WorkingSetBytes: uint64Val(seed, offsetMemWorkingSetBytes),
-		RSSBytes:        uint64Val(seed, -seed),
-		PageFaults:      uint64Val(seed, offsetMemPageFaults),
-		MajorPageFaults: uint64Val(seed, offsetMemMajorPageFaults),
+		UsageBytes:      testhelper.Uint64Val(seed, offsetMemUsageBytes),
+		WorkingSetBytes: testhelper.Uint64Val(seed, offsetMemWorkingSetBytes),
+		RSSBytes:        testhelper.Uint64Val(seed, -seed),
+		PageFaults:      testhelper.Uint64Val(seed, offsetMemPageFaults),
+		MajorPageFaults: testhelper.Uint64Val(seed, offsetMemMajorPageFaults),
 	}
 }
 
 func genTestSummaryMemory(seed int) *stats.MemoryStats {
 	return &stats.MemoryStats{
 		Time:            metav1.NewTime(scrapeTime),
-		UsageBytes:      uint64Val(seed, offsetMemUsageBytes),
-		WorkingSetBytes: uint64Val(seed, offsetMemWorkingSetBytes),
-		RSSBytes:        uint64Val(seed, offsetMemRSSBytes),
-		PageFaults:      uint64Val(seed, offsetMemPageFaults),
-		MajorPageFaults: uint64Val(seed, offsetMemMajorPageFaults),
+		UsageBytes:      testhelper.Uint64Val(seed, offsetMemUsageBytes),
+		WorkingSetBytes: testhelper.Uint64Val(seed, offsetMemWorkingSetBytes),
+		RSSBytes:        testhelper.Uint64Val(seed, offsetMemRSSBytes),
+		PageFaults:      testhelper.Uint64Val(seed, offsetMemPageFaults),
+		MajorPageFaults: testhelper.Uint64Val(seed, offsetMemMajorPageFaults),
 	}
 }
 
@@ -952,26 +958,20 @@ func genTestSummaryNetwork(seed int) *stats.NetworkStats {
 	return &stats.NetworkStats{
 		Time: metav1.NewTime(scrapeTime),
 		InterfaceStats: stats.InterfaceStats{
-			RxBytes:  uint64Val(seed, offsetNetRxBytes),
-			RxErrors: uint64Val(seed, offsetNetRxErrors),
-			TxBytes:  uint64Val(seed, offsetNetTxBytes),
-			TxErrors: uint64Val(seed, offsetNetTxErrors),
+			RxBytes:  testhelper.Uint64Val(seed, offsetNetRxBytes),
+			RxErrors: testhelper.Uint64Val(seed, offsetNetRxErrors),
+			TxBytes:  testhelper.Uint64Val(seed, offsetNetTxBytes),
+			TxErrors: testhelper.Uint64Val(seed, offsetNetTxErrors),
 		},
 	}
 }
 
 func genTestSummaryFsStats(seed int) *stats.FsStats {
 	return &stats.FsStats{
-		AvailableBytes: uint64Val(seed, offsetFsAvailable),
-		CapacityBytes:  uint64Val(seed, offsetFsCapacity),
-		UsedBytes:      uint64Val(seed, offsetFsUsed),
+		AvailableBytes: testhelper.Uint64Val(seed, offsetFsAvailable),
+		CapacityBytes:  testhelper.Uint64Val(seed, offsetFsCapacity),
+		UsedBytes:      testhelper.Uint64Val(seed, offsetFsUsed),
 	}
-}
-
-// Convenience function for taking the address of a uint64 literal.
-func uint64Val(seed, offset int) *uint64 {
-	val := uint64(seed + offset)
-	return &val
 }
 
 func checkIntMetric(t *testing.T, metrics *core.Set, key core.ResourceKey, metric core.Metric, value int64) {

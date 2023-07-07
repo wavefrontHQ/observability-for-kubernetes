@@ -74,7 +74,7 @@ func (nbe *NamespaceBasedEnricher) addNamespaceInfo(metricSet *metrics.Set) {
 	}
 }
 
-func NewNamespaceBasedEnricher(kubeClient *kube_client.Clientset) (*NamespaceBasedEnricher, error) {
+func NewNamespaceBasedEnricher(kubeClient kube_client.Interface) (*NamespaceBasedEnricher, error) {
 	return &NamespaceBasedEnricher{
 		store: util.GetNamespaceStore(kubeClient),
 	}, nil

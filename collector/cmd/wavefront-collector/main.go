@@ -14,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/setup"
+
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/experimental"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/version"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks/factory"
@@ -30,11 +32,8 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/discovery"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/manager"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/processors"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sources/summary"
-
 	kube_client "k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
 )
@@ -216,76 +215,12 @@ func createKubeClientOrDie(cfg configuration.SummarySourceConfig) *kube_client.C
 }
 
 func createDataProcessorsOrDie(kubeClient *kube_client.Clientset, cluster string, podLister v1listers.PodLister, workloadCache util.WorkloadCache, cfg *configuration.Config) []metrics.Processor {
-	labelCopier, err := util.NewLabelCopier(",", []string{}, []string{})
+	dataProcessors, err := setup.CreateDataProcessors(kubeClient, cluster, podLister, workloadCache, cfg)
 	if err != nil {
-		log.Fatalf("Failed to initialize label copier: %v", err)
+		log.Panic(err.Error())
 	}
-
-	dataProcessors := []metrics.Processor{
-		processors.NewRateCalculator(metrics.RateMetricsMapping),
-		processors.NewDistributionRateCalculator(),
-		processors.NewCumulativeDistributionConverter(),
-	}
-
-	collectionInterval := calculateCollectionInterval(cfg)
-	podBasedEnricher := processors.NewPodBasedEnricher(podLister, workloadCache, labelCopier, collectionInterval)
-	dataProcessors = append(dataProcessors, podBasedEnricher)
-
-	namespaceBasedEnricher, err := processors.NewNamespaceBasedEnricher(kubeClient)
-	if err != nil {
-		log.Fatalf("Failed to create NamespaceBasedEnricher: %v", err)
-	}
-	dataProcessors = append(dataProcessors, namespaceBasedEnricher)
-
-	metricsToAggregate := []string{
-		metrics.MetricCpuUsageRate.Name,
-		metrics.MetricMemoryUsage.Name,
-		metrics.MetricCpuRequest.Name,
-		metrics.MetricCpuLimit.Name,
-		metrics.MetricMemoryRequest.Name,
-		metrics.MetricMemoryLimit.Name,
-	}
-
-	metricsToAggregateForNode := []string{
-		metrics.MetricCpuRequest.Name,
-		metrics.MetricCpuLimit.Name,
-		metrics.MetricMemoryRequest.Name,
-		metrics.MetricMemoryLimit.Name,
-		metrics.MetricEphemeralStorageRequest.Name,
-		metrics.MetricEphemeralStorageLimit.Name,
-	}
-
-	metricsToSkip := metricsToAggregate
-	dataProcessors = append(dataProcessors,
-		processors.NewPodResourceAggregator(podLister),
-		processors.NewPodAggregator(metricsToSkip),
-		processors.NewNamespaceAggregator(metricsToAggregate),
-		processors.NewNodeAggregator(metricsToAggregateForNode),
-		processors.NewClusterAggregator(metricsToAggregate),
-	)
-
-	nodeAutoscalingEnricher, err := processors.NewNodeAutoscalingEnricher(kubeClient, labelCopier)
-	if err != nil {
-		log.Fatalf("Failed to create NodeAutoscalingEnricher: %v", err)
-	}
-	dataProcessors = append(dataProcessors, nodeAutoscalingEnricher)
-
-	// this always needs to be the last processor
-	wavefrontCoverter, err := summary.NewPointConverter(*cfg.Sources.SummaryConfig, cluster)
-	if err != nil {
-		log.Fatalf("Failed to create WavefrontPointConverter: %v", err)
-	}
-	dataProcessors = append(dataProcessors, wavefrontCoverter)
 
 	return dataProcessors
-}
-
-func calculateCollectionInterval(cfg *configuration.Config) time.Duration {
-	collectionInterval := cfg.DefaultCollectionInterval
-	if cfg.Sources.SummaryConfig.Collection.Interval > 0 {
-		collectionInterval = cfg.Sources.SummaryConfig.Collection.Interval
-	}
-	return collectionInterval
 }
 
 func getServiceListerOrDie(kubeClient *kube_client.Clientset) v1listers.ServiceLister {
