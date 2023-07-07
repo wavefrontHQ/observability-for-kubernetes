@@ -14,60 +14,70 @@ function curl_query_to_wf_dashboard() {
   # NOTE: any output inside this function is concatenated and used as the return value;
   # otherwise we would love to put a log such as this in here to give us more information:
   # echo "=============== Querying '$WF_CLUSTER' for query '${query}'"
-  curl --silent --show-error -X GET \
+  curl --silent --show-error --get \
     --header "Accept: application/json" \
     --header "Authorization: Bearer $WAVEFRONT_TOKEN" \
-    "https://$WF_CLUSTER.wavefront.com/api/v2/chart/api?q=${query}&queryType=WQL&s=$AFTER_UNIX_TS&g=s&view=METRIC&sorted=false&cached=true&useRawQK=false" |
+    --data-urlencode "q=$query" \
+    --data-urlencode "queryType=WQL" \
+    --data-urlencode "s=$AFTER_UNIX_TS" \
+    --data-urlencode "g=s" \
+    --data-urlencode "view=METRIC" \
+    --data-urlencode "sorted=false" \
+    --data-urlencode "cached=true" \
+    --data-urlencode "useRawQK=false" \
+    "https://$WF_CLUSTER.wavefront.com/api/v2/chart/api" |
     jq '.timeseries[0].data[0][1]'
 }
 
 function wait_for_query_match_exact() {
-  local query_match_exact=$1
-  local expected=$2
+  local expected=$1
+  shift
+  local query_match_exact="$*"
   local actual
   local loop_count=0
 
-  printf "checking wavefront query matches %s (max-queries=%s, query=%s)" "$expected" "$MAX_QUERY_TIMES" "$query_match_exact"
+  printf "checking wavefront query '%s' matches %s (max-queries=%s):" "$query_match_exact" "$expected" "$MAX_QUERY_TIMES"
 
   while [[ $loop_count -lt $MAX_QUERY_TIMES ]]; do
     loop_count=$((loop_count + 1))
 
-    printf "."
-    actual=$(curl_query_to_wf_dashboard "${query_match_exact}" | awk '{printf "%.3f", $1}')
+    actual=$(curl_query_to_wf_dashboard "$query_match_exact" | awk '{printf "%.3f", $1}')
 
     if echo "$actual $expected" | awk '{exit ($1 > $2 || $1 < $2)}'; then
-      echo "pass."
+      green " pass."
       return 0
     fi
 
+    printf " got %s" "$actual"
     sleep $CURL_WAIT
   done
 
-  echo "fail."
+  red " fail."
   return 1
 }
 
 function wait_for_query_non_zero() {
-  local query_non_zero=$1
+  local query_non_zero="$*"
   local actual=0
   local loop_count=0
 
-  printf "checking wavefront query returns non-zero result (max-queries=%s, query=%s)" "$MAX_QUERY_TIMES" "$query_non_zero"
+  printf "checking wavefront query '%s' returns non-zero result (max-queries=%s):" "$query_non_zero" "$MAX_QUERY_TIMES"
   while [[ $loop_count -lt $MAX_QUERY_TIMES ]]; do
     loop_count=$((loop_count + 1))
 
-    printf "."
-    actual=$(curl_query_to_wf_dashboard "${query_non_zero}")
+
+    actual=$(curl_query_to_wf_dashboard "$query_non_zero")
 
     if ! [[ $actual == null || $actual == 0 ]]; then
-      echo "pass."
+      green " pass."
       return 0
     fi
 
+    printf " got %s" "$actual"
     sleep $CURL_WAIT
   done
 
-  echo "fail."
+  red " fail."
   return 1
 }
 
@@ -82,7 +92,7 @@ function print_usage_and_exit() {
 }
 
 function exit_on_fail() {
-  $@ # run all arguments as a command
+  $* # run all arguments as a command
   local exit_code=$?
   if [[ $exit_code != 0 ]]; then
     echo "Command '$@' exited with exit code '$exit_code'"
@@ -125,9 +135,9 @@ function main() {
 
   wait_for_cluster_ready "${NS}"
 
-  exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(kubernetes.collector.version%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22%20AND%20installation_method%3D%22manual%22))" "${VERSION_IN_DECIMAL}"
-  exit_on_fail wait_for_query_non_zero "at(%22end%22%2C%202m%2C%20ts(kubernetes.cluster.pod.count%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22))"
-  exit_on_fail wait_for_query_non_zero "at(%22end%22%2C%202m%2C%20ts(mysql.connections%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22))"
+  exit_on_fail wait_for_query_match_exact "${VERSION_IN_DECIMAL}" "at(\"end\", 2m, ts(kubernetes.collector.version, cluster=\"${K8S_CLUSTER_NAME}\" AND installation_method=\"manual\"))"
+  exit_on_fail wait_for_query_non_zero "at(\"end\", 2m, ts(kubernetes.cluster.pod.count, cluster=\"${K8S_CLUSTER_NAME}\"))"
+  exit_on_fail wait_for_query_non_zero "at(\"end\", 2m, ts(mysql.connections, cluster=\"${K8S_CLUSTER_NAME}\"))"
 
   # We aren't currently checking for units here (eg. 1250 MiB vs 1.25 GiB), so there's a possibility that the following check could fail
   # We don't believe that is likely to happen due to the size of our environments but we can modify this in the future if that is a problem.
@@ -140,29 +150,29 @@ function main() {
     if [[ "${EXPECTED_NODE_CPU_REQUEST}" =~ ^[0-9]$ ]]; then
       EXPECTED_NODE_CPU_REQUEST="${EXPECTED_NODE_CPU_REQUEST}000"
     fi
-    exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(kubernetes.node.cpu.request%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22))" "${EXPECTED_NODE_CPU_REQUEST}.000"
+    exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_CPU_REQUEST}.000" "at(\"end\", 2m, ts(kubernetes.node.cpu.request, cluster=\"${K8S_CLUSTER_NAME}\"AND source=\"${node}\"))"
 
     local EXPECTED_NODE_CPU_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "cpu" | awk '{print $4}' | tr -dc '0-9\n')"
     if [[ "${EXPECTED_NODE_CPU_LIMIT}" =~ ^[0-9]$ ]]; then
       EXPECTED_NODE_CPU_LIMIT="${EXPECTED_NODE_CPU_LIMIT}000"
     fi
-    exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(kubernetes.node.cpu.limit%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22))" "${EXPECTED_NODE_CPU_LIMIT}.000"
+    exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_CPU_LIMIT}.000" "at(\"end\", 2m, ts(kubernetes.node.cpu.limit, cluster=\"${K8S_CLUSTER_NAME}\"AND source=\"${node}\"))"
 
     local EXPECTED_NODE_MEMORY_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "memory" | awk '{print $2}' | numfmt --from=auto)"
-    exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(kubernetes.node.memory.request%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22))" "${EXPECTED_NODE_MEMORY_REQUEST}.000"
+    exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_MEMORY_REQUEST}.000" "at(\"end\", 2m, ts(kubernetes.node.memory.request, cluster=\"${K8S_CLUSTER_NAME}\" AND source=\"${node}\"))"
 
     local EXPECTED_NODE_MEMORY_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "memory" | awk '{print $4}' | numfmt --from=auto)"
-    exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(kubernetes.node.memory.limit%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22))" "${EXPECTED_NODE_MEMORY_LIMIT}.000"
+    exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_MEMORY_LIMIT}.000" "at(\"end\", 2m, ts(kubernetes.node.memory.limit, cluster=\"${K8S_CLUSTER_NAME}\"AND source=\"${node}\"))"
 
     local EXPECTED_NODE_EPHERMERAL_STORAGE_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "ephemeral-storage" | awk '{print $2}' | numfmt --from=auto)"
-    exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(kubernetes.node.ephemeral_storage.request%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22))" "${EXPECTED_NODE_EPHERMERAL_STORAGE_REQUEST}.000"
+    exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_EPHERMERAL_STORAGE_REQUEST}.000" "at(\"end\", 2m, ts(kubernetes.node.ephemeral_storage.request, cluster=\"${K8S_CLUSTER_NAME}\" AND source=\"${node}\"))"
 
     local EXPECTED_NODE_EPHERMERAL_STORAGE_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "ephemeral-storage" | awk '{print $4}' | numfmt --from=auto)"
-    exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(kubernetes.node.ephemeral_storage.limit%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22AND%20source%3D%22${node}%22))" "${EXPECTED_NODE_EPHERMERAL_STORAGE_LIMIT}.000"
+    exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_EPHERMERAL_STORAGE_LIMIT}.000" "at(\"end\", 2m, ts(kubernetes.node.ephemeral_storage.limit, cluster=\"${K8S_CLUSTER_NAME}\" AND source=\"${node}\"))"
   done <<< "${NODE_NAME}"
 
   local PROM_EXAMPLE_EXPECTED_COUNT="3"
-  exit_on_fail wait_for_query_match_exact "at(%22end%22%2C%202m%2C%20ts(prom-example.schedule.activity.decision.counter%2C%20cluster%3D%22${K8S_CLUSTER_NAME}%22))" "${PROM_EXAMPLE_EXPECTED_COUNT}"
+  exit_on_fail wait_for_query_match_exact "${PROM_EXAMPLE_EXPECTED_COUNT}" "at(\"end\", 2m, ts(prom-example.schedule.activity.decision.counter, cluster=\"${K8S_CLUSTER_NAME}\"))"
 }
 
 main $@
