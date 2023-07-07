@@ -4,7 +4,7 @@ kubectl --namespace "$NS" port-forward "deploy/${PROXY_NAME}" 8888 &
 trap 'kill $(jobs -p) &>/dev/null || true' EXIT
 sleep 3
 
-echo "waiting for logs..."
+echo "waiting ${SLEEP_TIME} seconds for metrics..."
 sleep ${SLEEP_TIME}
 
 RES=$(mktemp)

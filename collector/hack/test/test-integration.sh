@@ -73,8 +73,6 @@ function run_real_proxy() {
       -v "$VERSION" \
       -n "$K8S_CLUSTER_NAME" \
       $additional_args
-
-  green "SUCCEEDED"
 }
 
 function print_usage_and_exit() {
@@ -169,6 +167,7 @@ function main() {
   if [[ "${tests_to_run[*]}" =~ "real-proxy-metrics" ]]; then
     green "\n==================== Running real-proxy-metrics test ===================="
     run_real_proxy_metrics_test
+    ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ " ${tests_to_run[*]} " =~ " real-proxy " ]]; then
     green "\n==================== Starting real proxy ===================="
