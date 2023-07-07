@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
 RELEASE=$(helm list -n wavefront | awk '/wavefront/ {print $1}')
 if [ -z ${RELEASE} ]; then exit 0; fi
 

@@ -15,6 +15,18 @@ data:
       - externalEndpointURL: http://wavefront-proxy.NAMESPACE.svc.cluster.local:9999/events
         type: external 
         enableEvents: true
-
+    
+    events:
+      filters:
+        tagAllowListSets:
+        - type:
+          - "Warning"
+        - type:
+          - "Normal"
+          kind:
+          - "Pod"
+          reason:
+          - "Backoff"
+    
     sources: 
       kubernetes_source: {}

@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: replicaset-no-owner
-        image: busybox
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
         resources:
           requests:
             cpu: 50m

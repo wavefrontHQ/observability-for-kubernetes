@@ -357,6 +357,6 @@ func (f fakeWorkloadCache) GetWorkloadForPod(pod *v1.Pod) (string, string) {
 	return "some-workload-name", "some-workload-kind"
 }
 
-func (f fakeWorkloadCache) GetWorkloadForPodName(podName, ns string) (string, string) {
-	return "some-workload-name", "some-workload-kind"
+func (f fakeWorkloadCache) GetWorkloadForPodName(podName, ns string) (string, string, string) {
+	return "some-workload", "some-workload-kind", "some-node-name"
 }

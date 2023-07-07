@@ -9,6 +9,7 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/leadership"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/plugins/sinks"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 
@@ -39,9 +40,12 @@ type EventRouter struct {
 	scrapeCluster     bool
 	leadershipManager *leadership.Manager
 	filters           eventFilter
+	clusterName       string
+	clusterUUID       string
+	workloadCache     util.WorkloadCache
 }
 
-func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink sinks.Sink, scrapeCluster bool) *EventRouter {
+func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink sinks.Sink, scrapeCluster bool, workloadCache util.WorkloadCache) *EventRouter {
 	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	eventsInformer := sharedInformers.Core().V1().Events()
 
@@ -51,6 +55,9 @@ func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConf
 		scrapeCluster:   scrapeCluster,
 		sharedInformers: sharedInformers,
 		filters:         newEventFilter(cfg.Filters),
+		clusterName:     cfg.ClusterName,
+		clusterUUID:     cfg.ClusterUUID,
+		workloadCache:   workloadCache,
 	}
 
 	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -112,6 +119,21 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		return
 	}
 
+	if e.ObjectMeta.Annotations == nil {
+		e.ObjectMeta.Annotations = map[string]string{}
+	}
+	e.ObjectMeta.Annotations["aria/cluster-name"] = er.clusterName
+	e.ObjectMeta.Annotations["aria/cluster-uuid"] = er.clusterUUID
+
+	if e.InvolvedObject.Kind == "Pod" {
+		workloadName, workloadKind, nodeName := er.workloadCache.GetWorkloadForPodName(e.InvolvedObject.Name, e.InvolvedObject.Namespace)
+		e.ObjectMeta.Annotations["aria/workload-name"] = workloadName
+		e.ObjectMeta.Annotations["aria/workload-kind"] = workloadKind
+		if len(nodeName) > 0 {
+			e.ObjectMeta.Annotations["aria/node-name"] = nodeName
+		}
+	}
+
 	ns := e.InvolvedObject.Namespace
 	if len(ns) == 0 {
 		ns = "default"
@@ -122,6 +144,7 @@ func (er *EventRouter) addEvent(obj interface{}) {
 		"kind":           e.InvolvedObject.Kind,
 		"reason":         e.Reason,
 		"component":      e.Source.Component,
+		"type":           e.Type,
 	}
 
 	resourceName := e.InvolvedObject.Name
@@ -143,18 +166,12 @@ func (er *EventRouter) addEvent(obj interface{}) {
 	}
 	sentEvents.Inc(1)
 
-	eType := e.Type
-	if len(eType) == 0 {
-		eType = "Normal"
-	}
-
 	er.sink.ExportEvent(newEvent(
 		e.Message,
 		e.LastTimestamp.Time,
 		e.Source.Host,
 		tags,
 		*e,
-		event.Type(eType),
 	))
 }
 
@@ -164,13 +181,11 @@ func newEvent(message string, ts time.Time, host string, tags map[string]string,
 		options = append(options, event.Annotate(k, v))
 	}
 
-	labels := make(map[string]string)
 	return &events.Event{
 		Message: message,
 		Ts:      ts,
 		Host:    host,
 		Options: options,
 		Event:   coreV1Event,
-		Labels:  labels,
 	}
 }

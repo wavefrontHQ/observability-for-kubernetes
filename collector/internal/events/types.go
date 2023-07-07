@@ -14,13 +14,10 @@ type EventSink interface {
 }
 
 type Event struct {
-	Message     string            `json:"-"`
-	Ts          time.Time         `json:"-"`
-	Host        string            `json:"-"`
-	Tags        map[string]string `json:"-"`
-	Options     []event.Option    `json:"-"`
-	ClusterName string            `json:"clusterName,omitempty"`
-	ClusterUUID string            `json:"clusterUUID,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	v1.Event    `json:",inline"`
+	Message  string            `json:"-"`
+	Ts       time.Time         `json:"-"`
+	Host     string            `json:"-"`
+	Tags     map[string]string `json:"-"`
+	Options  []event.Option    `json:"-"`
+	v1.Event `json:",inline"`
 }

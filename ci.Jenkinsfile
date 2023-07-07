@@ -52,7 +52,7 @@ pipeline {
             label "worker-1"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           environment {
             RELEASE_TYPE = "alpha"
@@ -73,7 +73,7 @@ pipeline {
             label "worker-2"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
@@ -100,7 +100,7 @@ pipeline {
             label "worker-3"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           steps {
             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
@@ -113,7 +113,7 @@ pipeline {
             label "worker-4"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           steps {
             sh 'cd operator && make checkfmt vet test'
@@ -127,7 +127,7 @@ pipeline {
             label "worker-5"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           steps {
             sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
@@ -146,7 +146,7 @@ pipeline {
             label "worker-1"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
@@ -174,7 +174,7 @@ pipeline {
             label "worker-2"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           environment {
             DOCKER_IMAGE = "kubernetes-collector"
@@ -201,7 +201,7 @@ pipeline {
             label "worker-3"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           environment {
             AKS_CLUSTER_NAME = "k8po-ci"
@@ -229,7 +229,7 @@ pipeline {
             label "worker-5"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           environment {
             KUBECONFIG = "$HOME/.kube/config"
@@ -269,7 +269,7 @@ pipeline {
             label "worker-1"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           environment {
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
@@ -295,7 +295,7 @@ pipeline {
             label "worker-3"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
@@ -318,7 +318,7 @@ pipeline {
 
         stage("AKS") {
           agent { label "worker-4" }
-          options { timeout(time: 30, unit: 'MINUTES') }
+          options { timeout(time: 60, unit: 'MINUTES') }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
             AKS_CLUSTER_NAME = "k8po-ci"
@@ -344,7 +344,7 @@ pipeline {
             label "worker-5"
           }
           options {
-            timeout(time: 30, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           environment {
             KUBECONFIG = "$HOME/.kube/config"

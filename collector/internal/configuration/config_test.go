@@ -132,23 +132,7 @@ func TestNew(t *testing.T) {
 		require.Equal(t, "some-cluster", cfg.Sinks[0].ClusterName)
 	})
 
-	t.Run("sinks have the correct ClusterUUID", func(t *testing.T) {
-		expectedUUID := "c246955e-21ff-4bc6-9b30-8479ea7f218c"
-		_ = os.Setenv(util.ClusterUUIDEnvVar, expectedUUID)
-		defer os.Unsetenv(util.ClusterUUIDEnvVar)
-		cfg, _ := New(func(config *Config) error {
-			config.Sources = &SourceConfig{SummaryConfig: &SummarySourceConfig{}}
-			config.Sinks = []*SinkConfig{{}}
-			return nil
-		})
-
-		require.Equal(t, expectedUUID, cfg.Sinks[0].ClusterUUID)
-	})
-
 	t.Run("overrides unset EnableEvents on sinks with the global EnableEvents", func(t *testing.T) {
-		expectedUUID := "c246955e-21ff-4bc6-9b30-8479ea7f218c"
-		_ = os.Setenv(util.ClusterUUIDEnvVar, expectedUUID)
-		defer os.Unsetenv(util.ClusterUUIDEnvVar)
 		cfg, _ := New(func(config *Config) error {
 			config.Sources = &SourceConfig{SummaryConfig: &SummarySourceConfig{}}
 			config.EnableEvents = true
@@ -160,9 +144,6 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("does not override EnableEvents on sinks when they are set", func(t *testing.T) {
-		expectedUUID := "c246955e-21ff-4bc6-9b30-8479ea7f218c"
-		_ = os.Setenv(util.ClusterUUIDEnvVar, expectedUUID)
-		defer os.Unsetenv(util.ClusterUUIDEnvVar)
 		enabled := true
 		cfg, _ := New(func(config *Config) error {
 			config.Sources = &SourceConfig{SummaryConfig: &SummarySourceConfig{}}
@@ -181,6 +162,10 @@ func TestLoadOrDie(t *testing.T) {
 	})
 
 	t.Run("loads config from a file", func(t *testing.T) {
+		expectedUUID := "c246955e-21ff-4bc6-9b30-8479ea7f218c"
+		_ = os.Setenv(util.ClusterUUIDEnvVar, expectedUUID)
+		defer os.Unsetenv(util.ClusterUUIDEnvVar)
+
 		configFile, _ := os.CreateTemp(os.TempDir(), "collector-config*.yaml")
 		const testConfig = `
 clusterName: new-collector
@@ -200,6 +185,8 @@ sources:
 		cfg := LoadOrDie(configFile.Name())
 
 		require.Equal(t, "new-collector", cfg.ClusterName)
+		require.Equal(t, "new-collector", cfg.EventsConfig.ClusterName)
+		require.Equal(t, expectedUUID, cfg.EventsConfig.ClusterUUID)
 		require.Equal(t, true, *cfg.Sinks[0].EnableEvents)
 		require.Equal(t, true, *cfg.Sinks[1].EnableEvents)
 	})

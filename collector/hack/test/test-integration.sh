@@ -21,8 +21,8 @@ function run_fake_proxy_test() {
   wait_for_cluster_resource_deleted namespace/$NS
 
   kubectl create namespace $NS
-  kubectl apply -f <(sed "s/wavefront-collector/$NS/g" ./deploy/mysql-config.yaml)
-  kubectl apply -f <(sed "s/wavefront-collector/$NS/g" ./deploy/memcached-config.yaml)
+  kubectl apply -f <(sed "s/wavefront-collector/$NS/g" "$REPO_ROOT/scripts/deploy/mysql-config.yaml")
+  kubectl apply -f <(sed "s/wavefront-collector/$NS/g" "$REPO_ROOT/scripts/deploy/memcached-config.yaml")
 
   local additional_args=""
   if [[ -n "${COLLECTOR_YAML:-}" ]]; then
@@ -137,7 +137,7 @@ function main() {
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "k8s-events-only" ]]; then
-    echo "==================== Running fake_proxy k8s-events-only test ===================="
+    green "\n==================== Running fake_proxy k8s-events-only test ===================="
     run_fake_proxy_test "k8s-events-only" "base/deploy/collector-deployments/5-collector-k8s-events-only.yaml" "" "$COLLECTOR_REPO_ROOT/hack/test/base/external-events-collector-config.template.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi

@@ -19,7 +19,6 @@ import (
 
 func NewTestSink() *ExternalSink {
 	return &ExternalSink{
-		ClusterName:         "testCluster",
 		externalEndpointURL: "test",
 	}
 }
@@ -36,7 +35,6 @@ func TestCreateWavefrontSinkWithEventsExternalEndpointURL(t *testing.T) {
 	require.NotNil(t, sink)
 	k8sSink, ok := sink.(*ExternalSink)
 	require.Equal(t, true, ok)
-	require.Equal(t, "testCluster", k8sSink.ClusterName)
 	require.Equal(t, "https://example.com", k8sSink.externalEndpointURL)
 }
 
@@ -86,8 +84,6 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 		sink.ExportEvent(event)
 		require.Contains(t, requestBody, "\"kind\":\"Pod\"")
 		require.Contains(t, requestBody, "\"name\":\"wavefront-proxy-66b4d9dd94-cfqrr.1764aab366800a9c\"")
-		require.Contains(t, requestBody, "\"clusterName\":\"testCluster\"")
-		require.Contains(t, requestBody, "\"clusterUUID\":\"12345-1\"")
 		require.Contains(t, requestContentType, "application/json")
 	})
 
@@ -168,7 +164,6 @@ func defaultSyncConfig(url string) configuration.SinkConfig {
 	return configuration.SinkConfig{
 		Type:                configuration.ExternalSinkType,
 		ClusterName:         "testCluster",
-		ClusterUUID:         "12345-1",
 		ExternalEndpointURL: url,
 		EnableEvents:        &eventsEnabled,
 	}

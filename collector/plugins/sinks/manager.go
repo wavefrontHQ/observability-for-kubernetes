@@ -104,7 +104,7 @@ func (sm *sinkManager) Export(data *metrics.Batch) {
 			log.WithField("name", sh.sink.Name()).Debug("Pushing metrics to sink")
 			select {
 			case sh.dataBatchChannel <- data:
-				log.WithField("name", sh.sink.Name()).Info("Pushing metrics to sink complete")
+				log.WithField("name", sh.sink.Name()).Debug("Pushing metrics to sink complete")
 				// everything ok
 			case <-time.After(sm.exportDataTimeout):
 				sinkTimeouts.Inc(1)

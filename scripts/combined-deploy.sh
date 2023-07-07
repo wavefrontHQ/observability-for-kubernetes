@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 OPERATOR_BUILD_DIR="${REPO_ROOT}/operator/build/operator"

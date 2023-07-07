@@ -47,13 +47,13 @@ fmt: $(GO_IMPORTS_BIN)
 .PHONY: deploy-targets clean-targets clean-deployment
 
 deploy-targets:
-	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/deploy-targets.sh)
+	@($(REPO_ROOT)/scripts/deploy/deploy-targets.sh)
 
 clean-targets:
-	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/uninstall-targets.sh)
+	@($(REPO_ROOT)/scripts/deploy/uninstall-targets.sh)
 
 clean-deployment:
-	@($(COLLECTOR_REPO_ROOT)/hack/test/deploy/uninstall-wavefront-helm-release.sh)
+	@($(REPO_ROOT)/scripts/deploy/uninstall-wavefront-helm-release.sh)
 	@(cd $(TEST_DIR) && ./clean-deploy.sh)
 
 k8s-env:
@@ -214,7 +214,7 @@ token-check:
 .PHONY: proxy-test
 proxy-test: token-check $(SEMVER_CLI_BIN)
 ifeq ($(INTEGRATION_TEST_ARGS),all)
-	$(eval INTEGRATION_TEST_ARGS := -r cluster-metrics-only -r node-metrics-only -r combined -r default -r real-proxy-metrics)
+	$(eval INTEGRATION_TEST_ARGS := -r cluster-metrics-only -r k8s-events-only -r node-metrics-only -r combined -r default -r real-proxy-metrics)
 endif
 	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) $(INTEGRATION_TEST_ARGS))
 

@@ -1385,6 +1385,7 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "externalEndpointURL: \"https://example.com\""))
 		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "enableEvents: true"))
 		require.False(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "proxyAddress", "kubeletHttps", "kubernetes_state_source"))
+		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "events:\n      filters:\n        tagAllowListSets:\n        - type:\n          - \"Warning\"\n        - type:\n          - \"Normal\"\n          kind:\n          - \"Pod\"\n          reason:\n          - \"Backoff\""))
 		require.False(t, mockKM.CollectorConfigMapContains())
 
 		require.False(t, mockKM.NodeCollectorDaemonSetContains())
@@ -1406,6 +1407,7 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 		require.True(t, mockKM.CollectorConfigMapContains("enableEvents: false"))
 		require.True(t, mockKM.CollectorConfigMapContains("type: \"external\"\n      enableEvents: true"))
 		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \"https://example.com\""))
+		require.True(t, mockKM.CollectorConfigMapContains("events:\n      filters:\n        tagAllowListSets:\n        - type:\n          - \"Warning\"\n        - type:\n          - \"Normal\"\n          kind:\n          - \"Pod\"\n          reason:\n          - \"Backoff\""))
 	})
 }
 
