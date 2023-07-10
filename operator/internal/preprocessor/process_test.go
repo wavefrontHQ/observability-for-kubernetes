@@ -164,6 +164,26 @@ func TestProcess(t *testing.T) {
 		require.Equal(t, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port 'global', overriding metric tag 'cluster' is disallowed", err.Error())
 	})
 
+	t.Run("returns error if experimental k8s events are enabled and secret does not exist", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.Experimental.KubernetesEvents.Enable = true
+
+		err := PreProcess(setup(), wfcr)
+
+		require.Error(t, err)
+		require.Equal(t, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'testWavefrontSecret' was not found.", err.Error())
+	})
+
+	t.Run("returns error if experimental k8s events are enabled and key does not exist within secret", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.Experimental.KubernetesEvents.Enable = true
+
+		err := PreProcess(setup(), wfcr)
+
+		require.Error(t, err)
+		require.Equal(t, "Invalid Authentication configured for Experimental Kubernetes Events. Missing data 'kubernetes-events-external-endpoint-access-key' in secret 'testWavefrontSecret'.", err.Error())
+	})
+
 }
 
 func TestProcessWavefrontProxyAuth(t *testing.T) {
