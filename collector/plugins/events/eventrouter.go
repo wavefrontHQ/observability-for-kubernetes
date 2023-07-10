@@ -4,6 +4,7 @@ package events
 
 import (
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
@@ -43,6 +44,7 @@ type EventRouter struct {
 	clusterName       string
 	clusterUUID       string
 	workloadCache     util.WorkloadCache
+	informerSynced    atomic.Bool
 }
 
 func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink sinks.Sink, scrapeCluster bool, workloadCache util.WorkloadCache) *EventRouter {
@@ -61,7 +63,9 @@ func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConf
 	}
 
 	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: er.addEvent,
+		AddFunc: func(obj interface{}) {
+			er.addEvent(obj, !er.informerSynced.Load())
+		},
 	})
 	er.eLister = eventsInformer.Lister()
 	er.eListerSynced = eventsInformer.Informer().HasSynced
@@ -88,6 +92,7 @@ func (er *EventRouter) Resume() {
 		log.Error("timed out waiting for caches to sync")
 		return
 	}
+	er.informerSynced.Store(true)
 	<-er.stop
 
 	Log.Infof("Shutting down EventRouter")
@@ -107,16 +112,14 @@ func (er *EventRouter) Stop() {
 }
 
 // addEvent is called when an event is created, or during the initial list
-func (er *EventRouter) addEvent(obj interface{}) {
+func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
+	if isInInitialList {
+		return
+	}
+
 	e, ok := obj.(*v1.Event)
 	if !ok {
 		return // prevent unlikely panic
-	}
-
-	// ignore events older than a minute to prevent surge on startup
-	if e.LastTimestamp.Time.Before(time.Now().Add(-1 * time.Minute)) {
-		Log.WithField("event", e.Message).Trace("Ignoring older event")
-		return
 	}
 
 	if e.ObjectMeta.Annotations == nil {

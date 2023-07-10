@@ -5,47 +5,74 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/client-go/kubernetes/fake"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestAddEvent(t *testing.T) {
-	sink := &MockExport{}
+	t.Run("forwards the event to the sink", func(t *testing.T) {
+		sink := &MockExport{}
 
-	er := &EventRouter{
-		sink: sink,
-	}
-	event := &v1.Event{
-		Message:       "Test message for events",
-		LastTimestamp: metav1.NewTime(time.Now()),
-		Source: v1.EventSource{
-			Host:      "test Host",
-			Component: "some-component",
-		},
-		InvolvedObject: v1.ObjectReference{
-			Namespace: "test-namespace",
-			Kind:      "some-kind",
-			Name:      "test-name",
-		},
-		Type:   "Normal",
-		Reason: "some-reason",
-	}
-	er.addEvent(event)
-	assert.Equal(t, event.Message, sink.Message)
-	assert.Equal(t, event.LastTimestamp, metav1.NewTime(sink.Ts))
-	assert.Equal(t, event.Source.Host, sink.Host)
-	assert.Equal(t, "Normal", sink.Annotations["type"])
-	assert.Equal(t, "some-kind", sink.Annotations["kind"])
-	assert.Equal(t, "some-reason", sink.Annotations["reason"])
-	assert.Equal(t, "some-component", sink.Annotations["component"])
-	assert.Equal(t, "test-name", sink.Annotations["resource_name"])
-	assert.NotContains(t, sink.Annotations, "pod_name")
-	assert.Equal(t, "test-namespace", event.InvolvedObject.Namespace)
+		er := &EventRouter{
+			sink: sink,
+		}
+		event := &v1.Event{
+			Message:       "Test message for events",
+			LastTimestamp: metav1.NewTime(time.Now()),
+			Source: v1.EventSource{
+				Host:      "test Host",
+				Component: "some-component",
+			},
+			InvolvedObject: v1.ObjectReference{
+				Namespace: "test-namespace",
+				Kind:      "some-kind",
+				Name:      "test-name",
+			},
+			Type:   "Normal",
+			Reason: "some-reason",
+		}
+		er.addEvent(event, false)
+		assert.Equal(t, event.Message, sink.Message)
+		assert.Equal(t, event.LastTimestamp, metav1.NewTime(sink.Ts))
+		assert.Equal(t, event.Source.Host, sink.Host)
+		assert.Equal(t, "Normal", sink.Annotations["type"])
+		assert.Equal(t, "some-kind", sink.Annotations["kind"])
+		assert.Equal(t, "some-reason", sink.Annotations["reason"])
+		assert.Equal(t, "some-component", sink.Annotations["component"])
+		assert.Equal(t, "test-name", sink.Annotations["resource_name"])
+		assert.NotContains(t, sink.Annotations, "pod_name")
+		assert.Equal(t, "test-namespace", event.InvolvedObject.Namespace)
+	})
+
+	t.Run("does not send add events for events that already existed prior to startup", func(t *testing.T) {
+		event := &v1.Event{
+			Message:       "Test message for events",
+			LastTimestamp: metav1.NewTime(time.Now()),
+			Source: v1.EventSource{
+				Host:      "test Host",
+				Component: "some-component",
+			},
+			InvolvedObject: v1.ObjectReference{
+				Namespace: "test-namespace",
+				Kind:      "some-kind",
+				Name:      "test-name",
+			},
+			Type:   "Normal",
+			Reason: "some-reason",
+		}
+		sink := &MockExport{}
+
+		er := &EventRouter{sink: sink}
+
+		er.addEvent(event, true)
+
+		require.Empty(t, sink.Message)
+	})
 }
 
 func TestAddEventHasWorkload(t *testing.T) {
@@ -81,7 +108,7 @@ func TestAddEventHasWorkload(t *testing.T) {
 		},
 		Reason: "some-reason",
 	}
-	er.addEvent(event)
+	er.addEvent(event, false)
 	assert.Equal(t, event.Message, sink.Message)
 	assert.Equal(t, event.LastTimestamp, metav1.NewTime(sink.Ts))
 	assert.Equal(t, event.Source.Host, sink.Host)
@@ -130,7 +157,7 @@ func TestEmptyNodeNameExcludesAnnotation(t *testing.T) {
 		},
 		Reason: "some-reason",
 	}
-	er.addEvent(event)
+	er.addEvent(event, false)
 	assert.NotContains(t, event.ObjectMeta.Annotations, "aria/node-name")
 }
 
