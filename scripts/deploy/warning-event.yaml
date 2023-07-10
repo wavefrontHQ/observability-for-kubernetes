@@ -13,4 +13,4 @@ involvedObject:
   uid: d134daad-7afb-4f7a-a2fb-fe8c1ebfc3b3
   kind: Pod
   namespace: collector-targets
-  name: pod-crash-loop-backoff
+  name: prom-example

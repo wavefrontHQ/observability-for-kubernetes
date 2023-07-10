@@ -45,9 +45,16 @@ function wait_for_cluster_ready() {
 }
 
 function wait_for_namespace_created() {
-	local namespace=$1
+  local namespace=$1
+
   printf "Waiting for namespace \"$1\" to be created ..."
-  while ! kubectl create namespace collector-targets &> /dev/null; do
+
+  if kubectl get namespace "$namespace" &> /dev/null; then
+    echo " done."
+    return 0
+  fi
+
+  while ! kubectl create namespace "$namespace" &> /dev/null; do
     printf "."
     sleep 1
   done

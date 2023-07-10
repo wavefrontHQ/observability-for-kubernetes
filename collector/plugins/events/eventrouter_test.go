@@ -2,16 +2,19 @@ package events
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/tools/cache"
 )
 
 func TestAddEvent(t *testing.T) {
@@ -65,13 +68,60 @@ func TestAddEvent(t *testing.T) {
 			Type:   "Normal",
 			Reason: "some-reason",
 		}
+		client := fake.NewSimpleClientset(event)
+		workloadCache := testWorkloadCache{}
 		sink := &MockExport{}
 
-		er := &EventRouter{sink: sink}
+		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, workloadCache)
 
-		er.addEvent(event, true)
+		go er.Resume()
+		defer er.Stop()
 
-		require.Empty(t, sink.Message)
+		cache.WaitForCacheSync(make(chan struct{}), er.eListerSynced)
+
+		sink.SyncAccess(func() {
+			require.Empty(t, sink.Message)
+		})
+	})
+
+	t.Run("sends add events for updates", func(t *testing.T) {
+		event := &v1.Event{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+			},
+			Message:       "Test message for events",
+			LastTimestamp: metav1.NewTime(time.Now()),
+			Source: v1.EventSource{
+				Host:      "test Host",
+				Component: "some-component",
+			},
+			InvolvedObject: v1.ObjectReference{
+				Namespace: "test-namespace",
+				Kind:      "some-kind",
+				Name:      "test-name",
+			},
+			Type:   "Normal",
+			Reason: "some-reason",
+		}
+		client := fake.NewSimpleClientset(event)
+		workloadCache := testWorkloadCache{}
+		sink := &MockExport{}
+
+		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, workloadCache)
+
+		go er.Resume()
+		defer er.Stop()
+
+		cache.WaitForCacheSync(make(chan struct{}), er.eListerSynced)
+
+		event.Count += 1
+		client.CoreV1().Events("test-namespace").Update(context.Background(), event, metav1.UpdateOptions{})
+
+		time.Sleep(10 * time.Millisecond)
+
+		sink.SyncAccess(func() {
+			require.NotEmpty(t, sink.Message)
+		})
 	})
 }
 
@@ -175,11 +225,20 @@ func (wc testWorkloadCache) GetWorkloadForPod(pod *v1.Pod) (string, string) {
 }
 
 type MockExport struct {
+	mu sync.Mutex
 	events.Event
 	Annotations map[string]string
 }
 
+func (m *MockExport) SyncAccess(do func()) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	do()
+}
+
 func (m *MockExport) ExportEvent(event *events.Event) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	tagMap := map[string]interface{}{
 		"annotations": map[string]string{},
 	}

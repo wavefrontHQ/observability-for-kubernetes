@@ -67,27 +67,6 @@ if [[ $DIFF_COUNT -gt 0 ]]; then
   exit 1
 fi
 
-EVENTS_RESULTS_FILE=$(mktemp)
-while true; do # wait until we get a good connection
-  RES_CODE=$(curl --silent --output "$EVENTS_RESULTS_FILE" --write-out "%{http_code}" "http://localhost:8888/events/assert")
-  [[ $RES_CODE -lt 200 ]] || break
-done
-
-EVENTS_FAIL_COUNT=$(jq "(.BadEventLines | length) + (.ZeroStartMillis | length) + (.MissingAnnotations | length) + (.UnexpectedAnnotations | length) + (.MissingTags | length)" "$EVENTS_RESULTS_FILE")
-
-echo "$EVENTS_RESULTS_FILE"
-if [[ $EVENTS_FAIL_COUNT -gt 0 ]]; then
-  red "BadEventLines: $(jq "(.BadEventLines | length)" "$EVENTS_RESULTS_FILE")"
-  red "ZeroStartMillis: $(jq "(.ZeroStartMillis | length)" "$EVENTS_RESULTS_FILE")"
-  red "MissingAnnotations: $(jq "(.MissingAnnotations | length)" "$EVENTS_RESULTS_FILE")"
-  red "UnexpectedAnnotations: $(jq "(.UnexpectedAnnotations | length)" "$EVENTS_RESULTS_FILE")"
-  red "MissingTags: $(jq "(.MissingTags | length)" "$EVENTS_RESULTS_FILE")"
-  if which pbcopy >/dev/null; then
-      echo "$EVENTS_RESULTS_FILE" | pbcopy
-    fi
-  exit 1
-fi
-
 green "SUCCEEDED"
 
 kill $(jobs -p) &>/dev/null || true

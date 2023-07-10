@@ -147,21 +147,29 @@ function run_proxy_checks() {
 }
 
 function run_k8s_events_checks() {
-  # trigger events to be sent to the test-proxy
   wait_for_cluster_ready
-  "$REPO_ROOT/scripts/deploy/deploy-targets.sh"
-  wait_for_cluster_ready
-
-  kubectl --namespace "$NS" port-forward "deploy/test-proxy" 8888 &>/dev/null &
+  sleep 3
+  kubectl --namespace "$NS" port-forward "deploy/test-proxy" 8888 &
   trap 'kill $(jobs -p) &>/dev/null || true' EXIT
 
-  local external_events_results_file=$(mktemp)
-  while true; do # wait until we get a good connection
-    RES_CODE=$(curl --silent --output "$external_events_results_file" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
-    [[ $RES_CODE -lt 200 ]] || break
-  done
+  "$REPO_ROOT/scripts/deploy/trigger-events.sh"
 
-  local external_event_count=$(jq ".EventCount" "$external_events_results_file")
+  local external_events_results_file=$(mktemp)
+  local external_event_count=0
+  for i in {1..5}; do
+    while true; do # wait until we get a good connection
+      RES_CODE=$(curl --silent --output "$external_events_results_file" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
+      [[ $RES_CODE -lt 200 ]] || break
+    done
+
+    external_event_count=$(jq ".EventCount" "$external_events_results_file")
+
+    if [[ $external_event_count -gt 0 ]]; then
+      break
+    fi
+
+    sleep 1
+  done
 
   if [[ $external_event_count -eq 0 ]]; then
     red "missing external events."
@@ -171,20 +179,26 @@ function run_k8s_events_checks() {
 
   local external_events_fail_count=$(jq "(.BadEventJSONs | length) + (.MissingFields | length) + (.FirstTimestampsMissing | length) + (.LastTimestampsInvalid | length)" "$external_events_results_file")
 
-  echo "$external_events_results_file"
-  if [[ external_events_fail_count -gt 0 ]]; then
+  echo "external events results: $external_events_results_file"
+  if [[ $external_events_fail_count -gt 0 ]]; then
     red "BadEventJSONs: $(jq "(.BadEventJSONs | length)" "$external_events_results_file")"
     red "MissingFields: $(jq "(.MissingFields | length)" "$external_events_results_file")"
     red "FirstTimestampsMissing: $(jq "(.FirstTimestampsMissing | length)" "$external_events_results_file")"
     red "LastTimestampsInvalid: $(jq "(.LastTimestampsInvalid | length)" "$external_events_results_file")"
     if which pbcopy >/dev/null; then
         echo "$external_events_results_file" | pbcopy
-      fi
+    fi
     exit 1
   fi
 
   "$REPO_ROOT/scripts/deploy/uninstall-targets.sh"
   kill $(jobs -p) &>/dev/null || true
+
+  SLEEP_TIME=10
+  PROXY_NAME="test-proxy"
+  METRICS_FILE_DIR="$SCRIPT_DIR/metrics"
+  METRICS_FILE_NAME="k8s-events-only"
+  source "$REPO_ROOT/scripts/compare-test-proxy-metrics.sh"
 }
 
 function clean_up_test() {

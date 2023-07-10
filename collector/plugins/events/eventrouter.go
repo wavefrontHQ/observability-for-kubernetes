@@ -66,6 +66,9 @@ func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConf
 		AddFunc: func(obj interface{}) {
 			er.addEvent(obj, !er.informerSynced.Load())
 		},
+		UpdateFunc: func(_, newObj interface{}) {
+			er.addEvent(newObj, false)
+		},
 	})
 	er.eLister = eventsInformer.Lister()
 	er.eListerSynced = eventsInformer.Informer().HasSynced
