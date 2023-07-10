@@ -4,7 +4,7 @@
   "alertSources": [
     {
       "name": "Alert Condition",
-      "query": "join((avg(align(1m, ts(\"kubernetes.pod.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\")), pod_name, namespace_name, workload_name, workload_kind, cluster, cluster_uuid, sources)) AS ts1 INNER JOIN (avg(align(1m, ts(\"kubernetes.pod.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\")), pod_name, namespace_name, workload_name, workload_kind, cluster, cluster_uuid, sources)) AS ts2 USING(source, pod_name, namespace_name, cluster, cluster_uuid), metric='cpu_ratio', source=ts1.source, pod_name=ts1.pod_name, namespace_name=ts1.namespace_name, workload_name=ts1.workload_name, workload_kind=ts1.workload_kind, cluster=ts1.cluster, (ts1 / ts2) * 100)",
+      "query": "join((avg(align(1m, ts(\"kubernetes.pod.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\")), pod_name, namespace_name, workload_name, workload_kind, cluster, cluster_uuid, sources)) AS ts1 INNER JOIN (avg(align(1m, ts(\"kubernetes.pod.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\")), pod_name, namespace_name, workload_name, workload_kind, cluster, cluster_uuid, sources)) AS ts2 USING(source, pod_name, namespace_name, workload_name, workload_kind, cluster, cluster_uuid), metric='cpu_ratio', source=ts1.source, pod_name=ts1.pod_name, namespace_name=ts1.namespace_name, workload_name=ts1.workload_name, workload_kind=ts1.workload_kind, cluster=ts1.cluster, (ts1 / ts2) * 100)",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
@@ -18,7 +18,7 @@
     }
   ],
   "conditions": {
-    "warn": "join((avg(align(1m, ts(\"kubernetes.pod.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\")), pod_name, namespace_name, workload_name, workload_kind, cluster, cluster_uuid, sources)) AS ts1 INNER JOIN (avg(align(1m, ts(\"kubernetes.pod.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\")), pod_name, namespace_name, workload_name, workload_kind, cluster, cluster_uuid, sources)) AS ts2 USING(source, pod_name, namespace_name, cluster, cluster_uuid), metric='cpu_ratio', source=ts1.source, pod_name=ts1.pod_name, namespace_name=ts1.namespace_name, workload_name=ts1.workload_name, workload_kind=ts1.workload_kind, cluster=ts1.cluster, (ts1 / ts2) * 100) > 90"
+    "warn": "join((avg(align(1m, ts(\"kubernetes.pod.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\")), pod_name, namespace_name, workload_name, workload_kind, cluster, cluster_uuid, sources)) AS ts1 INNER JOIN (avg(align(1m, ts(\"kubernetes.pod.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\")), pod_name, namespace_name, workload_name, workload_kind, cluster, cluster_uuid, sources)) AS ts2 USING(source, pod_name, namespace_name, workload_name, workload_kind, cluster, cluster_uuid), metric='cpu_ratio', source=ts1.source, pod_name=ts1.pod_name, namespace_name=ts1.namespace_name, workload_name=ts1.workload_name, workload_kind=ts1.workload_kind, cluster=ts1.cluster, (ts1 / ts2) * 100) > 90"
   },
   "displayExpression": "${Display Condition}",
   "minutes": 10,
