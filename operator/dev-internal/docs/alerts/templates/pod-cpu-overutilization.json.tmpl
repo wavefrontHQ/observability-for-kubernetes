@@ -11,7 +11,7 @@
     },
     {
       "name": "Display Condition",
-      "query": "${Alert Condition}.gt(70)",
+      "query": "ceil(${Alert Condition}).gt(70)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE","AUDIT"],
       "hidden": false
