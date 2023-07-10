@@ -3,6 +3,7 @@
 package events
 
 import (
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -66,7 +67,10 @@ func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConf
 		AddFunc: func(obj interface{}) {
 			er.addEvent(obj, !er.informerSynced.Load())
 		},
-		UpdateFunc: func(_, newObj interface{}) {
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			if reflect.DeepEqual(oldObj, newObj) {
+				return
+			}
 			er.addEvent(newObj, false)
 		},
 	})
