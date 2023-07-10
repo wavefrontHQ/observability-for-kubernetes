@@ -73,8 +73,7 @@ func defaultWavefrontConfig() *configuration.SinkConfig {
 func defaultExternalSinkConfig() *configuration.SinkConfig {
 	eventsEnabled := false
 	return &configuration.SinkConfig{
-		Type:                configuration.ExternalSinkType,
-		ExternalEndpointURL: "http://example.com",
-		EnableEvents:        &eventsEnabled,
+		Type:         configuration.ExternalSinkType,
+		EnableEvents: &eventsEnabled,
 	}
 }

@@ -3,6 +3,7 @@ package external
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	gm "github.com/rcrowley/go-metrics"
@@ -15,8 +16,9 @@ import (
 )
 
 type ExternalSink struct {
-	externalEndpointURL string
-	eventsEnabled       bool
+	eventsEnabled             bool
+	externalEndpointURL       string
+	externalEndpointAccessKey string
 }
 
 func (sink *ExternalSink) Name() string {
@@ -43,6 +45,7 @@ func (sink *ExternalSink) ExportEvent(ev *events.Event) {
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", sink.externalEndpointAccessKey))
 
 	_, err = http.DefaultClient.Do(req)
 	if err != nil {
@@ -58,7 +61,8 @@ func (sink *ExternalSink) ExportEvent(ev *events.Event) {
 
 func NewExternalSink(cfg configuration.SinkConfig) (sinks.Sink, error) {
 	return &ExternalSink{
-		externalEndpointURL: cfg.ExternalEndpointURL,
-		eventsEnabled:       *cfg.EnableEvents,
+		eventsEnabled:             *cfg.EnableEvents,
+		externalEndpointURL:       cfg.ExternalEndpointURL,
+		externalEndpointAccessKey: cfg.ExternalEndpointAccessKey,
 	}, nil
 }

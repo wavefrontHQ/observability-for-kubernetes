@@ -154,6 +154,23 @@ func TestNew(t *testing.T) {
 
 		require.Equal(t, true, *cfg.Sinks[0].EnableEvents)
 	})
+
+	t.Run("sets sink ExternalEndpointAccessKey only for ExternalSinkType", func(t *testing.T) {
+		require.NoError(t, os.Setenv(util.ExternalEndpointAccessKeyEnvVar, "some-key"))
+		defer os.Unsetenv(util.ExternalEndpointAccessKeyEnvVar)
+
+		cfg, _ := New(func(config *Config) error {
+			config.Sources = &SourceConfig{SummaryConfig: &SummarySourceConfig{}}
+			config.EnableEvents = false
+			config.Sinks = []*SinkConfig{{Type: ExternalSinkType}, {Type: WavefrontSinkType}}
+			return nil
+		})
+
+		require.Equal(t, ExternalSinkType, cfg.Sinks[0].Type)
+		require.Equal(t, "some-key", cfg.Sinks[0].ExternalEndpointAccessKey)
+		require.Equal(t, WavefrontSinkType, cfg.Sinks[1].Type)
+		require.Empty(t, cfg.Sinks[1].ExternalEndpointAccessKey)
+	})
 }
 
 func TestLoadOrDie(t *testing.T) {

@@ -158,6 +158,9 @@ type SinkConfig struct {
 	// External endpoint url set for events
 	ExternalEndpointURL string `yaml:"externalEndpointURL"`
 
+	// External endpoint access key for events
+	ExternalEndpointAccessKey string `yaml:"-"`
+
 	// Note: Properties below are for internal use only. These cannot be set via the configuration file.
 
 	// Internal: Cluster name pulled in from the top level property.
@@ -312,6 +315,9 @@ func reconcileGlobalProperties(cfg *Config) {
 		sinkCfg.InternalStatsPrefix = prefix
 		if sinkCfg.EnableEvents == nil {
 			sinkCfg.EnableEvents = &enableEvents
+		}
+		if sinkCfg.Type == ExternalSinkType {
+			sinkCfg.ExternalEndpointAccessKey = util.GetExternalEndpointAccessKey()
 		}
 	}
 	cfg.EventsConfig.ClusterName = cfg.ClusterName

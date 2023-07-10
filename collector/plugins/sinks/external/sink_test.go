@@ -40,12 +40,13 @@ func TestCreateWavefrontSinkWithEventsExternalEndpointURL(t *testing.T) {
 
 func TestEventsSendToExternalEndpointURL(t *testing.T) {
 	t.Run("sends the event in json format", func(t *testing.T) {
-		var requestBody, requestContentType string
+		var requestBody, requestContentType, authorizationHeader string
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			b, _ := io.ReadAll(r.Body)
 			requestBody = string(b)
 			requestContentType = r.Header.Get("Content-Type")
+			authorizationHeader = r.Header.Get("Authorization")
 		}))
 		defer server.Close()
 
@@ -85,6 +86,7 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 		require.Contains(t, requestBody, "\"kind\":\"Pod\"")
 		require.Contains(t, requestBody, "\"name\":\"wavefront-proxy-66b4d9dd94-cfqrr.1764aab366800a9c\"")
 		require.Contains(t, requestContentType, "application/json")
+		require.Contains(t, authorizationHeader, "Bearer some-key")
 	})
 
 	t.Run("Increments error count when the request fails", func(t *testing.T) {
@@ -162,9 +164,10 @@ func TestDisablingEvents(t *testing.T) {
 func defaultSyncConfig(url string) configuration.SinkConfig {
 	eventsEnabled := true
 	return configuration.SinkConfig{
-		Type:                configuration.ExternalSinkType,
-		ClusterName:         "testCluster",
-		ExternalEndpointURL: url,
-		EnableEvents:        &eventsEnabled,
+		Type:                      configuration.ExternalSinkType,
+		ClusterName:               "testCluster",
+		ExternalEndpointURL:       url,
+		EnableEvents:              &eventsEnabled,
+		ExternalEndpointAccessKey: "some-key",
 	}
 }

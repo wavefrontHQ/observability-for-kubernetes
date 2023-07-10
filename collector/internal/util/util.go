@@ -21,13 +21,14 @@ import (
 )
 
 const (
-	NodeNameEnvVar           = "POD_NODE_NAME"
-	NamespaceNameEnvVar      = "POD_NAMESPACE_NAME"
-	InstallationMethodEnvVar = "INSTALLATION_METHOD"
-	ClusterUUIDEnvVar        = "CLUSTER_UUID"
-	ForceGC                  = "FORCE_GC"
-	KubernetesVersionEnvVar  = "KUBERNETES_VERSION"
-	KubernetesProviderEnvVar = "KUBERNETES_PROVIDER"
+	NodeNameEnvVar                  = "POD_NODE_NAME"
+	NamespaceNameEnvVar             = "POD_NAMESPACE_NAME"
+	InstallationMethodEnvVar        = "INSTALLATION_METHOD"
+	ClusterUUIDEnvVar               = "CLUSTER_UUID"
+	ExternalEndpointAccessKeyEnvVar = "KUBERNETES_EVENTS_EXTERNAL_ENDPOINT_ACCESS_KEY"
+	ForceGC                         = "FORCE_GC"
+	KubernetesVersionEnvVar         = "KUBERNETES_VERSION"
+	KubernetesProviderEnvVar        = "KUBERNETES_PROVIDER"
 )
 
 const (
@@ -210,6 +211,10 @@ func GetInstallationMethod() string {
 
 func GetClusterUUID() string {
 	return os.Getenv(ClusterUUIDEnvVar)
+}
+
+func GetExternalEndpointAccessKey() string {
+	return os.Getenv(ExternalEndpointAccessKeyEnvVar)
 }
 
 func GetKubernetesProvider() string {

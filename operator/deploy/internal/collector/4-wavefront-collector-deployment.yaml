@@ -70,6 +70,13 @@ spec:
                   fieldPath: metadata.annotations['installation-method']
             - name: CLUSTER_UUID
               value: {{ .ClusterUUID }}
+          {{- if .Experimental.KubernetesEvents.Enable }}
+            - name: KUBERNETES_EVENTS_EXTERNAL_ENDPOINT_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .WavefrontTokenSecret }}
+                  key: kubernetes-events-external-endpoint-access-key
+          {{- end }}
           ports:
             - containerPort: 8088
               protocol: TCP
