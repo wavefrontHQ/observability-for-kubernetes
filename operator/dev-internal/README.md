@@ -162,6 +162,13 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Workload Not Ready](docs/alerts/templates/workload-not-ready.json.tmpl) | Workload has pods that are not ready. |
 | [Pod Out-of-memory Kills](docs/alerts/templates/pod-out-of-memory-kills.json.tmpl) | Workload has pod with container status `OOMKilled`. |
 
+
+### Pod Overutilization
+
+| Alert name | Description |
+|---|---|
+| [Pod CPU Overutilization](docs/alerts/templates/pod-cpu-overutilization.json.tmpl) | Workload has pod CPU usage that exceeds the threshold limit. |
+
 ## Bring Your Own Logs Shipper
 
 The operator deploys a data export component (wavefront-proxy) which can receive log data and forward it to the Operations for Applications service.
