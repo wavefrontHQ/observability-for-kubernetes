@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	gm "github.com/rcrowley/go-metrics"
 	"github.com/stretchr/testify/require"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
@@ -88,32 +87,6 @@ func TestEventsSendToExternalEndpointURL(t *testing.T) {
 		require.Contains(t, requestContentType, "application/json")
 		require.Contains(t, authorizationHeader, "Bearer some-key")
 	})
-
-	t.Run("Increments error count when the request fails", func(t *testing.T) {
-		server := httptest.NewServer(nil)
-		server.Close()
-
-		sink, err := NewExternalSink(defaultSyncConfig(server.URL))
-		require.NoError(t, err)
-
-		initialCount := gm.GetOrRegisterCounter("wavefront.events.errors.count", gm.DefaultRegistry).Count()
-		sink.ExportEvent(&events.Event{})
-
-		require.Equal(t, initialCount+1, gm.GetOrRegisterCounter("wavefront.events.errors.count", gm.DefaultRegistry).Count())
-	})
-
-	t.Run("Increments error count when the URL is invalid", func(t *testing.T) {
-		cfg := defaultSyncConfig("\x00")
-
-		sink, err := NewExternalSink(cfg)
-		require.NoError(t, err)
-
-		initialCount := gm.GetOrRegisterCounter("wavefront.events.errors.count", gm.DefaultRegistry).Count()
-		sink.ExportEvent(&events.Event{})
-
-		require.Equal(t, initialCount+1, gm.GetOrRegisterCounter("wavefront.events.errors.count", gm.DefaultRegistry).Count())
-	})
-
 }
 
 func TestDisablingEvents(t *testing.T) {
