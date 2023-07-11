@@ -141,7 +141,7 @@ pipeline {
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
-        stage("GKE Integration Test") {
+        stage("GKE") {
           agent {
             label "worker-1"
           }
@@ -169,7 +169,7 @@ pipeline {
           }
         }
 
-        stage("EKS Integration Test") {
+        stage("EKS") {
           agent {
             label "worker-2"
           }
@@ -196,7 +196,7 @@ pipeline {
           }
         }
 
-        stage("AKS Integration Test") {
+        stage("AKS") {
           agent {
             label "worker-3"
           }
@@ -224,7 +224,7 @@ pipeline {
           }
         }
 
-        stage("TKGm Integration Test") {
+        stage("TKGm") {
           agent {
             label "worker-5"
           }
@@ -339,7 +339,7 @@ pipeline {
           }
         }
 
-        stage("TKGm Integration Test") {
+        stage("TKGm") {
           agent {
             label "worker-5"
           }
