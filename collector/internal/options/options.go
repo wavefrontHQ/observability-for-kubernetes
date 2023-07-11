@@ -18,13 +18,14 @@ var DaemonAndAgentErr = errors.New("cannot set --daemon with --agent")
 
 type CollectorRunOptions struct {
 	// supported flags
-	Version         bool
-	EnableProfiling bool
-	daemon          bool
-	AgentType       AgentType
-	ConfigFile      string
-	LogLevel        string
-	MaxProcs        int
+	Version           bool
+	EnableProfiling   bool
+	daemon            bool
+	AgentType         AgentType
+	ConfigFile        string
+	LogLevel          string
+	MaxProcs          int
+	HeartbeatInterval time.Duration
 
 	// An experimental flag for forcing a garbage collection and releasing memory.
 	// See https://utcc.utoronto.ca/~cks/space/blog/programming/GoNoMemoryFreeing for reference.

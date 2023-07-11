@@ -261,7 +261,7 @@ func (sink *wavefrontSink) loggingAllowed() bool {
 }
 
 func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuration.SinkConfig) {
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(cfg.HeartbeatInterval)
 	sink.stopHeartbeat = make(chan struct{})
 	source := getDefault(util.GetNodeName(), "wavefront-collector-for-kubernetes")
 	tags := map[string]string{
@@ -280,7 +280,7 @@ func (sink *wavefrontSink) emitHeartbeat(sender senders.Sender, cfg configuratio
 		util.AddK8sTags(tags)
 		err := sender.SendMetric("~wavefront.kubernetes.collector.version", version.Float64(), 0, source, tags)
 		if err != nil {
-			log.Debugf("error emitting heartbeat metric :%v", err)
+			log.Errorf("error emitting heartbeat metric :%v", err)
 		}
 		for {
 			select {

@@ -16,7 +16,7 @@ function run_fake_proxy_test() {
 
   local USE_TEST_PROXY="true"
   local PROXY_NAME="wavefront-proxy"
-  local SLEEP_TIME=70
+  local SLEEP_TIME=20
 
   wait_for_cluster_resource_deleted namespace/$NS
 

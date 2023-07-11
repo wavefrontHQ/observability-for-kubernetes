@@ -165,6 +165,9 @@ type SinkConfig struct {
 
 	// Internal: The prefix used for internal stats. Used for the heartbeat metric.
 	InternalStatsPrefix string `yaml:"-"`
+
+	// Internal: heartbeat interval
+	HeartbeatInterval time.Duration `yaml:"heartbeatInterval"`
 }
 
 type CollectionConfig struct {
@@ -310,6 +313,7 @@ func reconcileGlobalProperties(cfg *Config) {
 	for _, sinkCfg := range cfg.Sinks {
 		sinkCfg.ClusterName = cfg.ClusterName
 		sinkCfg.InternalStatsPrefix = prefix
+		sinkCfg.HeartbeatInterval = cfg.FlushInterval
 		if sinkCfg.EnableEvents == nil {
 			sinkCfg.EnableEvents = &enableEvents
 		}

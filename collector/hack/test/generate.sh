@@ -26,12 +26,12 @@ function copy_collector_deployment_files() {
 }
 
 function replace_placeholders_in_template_yaml() {
-  local FLUSH_INTERVAL=15
-  local COLLECTION_INTERVAL=14
+  local FLUSH_INTERVAL=7
+  local COLLECTION_INTERVAL=15
 
   if [[ "${USE_TEST_PROXY}" = "true" ]]; then
-    FLUSH_INTERVAL=6
-    COLLECTION_INTERVAL=5
+    FLUSH_INTERVAL=5
+    COLLECTION_INTERVAL=10
     cp base/test-proxy.yaml base/deploy/6-wavefront-proxy.yaml
   else
     sed -e "s/YOUR_CLUSTER/${WF_CLUSTER}/g" \
