@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
@@ -20,60 +19,29 @@ import (
 func TestAddEvent(t *testing.T) {
 	t.Run("forwards the event to the sink", func(t *testing.T) {
 		sink := &MockExport{}
+		er := NewEventRouter(fake.NewSimpleClientset(), configuration.EventsConfig{}, sink, true, testWorkloadCache{})
+		event := fakeEvent()
 
-		er := &EventRouter{
-			sink: sink,
-		}
-		event := &v1.Event{
-			Message:       "Test message for events",
-			LastTimestamp: metav1.NewTime(time.Now()),
-			Source: v1.EventSource{
-				Host:      "test Host",
-				Component: "some-component",
-			},
-			InvolvedObject: v1.ObjectReference{
-				Namespace: "test-namespace",
-				Kind:      "some-kind",
-				Name:      "test-name",
-			},
-			Type:   "Normal",
-			Reason: "some-reason",
-		}
 		er.addEvent(event, false)
-		assert.Equal(t, event.Message, sink.Message)
-		assert.Equal(t, event.LastTimestamp, metav1.NewTime(sink.Ts))
-		assert.Equal(t, event.Source.Host, sink.Host)
-		assert.Equal(t, "Normal", sink.Annotations["type"])
-		assert.Equal(t, "some-kind", sink.Annotations["kind"])
-		assert.Equal(t, "some-reason", sink.Annotations["reason"])
-		assert.Equal(t, "some-component", sink.Annotations["component"])
-		assert.Equal(t, "test-name", sink.Annotations["resource_name"])
-		assert.NotContains(t, sink.Annotations, "pod_name")
-		assert.Equal(t, "test-namespace", event.InvolvedObject.Namespace)
+
+		require.Equal(t, event.Message, sink.Message)
+		require.Equal(t, event.LastTimestamp, metav1.NewTime(sink.Ts))
+		require.Equal(t, event.Source.Host, sink.Host)
+		require.Equal(t, "Normal", sink.Annotations["type"])
+		require.Equal(t, "some-kind", sink.Annotations["kind"])
+		require.Equal(t, "some-reason", sink.Annotations["reason"])
+		require.Equal(t, "some-component", sink.Annotations["component"])
+		require.Equal(t, "test-name", sink.Annotations["resource_name"])
+		require.NotContains(t, sink.Annotations, "pod_name")
+		require.Equal(t, "test-namespace", event.InvolvedObject.Namespace)
 	})
 
 	t.Run("does not send add events for events that already existed prior to startup", func(t *testing.T) {
-		event := &v1.Event{
-			Message:       "Test message for events",
-			LastTimestamp: metav1.NewTime(time.Now()),
-			Source: v1.EventSource{
-				Host:      "test Host",
-				Component: "some-component",
-			},
-			InvolvedObject: v1.ObjectReference{
-				Namespace: "test-namespace",
-				Kind:      "some-kind",
-				Name:      "test-name",
-			},
-			Type:   "Normal",
-			Reason: "some-reason",
-		}
+		event := fakeEvent()
 		client := fake.NewSimpleClientset(event)
 		workloadCache := testWorkloadCache{}
 		sink := &MockExport{}
-
 		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, workloadCache)
-
 		go er.Resume()
 		defer er.Stop()
 
@@ -85,38 +53,17 @@ func TestAddEvent(t *testing.T) {
 	})
 
 	t.Run("sends events for updates", func(t *testing.T) {
-		event := &v1.Event{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-			},
-			Message:       "Test message for events",
-			LastTimestamp: metav1.NewTime(time.Now()),
-			Source: v1.EventSource{
-				Host:      "test Host",
-				Component: "some-component",
-			},
-			InvolvedObject: v1.ObjectReference{
-				Namespace: "test-namespace",
-				Kind:      "some-kind",
-				Name:      "test-name",
-			},
-			Type:   "Normal",
-			Reason: "some-reason",
-		}
+		event := fakeEvent()
 		client := fake.NewSimpleClientset(event)
 		workloadCache := testWorkloadCache{}
 		sink := &MockExport{}
-
 		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, workloadCache)
-
 		go er.Resume()
 		defer er.Stop()
-
 		cache.WaitForCacheSync(make(chan struct{}), er.eListerSynced)
 
 		event.Count += 1
-		client.CoreV1().Events("test-namespace").Update(context.Background(), event, metav1.UpdateOptions{})
-
+		client.CoreV1().Events(event.Namespace).Update(context.Background(), event, metav1.UpdateOptions{})
 		time.Sleep(10 * time.Millisecond)
 
 		sink.SyncAccess(func() {
@@ -125,37 +72,16 @@ func TestAddEvent(t *testing.T) {
 	})
 
 	t.Run("does not send events when the update has not changed anything", func(t *testing.T) {
-		event := &v1.Event{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "test-namespace",
-			},
-			Message:       "Test message for events",
-			LastTimestamp: metav1.NewTime(time.Now()),
-			Source: v1.EventSource{
-				Host:      "test Host",
-				Component: "some-component",
-			},
-			InvolvedObject: v1.ObjectReference{
-				Namespace: "test-namespace",
-				Kind:      "some-kind",
-				Name:      "test-name",
-			},
-			Type:   "Normal",
-			Reason: "some-reason",
-		}
+		event := fakeEvent()
 		client := fake.NewSimpleClientset(event)
 		workloadCache := testWorkloadCache{}
 		sink := &MockExport{}
-
 		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, workloadCache)
-
 		go er.Resume()
 		defer er.Stop()
-
 		cache.WaitForCacheSync(make(chan struct{}), er.eListerSynced)
 
-		client.CoreV1().Events("test-namespace").Update(context.Background(), event, metav1.UpdateOptions{})
-
+		client.CoreV1().Events(event.Namespace).Update(context.Background(), event, metav1.UpdateOptions{})
 		time.Sleep(10 * time.Millisecond)
 
 		sink.SyncAccess(func() {
@@ -167,87 +93,73 @@ func TestAddEvent(t *testing.T) {
 func TestAddEventHasWorkload(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
 	fakePod := createFakePod(t, fakeClient, nil)
-
+	workloadCache := &testWorkloadCache{
+		workloadName: "some-workload-name",
+		workloadKind: "some-workload-kind",
+		nodeName:     "some-node-name",
+	}
 	sink := &MockExport{}
+	cfg := configuration.EventsConfig{ClusterName: "some-cluster-name", ClusterUUID: "some-cluster-uuid"}
+	event := fakeEvent()
+	event.InvolvedObject.Kind = fakePod.Kind
+	event.InvolvedObject.Namespace = fakePod.Namespace
+	event.InvolvedObject.Name = fakePod.Name
+	er := NewEventRouter(fakeClient, cfg, sink, true, workloadCache)
 
-	er := &EventRouter{
-		kubeClient:  fakeClient,
-		sink:        sink,
-		clusterName: "some-cluster-name",
-		clusterUUID: "some-cluster-uuid",
-		workloadCache: testWorkloadCache{
-			workloadName: "some-workload-name",
-			workloadKind: "some-workload-kind",
-			nodeName:     "some-node-name",
-		},
-	}
-
-	event := &v1.Event{
-		Message:       "Test message for events",
-		LastTimestamp: metav1.NewTime(time.Now()),
-		Source: v1.EventSource{
-			Host:      "test Host",
-			Component: "some-component",
-		},
-		Type: "Normal",
-		InvolvedObject: v1.ObjectReference{
-			Namespace: fakePod.Namespace,
-			Kind:      fakePod.Kind,
-			Name:      fakePod.Name,
-		},
-		Reason: "some-reason",
-	}
 	er.addEvent(event, false)
-	assert.Equal(t, event.Message, sink.Message)
-	assert.Equal(t, event.LastTimestamp, metav1.NewTime(sink.Ts))
-	assert.Equal(t, event.Source.Host, sink.Host)
-	assert.Equal(t, "Normal", sink.Annotations["type"])
-	assert.Equal(t, fakePod.Kind, sink.Annotations["kind"])
-	assert.Equal(t, "some-reason", sink.Annotations["reason"])
-	assert.Equal(t, "some-component", sink.Annotations["component"])
-	assert.Equal(t, fakePod.Name, sink.Annotations["pod_name"])
-	assert.NotContains(t, sink.Annotations, "resource_name")
-	assert.Equal(t, fakePod.Namespace, sink.InvolvedObject.Namespace)
-	assert.Equal(t, "some-cluster-name", sink.ObjectMeta.Annotations["aria/cluster-name"])
-	assert.Equal(t, "some-cluster-uuid", sink.ObjectMeta.Annotations["aria/cluster-uuid"])
-	assert.Equal(t, "some-workload-kind", sink.ObjectMeta.Annotations["aria/workload-kind"])
-	assert.Equal(t, "some-workload-name", sink.ObjectMeta.Annotations["aria/workload-name"])
-	assert.Equal(t, "some-node-name", sink.ObjectMeta.Annotations["aria/node-name"])
+
+	require.Equal(t, event.Message, sink.Message)
+	require.Equal(t, event.LastTimestamp, metav1.NewTime(sink.Ts))
+	require.Equal(t, event.Source.Host, sink.Host)
+	require.Equal(t, "Normal", sink.Annotations["type"])
+	require.Equal(t, fakePod.Kind, sink.Annotations["kind"])
+	require.Equal(t, "some-reason", sink.Annotations["reason"])
+	require.Equal(t, "some-component", sink.Annotations["component"])
+	require.Equal(t, fakePod.Name, sink.Annotations["pod_name"])
+	require.NotContains(t, sink.Annotations, "resource_name")
+	require.Equal(t, fakePod.Namespace, sink.InvolvedObject.Namespace)
+	require.Equal(t, "some-cluster-name", sink.ObjectMeta.Annotations["aria/cluster-name"])
+	require.Equal(t, "some-cluster-uuid", sink.ObjectMeta.Annotations["aria/cluster-uuid"])
+	require.Equal(t, "some-workload-kind", sink.ObjectMeta.Annotations["aria/workload-kind"])
+	require.Equal(t, "some-workload-name", sink.ObjectMeta.Annotations["aria/workload-name"])
+	require.Equal(t, "some-node-name", sink.ObjectMeta.Annotations["aria/node-name"])
 }
 
 func TestEmptyNodeNameExcludesAnnotation(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	fakePod := createFakePod(t, fakeClient, nil)
-
 	sink := &MockExport{}
-
-	er := &EventRouter{
-		kubeClient:  fakeClient,
-		sink:        sink,
-		clusterName: "some-cluster-name",
-		clusterUUID: "some-cluster-uuid",
-		workloadCache: testWorkloadCache{
-			workloadName: "some-workload-name",
-			workloadKind: "some-workload-kind",
-		},
+	workloadCache := &testWorkloadCache{
+		workloadName: "some-workload-name",
+		workloadKind: "some-workload-kind",
 	}
-	event := &v1.Event{
+	cfg := configuration.EventsConfig{ClusterName: "some-cluster-name", ClusterUUID: "some-cluster-uuid"}
+	event := fakeEvent()
+	er := NewEventRouter(fakeClient, cfg, sink, true, workloadCache)
+
+	er.addEvent(event, false)
+
+	require.NotContains(t, event.ObjectMeta.Annotations, "aria/node-name")
+}
+
+func fakeEvent() *v1.Event {
+	return &v1.Event{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "test-namespace",
+		},
 		Message:       "Test message for events",
 		LastTimestamp: metav1.NewTime(time.Now()),
 		Source: v1.EventSource{
 			Host:      "test Host",
 			Component: "some-component",
 		},
-		Type: "Warning",
 		InvolvedObject: v1.ObjectReference{
-			Namespace: fakePod.Namespace,
-			Kind:      fakePod.Kind,
-			Name:      fakePod.Name,
+			Namespace: "test-namespace",
+			Kind:      "some-kind",
+			Name:      "test-name",
 		},
+		Type:   "Normal",
 		Reason: "some-reason",
 	}
-	er.addEvent(event, false)
-	assert.NotContains(t, event.ObjectMeta.Annotations, "aria/node-name")
 }
 
 type testWorkloadCache struct {
@@ -311,6 +223,6 @@ func createFakePod(t *testing.T, fakeClient *fake.Clientset, owner *metav1.Owner
 
 	podsClient := fakeClient.CoreV1().Pods("a-ns")
 	pod, err := podsClient.Create(context.Background(), podSpec, metav1.CreateOptions{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	return pod
 }
