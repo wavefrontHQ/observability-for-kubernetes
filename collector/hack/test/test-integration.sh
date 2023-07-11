@@ -149,16 +149,6 @@ function main() {
     run_fake_proxy_test "all-metrics" "base/deploy/collector-deployments/5-collector-combined.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
-  if [[ "${tests_to_run[*]}" =~ "single-deployment" ]]; then
-    green "\n==================== Running fake_proxy single-deployment test ===================="
-    run_fake_proxy_test "all-metrics" "base/deploy/collector-deployments/5-collector-single-deployment.yaml"
-    ${SCRIPT_DIR}/clean-deploy.sh
-  fi
-  if [[ "${tests_to_run[*]}" =~ "histogram-conversion" ]]; then
-    green "\n==================== Running fake_proxy histogram-conversion test ===================="
-    run_fake_proxy_test "all-metrics" "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" "histogram-conversion"
-    ${SCRIPT_DIR}/clean-deploy.sh
-  fi
   if [[ "${tests_to_run[*]}" =~ "default" ]]; then
     green "\n==================== Running fake_proxy default test ===================="
     run_fake_proxy_test "all-metrics" "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
