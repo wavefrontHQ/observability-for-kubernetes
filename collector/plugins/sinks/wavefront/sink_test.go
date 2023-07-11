@@ -6,6 +6,7 @@ package wavefront
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
@@ -128,10 +129,11 @@ func TestEvents(t *testing.T) {
 func defaultSinkConfig() configuration.SinkConfig {
 	eventsEnabled := false
 	cfg := configuration.SinkConfig{
-		ProxyAddress: "wavefront-proxy:2878",
-		ClusterName:  "testCluster",
-		TestMode:     true,
-		EnableEvents: &eventsEnabled,
+		ProxyAddress:      "wavefront-proxy:2878",
+		ClusterName:       "testCluster",
+		TestMode:          true,
+		EnableEvents:      &eventsEnabled,
+		HeartbeatInterval: 1 * time.Minute,
 	}
 	return cfg
 }
