@@ -29,6 +29,7 @@ spec:
         app.kubernetes.io/component: proxy
       annotations:
         configHash: "{{ .DataExport.WavefrontProxy.ConfigHash }}"
+        secretHash: "{{ .DataExport.WavefrontProxy.SecretHash }}"
     spec:
       automountServiceAccountToken: false
       serviceAccountName: wavefront-proxy

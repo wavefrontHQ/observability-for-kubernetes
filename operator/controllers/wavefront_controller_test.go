@@ -769,6 +769,79 @@ func TestReconcileProxy(t *testing.T) {
 		))
 	})
 
+	t.Run("updates proxy when the wavefront secret is updated", func(t *testing.T) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.WavefrontTokenSecret = "some-token"
+		})
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfCR.Spec.WavefrontTokenSecret,
+				Namespace: wftest.DefaultNamespace,
+			},
+			Data: map[string][]byte{
+				"token": []byte("some-token"),
+			},
+		}
+
+		r, mockKM := emptyScenario(wfCR, nil, secret)
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.True(t, mockKM.ProxyDeploymentContains("name: WAVEFRONT_TOKEN"))
+		require.False(t, mockKM.ProxyDeploymentContains("name: CSP_API_TOKEN"))
+
+		secret.Data = map[string][]byte{
+			"csp-api-token": []byte("some-csp-api-token"),
+		}
+		err = r.Client.Update(context.Background(), secret)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+	})
+
+	t.Run("updates proxy when the wavefront secret is updated", func(t *testing.T) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.WavefrontTokenSecret = "some-token"
+		})
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfCR.Spec.WavefrontTokenSecret,
+				Namespace: wftest.DefaultNamespace,
+			},
+			Data: map[string][]byte{
+				"token": []byte("some-token"),
+			},
+		}
+
+		r, mockKM := emptyScenario(wfCR, nil, secret)
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		proxyDep, err := mockKM.GetProxyDeployment()
+		require.NoError(t, err)
+
+		secretHash := proxyDep.Spec.Template.ObjectMeta.Annotations["secretHash"]
+
+		require.NotEmpty(t, secretHash)
+
+		secret.Data = map[string][]byte{
+			"token": []byte("some-other-token"),
+		}
+		err = r.Client.Update(context.Background(), secret)
+		require.NoError(t, err)
+
+		_, err = r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		proxyDep, err = mockKM.GetProxyDeployment()
+		require.NoError(t, err)
+
+		require.NotEqual(t, secretHash, proxyDep.Spec.Template.ObjectMeta.Annotations["secretHash"])
+	})
+
 	t.Run("can create proxy with a user defined metric port", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.MetricPort = 1234

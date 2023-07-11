@@ -204,6 +204,9 @@ type WavefrontProxy struct {
 	// ConfigHash is for internal use only
 	ConfigHash string `json:"-"`
 
+	// SecretHash is for internal use only
+	SecretHash string `json:"-"`
+
 	// AvailableReplicas is for internal use only
 	AvailableReplicas int `json:"-"`
 
