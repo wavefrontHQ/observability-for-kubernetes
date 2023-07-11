@@ -44,7 +44,7 @@ function main() {
 
   kubectl apply -k ${OPERATOR_BUILD_DIR}
   kubectl create -n ${NS} secret generic wavefront-secret --from-literal token=${WAVEFRONT_TOKEN} \
-    --from-literal k8s-events-external-endpoint-token='a-key'|| true
+    --from-literal k8s-events-endpoint-token='a-key'|| true
 }
 
 main "$@"

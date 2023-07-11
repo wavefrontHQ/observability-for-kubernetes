@@ -25,7 +25,7 @@ const (
 	NamespaceNameEnvVar             = "POD_NAMESPACE_NAME"
 	InstallationMethodEnvVar        = "INSTALLATION_METHOD"
 	ClusterUUIDEnvVar               = "CLUSTER_UUID"
-	ExternalEndpointAccessKeyEnvVar = "K8S_EVENTS_EXTERNAL_ENDPOINT_TOKEN"
+	ExternalEndpointAccessKeyEnvVar = "K8S_EVENTS_ENDPOINT_TOKEN"
 	ForceGC                         = "FORCE_GC"
 	KubernetesVersionEnvVar         = "KUBERNETES_VERSION"
 	KubernetesProviderEnvVar        = "KUBERNETES_PROVIDER"

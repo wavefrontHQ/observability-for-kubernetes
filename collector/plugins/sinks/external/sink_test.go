@@ -117,7 +117,7 @@ func TestDisablingEvents(t *testing.T) {
 			FieldPath:       "spec.containers{wavefront-proxy}",
 		},
 		Reason:         "Pulled",
-		Message:        "Successfully pulled image projects.registry.vmware.com/tanzu_observability_keights_saas/proxy:13.0 in 52.454993525s",
+		Message:        "Successfully pulled image tobs/prxy:5.5 in 52.454993525s",
 		FirstTimestamp: metav1.NewTime(time.Now()),
 		LastTimestamp:  metav1.NewTime(time.Now()),
 		Count:          1,
@@ -132,6 +132,44 @@ func TestDisablingEvents(t *testing.T) {
 
 	sink.ExportEvent(event)
 	require.False(t, called, "expect event to not be exported")
+}
+
+func TestBadScenarios(t *testing.T) {
+	t.Run("non-successful HTTP code handled", func(t *testing.T) {
+		called := false
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			called = true
+			w.WriteHeader(404)
+		}))
+		defer server.Close()
+
+		cfg := defaultSyncConfig(server.URL)
+		sink, err := NewExternalSink(cfg)
+		require.NoError(t, err)
+
+		sink.ExportEvent(&events.Event{})
+		require.True(t, called, "expect server to be called")
+	})
+
+	t.Run("server error handled", func(t *testing.T) {
+		server := httptest.NewServer(nil)
+		defer server.Close()
+
+		cfg := defaultSyncConfig(server.URL)
+		sink, err := NewExternalSink(cfg)
+		require.NoError(t, err)
+
+		sink.ExportEvent(&events.Event{})
+	})
+
+	t.Run("invalid server URL handled", func(t *testing.T) {
+		cfg := defaultSyncConfig("\x00")
+
+		sink, err := NewExternalSink(cfg)
+		require.NoError(t, err)
+
+		sink.ExportEvent(&events.Event{})
+	})
 }
 
 func defaultSyncConfig(url string) configuration.SinkConfig {
