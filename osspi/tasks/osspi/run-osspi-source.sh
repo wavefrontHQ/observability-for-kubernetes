@@ -94,12 +94,12 @@ pushd "$REPO/$SCAN_PATH"
   osspi merge \
     "${input_bom_result_flag[@]}" \
     --input "$REPO"_signature/osspi_signature_detect_result.json \
-    --output total_reports.yaml
+    --output total_reports.manifest
 
   set +x
 
   str='[]'
-  if [[ $(< total_reports.yaml) = "$str" ]]; then
+  if [[ $(< total_reports.manifest) = "$str" ]]; then
     echo "Scan results are empty, exiting..."
     exit 0
   fi
@@ -131,7 +131,7 @@ pushd "$REPO/$SCAN_PATH"
     -gv "$osm_package_group_version" \
     -gl 'norsk-to-osspi' \
     "${osstp_multiple_group_versions_flag[@]}" \
-    total_reports.yaml
+    total_reports.manifest
   
   set +x
 popd
