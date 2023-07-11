@@ -168,12 +168,12 @@ func TestAddEventHasWorkload(t *testing.T) {
 	assert.Equal(t, "some-component", sink.Annotations["component"])
 	assert.Equal(t, fakePod.Name, sink.Annotations["pod_name"])
 	assert.NotContains(t, sink.Annotations, "resource_name")
-	assert.Equal(t, fakePod.Namespace, event.InvolvedObject.Namespace)
-	assert.Equal(t, "some-cluster-name", event.ObjectMeta.Annotations["aria/cluster-name"])
-	assert.Equal(t, "some-cluster-uuid", event.ObjectMeta.Annotations["aria/cluster-uuid"])
-	assert.Equal(t, "some-workload-kind", event.ObjectMeta.Annotations["aria/workload-kind"])
-	assert.Equal(t, "some-workload-name", event.ObjectMeta.Annotations["aria/workload-name"])
-	assert.Equal(t, "some-node-name", event.ObjectMeta.Annotations["aria/node-name"])
+	assert.Equal(t, fakePod.Namespace, sink.InvolvedObject.Namespace)
+	assert.Equal(t, "some-cluster-name", sink.ObjectMeta.Annotations["aria/cluster-name"])
+	assert.Equal(t, "some-cluster-uuid", sink.ObjectMeta.Annotations["aria/cluster-uuid"])
+	assert.Equal(t, "some-workload-kind", sink.ObjectMeta.Annotations["aria/workload-kind"])
+	assert.Equal(t, "some-workload-name", sink.ObjectMeta.Annotations["aria/workload-name"])
+	assert.Equal(t, "some-node-name", sink.ObjectMeta.Annotations["aria/node-name"])
 }
 
 func TestEmptyNodeNameExcludesAnnotation(t *testing.T) {
@@ -249,6 +249,7 @@ func (m *MockExport) ExportEvent(event *events.Event) {
 	m.Ts = event.Ts
 	m.Host = event.Host
 	m.Annotations = tagMap["annotations"].(map[string]string)
+	m.Event = *event
 }
 func (m *MockExport) Export(batch *metrics.Batch) {}
 func (m *MockExport) Name() string                { return "" }

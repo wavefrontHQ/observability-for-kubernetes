@@ -129,6 +129,8 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 		return // prevent unlikely panic
 	}
 
+	e = e.DeepCopy()
+
 	if e.ObjectMeta.Annotations == nil {
 		e.ObjectMeta.Annotations = map[string]string{}
 	}
