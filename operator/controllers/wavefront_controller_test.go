@@ -1382,7 +1382,7 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 				Namespace: wftest.DefaultNamespace,
 			},
 			Data: map[string][]byte{
-				"kubernetes-events-external-endpoint-access-key": []byte("a-key"),
+				"k8s-events-external-endpoint-token": []byte("ignored"),
 			},
 		})
 
@@ -1395,8 +1395,8 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "events:\n      filters:\n        tagAllowListSets:\n        - type:\n          - \"Warning\"\n        - type:\n          - \"Normal\"\n          kind:\n          - \"Pod\"\n          reason:\n          - \"Backoff\""))
 		require.False(t, mockKM.CollectorConfigMapContains())
 
-		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: KUBERNETES_EVENTS_EXTERNAL_ENDPOINT_ACCESS_KEY"))
-		require.True(t, mockKM.ClusterCollectorDeploymentContains("key: kubernetes-events-external-endpoint-access-key"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: K8S_EVENTS_EXTERNAL_ENDPOINT_TOKEN"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("key: k8s-events-external-endpoint-token"))
 		require.True(t, mockKM.CollectorServiceAccountContains())
 		require.False(t, mockKM.NodeCollectorDaemonSetContains())
 		require.False(t, mockKM.LoggingDaemonSetContains())
@@ -1415,8 +1415,8 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 				Namespace: wftest.DefaultNamespace,
 			},
 			Data: map[string][]byte{
-				"kubernetes-events-external-endpoint-access-key": []byte("a-key"),
-				"token": []byte("a-token"),
+				"k8s-events-external-endpoint-token": []byte("ignored"),
+				"token":                              []byte("ignored"),
 			},
 		})
 
@@ -1428,10 +1428,10 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 		require.True(t, mockKM.CollectorConfigMapContains("type: \"external\"\n      enableEvents: true"))
 		require.True(t, mockKM.CollectorConfigMapContains("events:\n      filters:\n        tagAllowListSets:\n        - type:\n          - \"Warning\"\n        - type:\n          - \"Normal\"\n          kind:\n          - \"Pod\"\n          reason:\n          - \"Backoff\""))
 
-		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: KUBERNETES_EVENTS_EXTERNAL_ENDPOINT_ACCESS_KEY"))
-		require.True(t, mockKM.ClusterCollectorDeploymentContains("key: kubernetes-events-external-endpoint-access-key"))
-		require.False(t, mockKM.NodeCollectorDaemonSetContains("name: KUBERNETES_EVENTS_EXTERNAL_ENDPOINT_ACCESS_KEY"))
-		require.False(t, mockKM.NodeCollectorDaemonSetContains("key: kubernetes-events-external-endpoint-access-key"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: K8S_EVENTS_EXTERNAL_ENDPOINT_TOKEN"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("key: k8s-events-external-endpoint-token"))
+		require.False(t, mockKM.NodeCollectorDaemonSetContains("name: K8S_EVENTS_EXTERNAL_ENDPOINT_TOKEN"))
+		require.False(t, mockKM.NodeCollectorDaemonSetContains("key: k8s-events-external-endpoint-token"))
 		require.True(t, mockKM.ProxyDeploymentContains("name: WAVEFRONT_TOKEN", "key: token"))
 	})
 }

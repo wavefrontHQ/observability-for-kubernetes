@@ -363,8 +363,8 @@ func TestProcessExperimental(t *testing.T) {
 				Namespace: "testNamespace",
 			},
 			Data: map[string][]byte{
-				"kubernetes-events-external-endpoint-access-key": []byte("some-key"),
-				"token": []byte("some-token"),
+				"k8s-events-external-endpoint-token": []byte("ignored"),
+				"token":                              []byte("ignored"),
 			},
 		}
 		fakeClient := setup(secret)
@@ -403,7 +403,7 @@ func TestProcessExperimental(t *testing.T) {
 		err := PreProcess(fakeClient, wfcr)
 
 		require.Error(t, err)
-		require.Equal(t, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'testWavefrontSecret' is missing Data 'kubernetes-events-external-endpoint-access-key'", err.Error())
+		require.Equal(t, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'testWavefrontSecret' is missing Data 'k8s-events-external-endpoint-token'", err.Error())
 	})
 }
 

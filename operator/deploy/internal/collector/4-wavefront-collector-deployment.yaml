@@ -71,11 +71,11 @@ spec:
             - name: CLUSTER_UUID
               value: {{ .ClusterUUID }}
           {{- if .Experimental.KubernetesEvents.Enable }}
-            - name: KUBERNETES_EVENTS_EXTERNAL_ENDPOINT_ACCESS_KEY
+            - name: K8S_EVENTS_EXTERNAL_ENDPOINT_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ .WavefrontTokenSecret }}
-                  key: kubernetes-events-external-endpoint-access-key
+                  key: k8s-events-external-endpoint-token
           {{- end }}
           ports:
             - containerPort: 8088
