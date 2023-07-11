@@ -84,7 +84,7 @@ func TestAddEvent(t *testing.T) {
 		})
 	})
 
-	t.Run("sends add events for updates", func(t *testing.T) {
+	t.Run("sends events for updates", func(t *testing.T) {
 		event := &v1.Event{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-namespace",
@@ -121,6 +121,45 @@ func TestAddEvent(t *testing.T) {
 
 		sink.SyncAccess(func() {
 			require.NotEmpty(t, sink.Message)
+		})
+	})
+
+	t.Run("does not send events when the update has not changed anything", func(t *testing.T) {
+		event := &v1.Event{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+			},
+			Message:       "Test message for events",
+			LastTimestamp: metav1.NewTime(time.Now()),
+			Source: v1.EventSource{
+				Host:      "test Host",
+				Component: "some-component",
+			},
+			InvolvedObject: v1.ObjectReference{
+				Namespace: "test-namespace",
+				Kind:      "some-kind",
+				Name:      "test-name",
+			},
+			Type:   "Normal",
+			Reason: "some-reason",
+		}
+		client := fake.NewSimpleClientset(event)
+		workloadCache := testWorkloadCache{}
+		sink := &MockExport{}
+
+		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, workloadCache)
+
+		go er.Resume()
+		defer er.Stop()
+
+		cache.WaitForCacheSync(make(chan struct{}), er.eListerSynced)
+
+		client.CoreV1().Events("test-namespace").Update(context.Background(), event, metav1.UpdateOptions{})
+
+		time.Sleep(10 * time.Millisecond)
+
+		sink.SyncAccess(func() {
+			require.Empty(t, sink.Message)
 		})
 	})
 }
