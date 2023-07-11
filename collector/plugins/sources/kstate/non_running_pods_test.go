@@ -2,6 +2,8 @@ package kstate
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 	"testing"
 	"time"
 
@@ -348,6 +350,13 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		containerMetric := actualWFPoints[1].(*wf.Point)
 		assert.Equal(t, "some-workload-name", containerMetric.Tags()["workload_name"])
 		assert.Equal(t, "some-workload-kind", containerMetric.Tags()["workload_kind"])
+	})
+
+	t.Run("returns nil if type is invalid", func(t *testing.T) {
+		workloadCache := fakeWorkloadCache{}
+
+		require.Nil(t, pointsForNonRunningPods(workloadCache)(v1.Pod{}, setupTestTransform()))
+		require.Nil(t, pointsForNonRunningPods(workloadCache)(&appsv1.Deployment{}, setupTestTransform()))
 	})
 }
 
