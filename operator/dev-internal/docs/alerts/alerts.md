@@ -8,6 +8,7 @@ We have alert templates on common Kubernetes issues.
 * [Detect pod backoff event](templates/pod-backoff-event.json.tmpl)
 * [Detect workload with non-ready pods](templates/workload-not-ready.json.tmpl)
 * [Detect pod out-of-memory kills](templates/pod-out-of-memory-kills.json.tmpl)
+* [Detect pod memory overutilization](templates/pod-memory-overutilization.json.tmpl)
 
 ## Flags
 
