@@ -16,10 +16,12 @@ else
   cat "${METRICS_FILE_DIR}/${METRICS_FILE_NAME}.jsonl" >${METRICS_FILE_DIR}/combined-metrics.jsonl
 fi
 
+FLUSH_INTERVAL=5
+RETRIES=14
 printf "Diffing metrics .."
-for i in {1..14}; do
+for (( i=1; i<="$RETRIES"; i++ )) do
   printf "."
-  sleep 5
+  sleep "$FLUSH_INTERVAL"
 
   while true; do # wait until we get a good connection
     RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@${METRICS_FILE_DIR}/combined-metrics.jsonl" "http://localhost:8888/metrics/diff" || echo "000")
@@ -37,6 +39,7 @@ for i in {1..14}; do
   DIFF_COUNT=$(jq "(.Missing | length) + (.Unwanted | length)" "$RES")
 
   if [[ $DIFF_COUNT -eq 0 ]]; then
+    printf " in %d tries" "$i"
     break
   fi
 done

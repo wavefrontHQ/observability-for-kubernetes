@@ -214,7 +214,7 @@ token-check:
 .PHONY: proxy-test
 proxy-test: token-check $(SEMVER_CLI_BIN)
 ifeq ($(INTEGRATION_TEST_ARGS),all)
-	$(eval INTEGRATION_TEST_ARGS := -r cluster-metrics-only -r node-metrics-only -r combined -r default -r real-proxy-metrics)
+	$(eval INTEGRATION_TEST_ARGS := -r cluster-metrics-only -r k8s-events-only -r node-metrics-only -r combined -r default -r real-proxy-metrics)
 endif
 	(cd $(TEST_DIR) && ./test-integration.sh -c $(WAVEFRONT_CLUSTER) -t $(WAVEFRONT_TOKEN) -v $(VERSION) $(INTEGRATION_TEST_ARGS))
 
