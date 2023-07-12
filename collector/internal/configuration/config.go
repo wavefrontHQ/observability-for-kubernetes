@@ -167,7 +167,7 @@ type SinkConfig struct {
 	InternalStatsPrefix string `yaml:"-"`
 
 	// Internal: heartbeat interval
-	HeartbeatInterval time.Duration `yaml:"heartbeatInterval"`
+	HeartbeatInterval time.Duration `yaml:"-"`
 }
 
 type CollectionConfig struct {
@@ -313,7 +313,7 @@ func reconcileGlobalProperties(cfg *Config) {
 	for _, sinkCfg := range cfg.Sinks {
 		sinkCfg.ClusterName = cfg.ClusterName
 		sinkCfg.InternalStatsPrefix = prefix
-		sinkCfg.HeartbeatInterval = cfg.FlushInterval
+		sinkCfg.HeartbeatInterval = cfg.DefaultCollectionInterval
 		if sinkCfg.EnableEvents == nil {
 			sinkCfg.EnableEvents = &enableEvents
 		}
