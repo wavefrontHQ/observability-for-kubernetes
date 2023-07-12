@@ -1,11 +1,12 @@
 kill $(jobs -p) &>/dev/null || true
-sleep 3
-kubectl --namespace "$NS" port-forward "deploy/${PROXY_NAME}" 8888 &
+printf "Port forwarding test-proxy control plane ..."
+(
+  while true; do
+    kubectl --namespace "$NS" port-forward "deploy/${PROXY_NAME}" 8888 &> /dev/null || true
+  done
+) &
+echo " done."
 trap 'kill $(jobs -p) &>/dev/null || true' EXIT
-sleep 3
-
-echo "waiting ${SLEEP_TIME} seconds for metrics..."
-sleep ${SLEEP_TIME}
 
 RES=$(mktemp)
 
@@ -15,26 +16,40 @@ else
   cat "${METRICS_FILE_DIR}/${METRICS_FILE_NAME}.jsonl" >${METRICS_FILE_DIR}/combined-metrics.jsonl
 fi
 
-while true; do # wait until we get a good connection
-  RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@${METRICS_FILE_DIR}/combined-metrics.jsonl" "http://localhost:8888/metrics/diff")
-  [[ $RES_CODE -lt 200 ]] || break
+FLUSH_INTERVAL=5
+RETRIES=14
+printf "Diffing metrics .."
+for (( i=1; i<="$RETRIES"; i++ )) do
+  printf "."
+  sleep "$FLUSH_INTERVAL"
+
+  while true; do # wait until we get a good connection
+    RES_CODE=$(curl --silent --output "$RES" --write-out "%{http_code}" --data-binary "@${METRICS_FILE_DIR}/combined-metrics.jsonl" "http://localhost:8888/metrics/diff" || echo "000")
+    [[ $RES_CODE -lt 200 ]] || break
+  done
+
+  cat "${RES}" > "${SCRIPT_DIR}/res.txt"
+
+  if [[ $RES_CODE -gt 399 ]]; then
+    red "INVALID METRICS"
+    jq -r '.[]' "${RES}"
+    exit 1
+  fi
+
+  DIFF_COUNT=$(jq "(.Missing | length) + (.Unwanted | length)" "$RES")
+
+  if [[ $DIFF_COUNT -eq 0 ]]; then
+    printf " in %d tries" "$i"
+    break
+  fi
 done
-
-cat "${RES}" > "${SCRIPT_DIR}/res.txt"
-
-if [[ $RES_CODE -gt 399 ]]; then
-  red "INVALID METRICS"
-  jq -r '.[]' "${RES}"
-  exit 1
-fi
-
-DIFF_COUNT=$(jq "(.Missing | length) + (.Unwanted | length)" "$RES")
+echo " done."
 
 jq -c '.Missing[]' "$RES" | sort >"${SCRIPT_DIR}/missing.jsonl"
 jq -c '.Extra[]' "$RES" | sort >"${SCRIPT_DIR}/extra.jsonl"
 jq -c '.Unwanted[]' "$RES" | sort >"${SCRIPT_DIR}/unwanted.jsonl"
 
-echo "$RES"
+echo "Metrics diff: $RES"
 if [[ $DIFF_COUNT -gt 0 ]]; then
   red "Missing: $(jq "(.Missing | length)" "$RES")"
   if [[ $(jq "(.Missing | length)" "$RES") -le 10 ]]; then

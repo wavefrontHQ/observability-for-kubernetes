@@ -2,6 +2,7 @@ package factory
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
@@ -68,6 +69,7 @@ func defaultWavefrontConfig() *configuration.SinkConfig {
 		Transforms: configuration.Transforms{
 			Prefix: "test.",
 		},
+		HeartbeatInterval: 1 * time.Minute,
 	}
 }
 func defaultExternalSinkConfig() *configuration.SinkConfig {

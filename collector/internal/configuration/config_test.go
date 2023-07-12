@@ -26,6 +26,7 @@ func TestNew(t *testing.T) {
 		require.Equal(t, 20*time.Second, cfg.SinkExportDataTimeout, "default cfg.SinkExportDataTimeout")
 		require.Equal(t, "k8s-cluster", cfg.ClusterName, "default cfg.ClusterName")
 		require.Equal(t, 5*time.Minute, cfg.DiscoveryConfig.DiscoveryInterval, "default cfg.DiscoveryInterval")
+		require.Equal(t, cfg.DefaultCollectionInterval, cfg.Sinks[0].HeartbeatInterval, "default cfg.Sinks[*].HeartbeatInterval")
 	})
 
 	t.Run("allows custom initialization", func(t *testing.T) {

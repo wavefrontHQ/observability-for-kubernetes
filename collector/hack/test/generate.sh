@@ -26,18 +26,18 @@ function copy_collector_deployment_files() {
 }
 
 function replace_placeholders_in_template_yaml() {
-  local FLUSH_INTERVAL=15
-  local COLLECTION_INTERVAL=14
+  local FLUSH_INTERVAL=7
 
   if [[ "${USE_TEST_PROXY}" = "true" ]]; then
-    FLUSH_INTERVAL=6
-    COLLECTION_INTERVAL=5
+    FLUSH_INTERVAL=5
     cp base/test-proxy.yaml base/deploy/6-wavefront-proxy.yaml
   else
     sed -e "s/YOUR_CLUSTER/${WF_CLUSTER}/g" \
         -e "s/YOUR_API_TOKEN/${WAVEFRONT_TOKEN}/g" \
         base/proxy.template.yaml > base/deploy/6-wavefront-proxy.yaml
   fi
+
+  COLLECTION_INTERVAL=$((FLUSH_INTERVAL * 2))
 
   sed "s/YOUR_IMAGE_TAG/${VERSION}/g" base/kustomization.template.yaml > base/kustomization.yaml
 
