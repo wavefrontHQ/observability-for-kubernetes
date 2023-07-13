@@ -4,6 +4,7 @@
 package kstate
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
@@ -30,11 +31,24 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 	completions := floatValOrDefault(job.Spec.Completions, -1.0)
 	parallelism := floatValOrDefault(job.Spec.Parallelism, -1.0)
 
-	return []wf.Metric{
+	points := []wf.Metric{
 		metricPoint(transforms.Prefix, "job.active", active, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "job.failed", failed, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "job.succeeded", succeeded, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "job.completions", completions, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "job.parallelism", parallelism, now, transforms.Source, tags),
 	}
+
+	if job.OwnerReferences == nil || len(job.OwnerReferences) == 0 {
+		workloadTags := buildWorkloadTags("Job", job.Name, job.Namespace, transforms.Tags)
+		status := workloadReady
+		println(fmt.Sprintf("job failures %d", job.Status.Failed))
+		if job.Status.Failed > 0 {
+			println(job.Status.Failed)
+			status = workloadNotReady
+		}
+		points = append(points, metricPoint(transforms.Prefix, workloadStatusMetric, status, now, transforms.Source, workloadTags))
+	}
+
+	return points
 }
