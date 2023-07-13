@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -31,7 +32,7 @@ func setupJobWithOwner() *batchv1.Job {
 	return job
 }
 
-func Test_pointsForJob(t *testing.T) {
+func TestPointsForJob(t *testing.T) {
 	testTransform := setupWorkloadTransform()
 
 	t.Run("test for Successful Job metrics without OwnerReferences", func(t *testing.T) {
@@ -55,8 +56,7 @@ func Test_pointsForJob(t *testing.T) {
 		sort.Strings(actualMetricNames)
 
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
-		assert.Equal(t, 1, actualWFPoints[5].Points())
-
+		assert.Equal(t, workloadReady, actualWFPoints[5].(*wf.Point).Value)
 	})
 
 	t.Run("test for Failed Job metrics without OwnerReferences", func(t *testing.T) {
@@ -64,48 +64,29 @@ func Test_pointsForJob(t *testing.T) {
 		testJob.Status.Failed = 1
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
-		assert.Equal(t, 0, actualWFPoints[5].Points())
+		assert.Equal(t, workloadNotReady, actualWFPoints[5].(*wf.Point).Value)
 
 	})
-	//t.Run("test for Job metrics without OwnerReferences", func(t *testing.T) {
-	//	testJob := setupJobWithOwner()
-	//	expectedMetricNames := []string{
-	//		"kubernetes.job.desired_replicas",
-	//		"kubernetes.job.available_replicas",
-	//		"kubernetes.job.ready_replicas",
-	//	}
-	//
-	//	actualWFPoints := pointsForJob(testJob, testTransform)
-	//	actualMetricNames := getTestWFMetricNames(actualWFPoints)
-	//
-	//	assert.Equal(t, len(expectedMetricNames), len(actualMetricNames))
-	//
-	//	sort.Strings(expectedMetricNames)
-	//	sort.Strings(actualMetricNames)
-	//
-	//	assert.Equal(t, expectedMetricNames, actualMetricNames)
-	//})
-	//
-	//t.Run("test for Job with healthy status and no OwnerReferences", func(t *testing.T) {
-	//	testJob := setupBasicJob()
-	//	workloadMetricName := "kubernetes.workload.status"
-	//
-	//	actualWFPointsMap := getWFPointsMap(pointsForJob(testJob, testTransform))
-	//	actualWFPoint := actualWFPointsMap[workloadMetricName]
-	//
-	//	assert.Equal(t, workloadReady, actualWFPoint.Value)
-	//})
-	//
-	//t.Run("test for Job with non healthy status and no OwnerReferences", func(t *testing.T) {
-	//	testJob := setupBasicJob()
-	//	workloadMetricName := "kubernetes.workload.status"
-	//	testJob.Status.ReadyReplicas = 0
-	//	testJob.Status.AvailableReplicas = 0
-	//
-	//	actualWFPointsMap := getWFPointsMap(pointsForJob(testJob, testTransform))
-	//	actualWFPoint := actualWFPointsMap[workloadMetricName]
-	//
-	//	assert.Equal(t, workloadNotReady, actualWFPoint.Value)
-	//})
 
+	t.Run("test for Successful Job metrics without OwnerReferences", func(t *testing.T) {
+		testJob := setupJobWithOwner()
+
+		expectedMetricNames := []string{
+			"kubernetes.job.active",
+			"kubernetes.job.failed",
+			"kubernetes.job.succeeded",
+			"kubernetes.job.completions",
+			"kubernetes.job.parallelism",
+		}
+
+		actualWFPoints := pointsForJob(testJob, testTransform)
+		actualMetricNames := getTestWFMetricNames(actualWFPoints)
+
+		assert.Equal(t, len(expectedMetricNames), len(actualMetricNames))
+
+		sort.Strings(expectedMetricNames)
+		sort.Strings(actualMetricNames)
+
+		assert.Equal(t, expectedMetricNames, actualMetricNames)
+	})
 }
