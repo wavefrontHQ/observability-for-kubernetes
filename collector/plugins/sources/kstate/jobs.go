@@ -38,14 +38,21 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 		metricPoint(transforms.Prefix, "job.parallelism", parallelism, now, transforms.Source, tags),
 	}
 
+	var workloadKind, workloadName string
+
 	if job.OwnerReferences == nil || len(job.OwnerReferences) == 0 {
-		workloadTags := buildWorkloadTags("Job", job.Name, job.Namespace, transforms.Tags)
-		status := workloadReady
-		if job.Status.Failed > 0 {
-			status = workloadNotReady
-		}
-		points = append(points, metricPoint(transforms.Prefix, workloadStatusMetric, status, now, transforms.Source, workloadTags))
+		workloadKind = "Job"
+		workloadName = job.Name
+	} else {
+		workloadKind = job.OwnerReferences[0].Kind
+		workloadName = job.OwnerReferences[0].Name
 	}
+	workloadTags := buildWorkloadTags(workloadKind, workloadName, job.Namespace, transforms.Tags)
+	status := workloadReady
+	if job.Status.Failed > 0 {
+		status = workloadNotReady
+	}
+	points = append(points, metricPoint(transforms.Prefix, workloadStatusMetric, status, now, transforms.Source, workloadTags))
 
 	return points
 }
