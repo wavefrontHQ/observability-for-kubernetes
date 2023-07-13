@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Event
+metadata:
+  name: warning-event
+  namespace: collector-targets
+type: Warning
+message: 'test warning'
+reason: 'testing'
+source:
+  component: Test
+firstTimestamp: TIMESTAMP
+involvedObject:
+  uid: d134daad-7afb-4f7a-a2fb-fe8c1ebfc3b3
+  kind: Pod
+  namespace: collector-targets
+  name: prom-example

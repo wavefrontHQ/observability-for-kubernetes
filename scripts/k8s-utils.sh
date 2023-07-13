@@ -45,9 +45,16 @@ function wait_for_cluster_ready() {
 }
 
 function wait_for_namespace_created() {
-	local namespace=$1
+  local namespace=$1
+
   printf "Waiting for namespace \"$1\" to be created ..."
-  while ! kubectl create namespace collector-targets &> /dev/null; do
+
+  if kubectl get namespace "$namespace" &> /dev/null; then
+    echo " done."
+    return 0
+  fi
+
+  while ! kubectl create namespace "$namespace" &> /dev/null; do
     printf "."
     sleep 1
   done
@@ -104,4 +111,44 @@ function get_next_collector_version() {
 
 function get_next_operator_version() {
   "${REPO_ROOT}"/scripts/get-next-operator-version.sh
+}
+
+function start_forward_test_proxy() {
+  local ns=$1
+  local proxy_name=$2
+  local out=$3
+  stop_forward_test_proxy "$out"
+  printf "Start forwarding test-proxy ..."
+  forward_proxy_loop "$ns" "$proxy_name" "$out" & FORWARD_PROXY_PID=$!
+  echo " done."
+}
+
+function forward_proxy_loop() {
+  local ns=$1
+  local proxy_name=$2
+  local out=$3
+  for i in {1..10}; do
+    kubectl --namespace "$ns" port-forward "deploy/${proxy_name}" 8888 &> "$out" || true
+    sleep 1
+  done
+}
+
+function stop_forward_test_proxy() {
+  local out=$1
+  echo "Stop forwarding test-proxy ..."
+  if [[ "$FORWARD_PROXY_PID" ]]; then
+    while kill -0 "$FORWARD_PROXY_PID" &> "$out"; do
+      printf "."
+      kill -9 "$FORWARD_PROXY_PID" &> "$out" || true
+    done
+  fi
+  local forward_process_pid=$(lsof -t -i :8888 || echo "")
+  if [[ "$forward_process_pid" ]]; then
+    while kill -0 "$forward_process_pid" &> "$out"; do
+      printf "."
+      kill -9 "$forward_process_pid" &> "$out" || true
+    done
+  fi
+  echo " done."
+  FORWARD_PROXY_PID=""
 }

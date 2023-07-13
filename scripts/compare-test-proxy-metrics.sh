@@ -1,12 +1,6 @@
 kill $(jobs -p) &>/dev/null || true
-printf "Port forwarding test-proxy control plane ..."
-(
-  while true; do
-    kubectl --namespace "$NS" port-forward "deploy/${PROXY_NAME}" 8888 &> /dev/null || true
-  done
-) &
-echo " done."
-trap 'kill $(jobs -p) &>/dev/null || true' EXIT
+start_forward_test_proxy "$NS" "$PROXY_NAME" /dev/null
+trap 'stop_forward_test_proxy /dev/null' EXIT
 
 RES=$(mktemp)
 
@@ -61,53 +55,12 @@ if [[ $DIFF_COUNT -gt 0 ]]; then
   fi
   red "Extra: $(jq "(.Extra | length)" "$RES")"
   red "FAILED: METRICS OUTPUT DID NOT MATCH"
-  if which pbcopy >/dev/null; then
+  if which pbcopy &>/dev/null; then
     echo "$RES" | pbcopy
   fi
   exit 1
 fi
 
-EVENTS_RESULTS_FILE=$(mktemp)
-while true; do # wait until we get a good connection
-  RES_CODE=$(curl --silent --output "$EVENTS_RESULTS_FILE" --write-out "%{http_code}" "http://localhost:8888/events/assert")
-  [[ $RES_CODE -lt 200 ]] || break
-done
-
-EVENTS_FAIL_COUNT=$(jq "(.BadEventLines | length) + (.ZeroStartMillis | length) + (.MissingAnnotations | length) + (.UnexpectedAnnotations | length) + (.MissingTags | length)" "$EVENTS_RESULTS_FILE")
-
-echo "$EVENTS_RESULTS_FILE"
-if [[ $EVENTS_FAIL_COUNT -gt 0 ]]; then
-  red "BadEventLines: $(jq "(.BadEventLines | length)" "$EVENTS_RESULTS_FILE")"
-  red "ZeroStartMillis: $(jq "(.ZeroStartMillis | length)" "$EVENTS_RESULTS_FILE")"
-  red "MissingAnnotations: $(jq "(.MissingAnnotations | length)" "$EVENTS_RESULTS_FILE")"
-  red "UnexpectedAnnotations: $(jq "(.UnexpectedAnnotations | length)" "$EVENTS_RESULTS_FILE")"
-  red "MissingTags: $(jq "(.MissingTags | length)" "$EVENTS_RESULTS_FILE")"
-  if which pbcopy >/dev/null; then
-      echo "$EVENTS_RESULTS_FILE" | pbcopy
-    fi
-  exit 1
-fi
-
-EXTERNAL_EVENTS_RESULTS_FILE=$(mktemp)
-while true; do # wait until we get a good connection
-  RES_CODE=$(curl --silent --output "$EXTERNAL_EVENTS_RESULTS_FILE" --write-out "%{http_code}" "http://localhost:8888/events/external/assert")
-  [[ $RES_CODE -lt 200 ]] || break
-done
-
-EXTERNAL_EVENTS_FAIL_COUNT=$(jq "(.BadEventJSONs | length) + (.MissingFields | length) + (.FirstTimestampsMissing | length) + (.LastTimestampsInvalid | length)" "$EXTERNAL_EVENTS_RESULTS_FILE")
-
-echo "$EXTERNAL_EVENTS_RESULTS_FILE"
-if [[ $EXTERNAL_EVENTS_FAIL_COUNT -gt 0 ]]; then
-  red "BadEventJSONs: $(jq "(.BadEventJSONs | length)" "$EXTERNAL_EVENTS_RESULTS_FILE")"
-  red "MissingFields: $(jq "(.MissingFields | length)" "$EXTERNAL_EVENTS_RESULTS_FILE")"
-  red "FirstTimestampsMissing: $(jq "(.FirstTimestampsMissing | length)" "$EXTERNAL_EVENTS_RESULTS_FILE")"
-  red "LastTimestampsInvalid: $(jq "(.LastTimestampsInvalid | length)" "$EXTERNAL_EVENTS_RESULTS_FILE")"
-  if which pbcopy >/dev/null; then
-      echo "$EXTERNAL_EVENTS_RESULTS_FILE" | pbcopy
-    fi
-  exit 1
-fi
-
 green "SUCCEEDED"
 
-kill $(jobs -p) &>/dev/null || true
+stop_forward_test_proxy /dev/null
