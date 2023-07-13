@@ -1,8 +1,9 @@
 package kstate
 
 import (
-	batchv1 "k8s.io/api/batch/v1"
 	"testing"
+
+	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"

@@ -1,8 +1,9 @@
 package kstate
 
 import (
-	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	"testing"
+
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 
 	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"

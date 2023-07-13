@@ -1,10 +1,11 @@
 package kstate
 
 import (
+	"testing"
+
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	"k8s.io/api/flowcontrol/v1beta2"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"

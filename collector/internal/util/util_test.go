@@ -1,9 +1,10 @@
 package util
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	kube_api "k8s.io/api/core/v1"
-	"testing"
 )
 
 func TestGetNodeRole(t *testing.T) {

@@ -2,10 +2,11 @@ package kstate
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
-	appsv1 "k8s.io/api/apps/v1"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 

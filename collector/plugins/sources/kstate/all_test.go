@@ -1,6 +1,8 @@
 package kstate
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
@@ -8,7 +10,6 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	"testing"
 )
 
 type nilTest struct {
