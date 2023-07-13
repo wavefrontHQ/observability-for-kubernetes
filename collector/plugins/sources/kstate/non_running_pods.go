@@ -97,6 +97,7 @@ func buildPodTerminatingMetrics(pod *v1.Pod, sharedTags map[string]string, trans
 	tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePod
 	tags[metrics.LabelPodId.Key] = string(pod.UID)
 	tags["DeletionTimestamp"] = pod.DeletionTimestamp.Format(time.RFC3339)
+	tags["reason"] = "Terminating"
 
 	for _, condition := range pod.Status.Conditions {
 		if condition.Type == v1.PodScheduled && condition.Status == "False" {
