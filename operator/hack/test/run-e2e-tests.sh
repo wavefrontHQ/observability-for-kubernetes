@@ -149,8 +149,8 @@ function run_proxy_checks() {
 function run_k8s_events_checks() {
   wait_for_cluster_ready
   sleep 3
-  kubectl --namespace "$NS" port-forward "deploy/test-proxy" 8888 &
-  trap 'kill $(jobs -p) &>/dev/null || true' EXIT
+  start_forward_test_proxy "observability-system" "test-proxy" /dev/null
+  trap 'stop_forward_test_proxy /dev/null' EXIT
 
   "$REPO_ROOT/scripts/deploy/trigger-events.sh"
 
@@ -158,7 +158,7 @@ function run_k8s_events_checks() {
   local external_event_count=0
   for i in {1..5}; do
     while true; do # wait until we get a good connection
-      RES_CODE=$(curl --silent --output "$external_events_results_file" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
+      RES_CODE=$(curl --output "$external_events_results_file" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
       [[ $RES_CODE -lt 200 ]] || break
     done
 
@@ -192,7 +192,7 @@ function run_k8s_events_checks() {
   fi
 
   "$REPO_ROOT/scripts/deploy/uninstall-targets.sh"
-  kill $(jobs -p) &>/dev/null || true
+  stop_forward_test_proxy /dev/null
 
   SLEEP_TIME=10
   PROXY_NAME="test-proxy"
@@ -382,22 +382,13 @@ function run_logging_integration_checks() {
   CURL_ERR=$(mktemp)
   PF_OUT=$(mktemp)
 
-  jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  if [[ "$(uname -s)" != "Darwin" ]]; then
-    netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  fi
-  kill $(jobs -p) &>/dev/null || true
-  sleep 3
-  if [[ "$(uname -s)" != "Darwin" ]]; then
-    netstat -tnul # TODO: Delete me once CI stabilizes from K8SSAAS-1910
-  fi
-  kubectl --namespace "$NS" port-forward deploy/test-proxy 8888 &> "$PF_OUT" &
-  jobs -l # TODO: Delete me once CI stabilizes from K8SSAAS-1910
+  echo "first jobs..."
+  start_forward_test_proxy "observability-system" "test-proxy" "$PF_OUT"
+  trap 'stop_forward_test_proxy "/dev/null"' EXIT
   trap 'clean_up_port_forward' EXIT
-  sleep 3
 
   for _ in {1..10}; do
-    CURL_CODE=$(curl --silent --show-error --output "$CURL_OUT" --stderr "$CURL_ERR" --write-out "%{http_code}" "http://localhost:8888/logs/assert")
+    CURL_CODE=$(curl --silent --show-error --output "$CURL_OUT" --stderr "$CURL_ERR" --write-out "%{http_code}" "http://localhost:8888/logs/assert" || echo "000")
     if [[ $CURL_CODE -eq 200 ]]; then
       break
     fi
@@ -481,7 +472,7 @@ function run_logging_integration_checks() {
   fi
 
   rm -f "$CURL_OUT" "$CURL_ERR" "$PF_OUT" || true
-  kill $(jobs -p) &>/dev/null || true
+  stop_forward_test_proxy "/dev/null"
 
   yellow "Integration test complete. ${receivedLogCount} logs were checked."
 }

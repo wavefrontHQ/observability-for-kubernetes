@@ -1,12 +1,6 @@
 kill $(jobs -p) &>/dev/null || true
-printf "Port forwarding test-proxy control plane ..."
-(
-  while true; do
-    kubectl --namespace "$NS" port-forward "deploy/${PROXY_NAME}" 8888 &> /dev/null || true
-  done
-) &
-echo " done."
-trap 'kill $(jobs -p) &>/dev/null || true' EXIT
+start_forward_test_proxy "$NS" "$PROXY_NAME" /dev/null
+trap 'stop_forward_test_proxy /dev/null' EXIT
 
 RES=$(mktemp)
 
@@ -69,4 +63,4 @@ fi
 
 green "SUCCEEDED"
 
-kill $(jobs -p) &>/dev/null || true
+stop_forward_test_proxy /dev/null
