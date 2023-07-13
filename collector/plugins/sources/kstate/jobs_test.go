@@ -55,8 +55,11 @@ func TestPointsForJob(t *testing.T) {
 		sort.Strings(expectedMetricNames)
 		sort.Strings(actualMetricNames)
 
+		actualWorkloadStatusPoint := actualWFPoints[5].(*wf.Point)
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
-		assert.Equal(t, workloadReady, actualWFPoints[5].(*wf.Point).Value)
+		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
+		assert.Equal(t, testJob.Name, actualWorkloadStatusPoint.Tags()[workloadNameTag])
+		assert.Equal(t, "Job", actualWorkloadStatusPoint.Tags()[workloadKindTag])
 	})
 
 	t.Run("test for Failed Job metrics without OwnerReferences", func(t *testing.T) {
@@ -65,10 +68,9 @@ func TestPointsForJob(t *testing.T) {
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
 		assert.Equal(t, workloadNotReady, actualWFPoints[5].(*wf.Point).Value)
-
 	})
 
-	t.Run("test for Successful Job metrics without OwnerReferences", func(t *testing.T) {
+	t.Run("test for Successful Job metrics with OwnerReferences", func(t *testing.T) {
 		testJob := setupJobWithOwner()
 
 		expectedMetricNames := []string{
@@ -77,6 +79,7 @@ func TestPointsForJob(t *testing.T) {
 			"kubernetes.job.succeeded",
 			"kubernetes.job.completions",
 			"kubernetes.job.parallelism",
+			"kubernetes.workload.status",
 		}
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
@@ -87,6 +90,10 @@ func TestPointsForJob(t *testing.T) {
 		sort.Strings(expectedMetricNames)
 		sort.Strings(actualMetricNames)
 
+		actualWorkloadStatusPoint := actualWFPoints[5].(*wf.Point)
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
+		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
+		assert.Equal(t, "someOwner", actualWorkloadStatusPoint.Tags()[workloadNameTag])
+		assert.Equal(t, "Cronjob", actualWorkloadStatusPoint.Tags()[workloadKindTag])
 	})
 }
