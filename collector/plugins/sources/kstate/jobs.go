@@ -4,7 +4,6 @@
 package kstate
 
 import (
-	"fmt"
 	"reflect"
 	"time"
 
@@ -42,9 +41,7 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 	if job.OwnerReferences == nil || len(job.OwnerReferences) == 0 {
 		workloadTags := buildWorkloadTags("Job", job.Name, job.Namespace, transforms.Tags)
 		status := workloadReady
-		println(fmt.Sprintf("job failures %d", job.Status.Failed))
 		if job.Status.Failed > 0 {
-			println(job.Status.Failed)
 			status = workloadNotReady
 		}
 		points = append(points, metricPoint(transforms.Prefix, workloadStatusMetric, status, now, transforms.Source, workloadTags))
