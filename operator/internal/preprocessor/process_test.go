@@ -163,7 +163,6 @@ func TestProcess(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port 'global', overriding metric tag 'cluster' is disallowed", err.Error())
 	})
-
 }
 
 func TestProcessWavefrontProxyAuth(t *testing.T) {
@@ -353,6 +352,58 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 		err := PreProcess(fakeClient, wfcr)
 		require.Error(t, err)
 		require.Equal(t, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Missing Authentication type. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", err.Error())
+	})
+}
+
+func TestProcessExperimental(t *testing.T) {
+	t.Run("succeeds when K8s events are enabled and secret exists", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"k8s-events-endpoint-token": []byte("ignored"),
+				"token":                     []byte("ignored"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		wfcr.Spec.Experimental.KubernetesEvents.Enable = true
+
+		err := PreProcess(fakeClient, wfcr)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("returns error if K8s events are enabled and secret does not exist", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.Experimental.KubernetesEvents.Enable = true
+
+		err := PreProcess(setup(), wfcr)
+
+		require.Error(t, err)
+		require.Equal(t, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'testWavefrontSecret' was not found", err.Error())
+	})
+
+	t.Run("returns error if K8s events are enabled and data does not exist in secret", func(t *testing.T) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "testWavefrontSecret",
+				Namespace: "testNamespace",
+			},
+			Data: map[string][]byte{
+				"token": []byte("some-token"),
+			},
+		}
+		fakeClient := setup(secret)
+		wfcr := defaultWFCR()
+		wfcr.Spec.Experimental.KubernetesEvents.Enable = true
+
+		err := PreProcess(fakeClient, wfcr)
+
+		require.Error(t, err)
+		require.Equal(t, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'testWavefrontSecret' is missing Data 'k8s-events-endpoint-token'", err.Error())
 	})
 }
 

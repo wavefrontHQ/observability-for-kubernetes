@@ -46,6 +46,11 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 		return err
 	}
 
+	err = preProcessExperimental(client, wfSpec)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -134,6 +139,20 @@ func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) err
 		return err
 	}
 
+	return nil
+}
+
+func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
+	if wfSpec.Experimental.KubernetesEvents.Enable {
+		secret, err := findSecret(client, wfSpec.WavefrontTokenSecret, wfSpec.Namespace)
+		if err != nil {
+			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' was not found", wfSpec.WavefrontTokenSecret)
+		}
+
+		if _, ok := secret.Data["k8s-events-endpoint-token"]; !ok {
+			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' is missing Data 'k8s-events-endpoint-token'", wfSpec.WavefrontTokenSecret)
+		}
+	}
 	return nil
 }
 

@@ -43,7 +43,8 @@ function main() {
   sed -i.bak "s%collector:.*$%collector: ${COLLECTOR_VERSION}%" "${OPERATOR_BUILD_DIR}/wavefront-operator.yaml"
 
   kubectl apply -k ${OPERATOR_BUILD_DIR}
-  kubectl create -n ${NS} secret generic wavefront-secret --from-literal token=${WAVEFRONT_TOKEN} || true
+  kubectl create -n ${NS} secret generic wavefront-secret --from-literal token=${WAVEFRONT_TOKEN} \
+    --from-literal k8s-events-endpoint-token='a-key'|| true
 }
 
 main "$@"

@@ -1368,46 +1368,71 @@ func TestReconcileAutoInstrumentation(t *testing.T) {
 }
 
 func TestReconcileKubernetesEvents(t *testing.T) {
-	t.Run("k8s events only", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+	t.Run("can enable K8s events only", func(t *testing.T) {
+		cr := wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.KubernetesEvents.Enable = true
 			wavefront.Spec.Experimental.KubernetesEvents.ExternalEndpointURL = "https://example.com"
 			wavefront.Spec.DataExport.WavefrontProxy.Enable = false
 			wavefront.Spec.DataCollection.Metrics.Enable = false
 			wavefront.Spec.DataCollection.Logging.Enable = false
-		}), nil)
+		})
+		r, mockKM := componentScenario(cr, nil, &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cr.Spec.WavefrontTokenSecret,
+				Namespace: wftest.DefaultNamespace,
+			},
+			Data: map[string][]byte{
+				"k8s-events-endpoint-token": []byte("ignored"),
+			},
+		})
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
-		require.True(t, mockKM.CollectorServiceAccountContains())
-		require.True(t, mockKM.ClusterCollectorDeploymentContains())
 		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "externalEndpointURL: \"https://example.com\""))
 		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "enableEvents: true"))
 		require.False(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "proxyAddress", "kubeletHttps", "kubernetes_state_source"))
 		require.True(t, mockKM.ConfigMapContains("k8s-events-only-wavefront-collector-config", "events:\n      filters:\n        tagAllowListSets:\n        - type:\n          - \"Warning\"\n        - type:\n          - \"Normal\"\n          kind:\n          - \"Pod\"\n          reason:\n          - \"Backoff\""))
 		require.False(t, mockKM.CollectorConfigMapContains())
 
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: K8S_EVENTS_ENDPOINT_TOKEN"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("key: k8s-events-endpoint-token"))
+		require.True(t, mockKM.CollectorServiceAccountContains())
 		require.False(t, mockKM.NodeCollectorDaemonSetContains())
 		require.False(t, mockKM.LoggingDaemonSetContains())
 		require.False(t, mockKM.ProxyServiceContains())
 		require.False(t, mockKM.ProxyDeploymentContains())
 	})
 
-	t.Run("can enable kubernetes events", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
+	t.Run("can enable K8s events and WF", func(t *testing.T) {
+		cr := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.KubernetesEvents.Enable = true
 			w.Spec.Experimental.KubernetesEvents.ExternalEndpointURL = "https://example.com"
-		}), nil)
+		})
+		r, mockKM := componentScenario(cr, nil, &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cr.Spec.WavefrontTokenSecret,
+				Namespace: wftest.DefaultNamespace,
+			},
+			Data: map[string][]byte{
+				"k8s-events-endpoint-token": []byte("ignored"),
+				"token":                     []byte("ignored"),
+			},
+		})
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
-
 		require.NoError(t, err)
 
+		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \"https://example.com\""))
 		require.True(t, mockKM.CollectorConfigMapContains("enableEvents: false"))
 		require.True(t, mockKM.CollectorConfigMapContains("type: \"external\"\n      enableEvents: true"))
-		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \"https://example.com\""))
 		require.True(t, mockKM.CollectorConfigMapContains("events:\n      filters:\n        tagAllowListSets:\n        - type:\n          - \"Warning\"\n        - type:\n          - \"Normal\"\n          kind:\n          - \"Pod\"\n          reason:\n          - \"Backoff\""))
+
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: K8S_EVENTS_ENDPOINT_TOKEN"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("key: k8s-events-endpoint-token"))
+		require.False(t, mockKM.NodeCollectorDaemonSetContains("name: K8S_EVENTS_ENDPOINT_TOKEN"))
+		require.False(t, mockKM.NodeCollectorDaemonSetContains("key: k8s-events-endpoint-token"))
+		require.True(t, mockKM.ProxyDeploymentContains("name: WAVEFRONT_TOKEN", "key: token"))
 	})
 }
 
