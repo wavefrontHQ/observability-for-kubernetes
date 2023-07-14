@@ -12,7 +12,9 @@ RELEASE_VERSION=$(get_next_operator_version)
 
 git checkout .
 
-VERSION=$RELEASE_VERSION$VERSION_POSTFIX make copy-rbac-kustomization-yaml released-kubernetes-yaml
+VERSION=$RELEASE_VERSION$VERSION_POSTFIX
+
+make copy-rbac-kustomization-yaml released-kubernetes-yaml
 cp "${OPERATOR_DIR}"/dev-internal/deploy/wavefront-operator.yaml "${OPERATOR_DIR}"/build/wavefront-operator.yaml
 
 current_version="$(get_next_collector_version)"
@@ -20,6 +22,20 @@ image_version="${current_version}${VERSION_POSTFIX}"
 
 sed -i.bak "s%collector:.*$%collector: ${image_version}%" "${OPERATOR_DIR}"/build/wavefront-operator.yaml
 
+# helm
+cp "${OPERATOR_DIR}"/build/wavefront-operator.yaml "${REPO_ROOT}"/helm-charts/aria-operator/templates/aria-operator.yaml
+pushd "$REPO_ROOT"/helm-charts
+sed -i.bak \
+  -e "s/\(version:.*\)/\1-$GIT_BRANCH/g" \
+  -e "s/appVersion:.*\$/appVersion: \"$VERSION\"/g" \
+  aria-operator/Chart.yaml
+helm package aria-operator
+helm push aria-operator-*.tgz oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts
+rm aria-operator-*.tgz
+rm aria-operator/Chart.yaml.bak
+popd
+
+# update rc branch
 git checkout .
 git fetch
 git checkout rc
