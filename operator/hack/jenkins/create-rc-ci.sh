@@ -4,6 +4,8 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 OPERATOR_DIR="${REPO_ROOT}/operator"
 
+cd "$OPERATOR_DIR"
+
 git config --global user.email "svc.wf-jenkins@vmware.com"
 git config --global user.name "svc.wf-jenkins"
 git remote set-url origin https://${TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git
@@ -36,7 +38,7 @@ rm aria-operator/Chart.yaml.bak
 popd
 
 # update rc branch
-git checkout .
+git checkout ../
 git fetch
 git checkout rc
 git reset --hard origin/rc
