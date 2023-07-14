@@ -29,8 +29,8 @@ sed -i.bak \
   -e "s/\(version:.*\)/\1-$GIT_BRANCH/g" \
   -e "s/appVersion:.*\$/appVersion: \"$VERSION\"/g" \
   aria-operator/Chart.yaml
-helm package aria-operator
-helm push aria-operator-*.tgz oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts
+"${REPO_ROOT}"/bin/helm package aria-operator
+"${REPO_ROOT}"/bin/helm push aria-operator-*.tgz oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts
 rm aria-operator-*.tgz
 rm aria-operator/Chart.yaml.bak
 popd

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+HELM_VERSION=3.12.2
+HELM_OS=$(go env GOOS)
+HELM_ARCH=$(go env GOARCH)
+
+if [[ ! -f .cache/helm ]] || ! .cache/helm version | grep "$HELM_VERSION" &> /dev/null; then
+    printf "downloading helm %s ..." "$HELM_VERSION"
+    mkdir -p .cache
+    curl --silent "https://get.helm.sh/helm-v$HELM_VERSION-$HELM_OS-$HELM_ARCH.tar.gz" | tar xz --to-stdout "$HELM_OS-$HELM_ARCH"/helm > .cache/helm
+    chmod +x .cache/helm
+    echo " done."
+fi
+
+# shellcheck disable=SC2086
+.cache/helm $*
