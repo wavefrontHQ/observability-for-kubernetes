@@ -18,9 +18,12 @@ wait_for_namespace_created collector-targets
 
 wait_for_namespaced_resource_created collector-targets serviceaccount/default
 
-kubectl apply -f prom-example.yaml >/dev/null
-kubectl apply -f exclude-prom-example.yaml >/dev/null
-kubectl apply -f cpu-throttled-prom-example.yaml >/dev/null
+if [ "${OPERATOR_TEST}" != "true" ]; then
+  kubectl apply -f prom-example.yaml >/dev/null
+  kubectl apply -f exclude-prom-example.yaml >/dev/null
+  kubectl apply -f cpu-throttled-prom-example.yaml >/dev/null
+fi
+
 kubectl apply -f pending-pod-cannot-be-scheduled.yaml >/dev/null
 kubectl apply -f pending-pod-image-cannot-be-loaded.yaml >/dev/null
 kubectl apply -f running-pod-crash-loop-backoff.yaml >/dev/null
@@ -54,10 +57,12 @@ MEMCACHED_CHART_VERSION='6.3.14'
 MEMCACHED_RS=$(kubectl get rs -n collector-targets | awk '/memcached-release/ {print $1}')
 kubectl autoscale rs -n collector-targets ${MEMCACHED_RS} --max=5 --cpu-percent=80
 
-"$REPO_ROOT"/bin/helm upgrade --install mysql-release bitnami/mysql \
---set auth.rootPassword=password123 \
---set primary.persistence.size=500Mi \
---set image.debug=true \
---namespace collector-targets >/dev/null
+if [ "${OPERATOR_TEST}" != "true" ]; then
+  "$REPO_ROOT"/bin/helm upgrade --install mysql-release bitnami/mysql \
+  --set auth.rootPassword=password123 \
+  --set primary.persistence.size=500Mi \
+  --set image.debug=true \
+  --namespace collector-targets >/dev/null
+fi
 
 echo "Finished deploying targets"

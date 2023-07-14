@@ -204,7 +204,7 @@ function run_k8s_events_checks() {
 }
 
 function run_metrics_checks() {
-  "$REPO_ROOT/scripts/deploy/deploy-targets.sh"
+  OPERATOR_TEST=true "$REPO_ROOT/scripts/deploy/deploy-targets.sh"
   wait_for_cluster_ready
 
   PROXY_NAME="test-proxy"
