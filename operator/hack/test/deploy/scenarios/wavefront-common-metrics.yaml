@@ -10,7 +10,7 @@ spec:
   dataCollection:
     metrics:
       enable: true
-      defaultCollectionInterval: 10s
+      defaultCollectionInterval: 15s
   dataExport:
     externalWavefrontProxy:
       url: test-proxy:2878
@@ -45,9 +45,9 @@ spec:
                 - amd64
       containers:
       - name: test-proxy
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:test-2.9.4
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:test-2.9.5
         imagePullPolicy: Always
-        command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "debug" ]
+        command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info" ]
         ports:
         - name: proxy
           containerPort: 2878
