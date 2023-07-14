@@ -138,7 +138,6 @@ func serveMetrics(proxylines *broadcaster.Broadcaster[string]) {
 
 	cm := cmux.New(listener)
 
-	log.Info("matching grpc content")
 	httpL := cm.Match(cmux.HTTP1())
 	grpcL := cm.Match(cmux.Any())
 
