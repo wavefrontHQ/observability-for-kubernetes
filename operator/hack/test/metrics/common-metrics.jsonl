@@ -412,7 +412,7 @@
 {"Name":"kubernetes.statefulset.updated_replicas","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","statefulset":"mysql-release"}}
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"kube-system","source":"","workload_name":"kube-proxy","workload_kind":"DaemonSet"}}
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"observability-system","source":"","workload_name":"wavefront-collector","workload_kind":""}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"memcached-release","workload_kind":"Deployment"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"observability-system","source":"","workload_name":"memcached-release","workload_kind":"Deployment"}}
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"mysql-release","workload_kind":"StatefulSet"}}
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"replicaset-no-owner","workload_kind":"ReplicaSet"}}
 {"Name":"~wavefront.kubernetes.collector.version","Tags":{"cluster":"","source":"","k8s_provider":"","k8s_version":"","installation_method":"","stats_prefix":""}}
