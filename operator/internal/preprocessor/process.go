@@ -162,6 +162,14 @@ func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.WavefrontTokenAuthType
 		return nil
 	}
+
+	secretHashBytes, err := json.Marshal(secret)
+	if err != nil {
+		return err
+	}
+
+	wfSpec.DataExport.WavefrontProxy.SecretHash = hashValue(secretHashBytes)
+
 	_, wavefrontTokenAuth := secret.Data["token"]
 	_, cspTokenAuth := secret.Data["csp-api-token"]
 	_, cspAppID := secret.Data["csp-app-id"]
