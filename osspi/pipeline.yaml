@@ -112,18 +112,6 @@ jobs:
             PRODUCT: Wavefront_K8_Operator
             VERSION: Latest
             APPEND: true
-        - task: osspi-scan-docker-operator
-          file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
-          input_mapping:
-            ci_repo: observability-for-kubernetes
-          params:
-            IMAGE: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator
-            TAG: 2.10.0-alpha-7aa91e3f
-            API_KEY: ((osspi.osm-prod-api-key))
-            USERNAME: ((osspi.osm-prod-username))
-            PRODUCT: Wavefront_K8_Operator
-            VERSION: Latest
-            APPEND: true
   - name: osspi-scan-wavefront-kubernetes-adapter
     serial: true
     plan:
