@@ -248,6 +248,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "pod1", point.Tags()["pod_name"])
 		assert.Equal(t, "testLabelName", point.Tags()["label.name"])
 		assert.Equal(t, "none", point.Tags()["nodename"])
+		assert.Equal(t, "Terminating", point.Tags()["reason"])
 	})
 
 	t.Run("test for terminating pod with nodename", func(t *testing.T) {
@@ -263,6 +264,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "pod1", point.Tags()["pod_name"])
 		assert.Equal(t, "testLabelName", point.Tags()["label.name"])
 		assert.Equal(t, "some-node", point.Tags()["nodename"])
+		assert.Equal(t, "Terminating", point.Tags()["reason"])
 	})
 
 	t.Run("test for completed pod", func(t *testing.T) {
