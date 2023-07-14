@@ -84,3 +84,24 @@ spec:
     protocol: TCP
   selector:
     app: test-proxy
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: memcached-config
+  namespace: observability-system
+  annotations:
+    wavefront.com/discovery-config: 'true'
+stringData:
+  collector.yaml: |
+    # specify a list of discovery rules (plugins)
+    plugins:
+    # memcached
+    - name: memcached
+      type: telegraf/memcached
+      selectors:
+        images:
+        - 'docker.io/bitnami/memcached:*'
+      port: 11211
+      conf: |
+        servers = ["memcached-release.collector-targets.svc.cluster.local:11211"]
