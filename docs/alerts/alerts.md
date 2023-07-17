@@ -6,6 +6,8 @@ We have alert templates on common Kubernetes issues.
 * [Detect pod stuck in pending](templates/pod-stuck-in-pending.json.tmpl)
 * [Detect pod stuck in terminating](templates/pod-stuck-in-terminating.json.tmpl)
 * [Detect pod backoff event](templates/pod-backoff-event.json.tmpl)
+* [Detect workload with non-ready pods](templates/workload-not-ready.json.tmpl)
+* [Detect pod out-of-memory kills](templates/pod-out-of-memory-kills.json.tmpl)
 
 ## Flags
 

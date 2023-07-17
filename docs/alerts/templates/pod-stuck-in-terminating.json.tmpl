@@ -4,7 +4,7 @@
   "alertSources": [
     {
       "name": "Alert Condition",
-      "query": "(mcount(10m, count(ts(\"kubernetes.pod.terminating\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, pod_name, namespace_name, cluster, DeletionTimestamp)) >= 10)",
+      "query": "(mcount(10m, count(ts(\"kubernetes.pod.terminating\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, pod_name, namespace_name, cluster, DeletionTimestamp, cluster_uuid)) >= 10)",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
@@ -18,9 +18,14 @@
     }
   ],
   "conditions": {
-    "warn": "(mcount(10m, count(ts(\"kubernetes.pod.terminating\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, pod_name, namespace_name, cluster, DeletionTimestamp)) >= 10) >= 1"
+    "warn": "(mcount(10m, count(ts(\"kubernetes.pod.terminating\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, pod_name, namespace_name, cluster, DeletionTimestamp, cluster_uuid)) >= 10) >= 1"
   },
   "displayExpression": "${Display Condition}",
   "minutes": 5,
-  "resolveAfterMinutes": 2
+  "resolveAfterMinutes": 2,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  }
 }
