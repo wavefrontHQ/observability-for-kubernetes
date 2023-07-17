@@ -1,0 +1,11 @@
+apiVersion: wavefront.com/v1alpha1
+kind: Wavefront
+metadata:
+  name: wavefront
+  namespace: observability-system
+spec:
+  clusterName: {{ .Values.clusterName }}
+  experimental:
+    kubernetesEvents:
+      enable: true
+      externalEndpointURL: {{ .Values.k8sEvents.url }}

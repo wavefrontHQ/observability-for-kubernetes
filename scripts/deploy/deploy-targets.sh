@@ -37,9 +37,9 @@ kubectl apply -f jobs.yaml >/dev/null
 
 MEMCACHED_CHART_VERSION='6.3.14'
 
-helm repo add bitnami https://charts.bitnami.com/bitnami >/dev/null || true
-helm repo update >/dev/null || true
-helm upgrade --install memcached-release bitnami/memcached \
+"$REPO_ROOT"/bin/helm repo add bitnami https://charts.bitnami.com/bitnami >/dev/null || true
+"$REPO_ROOT"/bin/helm repo update >/dev/null || true
+"$REPO_ROOT"/bin/helm upgrade --install memcached-release bitnami/memcached \
 --version ${MEMCACHED_CHART_VERSION} \
 --set resources.requests.memory="100Mi",resources.requests.cpu="100m" \
 --set persistence.size=200Mi \
@@ -48,7 +48,7 @@ helm upgrade --install memcached-release bitnami/memcached \
 MEMCACHED_RS=$(kubectl get rs -n collector-targets | awk '/memcached-release/ {print $1}')
 kubectl autoscale rs -n collector-targets ${MEMCACHED_RS} --max=5 --cpu-percent=80
 
-helm upgrade --install mysql-release bitnami/mysql \
+"$REPO_ROOT"/bin/helm upgrade --install mysql-release bitnami/mysql \
 --set auth.rootPassword=password123 \
 --set primary.persistence.size=500Mi \
 --set image.debug=true \
