@@ -508,6 +508,9 @@
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","workload_name":"wavefront-proxy","workload_kind":"Deployment"}}
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"mysql-release","workload_kind":"StatefulSet"}}
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"replicaset-no-owner","workload_kind":"ReplicaSet"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-failure","workload_kind":"Job"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success","workload_kind":"Job"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"hello","workload_kind":"CronJob"}}
 {"Name":"linux.sysctl.fs.aio-max-nr","Tags":{"cluster":"","source":""}}
 {"Name":"linux.sysctl.fs.aio-nr","Tags":{"cluster":"","source":""}}
 {"Name":"linux.sysctl.fs.dentry-age-limit","Tags":{"cluster":"","source":""}}
