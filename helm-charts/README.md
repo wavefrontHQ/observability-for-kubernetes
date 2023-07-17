@@ -22,11 +22,19 @@ helm install aria-hub oci://projects.registry.vmware.com/tanzu_observability/hel
 ```
 
 ## Uninstalling
+Run the following commands in this order.
 
 ```
-helm uninstall aria-hub 
+helm uninstall aria-hub
 
 helm uninstall aria-operator
+```
+If you ran the commands in the wrong order, you may see this error `Error: failed to delete release: aria-hub`. 
+
+If you do, you will need to additionally run the following command before you can reinstall aria-hub:
+
+```
+kubectl delete secret sh.helm.release.v1.aria-hub.v1
 ```
 
 ## Developing
