@@ -511,6 +511,8 @@
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-failure","workload_kind":"Job"}}
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success","workload_kind":"Job"}}
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"hello","workload_kind":"CronJob"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"running-pod","workload_kind":"Pod"}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-image-cannot-be-loaded","workload_kind":"Pod"}}
 {"Name":"linux.sysctl.fs.aio-max-nr","Tags":{"cluster":"","source":""}}
 {"Name":"linux.sysctl.fs.aio-nr","Tags":{"cluster":"","source":""}}
 {"Name":"linux.sysctl.fs.dentry-age-limit","Tags":{"cluster":"","source":""}}

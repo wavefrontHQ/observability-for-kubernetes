@@ -154,5 +154,9 @@ func (converter *pointConverter) addLabelTags(ms *metrics.Set, tags map[string]s
 }
 
 func (converter *pointConverter) cleanMetricName(metricType string, metricName string) string {
-	return converter.prefix + metricType + "." + strings.Replace(metricName, "/", ".", -1)
+	cleanName := converter.prefix
+	if len(metricType) > 0 {
+		cleanName += metricType + "."
+	}
+	return cleanName + strings.Replace(metricName, "/", ".", -1)
 }

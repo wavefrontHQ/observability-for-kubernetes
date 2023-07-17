@@ -42,6 +42,10 @@ func PodKey(namespace, podName string) ResourceKey {
 	return ResourceKey(fmt.Sprintf("namespace:%s/pod:%s", namespace, podName))
 }
 
+func WorkloadStatusPodKey(namespace, podName string) ResourceKey {
+	return ResourceKey(fmt.Sprintf("workloadStatus/namespace:%s/pod:%s", namespace, podName))
+}
+
 func NamespaceKey(namespace string) ResourceKey {
 	return ResourceKey(fmt.Sprintf("namespace:%s", namespace))
 }
