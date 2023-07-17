@@ -143,6 +143,52 @@ func TestPodEnricherHandlesContainerBatches(t *testing.T) {
 	})
 }
 
+func TestPodWorkloadStatus(t *testing.T) {
+	t.Run("Adds workload status metric for pods with no owner", func(t *testing.T) {
+		tc := setup()
+		tc.pod.OwnerReferences = nil
+		tc.workloadCache = testWorkloadCache{
+			workloadName: "pod1",
+			workloadKind: "Pod",
+		}
+		podBasedEnricher := createEnricher(t, tc)
+
+		batch, err := podBasedEnricher.Process(createPodBatch())
+		assert.NoError(t, err)
+
+		expectedPodLabels := map[string]string{
+			"namespace_name": "ns1",
+			"workload_name":  "pod1",
+			"workload_kind":  "Pod",
+		}
+		expectedPodLabelValue := metrics.LabeledValue{
+			Name: "workload/status",
+			Value: metrics.Value{
+				IntValue: 1,
+			},
+		}
+
+		podMs, found := batch.Sets[metrics.WorkloadStatusPodKey("ns1", "pod1")]
+
+		assert.True(t, found)
+		assert.Equal(t, expectedPodLabels, podMs.Labels)
+		assert.Empty(t, podMs.Values)
+		assert.Len(t, podMs.LabeledValues, 1)
+		assert.Equal(t, expectedPodLabelValue, podMs.LabeledValues[0])
+	})
+
+	t.Run("Does not add workload status metric for pods with owner", func(t *testing.T) {
+		tc := setup()
+		podBasedEnricher := createEnricher(t, tc)
+
+		batch, err := podBasedEnricher.Process(createPodBatch())
+		assert.NoError(t, err)
+		_, found := batch.Sets[metrics.WorkloadStatusPodKey("ns1", "pod1")]
+
+		assert.False(t, found)
+	})
+}
+
 func TestPodEnricherHandlesPodBatches(t *testing.T) {
 	tc := setup()
 	podBasedEnricher := createEnricher(t, tc)
@@ -510,6 +556,10 @@ func setup() *enricherTestContext {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "pod1",
 				Namespace: "ns1",
+				OwnerReferences: []metav1.OwnerReference{{
+					Kind: "ReplicaSet",
+					Name: "someReplicaset",
+				}},
 			},
 			Status: kube_api.PodStatus{
 				Phase: kube_api.PodRunning,

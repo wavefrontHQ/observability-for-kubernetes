@@ -34,6 +34,8 @@ kubectl apply -f replicaset-no-owner.yaml >/dev/null
 
 kubectl delete -f jobs.yaml &>/dev/null || true
 kubectl apply -f jobs.yaml >/dev/null
+kubectl delete -f cronjobs.yaml &>/dev/null || true
+kubectl apply -f cronjobs.yaml >/dev/null
 
 MEMCACHED_CHART_VERSION='6.3.14'
 
