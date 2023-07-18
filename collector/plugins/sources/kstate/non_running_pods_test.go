@@ -22,6 +22,10 @@ func setupBasicPod() *v1.Pod {
 			Name:      "pod1",
 			Namespace: "ns1",
 			Labels:    map[string]string{"name": "testLabelName"},
+			OwnerReferences: []metav1.OwnerReference{{
+				Kind: "Deployment",
+				Name: "pod-owner",
+			}},
 		},
 		Spec: v1.PodSpec{
 			NodeName: "node1",
@@ -44,10 +48,6 @@ func setupPendingPod() *v1.Pod {
 			},
 		},
 	}
-	pendingPod.OwnerReferences = []metav1.OwnerReference{{
-		Kind: "Deployment",
-		Name: "pod-owner",
-	}}
 	return pendingPod
 }
 
@@ -56,10 +56,6 @@ func setupTerminatingPod(t *testing.T, deletionTime string, nodeName string) *v1
 	terminatingPod.Status = v1.PodStatus{
 		Phase: v1.PodPending,
 	}
-	terminatingPod.OwnerReferences = []metav1.OwnerReference{{
-		Kind: "Deployment",
-		Name: "pod-owner",
-	}}
 
 	terminatingPod.Spec.NodeName = nodeName
 
@@ -123,10 +119,6 @@ func setupContainerCreatingPod() *v1.Pod {
 			},
 		},
 	}
-	containerCreatingPod.OwnerReferences = []metav1.OwnerReference{{
-		Kind: "Deployment",
-		Name: "pod-owner",
-	}}
 	return containerCreatingPod
 }
 
@@ -171,10 +163,6 @@ func setupCompletedPod() *v1.Pod {
 			},
 		},
 	}
-	completedPod.OwnerReferences = []metav1.OwnerReference{{
-		Kind: "Deployment",
-		Name: "pod-owner",
-	}}
 	return completedPod
 }
 
@@ -220,10 +208,6 @@ func setupFailedPod() *v1.Pod {
 			},
 		},
 	}
-	failedPod.OwnerReferences = []metav1.OwnerReference{{
-		Kind: "Deployment",
-		Name: "pod-owner",
-	}}
 	return failedPod
 }
 
@@ -377,7 +361,6 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
 		expectedWorkloadName := testPod.Name
-		expectedWorkloadKind := "Pod"
 		workloadCache := fakeWorkloadCache{}
 
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
@@ -388,7 +371,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, expectedMetric, podPoint.Metric)
 		assert.Equal(t, workloadNotReady, podPoint.Value)
 		assert.Equal(t, expectedWorkloadName, podPoint.Tags()["workload_name"])
-		assert.Equal(t, expectedWorkloadKind, podPoint.Tags()["workload_kind"])
+		assert.Equal(t, workloadKindPod, podPoint.Tags()["workload_kind"])
 	})
 }
 

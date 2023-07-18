@@ -15,9 +15,6 @@ import (
 
 func setupBasicDeploymentWorkload() *appsv1.Deployment {
 	return &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Deployment",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "basic-deployment-workload",
 			Labels: nil,
@@ -43,10 +40,10 @@ func Test_buildWorkloadStatusMetric(t *testing.T) {
 		numberDesired := 1.0
 		numberReady := 1.0
 
-		testTags := buildWorkloadTags(testDeployment.Kind, testDeployment.Name, "", testTransform.Tags)
+		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", testTransform.Tags)
 
 		assert.Equal(t, "basic-deployment-workload", testTags[workloadNameTag])
-		assert.Equal(t, "Deployment", testTags[workloadKindTag])
+		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
 
 		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, numberDesired, numberReady, timestamp, testTransform.Source, testTags)
 		point := actualWFPoint.(*wf.Point)
@@ -60,10 +57,10 @@ func Test_buildWorkloadStatusMetric(t *testing.T) {
 		numberDesired := 1.0
 		numberReady := 0.0
 
-		testTags := buildWorkloadTags(testDeployment.Kind, testDeployment.Name, "", testTransform.Tags)
+		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", testTransform.Tags)
 
 		assert.Equal(t, "basic-deployment-workload", testTags[workloadNameTag])
-		assert.Equal(t, "Deployment", testTags[workloadKindTag])
+		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
 
 		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, numberDesired, numberReady, timestamp, testTransform.Source, testTags)
 		point := actualWFPoint.(*wf.Point)

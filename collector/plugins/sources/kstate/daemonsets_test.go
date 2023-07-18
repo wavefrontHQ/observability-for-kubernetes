@@ -57,6 +57,7 @@ func Test_pointsForDaemonSet(t *testing.T) {
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindDaemonSet, actualWFPoint.Tags()["workload_kind"])
 	})
 
 	t.Run("test for DaemonSet with non healthy status", func(t *testing.T) {
@@ -69,5 +70,6 @@ func Test_pointsForDaemonSet(t *testing.T) {
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindDaemonSet, actualWFPoint.Tags()["workload_kind"])
 	})
 }

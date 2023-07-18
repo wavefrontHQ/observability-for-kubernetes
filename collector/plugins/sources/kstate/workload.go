@@ -11,6 +11,14 @@ const (
 
 	workloadReady    = float64(1.0)
 	workloadNotReady = float64(0.0)
+
+	workloadKindPod         = "Pod"
+	workloadKindCronJob     = "CronJob"
+	workloadKindJob         = "Job"
+	workloadKindDaemonSet   = "DaemonSet"
+	workloadKindStatefulSet = "StatefulSet"
+	workloadKindReplicaSet  = "ReplicaSet"
+	workloadKindDeployment  = "Deployment"
 )
 
 func buildWorkloadStatusMetric(prefix string, numberDesired float64, numberReady float64, ts int64, source string, tags map[string]string) wf.Metric {
