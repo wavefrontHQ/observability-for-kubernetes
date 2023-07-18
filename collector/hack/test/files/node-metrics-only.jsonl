@@ -8,7 +8,6 @@
 {"Name":"kubernetes.collector.discovery.enabled"}
 ~{"Name":"kubernetes.daemonset.current_scheduled"}
 ~{"Name":"kubernetes.deployment.available_replicas"}
-~{"Name":"kubernetes.workload.status"}
 ~{"Name":"kubernetes.job.active"}
 {"Name":"kubernetes.node.cpu.limit"}
 ~{"Name":"kubernetes.node.info"}
@@ -30,6 +29,8 @@
 ~{"Name":"kubernetes.pv.status.phase"}
 ~{"Name":"kubernetes.pv.info"}
 ~{"Name":"kubernetes.pv.access_mode"}
+~{"Name":"kubernetes.workload.status","Value":"0"}
+{"Name":"kubernetes.workload.status","Value":"1"}
 {"Name":"linux.sysctl.fs.aio-max-nr"}
 {"Name":"mem.available"}
 {"Name":"memcached.accepting.conns"}
