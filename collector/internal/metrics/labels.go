@@ -30,7 +30,6 @@ var (
 	MetricSetTypeNamespace       = "ns"
 	MetricSetTypeNode            = "node"
 	MetricSetTypeCluster         = "cluster"
-	MetricSetTypeWorkload        = "workload"
 
 	LabelCluster = LabelDescriptor{
 		Key:         "cluster",

@@ -44,6 +44,10 @@ func setupPendingPod() *v1.Pod {
 			},
 		},
 	}
+	pendingPod.OwnerReferences = []metav1.OwnerReference{{
+		Kind: "Deployment",
+		Name: "pod-owner",
+	}}
 	return pendingPod
 }
 
@@ -52,6 +56,10 @@ func setupTerminatingPod(t *testing.T, deletionTime string, nodeName string) *v1
 	terminatingPod.Status = v1.PodStatus{
 		Phase: v1.PodPending,
 	}
+	terminatingPod.OwnerReferences = []metav1.OwnerReference{{
+		Kind: "Deployment",
+		Name: "pod-owner",
+	}}
 
 	terminatingPod.Spec.NodeName = nodeName
 
@@ -115,6 +123,10 @@ func setupContainerCreatingPod() *v1.Pod {
 			},
 		},
 	}
+	containerCreatingPod.OwnerReferences = []metav1.OwnerReference{{
+		Kind: "Deployment",
+		Name: "pod-owner",
+	}}
 	return containerCreatingPod
 }
 
@@ -159,6 +171,10 @@ func setupCompletedPod() *v1.Pod {
 			},
 		},
 	}
+	completedPod.OwnerReferences = []metav1.OwnerReference{{
+		Kind: "Deployment",
+		Name: "pod-owner",
+	}}
 	return completedPod
 }
 
@@ -204,6 +220,10 @@ func setupFailedPod() *v1.Pod {
 			},
 		},
 	}
+	failedPod.OwnerReferences = []metav1.OwnerReference{{
+		Kind: "Deployment",
+		Name: "pod-owner",
+	}}
 	return failedPod
 }
 
@@ -350,6 +370,25 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		containerMetric := actualWFPoints[1].(*wf.Point)
 		assert.Equal(t, "some-workload-name", containerMetric.Tags()["workload_name"])
 		assert.Equal(t, "some-workload-kind", containerMetric.Tags()["workload_kind"])
+	})
+
+	t.Run("non-running pods without owner references should have workload.status metric", func(t *testing.T) {
+		testPod := setupFailedPod()
+		testPod.OwnerReferences = nil
+		expectedMetric := testTransform.Prefix + workloadStatusMetric
+		expectedWorkloadName := testPod.Name
+		expectedWorkloadKind := "Pod"
+		workloadCache := fakeWorkloadCache{}
+
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
+		assert.NotNil(t, actualWFPoints)
+		assert.Greater(t, len(actualWFPoints), 0)
+
+		podPoint := getWFPointsMap(actualWFPoints)[expectedMetric]
+		assert.Equal(t, expectedMetric, podPoint.Metric)
+		assert.Equal(t, workloadNotReady, podPoint.Value)
+		assert.Equal(t, expectedWorkloadName, podPoint.Tags()["workload_name"])
+		assert.Equal(t, expectedWorkloadKind, podPoint.Tags()["workload_kind"])
 	})
 }
 
