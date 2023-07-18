@@ -41,7 +41,7 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 	var workloadKind, workloadName string
 
 	if job.OwnerReferences == nil || len(job.OwnerReferences) == 0 {
-		workloadKind = "Job"
+		workloadKind = workloadKindJob
 		workloadName = job.Name
 	} else {
 		workloadKind = job.OwnerReferences[0].Kind

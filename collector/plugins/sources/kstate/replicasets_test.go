@@ -82,6 +82,7 @@ func Test_pointsForReplicaSet(t *testing.T) {
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindReplicaSet, actualWFPoint.Tags()["workload_kind"])
 	})
 
 	t.Run("test for ReplicaSet with non healthy status and no OwnerReferences", func(t *testing.T) {
@@ -94,6 +95,7 @@ func Test_pointsForReplicaSet(t *testing.T) {
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindReplicaSet, actualWFPoint.Tags()["workload_kind"])
 	})
 
 }

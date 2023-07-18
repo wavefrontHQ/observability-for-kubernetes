@@ -37,7 +37,7 @@ func TestPointsForJob(t *testing.T) {
 
 	t.Run("test for Successful Job metrics without OwnerReferences", func(t *testing.T) {
 		testJob := setupBasicJob()
-		expectedWorkloadKindTag := "Job"
+		expectedWorkloadKindTag := workloadKindJob
 
 		expectedMetricNames := []string{
 			"kubernetes.job.active",
@@ -66,7 +66,7 @@ func TestPointsForJob(t *testing.T) {
 	t.Run("test for Failed Job metrics without OwnerReferences", func(t *testing.T) {
 		testJob := setupBasicJob()
 		testJob.Status.Failed = 1
-		expectedWorkloadKindTag := "Job"
+		expectedWorkloadKindTag := workloadKindJob
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
 		actualWorkloadStatusPoint := actualWFPoints[5].(*wf.Point)
@@ -106,7 +106,7 @@ func TestPointsForJob(t *testing.T) {
 	t.Run("test for Failed Job metrics with OwnerReferences", func(t *testing.T) {
 		testJob := setupJobWithOwner()
 		testJob.Status.Failed = 1
-		expectedWorkloadKindTag := "CronJob"
+		expectedWorkloadKindTag := workloadKindCronJob
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
 		actualWorkloadStatusPoint := actualWFPoints[5].(*wf.Point)

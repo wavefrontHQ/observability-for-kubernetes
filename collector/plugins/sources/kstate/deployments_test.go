@@ -54,6 +54,7 @@ func Test_pointsForDeployment(t *testing.T) {
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindDeployment, actualWFPoint.Tags()["workload_kind"])
 	})
 
 	t.Run("test for Deployment workload with non healthy status", func(t *testing.T) {
@@ -66,5 +67,6 @@ func Test_pointsForDeployment(t *testing.T) {
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindDeployment, actualWFPoint.Tags()["workload_kind"])
 	})
 }
