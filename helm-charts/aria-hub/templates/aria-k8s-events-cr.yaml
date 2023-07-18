@@ -5,6 +5,17 @@ metadata:
   namespace: observability-system
 spec:
   clusterName: {{ .Values.clusterName }}
+  dataCollection:
+    metrics:
+      enable: false
+      clusterCollector:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 10Mi
+          limits:
+            cpu: 250m
+            memory: 200Mi
   experimental:
     kubernetesEvents:
       enable: true
