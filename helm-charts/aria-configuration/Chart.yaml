@@ -1,0 +1,6 @@
+apiVersion: v2
+name: aria-configuration
+description: A Helm chart for Aria Integration Configuration
+type: application
+version: 0.1.1
+appVersion: 2.11
