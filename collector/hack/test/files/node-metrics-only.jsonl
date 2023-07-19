@@ -29,8 +29,7 @@
 ~{"Name":"kubernetes.pv.status.phase"}
 ~{"Name":"kubernetes.pv.info"}
 ~{"Name":"kubernetes.pv.access_mode"}
-~{"Name":"kubernetes.workload.status","Value":"0"}
-{"Name":"kubernetes.workload.status","Value":"1"}
+{"Name":"kubernetes.workload.status"}
 {"Name":"linux.sysctl.fs.aio-max-nr"}
 {"Name":"mem.available"}
 {"Name":"memcached.accepting.conns"}
