@@ -178,7 +178,16 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 				metrics.LabelWorkloadKind.Key:  podMs.Labels[metrics.LabelWorkloadKind.Key],
 			},
 		}
-		addLabeledIntMetric(workloadMs, &metrics.MetricWorkloadStatus, nil, 1)
+
+		workloadStatusValue := int64(1)
+		for _, condition := range pod.Status.Conditions {
+			if condition.Type == kube_api.ContainersReady && condition.Status == "False" {
+				workloadStatusValue = 0
+				break
+			}
+		}
+
+		addLabeledIntMetric(workloadMs, &metrics.MetricWorkloadStatus, nil, workloadStatusValue)
 		newMs[metrics.WorkloadStatusPodKey(pod.Namespace, pod.Name)] = workloadMs
 	}
 
