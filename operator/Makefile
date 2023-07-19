@@ -248,9 +248,9 @@ kubernetes-yaml: manifests kustomize $(OPERATOR_BUILD_DIR)
 
 .PHONY: helm-kubernetes-yaml
 helm-kubernetes-yaml: copy-base-patches kubernetes-yaml
-	rm -f $(MONOREPO_DIR)/helm-charts/aria-operator/templates/*.yaml
-	$(KUSTOMIZE) build config/default -o $(MONOREPO_DIR)/helm-charts/aria-operator/templates
-	rm $(MONOREPO_DIR)/helm-charts/aria-operator/templates/v1_namespace_observability-system.yaml
+	rm -f $(MONOREPO_DIR)/helm-charts/aria-integration/templates/*.yaml
+	$(KUSTOMIZE) build config/default -o $(MONOREPO_DIR)/helm-charts/aria-integration/templates
+	rm $(MONOREPO_DIR)/helm-charts/aria-integration/templates/v1_namespace_observability-system.yaml
 
 .PHONY: rc-kubernetes-yaml
 rc-kubernetes-yaml: $(OPERATOR_BUILD_DIR)

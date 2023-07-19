@@ -15,13 +15,13 @@ distributing Charts going forward.
 **Namespace:** the only currently supported namespace for deploying these charts is `observability-system`.
 
 ```
-helm --namespace observability-system install aria-operator \
-  oci://projects.registry.vmware.com/tanzu_observability/helm-charts/aria-operator
+helm --namespace observability-system install aria-integration \
+  oci://projects.registry.vmware.com/tanzu_observability/helm-charts/aria-integration
 
-  helm pull oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts/aria-operator --version 0.1.1-main
+  helm pull oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts/aria-integration --version 0.1.1-main
 
-helm --namespace observability-system install aria-hub \
-  oci://projects.registry.vmware.com/tanzu_observability/helm-charts/aria-hub \
+helm --namespace observability-system install aria-configuration \
+  oci://projects.registry.vmware.com/tanzu_observability/helm-charts/aria-configuration \
   --set clusterName=<CLUSTER_NAME> \
   --set k8sEvents.url=<URL> \
   --set k8sEvents.token=<LEMANS_TOKEN>
@@ -31,35 +31,35 @@ helm --namespace observability-system install aria-hub \
 Run the following commands in this order.
 
 ```
-helm --namespace observability-system uninstall aria-hub
+helm --namespace observability-system uninstall aria-configuration
 
-helm --namespace observability-system uninstall aria-operator
+helm --namespace observability-system uninstall aria-integration
 ```
 
-If you ran the commands in the wrong order, you may see this error `Error: failed to delete release: aria-hub`. 
+If you ran the commands in the wrong order, you may see this error `Error: failed to delete release: aria-configuration`. 
 
-If you do, you will need to additionally run the following command before you can reinstall aria-hub:
+If you do, you will need to additionally run the following command before you can reinstall aria-configuration:
 
 ```
-kubectl --namespace observability-system delete secret sh.helm.release.v1.aria-hub.v1
+kubectl --namespace observability-system delete secret sh.helm.release.v1.aria-configuration.v1
 ```
 
 ## Developing
 
 To package, push, and install a helm chart to Harbor Dev:
 ```
-helm package ./aria-operator
-helm push aria-operator-*.tgz oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts
+helm package ./aria-integration
+helm push aria-integration-*.tgz oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts
 
-helm package ./aria-hub
-helm push aria-hub-*.tgz oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts
+helm package ./aria-configuration
+helm push aria-configuration-*.tgz oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts
 
 # Install the charts auto-published in CI for the `main` branch
-helm --namespace observability-system install aria-operator \
-  oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts/aria-operator --version 0.1.1-main
+helm --namespace observability-system install aria-integration \
+  oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts/aria-integration --version 0.1.1-main
 
-helm --namespace observability-system install aria-hub \
-  oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts/aria-hub --version 0.1.1-main \
+helm --namespace observability-system install aria-configuration \
+  oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts/aria-configuration --version 0.1.1-main \
   --set clusterName=<CLUSTER_NAME> \
   --set k8sEvents.url=<URL> \
   --set k8sEvents.token=<LEMANS_TOKEN>
@@ -67,10 +67,10 @@ helm --namespace observability-system install aria-hub \
 
 To package and push a helm chart to Harbor Prod:
 ```
-helm package ./aria-operator
-helm push aria-operator-*.tgz oci://projects.registry.vmware.com/tanzu_observability/helm-charts
+helm package ./aria-integration
+helm push aria-integration-*.tgz oci://projects.registry.vmware.com/tanzu_observability/helm-charts
 
-helm package ./aria-hub
-helm push aria-hub-*.tgz oci://projects.registry.vmware.com/tanzu_observability/helm-charts
+helm package ./aria-configuration
+helm push aria-configuration-*.tgz oci://projects.registry.vmware.com/tanzu_observability/helm-charts
 ```
 
