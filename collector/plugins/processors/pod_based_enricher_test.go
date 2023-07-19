@@ -151,6 +151,16 @@ func TestPodWorkloadStatus(t *testing.T) {
 			workloadName: "pod1",
 			workloadKind: "Pod",
 		}
+		tc.pod.Status.ContainerStatuses = []kube_api.ContainerStatus{
+			kube_api.ContainerStatus{
+				ContainerID: "container id",
+				Name:        "pod-container",
+				State: kube_api.ContainerState{
+					Running: &kube_api.ContainerStateRunning{},
+				},
+			},
+		}
+
 		podBasedEnricher := createEnricher(t, tc)
 
 		batch, err := podBasedEnricher.Process(createPodBatch())
@@ -165,6 +175,51 @@ func TestPodWorkloadStatus(t *testing.T) {
 			Name: "workload/status",
 			Value: metrics.Value{
 				IntValue: 1,
+			},
+		}
+
+		podMs, found := batch.Sets[metrics.WorkloadStatusPodKey("ns1", "pod1")]
+
+		assert.True(t, found)
+		assert.Equal(t, expectedPodLabels, podMs.Labels)
+		assert.Empty(t, podMs.Values)
+		assert.Len(t, podMs.LabeledValues, 1)
+		assert.Equal(t, expectedPodLabelValue, podMs.LabeledValues[0])
+	})
+
+	t.Run("workload status for a pod with no owner and has a CrashLoopBackOff container", func(t *testing.T) {
+		tc := setup()
+		tc.pod.OwnerReferences = nil
+		tc.workloadCache = testWorkloadCache{
+			workloadName: "pod1",
+			workloadKind: "Pod",
+		}
+		tc.pod.Status.ContainerStatuses = []kube_api.ContainerStatus{
+			kube_api.ContainerStatus{
+				ContainerID: "container id",
+				Name:        "pod-container",
+				State: kube_api.ContainerState{
+					Waiting: &kube_api.ContainerStateWaiting{
+						Message: "back-off 5m0s restarting failed container=pod-container",
+						Reason:  "CrashLoopBackOff",
+					},
+				},
+			},
+		}
+		podBasedEnricher := createEnricher(t, tc)
+
+		batch, err := podBasedEnricher.Process(createPodBatch())
+		assert.NoError(t, err)
+
+		expectedPodLabels := map[string]string{
+			"namespace_name": "ns1",
+			"workload_name":  "pod1",
+			"workload_kind":  "Pod",
+		}
+		expectedPodLabelValue := metrics.LabeledValue{
+			Name: "workload/status",
+			Value: metrics.Value{
+				IntValue: 0,
 			},
 		}
 
