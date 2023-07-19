@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BIN_DIR=$(dirname "$0")
+
+VERSION=latest
+
+if [[ ! -f "$BIN_DIR/.cache/semver-cli" ]]; then
+    printf "downloading semver-cli %s ..." "$VERSION"
+    mkdir -p "$BIN_DIR/.cache"
+    GOBIN="$BIN_DIR/.cache" CGO_ENABLED=0 go install "github.com/davidrjonas/semver-cli@$VERSION"
+    chmod +x "$BIN_DIR/.cache/semver-cli"
+    echo " done."
+fi
+
+# shellcheck disable=SC2086
+"$BIN_DIR"/.cache/semver-cli $*

@@ -17,7 +17,7 @@ pipeline {
       steps {
         withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
           sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-          sh 'cd operator && make semver-cli'
+          sh 'cd operator'
         }
       }
     }

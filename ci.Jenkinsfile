@@ -61,7 +61,7 @@ pipeline {
           steps {
             withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
                sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
-               sh 'cd collector && make semver-cli'
+               sh 'cd collector'
                sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
                sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
             }
@@ -85,7 +85,7 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli clean-build'
+            sh 'cd operator && make clean-build'
             sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
             sh 'cd operator && make docker-xplatform-build'
             sh 'cd operator && ./hack/jenkins/create-rc-ci.sh'
@@ -280,7 +280,7 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli'
+            sh 'cd operator'
             lock("integration-test-gke") {
               sh 'cd operator && make gke-connect-to-cluster'
               sh 'cd operator && make clean-cluster'
@@ -306,7 +306,7 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli'
+            sh 'cd operator'
             lock("integration-test-eks") {
               sh 'cd operator && make target-eks'
               sh 'cd operator && make clean-cluster'
@@ -327,7 +327,7 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli'
+            sh 'cd operator'
             lock("integration-test-aks") {
               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
                 sh 'cd operator && kubectl config use k8po-ci'

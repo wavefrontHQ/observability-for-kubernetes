@@ -2,6 +2,7 @@
 set -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
+BIN_DIR="$REPO_ROOT/bin"
 cd "${REPO_ROOT}"
 
 function check_required_argument() {
@@ -36,7 +37,5 @@ done
 
 check_required_argument "${VERSION}" "-v <VERSION> is required"
 check_required_argument "${BUMP_COMPONENT}" "-s <BUMP_COMPONENT> is required"
-
-make -s semver-cli
 
 semver-cli inc "$BUMP_COMPONENT" "$VERSION"

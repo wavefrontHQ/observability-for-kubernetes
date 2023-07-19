@@ -6,14 +6,7 @@ GOPATH?=$(or $(shell go env GOPATH),$(HOME)/go)
 GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
 
-SEMVER_CLI_BIN:=$(or $(shell which semver-cli),$(GOPATH)/bin/semver-cli)
 GO_IMPORTS_BIN:=$(or $(shell which goimports),$(GOPATH)/bin/goimports)
-
-.PHONY: semver-cli
-semver-cli: $(SEMVER_CLI_BIN)
-
-$(SEMVER_CLI_BIN):
-	cd $(MONOREPO_DIR); CGO_ENABLED=0 go install github.com/davidrjonas/semver-cli@latest
 
 $(GO_IMPORTS_BIN):
 	cd $(MONOREPO_DIR); CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest

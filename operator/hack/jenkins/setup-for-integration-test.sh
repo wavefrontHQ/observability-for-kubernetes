@@ -78,10 +78,3 @@ if ! [ -x "$(command -v crane)" ]; then
   | sudo tee /usr/local/bin/crane >/dev/null
   sudo chmod +x /usr/local/bin/crane
 fi
-
-#
-# semver cli
-#
-git config --global http.sslVerify false
-make semver-cli
-git config --global http.sslVerify true
