@@ -37,8 +37,8 @@ metadata:
   name: job-success
   namespace: collector-targets
 spec:
-  completions: 1
-  parallelism: 1
+  completions: 2
+  parallelism: 2
   backoffLimit: 2
   template:
     metadata:
@@ -59,3 +59,37 @@ spec:
               cpu: 200m
               memory: 200Mi
       restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-parallel-failure
+  namespace: collector-targets
+spec:
+  completions: 3
+  parallelism: 2
+  backoffLimit: 1
+  template:
+    metadata:
+      name: job-parallel-failure
+      labels:
+        name: jobs
+        exclude-me: "true"
+    spec:
+      hostNetwork: true
+      containers:
+      - name: hello
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+        args:
+        - /bin/sh
+        - -c
+        - EXIT_CODE=$(( $RANDOM % 2 > 0));date; echo Am I down; exit $EXIT_CODE
+        resources:
+          requests:
+            cpu: 50m
+            memory: 20Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi
+      restartPolicy: OnFailure
+

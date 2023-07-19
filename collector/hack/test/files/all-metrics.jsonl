@@ -516,6 +516,7 @@
 {"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-cannot-be-scheduled","workload_kind":"Pod"}}
 {"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-crash-loop-backoff","workload_kind":"Pod"}}
 {"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-image-cannot-be-loaded","workload_kind":"Pod"}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-crash-loop-backoff","workload_kind":"Pod"}}
 {"Name":"linux.sysctl.fs.aio-max-nr","Tags":{"cluster":"","source":""}}
 {"Name":"linux.sysctl.fs.aio-nr","Tags":{"cluster":"","source":""}}
 {"Name":"linux.sysctl.fs.dentry-age-limit","Tags":{"cluster":"","source":""}}
