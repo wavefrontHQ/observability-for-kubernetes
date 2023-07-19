@@ -15,12 +15,10 @@ distributing Charts going forward.
 **Namespace:** the only currently supported namespace for deploying these charts is `observability-system`.
 
 ```
-helm --namespace observability-system install aria-integration \
+helm install aria-integration --create-namespace --namespace observability-system \
   oci://projects.registry.vmware.com/tanzu_observability/helm-charts/aria-integration
 
-  helm pull oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts/aria-integration --version 0.1.1-main
-
-helm --namespace observability-system install aria-configuration \
+helm install aria-configuration --namespace observability-system \
   oci://projects.registry.vmware.com/tanzu_observability/helm-charts/aria-configuration \
   --set clusterName=<CLUSTER_NAME> \
   --set k8sEvents.url=<URL> \
@@ -31,17 +29,19 @@ helm --namespace observability-system install aria-configuration \
 Run the following commands in this order.
 
 ```
-helm --namespace observability-system uninstall aria-configuration
+helm uninstall aria-configuration --namespace observability-system
 
-helm --namespace observability-system uninstall aria-integration
+helm uninstall aria-integration --namespace observability-system
+
+kubectl delete namespace observability-system
 ```
 
 If you ran the commands in the wrong order, you may see this error `Error: failed to delete release: aria-configuration`. 
 
-If you do, you will need to additionally run the following command before you can reinstall aria-configuration:
+If you do, you can delete the `observability-system` namespace to clean up:
 
 ```
-kubectl --namespace observability-system delete secret sh.helm.release.v1.aria-configuration.v1
+kubectl delete namespace observability-system
 ```
 
 ## Developing
@@ -55,11 +55,11 @@ helm package ./aria-configuration
 helm push aria-configuration-*.tgz oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts
 
 # Install the charts auto-published in CI for the `main` branch
-helm --namespace observability-system install aria-integration \
+helm install aria-integration --create-namespace --namespace observability-system \
   oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts/aria-integration --version 0.1.1-main
 
-helm --namespace observability-system install aria-configuration \
-  oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts/aria-configuration --version 0.1.1-main \
+helm install aria-configuration --namespace observability-system \
+  oci://projects.registry.vmware.com/tanzu_observability_keights_saas/helm-charts/aria-configuration --version 0.1.1 \
   --set clusterName=<CLUSTER_NAME> \
   --set k8sEvents.url=<URL> \
   --set k8sEvents.token=<LEMANS_TOKEN>
