@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -19,6 +18,8 @@ func setupBasicJob() *batchv1.Job {
 		Spec: batchv1.JobSpec{},
 		Status: batchv1.JobStatus{
 			Succeeded: 1,
+			Failed:    0,
+			Active:    0,
 		},
 	}
 }
@@ -34,11 +35,10 @@ func setupJobWithOwner() *batchv1.Job {
 
 func TestPointsForJob(t *testing.T) {
 	testTransform := setupWorkloadTransform()
+	workloadStatusMetricName := testTransform.Prefix + workloadStatusMetric
 
-	t.Run("test for Successful Job metrics without OwnerReferences", func(t *testing.T) {
+	t.Run("test for Job metrics", func(t *testing.T) {
 		testJob := setupBasicJob()
-		expectedWorkloadKindTag := workloadKindJob
-
 		expectedMetricNames := []string{
 			"kubernetes.job.active",
 			"kubernetes.job.failed",
@@ -56,62 +56,149 @@ func TestPointsForJob(t *testing.T) {
 		sort.Strings(expectedMetricNames)
 		sort.Strings(actualMetricNames)
 
-		actualWorkloadStatusPoint := actualWFPoints[5].(*wf.Point)
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
+	})
+
+	t.Run("Non-parallel Job without OwnerReferences has a ready workload status", func(t *testing.T) {
+		// For a non-parallel Job, you can leave both .spec.completions and .spec.parallelism unset.
+		// When both are unset, both are defaulted to 1.
+		testJob := setupBasicJob()
+
+		actualWFPoints := pointsForJob(testJob, testTransform)
+		assert.NotNil(t, actualWFPoints)
+		actualWFPointsMap := getWFPointsMap(actualWFPoints)
+		assert.Greater(t, len(actualWFPointsMap), 0)
+
+		actualWorkloadStatusPoint, found := actualWFPointsMap[workloadStatusMetricName]
+		assert.True(t, found)
 		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
 		assert.Equal(t, testJob.Name, actualWorkloadStatusPoint.Tags()[workloadNameTag])
-		assert.Equal(t, expectedWorkloadKindTag, actualWorkloadStatusPoint.Tags()[workloadKindTag])
+		assert.Equal(t, workloadKindJob, actualWorkloadStatusPoint.Tags()[workloadKindTag])
 	})
 
-	t.Run("test for Failed Job metrics without OwnerReferences", func(t *testing.T) {
+	t.Run("Non-parallel Job without OwnerReferences does not have a ready workload status", func(t *testing.T) {
 		testJob := setupBasicJob()
 		testJob.Status.Failed = 1
-		expectedWorkloadKindTag := workloadKindJob
+		testJob.Status.Succeeded = 0
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
-		actualWorkloadStatusPoint := actualWFPoints[5].(*wf.Point)
+		actualWorkloadStatusPoint := getWFPointsMap(actualWFPoints)[workloadStatusMetricName]
 
 		assert.Equal(t, workloadNotReady, actualWorkloadStatusPoint.Value)
-		assert.Equal(t, expectedWorkloadKindTag, actualWorkloadStatusPoint.Tags()[workloadKindTag])
+		assert.Equal(t, workloadKindJob, actualWorkloadStatusPoint.Tags()[workloadKindTag])
 	})
 
-	t.Run("test for Successful Job metrics with OwnerReferences", func(t *testing.T) {
+	t.Run("Non-parallel Job with OwnerReferences has a ready workload status", func(t *testing.T) {
 		testJob := setupJobWithOwner()
-		expectedWorkloadKindTag := "CronJob"
-
-		expectedMetricNames := []string{
-			"kubernetes.job.active",
-			"kubernetes.job.failed",
-			"kubernetes.job.succeeded",
-			"kubernetes.job.completions",
-			"kubernetes.job.parallelism",
-			"kubernetes.workload.status",
-		}
+		expectedOwnerName := "someOwner"
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
-		actualMetricNames := getTestWFMetricNames(actualWFPoints)
+		assert.NotNil(t, actualWFPoints)
+		actualWFPointsMap := getWFPointsMap(actualWFPoints)
+		assert.Greater(t, len(actualWFPointsMap), 0)
 
-		assert.Equal(t, len(expectedMetricNames), len(actualMetricNames))
-
-		sort.Strings(expectedMetricNames)
-		sort.Strings(actualMetricNames)
-
-		actualWorkloadStatusPoint := actualWFPoints[5].(*wf.Point)
-		assert.Equal(t, expectedMetricNames, actualMetricNames)
+		actualWorkloadStatusPoint, found := actualWFPointsMap[workloadStatusMetricName]
+		assert.True(t, found)
 		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
-		assert.Equal(t, "someOwner", actualWorkloadStatusPoint.Tags()[workloadNameTag])
-		assert.Equal(t, expectedWorkloadKindTag, actualWorkloadStatusPoint.Tags()[workloadKindTag])
+		assert.Equal(t, expectedOwnerName, actualWorkloadStatusPoint.Tags()[workloadNameTag])
+		assert.Equal(t, workloadKindCronJob, actualWorkloadStatusPoint.Tags()[workloadKindTag])
 	})
 
-	t.Run("test for Failed Job metrics with OwnerReferences", func(t *testing.T) {
+	t.Run("Non-parallel Job with OwnerReferences does not have a ready workload status", func(t *testing.T) {
 		testJob := setupJobWithOwner()
 		testJob.Status.Failed = 1
-		expectedWorkloadKindTag := workloadKindCronJob
+		testJob.Status.Succeeded = 0
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
-		actualWorkloadStatusPoint := actualWFPoints[5].(*wf.Point)
+		actualWorkloadStatusPoint := getWFPointsMap(actualWFPoints)[workloadStatusMetricName]
 
 		assert.Equal(t, workloadNotReady, actualWorkloadStatusPoint.Value)
-		assert.Equal(t, expectedWorkloadKindTag, actualWorkloadStatusPoint.Tags()[workloadKindTag])
+		assert.Equal(t, workloadKindCronJob, actualWorkloadStatusPoint.Tags()[workloadKindTag])
+	})
+
+	t.Run("Parallel Job with a fixed completion count has a ready workload status", func(t *testing.T) {
+		testJob := setupBasicJob()
+		// For a fixed completion count Job, you should set .spec.completions to the number of completions needed.
+		// You can set .spec.parallelism, or leave it unset, and it will default to 1.
+		testJob.Status.Succeeded = 2
+		completionsCount := 2
+		parallelismCount := 1
+		testJob.Spec.Completions = genericPointer[int32](int32(completionsCount))
+		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
+
+		actualWFPoints := pointsForJob(testJob, testTransform)
+		actualWFPointsMap := getWFPointsMap(actualWFPoints)
+
+		actualJobSucceededPoint := actualWFPointsMap[testTransform.Prefix+"job.succeeded"]
+		actualJobCompletionsPoint := actualWFPointsMap[testTransform.Prefix+"job.completions"]
+		actualJobParallelismPoint := actualWFPointsMap[testTransform.Prefix+"job.parallelism"]
+		assert.Equal(t, float64(testJob.Status.Succeeded), actualJobSucceededPoint.Value)
+		assert.Equal(t, float64(completionsCount), actualJobCompletionsPoint.Value)
+		assert.Equal(t, float64(parallelismCount), actualJobParallelismPoint.Value)
+
+		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
+		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
+	})
+
+	t.Run("Parallel Job with a fixed completion count does not have a ready workload status", func(t *testing.T) {
+		testJob := setupBasicJob()
+		completionsCount := 2
+		parallelismCount := 1
+		testJob.Spec.Completions = genericPointer[int32](int32(completionsCount))
+		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
+
+		actualWFPoints := pointsForJob(testJob, testTransform)
+		actualWFPointsMap := getWFPointsMap(actualWFPoints)
+
+		actualJobSucceededPoint := actualWFPointsMap[testTransform.Prefix+"job.succeeded"]
+		actualJobCompletionsPoint := actualWFPointsMap[testTransform.Prefix+"job.completions"]
+		actualJobParallelismPoint := actualWFPointsMap[testTransform.Prefix+"job.parallelism"]
+		assert.Less(t, actualJobSucceededPoint.Value, actualJobCompletionsPoint.Value)
+		assert.Equal(t, float64(completionsCount), actualJobCompletionsPoint.Value)
+		assert.Equal(t, float64(parallelismCount), actualJobParallelismPoint.Value)
+
+		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
+		assert.Equal(t, workloadNotReady, actualWorkloadStatusPoint.Value)
+	})
+
+	t.Run("Parallel Job with a with a work queue has a ready workload status", func(t *testing.T) {
+		testJob := setupBasicJob()
+		// For a work queue Job, you must leave .spec.completions unset,
+		// and set .spec.parallelism to a non-negative integer.
+		parallelismCount := 2
+		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
+
+		actualWFPoints := pointsForJob(testJob, testTransform)
+		actualWFPointsMap := getWFPointsMap(actualWFPoints)
+
+		actualJobSucceededPoint := actualWFPointsMap[testTransform.Prefix+"job.succeeded"]
+		actualJobCompletionsPoint := actualWFPointsMap[testTransform.Prefix+"job.completions"]
+		actualJobParallelismPoint := actualWFPointsMap[testTransform.Prefix+"job.parallelism"]
+		assert.Negative(t, actualJobCompletionsPoint.Value)
+		assert.Positive(t, actualJobParallelismPoint.Value)
+		assert.Positive(t, actualJobSucceededPoint.Value)
+
+		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
+		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
+	})
+
+	t.Run("Parallel Job with a with a work queue does not have a ready workload status", func(t *testing.T) {
+		testJob := setupBasicJob()
+		testJob.Status.Succeeded = 0
+		parallelismCount := 2
+		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
+
+		actualWFPoints := pointsForJob(testJob, testTransform)
+		actualWFPointsMap := getWFPointsMap(actualWFPoints)
+
+		actualJobSucceededPoint := actualWFPointsMap[testTransform.Prefix+"job.succeeded"]
+		actualJobCompletionsPoint := actualWFPointsMap[testTransform.Prefix+"job.completions"]
+		actualJobParallelismPoint := actualWFPointsMap[testTransform.Prefix+"job.parallelism"]
+		assert.Negative(t, actualJobCompletionsPoint.Value)
+		assert.Positive(t, actualJobParallelismPoint.Value)
+		assert.Zero(t, actualJobSucceededPoint.Value)
+
+		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
+		assert.Equal(t, workloadNotReady, actualWorkloadStatusPoint.Value)
 	})
 }
