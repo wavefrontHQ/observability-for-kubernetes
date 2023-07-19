@@ -1,6 +1,64 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
+  name: job-non-parallel-success
+  namespace: collector-targets
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      name: say-something
+      labels:
+        name: jobs
+        exclude-me: "true"
+    spec:
+      containers:
+      - name: say-something
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+        command: ["echo", "Running a job"]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 20Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi
+      restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-non-parallel-failure
+  namespace: collector-targets
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      name: job-failure
+      labels:
+        name: jobs
+        exclude-me: "true"
+    spec:
+      hostNetwork: true
+      containers:
+      - name: hello
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+        args:
+        - /bin/sh
+        - -c
+        - date; echo I am down; exit 1
+        resources:
+          requests:
+            cpu: 50m
+            memory: 20Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
   name: job-failure
   namespace: collector-targets
 spec:
@@ -92,4 +150,3 @@ spec:
             cpu: 200m
             memory: 200Mi
       restartPolicy: OnFailure
-

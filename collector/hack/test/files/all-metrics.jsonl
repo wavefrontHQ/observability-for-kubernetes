@@ -163,11 +163,11 @@
 {"Name":"kubernetes.hpa.min_replicas","Tags":{"cluster":"","hpa":"","namespace_name": "collector-targets","source":""}}
 {"Name":"kubernetes.job.active","Tags":{"cluster":"","job":"","namespace_name":"","source":""}}
 {"Name":"kubernetes.job.completions","Value":"1","Tags":{"cluster":"","job":"job-failure","namespace_name":"","source":""}}
-{"Name":"kubernetes.job.completions","Value":"1","Tags":{"cluster":"","job":"job-success","namespace_name":"","source":""}}
+{"Name":"kubernetes.job.completions","Value":"2","Tags":{"cluster":"","job":"job-success","namespace_name":"","source":""}}
 {"Name":"kubernetes.job.failed","Value":"0","Tags":{"cluster":"","job":"job-success","namespace_name":"","source":""}}
 {"Name":"kubernetes.job.failed","Tags":{"cluster":"","job":"job-failure","namespace_name":"","source":""}}
 {"Name":"kubernetes.job.parallelism","Tags":{"cluster":"","job":"","namespace_name":"","source":""}}
-{"Name":"kubernetes.job.succeeded","Value":"1","Tags":{"cluster":"","job":"job-success","namespace_name":"","source":""}}
+{"Name":"kubernetes.job.succeeded","Value":"2","Tags":{"cluster":"","job":"job-success","namespace_name":"","source":""}}
 {"Name":"kubernetes.job.succeeded","Value":"0","Tags":{"cluster":"","job":"job-failure","namespace_name":"","source":""}}
 {"Name":"kubernetes.node.cpu.limit","Tags":{"cluster":"","!label.kubernetes.io/arch":"","label.kubernetes.io/os":"linux","nodename":"","source":"","type":"node","node_role":""}}
 {"Name":"kubernetes.node.cpu.node_allocatable","Tags":{"cluster":"","!label.kubernetes.io/arch":"","label.kubernetes.io/os":"linux","nodename":"","source":"","type":"node","node_role":""}}
@@ -508,9 +508,13 @@
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","workload_name":"wavefront-proxy","workload_kind":"Deployment"}}
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"mysql-release","workload_kind":"StatefulSet"}}
 {"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"replicaset-no-owner","workload_kind":"ReplicaSet"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-failure","workload_kind":"Job"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success","workload_kind":"Job"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"hello","workload_kind":"CronJob"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success","workload_kind":"Job"}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-failure","workload_kind":"Job"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-non-parallel-success","workload_kind":"Job"}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-non-parallel-failure","workload_kind":"Job"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-parallel-success","workload_kind":"Job"}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-parallel-failure","workload_kind":"Job"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"hello","workload_kind":"CronJob"}}
 {"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"prom-example","workload_kind":"Pod"}}
 {"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"running-pod","workload_kind":"Pod"}}
 {"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-cannot-be-scheduled","workload_kind":"Pod"}}
