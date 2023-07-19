@@ -135,7 +135,7 @@ function forward_proxy_loop() {
 
 function stop_forward_test_proxy() {
   local out=$1
-  echo "Stop forwarding test-proxy ..."
+  printf "Stop forwarding test-proxy ..."
   if [[ "$FORWARD_PROXY_PID" ]]; then
     while kill -0 "$FORWARD_PROXY_PID" &> "$out"; do
       printf "."
