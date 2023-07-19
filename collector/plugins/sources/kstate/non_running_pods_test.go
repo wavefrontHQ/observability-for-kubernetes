@@ -236,7 +236,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "Unschedulable", point.Tags()["reason"])
 		assert.Equal(t, "none", point.Tags()["nodename"])
 		assert.Equal(t, "0/1 nodes are available: 1 Insufficient memory.", point.Tags()["message"])
-		assert.Equal(t, "some-workload-name", point.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", point.Tags()[workloadNameTag])
 	})
 
 	t.Run("test for terminating pod without nodename", func(t *testing.T) {
@@ -283,7 +283,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, string(v1.PodSucceeded), podPoint.Tags()["phase"])
 		assert.Equal(t, "", podPoint.Tags()["reason"])
 		assert.Equal(t, "node1", podPoint.Tags()["nodename"])
-		assert.Equal(t, "some-workload-name", podPoint.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", podPoint.Tags()[workloadNameTag])
 
 		// check for container metrics
 		containerPoint := actualWFPoints[1].(*wf.Point)
@@ -291,7 +291,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "0", containerPoint.Tags()["exit_code"])
 		assert.Equal(t, "Completed", containerPoint.Tags()["reason"])
 		assert.Equal(t, "terminated", containerPoint.Tags()["status"])
-		assert.Equal(t, "some-workload-name", containerPoint.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", containerPoint.Tags()[workloadNameTag])
 	})
 
 	t.Run("test for failed pod", func(t *testing.T) {
@@ -308,7 +308,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, 255, len(podPoint.Tags()["message"])+len("message")+len("="))
 		assert.Contains(t, podPoint.Tags()["message"], "containers with unready status: [hello]")
 		assert.Equal(t, "node1", podPoint.Tags()["nodename"])
-		assert.Equal(t, "some-workload-name", podPoint.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", podPoint.Tags()[workloadNameTag])
 
 		// check for container metrics
 		containerMetric := actualWFPoints[1].(*wf.Point)
@@ -316,7 +316,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "1", containerMetric.Tags()["exit_code"])
 		assert.Equal(t, "Error", containerMetric.Tags()["reason"])
 		assert.Equal(t, "terminated", containerMetric.Tags()["status"])
-		assert.Equal(t, "some-workload-name", containerMetric.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", containerMetric.Tags()[workloadNameTag])
 	})
 
 	t.Run("test for container creating pod", func(t *testing.T) {
@@ -332,14 +332,14 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "ContainersNotReady", podMetric.Tags()["reason"])
 		assert.Equal(t, "containers with unready status: [wavefront-proxy]", podMetric.Tags()["message"])
 		assert.Equal(t, "node1", podMetric.Tags()["nodename"])
-		assert.Equal(t, "some-workload-name", podMetric.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", podMetric.Tags()[workloadNameTag])
 
 		// check for container metrics
 		containerMetric := actualWFPoints[1].(*wf.Point)
 		assert.Equal(t, float64(util.CONTAINER_STATE_WAITING), containerMetric.Value)
 		assert.Equal(t, "ContainerCreating", containerMetric.Tags()["reason"])
 		assert.Equal(t, "waiting", containerMetric.Tags()["status"])
-		assert.Equal(t, "some-workload-name", containerMetric.Tags()["workload_name"])
+		assert.Equal(t, "some-workload-name", containerMetric.Tags()[workloadNameTag])
 	})
 
 	t.Run("metrics should have workload name and type", func(t *testing.T) {
@@ -348,12 +348,12 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 
 		podMetric := actualWFPoints[0].(*wf.Point)
-		assert.Equal(t, "some-workload-name", podMetric.Tags()["workload_name"])
-		assert.Equal(t, "some-workload-kind", podMetric.Tags()["workload_kind"])
+		assert.Equal(t, "some-workload-name", podMetric.Tags()[workloadNameTag])
+		assert.Equal(t, "some-workload-kind", podMetric.Tags()[workloadKindTag])
 
 		containerMetric := actualWFPoints[1].(*wf.Point)
-		assert.Equal(t, "some-workload-name", containerMetric.Tags()["workload_name"])
-		assert.Equal(t, "some-workload-kind", containerMetric.Tags()["workload_kind"])
+		assert.Equal(t, "some-workload-name", containerMetric.Tags()[workloadNameTag])
+		assert.Equal(t, "some-workload-kind", containerMetric.Tags()[workloadKindTag])
 	})
 
 	t.Run("non-running pods without owner references should have workload.status metric", func(t *testing.T) {
@@ -370,8 +370,8 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		podPoint := getWFPointsMap(actualWFPoints)[expectedMetric]
 		assert.Equal(t, expectedMetric, podPoint.Metric)
 		assert.Equal(t, workloadNotReady, podPoint.Value)
-		assert.Equal(t, expectedWorkloadName, podPoint.Tags()["workload_name"])
-		assert.Equal(t, workloadKindPod, podPoint.Tags()["workload_kind"])
+		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
+		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
 	})
 }
 

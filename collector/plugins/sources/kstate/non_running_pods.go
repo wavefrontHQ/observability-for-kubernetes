@@ -28,8 +28,8 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 
 		workloadName, workloadKind := workloadCache.GetWorkloadForPod(pod)
 		sharedTags := make(map[string]string, len(pod.GetLabels())+2)
-		sharedTags["workload_name"] = workloadName
-		sharedTags["workload_kind"] = workloadKind
+		sharedTags[workloadNameTag] = workloadName
+		sharedTags[workloadKindTag] = workloadKind
 
 		copyLabels(pod.GetLabels(), sharedTags)
 		now := time.Now().Unix()
@@ -44,7 +44,7 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 		// emit workload.status metric for single pods with no owner references
 		if pod.OwnerReferences == nil || len(pod.OwnerReferences) == 0 {
 			workloadTags := buildWorkloadTags(workloadKindPod, pod.Name, pod.Namespace, transforms.Tags)
-			points = append(points, buildWorkloadStatusMetric(transforms.Prefix, 1, 0, now, transforms.Source, workloadTags))
+			points = append(points, buildWorkloadStatusMetric(transforms.Prefix, 0, now, transforms.Source, workloadTags))
 		}
 		return points
 	}

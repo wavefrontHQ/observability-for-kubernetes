@@ -21,12 +21,7 @@ const (
 	workloadKindDeployment  = "Deployment"
 )
 
-func buildWorkloadStatusMetric(prefix string, numberDesired float64, numberReady float64, ts int64, source string, tags map[string]string) wf.Metric {
-	status := workloadNotReady
-	if numberReady == numberDesired {
-		status = workloadReady
-	}
-
+func buildWorkloadStatusMetric(prefix string, status float64, ts int64, source string, tags map[string]string) wf.Metric {
 	return metricPoint(prefix, workloadStatusMetric, status, ts, source, tags)
 }
 

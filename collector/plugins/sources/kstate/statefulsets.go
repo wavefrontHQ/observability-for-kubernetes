@@ -29,8 +29,9 @@ func pointsForStatefulSet(item interface{}, transforms configuration.Transforms)
 	current := float64(statefulset.Status.CurrentReplicas)
 	updated := float64(statefulset.Status.UpdatedReplicas)
 
+	workloadStatus := getWorkloadStatusForStatefulSet(desired, statefulset.Status.ReadyReplicas)
 	workloadTags := buildWorkloadTags(workloadKindStatefulSet, statefulset.Name, statefulset.Namespace, transforms.Tags)
-	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, desired, ready, now, transforms.Source, workloadTags)
+	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags)
 
 	return []wf.Metric{
 		metricPoint(transforms.Prefix, "statefulset.desired_replicas", desired, now, transforms.Source, tags),
@@ -39,4 +40,12 @@ func pointsForStatefulSet(item interface{}, transforms configuration.Transforms)
 		metricPoint(transforms.Prefix, "statefulset.updated_replicas", updated, now, transforms.Source, tags),
 		workloadPoint,
 	}
+}
+
+func getWorkloadStatusForStatefulSet(desiredReplicas float64, readyReplicas int32) float64 {
+	// number of pods created with a Ready Condition match the desired number of replicas
+	if readyReplicas == int32(desiredReplicas) {
+		return workloadReady
+	}
+	return workloadNotReady
 }

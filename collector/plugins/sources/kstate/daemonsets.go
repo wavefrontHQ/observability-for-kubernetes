@@ -29,8 +29,9 @@ func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) [
 	misScheduled := float64(daemonset.Status.NumberMisscheduled)
 	ready := float64(daemonset.Status.NumberReady)
 
+	workloadStatus := getWorkloadStatusForDaemonSet(daemonset.Status.DesiredNumberScheduled, daemonset.Status.NumberAvailable)
 	workloadTags := buildWorkloadTags(workloadKindDaemonSet, daemonset.Name, daemonset.Namespace, transforms.Tags)
-	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, desiredScheduled, ready, now, transforms.Source, workloadTags)
+	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags)
 
 	return []wf.Metric{
 		metricPoint(transforms.Prefix, "daemonset.current_scheduled", currentScheduled, now, transforms.Source, tags),
@@ -39,4 +40,12 @@ func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) [
 		metricPoint(transforms.Prefix, "daemonset.ready", ready, now, transforms.Source, tags),
 		workloadPoint,
 	}
+}
+
+func getWorkloadStatusForDaemonSet(desiredNumberScheduled int32, numberAvailable int32) float64 {
+	// number of desired nodes that have one or more of the daemon pod running and available
+	if numberAvailable == desiredNumberScheduled {
+		return workloadReady
+	}
+	return workloadNotReady
 }
