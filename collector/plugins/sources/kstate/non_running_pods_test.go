@@ -373,6 +373,25 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
 		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
 	})
+
+	// TODO: add integration test
+	t.Run("non-running completed pods without owner references should have workload.status metric", func(t *testing.T) {
+		testPod := setupCompletedPod()
+		testPod.OwnerReferences = nil
+		expectedMetric := testTransform.Prefix + workloadStatusMetric
+		expectedWorkloadName := testPod.Name
+		workloadCache := fakeWorkloadCache{}
+
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
+		assert.NotNil(t, actualWFPoints)
+		assert.Greater(t, len(actualWFPoints), 0)
+
+		podPoint := getWFPointsMap(actualWFPoints)[expectedMetric]
+		assert.Equal(t, expectedMetric, podPoint.Metric)
+		assert.Equal(t, workloadReady, podPoint.Value)
+		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
+		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
+	})
 }
 
 type fakeWorkloadCache struct{}
