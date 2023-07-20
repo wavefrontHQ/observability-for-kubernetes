@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,8 +21,25 @@ func setupBasicJob() *batchv1.Job {
 			Succeeded: 1,
 			Failed:    0,
 			Active:    0,
+			Conditions: []batchv1.JobCondition{{
+				Type:   batchv1.JobComplete,
+				Status: corev1.ConditionTrue,
+			}},
 		},
 	}
+}
+
+func setupFailedJob() *batchv1.Job {
+	job := setupBasicJob()
+	job.Status.Conditions = []batchv1.JobCondition{{
+		Type:    batchv1.JobFailed,
+		Status:  corev1.ConditionTrue,
+		Reason:  "BackoffLimitExceeded",
+		Message: "Job has reached the specified backoff limit",
+	}}
+	job.Status.Failed = 1
+	job.Status.Succeeded = 0
+	return job
 }
 
 func setupJobWithOwner() *batchv1.Job {
@@ -77,9 +95,7 @@ func TestPointsForJob(t *testing.T) {
 	})
 
 	t.Run("Non-parallel Job without OwnerReferences does not have a ready workload status", func(t *testing.T) {
-		testJob := setupBasicJob()
-		testJob.Status.Failed = 1
-		testJob.Status.Succeeded = 0
+		testJob := setupFailedJob()
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
 		actualWorkloadStatusPoint := getWFPointsMap(actualWFPoints)[workloadStatusMetricName]
@@ -106,8 +122,8 @@ func TestPointsForJob(t *testing.T) {
 
 	t.Run("Non-parallel Job with OwnerReferences does not have a ready workload status", func(t *testing.T) {
 		testJob := setupJobWithOwner()
-		testJob.Status.Failed = 1
-		testJob.Status.Succeeded = 0
+		testJob.Status.Conditions[0].Type = batchv1.JobFailed
+		testJob.Status.Failed = 2
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
 		actualWorkloadStatusPoint := getWFPointsMap(actualWFPoints)[workloadStatusMetricName]
@@ -117,12 +133,12 @@ func TestPointsForJob(t *testing.T) {
 	})
 
 	t.Run("Parallel Job with a fixed completion count has a ready workload status", func(t *testing.T) {
-		testJob := setupBasicJob()
 		// For a fixed completion count Job, you should set .spec.completions to the number of completions needed.
 		// You can set .spec.parallelism, or leave it unset, and it will default to 1.
+		testJob := setupBasicJob()
 		testJob.Status.Succeeded = 2
 		completionsCount := 2
-		parallelismCount := 1
+		parallelismCount := 2
 		testJob.Spec.Completions = genericPointer[int32](int32(completionsCount))
 		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
 
@@ -141,9 +157,11 @@ func TestPointsForJob(t *testing.T) {
 	})
 
 	t.Run("Parallel Job with a fixed completion count does not have a ready workload status", func(t *testing.T) {
-		testJob := setupBasicJob()
-		completionsCount := 2
-		parallelismCount := 1
+		testJob := setupFailedJob()
+		testJob.Status.Failed = 5
+		testJob.Status.Succeeded = 3
+		completionsCount := 12
+		parallelismCount := 3
 		testJob.Spec.Completions = genericPointer[int32](int32(completionsCount))
 		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
 
@@ -162,9 +180,10 @@ func TestPointsForJob(t *testing.T) {
 	})
 
 	t.Run("Parallel Job with a with a work queue has a ready workload status", func(t *testing.T) {
-		testJob := setupBasicJob()
 		// For a work queue Job, you must leave .spec.completions unset,
 		// and set .spec.parallelism to a non-negative integer.
+		testJob := setupBasicJob()
+		testJob.Status.Succeeded = 2
 		parallelismCount := 2
 		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
 
@@ -183,8 +202,8 @@ func TestPointsForJob(t *testing.T) {
 	})
 
 	t.Run("Parallel Job with a with a work queue does not have a ready workload status", func(t *testing.T) {
-		testJob := setupBasicJob()
-		testJob.Status.Succeeded = 0
+		testJob := setupFailedJob()
+		testJob.Status.Failed = 5
 		parallelismCount := 2
 		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
+	corev1 "k8s.io/api/core/v1"
 
 	log "github.com/sirupsen/logrus"
 
@@ -40,29 +41,30 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 
 	var workloadKind, workloadName string
 
-	if job.OwnerReferences == nil || len(job.OwnerReferences) == 0 {
+	if len(job.OwnerReferences) == 0 {
 		workloadKind = workloadKindJob
 		workloadName = job.Name
 	} else {
 		workloadKind = job.OwnerReferences[0].Kind
 		workloadName = job.OwnerReferences[0].Name
 	}
+	workloadStatus := getWorkloadStatusForJob(job.Status.Conditions)
 	workloadTags := buildWorkloadTags(workloadKind, workloadName, job.Namespace, transforms.Tags)
-	workloadStatus := getWorkloadStatusForJob(job.Spec.Completions, job.Status.Succeeded)
 	points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
 
 	return points
 }
 
-// When a specified number of successful completions is reached, the Job is complete.
-func getWorkloadStatusForJob(completions *int32, succeeded int32) float64 {
-	// 1. Non-parallel Job (completion count of 1), the Job is complete as soon as its Pod terminates successfully.
-	// 2. Fixed completion count Job (completion count of N > 1), is complete when there are N successful Pods.
-	// 3. Parallel Jobs with a work queue (completions is nil), the success of any pod signals the success of all pods.
-	if completions != nil && *completions == succeeded {
-		return workloadReady
-	} else if completions == nil && succeeded > 0 {
-		return workloadReady
+func getWorkloadStatusForJob(jobConditions []batchv1.JobCondition) float64 {
+	if len(jobConditions) == 0 {
+		return workloadNotReady
+	}
+
+	for _, jobCondition := range jobConditions {
+		// When a specified number of successful completions is reached, the Job is complete.
+		if jobCondition.Type == batchv1.JobComplete && jobCondition.Status == corev1.ConditionTrue {
+			return workloadReady
+		}
 	}
 	return workloadNotReady
 }

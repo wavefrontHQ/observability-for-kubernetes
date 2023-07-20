@@ -169,7 +169,7 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 	podMs.Labels[metrics.LabelWorkloadKind.Key] = workloadKind
 
 	// Add workload status metric for pods with no owner references
-	if pod.OwnerReferences == nil || len(pod.OwnerReferences) == 0 {
+	if len(pod.OwnerReferences) == 0 {
 		pbe.addWorkloadStatusMetric(podMs, pod, newMs)
 	}
 
