@@ -659,7 +659,9 @@ function main() {
     run_test "basic" "health" "static_analysis"
   fi
   if [[ " ${tests_to_run[*]} " =~ " common-metrics " ]]; then
-    run_test "common-metrics" "common-metrics-check"
+#    run_test "common-metrics" "proxy"
+    run_test "common-metrics" "common-metrics-check" "proxy"
+#    TODO real proxy to see what's actually missing if necessary
   fi
   if [[ " ${tests_to_run[*]} " =~ " advanced " ]]; then
     run_test "advanced" "health" "test_wavefront_metrics" "logging" "proxy"
