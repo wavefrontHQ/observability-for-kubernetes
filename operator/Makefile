@@ -31,7 +31,7 @@ OBSERVABILITY_FOR_KUBERNETES_HEADER=-H "Authorization: token $(TOKEN)"
 endif
 
 MONOREPO_DIR=$(shell git rev-parse --show-toplevel)
-REPO_DIR=$(shell git rev-parse --show-toplevel)/operator
+OPERATOR_DIR=$(shell git rev-parse --show-toplevel)/operator
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -179,17 +179,17 @@ endif
 copy-base-patches:
 	cp config/manager/patches-base.yaml config/manager/patches.yaml
 
-CONTROLLER_GEN = $(REPO_DIR)/bin/controller-gen
+CONTROLLER_GEN = $(OPERATOR_DIR)/bin/controller-gen
 .PHONY: controller-gen
 controller-gen:
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.11.3)
 
-KUSTOMIZE = $(REPO_DIR)/bin/kustomize
+KUSTOMIZE = $(OPERATOR_DIR)/bin/kustomize
 .PHONY: kustomize
 kustomize: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.7)
 
-IMGPKG = $(REPO_DIR)/bin/imgpkg
+IMGPKG = $(OPERATOR_DIR)/bin/imgpkg
 $(IMGPKG):
 	curl --create-dirs --output $(IMGPKG) -L https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v0.33.0/imgpkg-$(shell go env GOOS)-$(shell go env GOARCH)
 	chmod +x $(IMGPKG)
@@ -197,12 +197,12 @@ $(IMGPKG):
 .PHONY: imgpkg
 imgpkg: $(IMGPKG)
 
-KUBE_LINTER = $(REPO_DIR)/bin/kube-linter
+KUBE_LINTER = $(OPERATOR_DIR)/bin/kube-linter
 .PHONY: install-kube-linter
 install-kube-linter: ## Download kube-linter locally if necessary.
 	$(call go-get-tool,$(KUBE_LINTER),golang.stackrox.io/kube-linter/cmd/kube-linter@v0.4.0)
 
-KUBE_SCORE = $(REPO_DIR)/bin/kube-score
+KUBE_SCORE = $(OPERATOR_DIR)/bin/kube-score
 .PHONY: install-kube-score
 install-kube-score: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUBE_SCORE),github.com/zegl/kube-score/cmd/kube-score@v1.14.0)
@@ -212,11 +212,11 @@ define go-get-tool
 @[ -f $(1) ] || { \
 set -e ;\
 echo "Downloading $(2)" ;\
-GOOS= GOARCH= GOBIN=$(REPO_DIR)/bin go install $(2) ;\
+GOOS= GOARCH= GOBIN=$(OPERATOR_DIR)/bin go install $(2) ;\
 }
 endef
 
-OPERATOR_BUILD_DIR:=$(REPO_DIR)/build/operator
+OPERATOR_BUILD_DIR:=$(OPERATOR_DIR)/build/operator
 
 ifeq (Kind,$(shell $(MONOREPO_DIR)/scripts/get-k8s-cluster-env.sh))
 OPERATOR_YAML_TYPE?=kind
@@ -234,17 +234,23 @@ $(OPERATOR_BUILD_DIR):
 
 .PHONY: base-kustomization-yaml
 base-kustomization-yaml: $(OPERATOR_BUILD_DIR)
-	cp $(REPO_DIR)/hack/build/kustomization.yaml $(OPERATOR_BUILD_DIR)
+	cp $(OPERATOR_DIR)/hack/build/kustomization.yaml $(OPERATOR_BUILD_DIR)
 
 .PHONY: custom-kustomization-yaml
 custom-kustomization-yaml: $(OPERATOR_BUILD_DIR)
-	sed "s%YOUR_IMAGE_REGISTRY%$(PREFIX)%g" $(REPO_DIR)/dev-internal/deploy/kustomization.yaml | \
+	sed "s%YOUR_IMAGE_REGISTRY%$(PREFIX)%g" $(OPERATOR_DIR)/dev-internal/deploy/kustomization.yaml | \
 		sed "s%YOUR_NAMESPACE%$(NS)%g" > $(KUSTOMIZATION_YAML)
 
 .PHONY: kubernetes-yaml
 kubernetes-yaml: manifests kustomize $(OPERATOR_BUILD_DIR)
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/default > $(KUBERNETES_YAML)
+
+.PHONY: helm-kubernetes-yaml
+helm-kubernetes-yaml: copy-base-patches kubernetes-yaml
+	rm -f $(MONOREPO_DIR)/helm-charts/aria-integration/templates/*.yaml
+	$(KUSTOMIZE) build config/default -o $(MONOREPO_DIR)/helm-charts/aria-integration/templates
+	rm $(MONOREPO_DIR)/helm-charts/aria-integration/templates/v1_namespace_observability-system.yaml
 
 .PHONY: rc-kubernetes-yaml
 rc-kubernetes-yaml: $(OPERATOR_BUILD_DIR)
@@ -258,7 +264,7 @@ xplatform-kubernetes-yaml: docker-xplatform-build copy-base-patches kubernetes-y
 
 .PHONY: released-kubernetes-yaml
 released-kubernetes-yaml: copy-base-patches kubernetes-yaml
-	cp $(KUBERNETES_YAML) $(REPO_DIR)/dev-internal/deploy/wavefront-operator.yaml
+	cp $(KUBERNETES_YAML) $(OPERATOR_DIR)/dev-internal/deploy/wavefront-operator.yaml
 
 .PHONY: kind-kubernetes-yaml
 kind-kubernetes-yaml: docker-build copy-kind-patches kubernetes-yaml
@@ -292,4 +298,4 @@ undeploy: operator-yaml
 
 .PHONY: integration-test
 integration-test: install-kube-score install-kube-linter undeploy deploy
-	(cd $(REPO_DIR)/hack/test && ./run-e2e-tests.sh -t $(WAVEFRONT_TOKEN) -d $(NS) -v $(NEXT_RELEASE_VERSION) $(INTEGRATION_TEST_ARGS))
+	(cd $(OPERATOR_DIR)/hack/test && ./run-e2e-tests.sh -t $(WAVEFRONT_TOKEN) -d $(NS) -v $(NEXT_RELEASE_VERSION) $(INTEGRATION_TEST_ARGS))
