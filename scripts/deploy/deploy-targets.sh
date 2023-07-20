@@ -22,6 +22,8 @@ if [ "${OPERATOR_TEST}" != "true" ]; then
   kubectl apply -f prom-example.yaml >/dev/null
   kubectl apply -f exclude-prom-example.yaml >/dev/null
   kubectl apply -f cpu-throttled-prom-example.yaml >/dev/null
+else
+  kubectl apply -f light-prom-example.yaml
 fi
 
 kubectl apply -f pending-pod-cannot-be-scheduled.yaml >/dev/null
