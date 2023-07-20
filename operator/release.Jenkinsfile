@@ -6,6 +6,7 @@ pipeline {
   }
 
   environment {
+    PATH = "${env.WORKSPACE}/bin:${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
     BUMP_COMPONENT = "${params.BUMP_COMPONENT}"
     GIT_BRANCH = "main"
     GIT_CREDENTIAL_ID = 'wf-jenkins-github'
@@ -15,20 +16,15 @@ pipeline {
   stages {
     stage("Setup tools") {
       steps {
-        withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-          sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-          sh 'cd operator'
-        }
+        sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
       }
     }
     stage("Create Bump Version Branch") {
       steps {
-        withEnv(["PATH+EXTRA=${HOME}/go/bin"]){
-          sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
-          sh 'git config --global user.name "svc.wf-jenkins"'
-          sh 'git remote set-url origin https://${GITHUB_TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git'
-          sh 'cd operator && ./hack/jenkins/bump-version.sh -s "${BUMP_COMPONENT}"'
-        }
+        sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
+        sh 'git config --global user.name "svc.wf-jenkins"'
+        sh 'git remote set-url origin https://${GITHUB_TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git'
+        sh 'cd operator && ./hack/jenkins/bump-version.sh -s "${BUMP_COMPONENT}"'
       }
     }
     stage("Promote Image and Generate YAML") {
@@ -58,15 +54,13 @@ pipeline {
         script {
           env.VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
         }
-        withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-          lock("integration-test-gke") {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && make gke-connect-to-cluster'
-            sh 'cd operator && make clean-cluster'
-            sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
-            sh 'cd operator && ./hack/test/run-e2e-tests.sh -t $WAVEFRONT_TOKEN -r advanced'
-            sh 'cd operator && make clean-cluster'
-          }
+        lock("integration-test-gke") {
+          sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+          sh 'cd operator && make gke-connect-to-cluster'
+          sh 'cd operator && make clean-cluster'
+          sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
+          sh 'cd operator && ./hack/test/run-e2e-tests.sh -t $WAVEFRONT_TOKEN -r advanced'
+          sh 'cd operator && make clean-cluster'
         }
       }
     }

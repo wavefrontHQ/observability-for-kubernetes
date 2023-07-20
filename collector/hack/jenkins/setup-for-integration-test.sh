@@ -51,16 +51,6 @@ if [[ "${K8S_ENV}" == "eks" ]]; then
 fi
 
 #
-# kubectl
-#
-if ! [ -x "$(command -v kubectl)" ]; then
-  #curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
-  curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl"
-  chmod +x ./kubectl
-  sudo mv ./kubectl /usr/local/bin/kubectl
-fi
-
-#
 # jq
 #
 if ! [ -x "$(command -v jq)" ]; then

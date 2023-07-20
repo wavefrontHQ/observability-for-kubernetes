@@ -2,7 +2,6 @@
 set -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-BIN_DIR="$REPO_ROOT/bin"
 cd "${REPO_ROOT}"
 
 function check_required_argument() {

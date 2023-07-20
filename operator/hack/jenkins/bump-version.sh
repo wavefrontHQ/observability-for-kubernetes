@@ -3,7 +3,6 @@ set -e
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
-BIN_DIR="$REPO_ROOT/bin"
 
 cd "$(dirname "$0")"
 

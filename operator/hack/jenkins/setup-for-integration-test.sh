@@ -34,14 +34,6 @@ docker-credential-gcr configure-docker --registries="us.gcr.io"
   || (echo "docker credentials not configured properly"; exit 1)
 
 #
-# kubectl
-#
-#curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
-curl -LO "https://storage.googleapis.com/kubernetes-release/release/v1.23.6/bin/linux/amd64/kubectl"
-chmod +x ./kubectl
-sudo mv ./kubectl /usr/local/bin/kubectl
-
-#
 # jq
 #
 if ! [ -x "$(command -v jq)" ]; then

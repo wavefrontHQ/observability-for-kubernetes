@@ -8,7 +8,7 @@ pipeline {
   }
 
   environment {
-    PATH = "${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
+    PATH = "${env.WORKSPACE}/bin:${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
     GITHUB_TOKEN = credentials("GITHUB_TOKEN")
     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
@@ -214,7 +214,7 @@ pipeline {
              lock("integration-test-aks") {
                withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
                  sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-                 sh 'cd collector && kubectl config use k8po-ci'
+                 sh 'kubectl config use k8po-ci'
                  sh 'cd collector && make clean-cluster'
                  sh 'cd collector && make integration-test'
                  sh 'cd collector && make clean-cluster'
@@ -280,7 +280,6 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator'
             lock("integration-test-gke") {
               sh 'cd operator && make gke-connect-to-cluster'
               sh 'cd operator && make clean-cluster'
@@ -306,7 +305,6 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator'
             lock("integration-test-eks") {
               sh 'cd operator && make target-eks'
               sh 'cd operator && make clean-cluster'
@@ -327,10 +325,9 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator'
             lock("integration-test-aks") {
               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                sh 'cd operator && kubectl config use k8po-ci'
+                sh 'kubectl config use k8po-ci'
                 sh 'cd operator && make clean-cluster'
                 sh 'cd operator && make integration-test'
                 sh 'cd operator && make clean-cluster'
