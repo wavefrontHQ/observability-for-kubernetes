@@ -1,6 +1,7 @@
 package kstate
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 
@@ -75,6 +76,19 @@ func TestPointsForJob(t *testing.T) {
 		sort.Strings(actualMetricNames)
 
 		assert.Equal(t, expectedMetricNames, actualMetricNames)
+	})
+
+	t.Run("workload status metrics should have available and desired tags", func(t *testing.T) {
+		testJob := setupBasicJob()
+
+		actualWFPoints := pointsForJob(testJob, testTransform)
+		actualWFPointsMap := getWFPointsMap(actualWFPoints)
+		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
+
+		expectedAvailable := "1"
+		expectedDesired := "1"
+		assert.Equal(t, expectedAvailable, actualWorkloadStatusPoint.Tags()[workloadAvailableTag])
+		assert.Equal(t, expectedDesired, actualWorkloadStatusPoint.Tags()[workloadDesiredTag])
 	})
 
 	t.Run("Non-parallel Job without OwnerReferences has a ready workload status", func(t *testing.T) {
@@ -154,6 +168,9 @@ func TestPointsForJob(t *testing.T) {
 
 		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
 		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
+
+		assert.Equal(t, fmt.Sprintf("%d", testJob.Status.Succeeded), actualWorkloadStatusPoint.Tags()[workloadAvailableTag])
+		assert.Equal(t, fmt.Sprintf("%d", *testJob.Spec.Completions), actualWorkloadStatusPoint.Tags()[workloadDesiredTag])
 	})
 
 	t.Run("Parallel Job with a fixed completion count does not have a ready workload status", func(t *testing.T) {
@@ -199,6 +216,10 @@ func TestPointsForJob(t *testing.T) {
 
 		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
 		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
+
+		expectedDesired := "1"
+		assert.Equal(t, fmt.Sprintf("%d", testJob.Status.Succeeded), actualWorkloadStatusPoint.Tags()[workloadAvailableTag])
+		assert.Equal(t, expectedDesired, actualWorkloadStatusPoint.Tags()[workloadDesiredTag])
 	})
 
 	t.Run("Parallel Job with a with a work queue does not have a ready workload status", func(t *testing.T) {

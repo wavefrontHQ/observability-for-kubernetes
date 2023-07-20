@@ -1,6 +1,7 @@
 package kstate
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -42,10 +43,12 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 		numberDesired := int32(1)
 		numberAvailable := int32(1)
 
-		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", testTransform.Tags)
+		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, testTransform.Tags)
 
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
+		assert.Equal(t, fmt.Sprintf("%d", numberDesired), testTags[workloadDesiredTag])
+		assert.Equal(t, fmt.Sprintf("%d", numberAvailable), testTags[workloadAvailableTag])
 
 		workloadStatus := getWorkloadStatus(numberDesired, numberAvailable)
 		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, workloadStatus, timestamp, testTransform.Source, testTags)
@@ -61,10 +64,12 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 		numberDesired := int32(1)
 		numberAvailable := int32(0)
 
-		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", testTransform.Tags)
+		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, testTransform.Tags)
 
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
+		assert.Equal(t, fmt.Sprintf("%d", numberDesired), testTags[workloadDesiredTag])
+		assert.Equal(t, fmt.Sprintf("%d", numberAvailable), testTags[workloadAvailableTag])
 
 		workloadStatus := getWorkloadStatus(numberDesired, numberAvailable)
 		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, workloadStatus, timestamp, testTransform.Source, testTags)

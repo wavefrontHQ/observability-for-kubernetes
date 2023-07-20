@@ -170,6 +170,8 @@ func TestPodWorkloadStatus(t *testing.T) {
 			"namespace_name": "ns1",
 			"workload_name":  "pod1",
 			"workload_kind":  "Pod",
+			"available":      "1",
+			"desired":        "1",
 		}
 		expectedPodLabelValue := metrics.LabeledValue{
 			Name: "workload/status",
@@ -215,6 +217,8 @@ func TestPodWorkloadStatus(t *testing.T) {
 			"namespace_name": "ns1",
 			"workload_name":  "pod1",
 			"workload_kind":  "Pod",
+			"available":      "0",
+			"desired":        "1",
 		}
 		expectedPodLabelValue := metrics.LabeledValue{
 			Name: "workload/status",
