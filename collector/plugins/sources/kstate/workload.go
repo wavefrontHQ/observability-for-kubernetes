@@ -30,3 +30,10 @@ func buildWorkloadTags(kind string, name string, namespace string, customTags ma
 	tags[workloadKindTag] = kind
 	return tags
 }
+
+func getWorkloadStatus(desired, available int32) float64 {
+	if available == desired {
+		return workloadReady
+	}
+	return workloadNotReady
+}

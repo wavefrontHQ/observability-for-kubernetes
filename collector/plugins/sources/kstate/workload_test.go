@@ -39,7 +39,7 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 	t.Run("test for deployment workload status ready", func(t *testing.T) {
 		testDeployment := setupBasicDeploymentWorkload()
 		expectedWorkloadName := testDeployment.Name
-		numberDesired := 1.0
+		numberDesired := int32(1)
 		numberAvailable := int32(1)
 
 		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", testTransform.Tags)
@@ -47,7 +47,7 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
 
-		workloadStatus := getWorkloadStatusForDeployment(numberDesired, numberAvailable)
+		workloadStatus := getWorkloadStatus(numberDesired, numberAvailable)
 		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, workloadStatus, timestamp, testTransform.Source, testTags)
 		point := actualWFPoint.(*wf.Point)
 
@@ -58,7 +58,7 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 	t.Run("test for deployment workload status not ready", func(t *testing.T) {
 		testDeployment := setupBasicDeploymentWorkload()
 		expectedWorkloadName := testDeployment.Name
-		numberDesired := 1.0
+		numberDesired := int32(1)
 		numberAvailable := int32(0)
 
 		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", testTransform.Tags)
@@ -66,7 +66,7 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
 
-		workloadStatus := getWorkloadStatusForDeployment(numberDesired, numberAvailable)
+		workloadStatus := getWorkloadStatus(numberDesired, numberAvailable)
 		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, workloadStatus, timestamp, testTransform.Source, testTags)
 		point := actualWFPoint.(*wf.Point)
 

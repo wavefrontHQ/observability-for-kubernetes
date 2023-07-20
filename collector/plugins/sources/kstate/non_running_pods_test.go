@@ -374,7 +374,6 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
 	})
 
-	// TODO: add integration test
 	t.Run("non-running completed pods without owner references should have workload.status metric", func(t *testing.T) {
 		testPod := setupCompletedPod()
 		testPod.OwnerReferences = nil
