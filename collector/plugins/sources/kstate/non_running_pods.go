@@ -44,7 +44,8 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 		// emit workload.status metric for single pods with no owner references
 		if len(pod.OwnerReferences) == 0 {
 			workloadStatus := getWorkloadStatusForNonRunningPod(pod.Status.ContainerStatuses)
-			workloadTags := buildWorkloadTags(workloadKindPod, pod.Name, pod.Namespace, transforms.Tags)
+			// non-running pods has a default available value of 0 because they are not running
+			workloadTags := buildWorkloadTags(workloadKindPod, pod.Name, pod.Namespace, 1, 0, transforms.Tags)
 			points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
 		}
 		return points

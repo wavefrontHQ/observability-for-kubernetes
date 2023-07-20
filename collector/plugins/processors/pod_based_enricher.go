@@ -214,6 +214,8 @@ func (pbe *PodBasedEnricher) addWorkloadStatusMetric(podMs *metrics.Set, pod *ku
 			metrics.LabelNamespaceName.Key: pod.Namespace,
 			metrics.LabelWorkloadName.Key:  podMs.Labels[metrics.LabelWorkloadName.Key],
 			metrics.LabelWorkloadKind.Key:  podMs.Labels[metrics.LabelWorkloadKind.Key],
+			metrics.LabelAvailable.Key:     podMs.Labels[metrics.LabelAvailable.Key],
+			metrics.LabelDesired.Key:       podMs.Labels[metrics.LabelDesired.Key],
 		},
 	}
 	workloadStatus := 1
@@ -223,6 +225,8 @@ func (pbe *PodBasedEnricher) addWorkloadStatusMetric(podMs *metrics.Set, pod *ku
 			break
 		}
 	}
+	workloadMs.Labels[metrics.LabelAvailable.Key] = fmt.Sprintf("%d", workloadStatus)
+	workloadMs.Labels[metrics.LabelDesired.Key] = "1"
 	addLabeledIntMetric(workloadMs, &metrics.MetricWorkloadStatus, nil, int64(workloadStatus))
 	newMs[metrics.WorkloadStatusPodKey(pod.Namespace, pod.Name)] = workloadMs
 }

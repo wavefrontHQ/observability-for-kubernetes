@@ -49,7 +49,11 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 		workloadName = job.OwnerReferences[0].Name
 	}
 	workloadStatus := getWorkloadStatusForJob(job.Status.Conditions)
-	workloadTags := buildWorkloadTags(workloadKind, workloadName, job.Namespace, transforms.Tags)
+	completionsCount := int32(1)
+	if job.Spec.Completions != nil {
+		completionsCount = *job.Spec.Completions
+	}
+	workloadTags := buildWorkloadTags(workloadKind, workloadName, job.Namespace, completionsCount, int32(succeeded), transforms.Tags)
 	points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
 
 	return points

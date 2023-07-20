@@ -372,6 +372,11 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, workloadNotReady, podPoint.Value)
 		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
 		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
+
+		expectedAvailable := "0"
+		expectedDesired := "1"
+		assert.Equal(t, expectedAvailable, podPoint.Tags()[workloadAvailableTag])
+		assert.Equal(t, expectedDesired, podPoint.Tags()[workloadDesiredTag])
 	})
 
 	t.Run("non-running completed pods without owner references should have workload.status metric", func(t *testing.T) {
@@ -390,6 +395,11 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, workloadReady, podPoint.Value)
 		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
 		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
+
+		expectedAvailable := "0"
+		expectedDesired := "1"
+		assert.Equal(t, expectedAvailable, podPoint.Tags()[workloadAvailableTag])
+		assert.Equal(t, expectedDesired, podPoint.Tags()[workloadDesiredTag])
 	})
 }
 
