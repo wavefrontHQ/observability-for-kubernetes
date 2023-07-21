@@ -131,7 +131,7 @@ vet:
 containers: container test-proxy-container
 
 .PHONY: container
-container: $(SEMVER_CLI_BIN)
+container:
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) make build -o fmt -o vet
 	docker build -f Dockerfile \
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OUT_DIR)
@@ -139,7 +139,7 @@ ifneq ($(OVERRIDE_IMAGE_NAME),)
 	docker tag $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) $(OVERRIDE_IMAGE_NAME)
 endif
 
-cover-container: $(SEMVER_CLI_BIN)
+cover-container:
 	# Run build in a container in order to have reproducible builds
 	docker build \
 	-f $(COLLECTOR_REPO_ROOT)/Dockerfile.cover-non-cross-platform \
@@ -165,7 +165,7 @@ docker-xplatform-build:
 TEST_PROXY_VERSION?=
 
 .PHONY: test-proxy-container
-test-proxy-container: $(SEMVER_CLI_BIN)
+test-proxy-container:
 	@if [ -z "$(TEST_PROXY_VERSION)" ]; then echo "Need to set TEST_PROXY_VERSION" && exit 1; fi
 	docker build \
 	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
@@ -189,7 +189,7 @@ peg:
 	peg -switch -inline $<
 
 .PHONY: container_rhel
-container_rhel: $(SEMVER_CLI_BIN)
+container_rhel:
 	docker build \
 		-f $(COLLECTOR_REPO_ROOT)/deploy/docker/Dockerfile-rhel \
 		--build-arg COLLECTOR_VERSION=$(NEXT_RELEASE_VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
@@ -212,7 +212,7 @@ token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
 .PHONY: proxy-test
-proxy-test: token-check $(SEMVER_CLI_BIN)
+proxy-test: token-check
 ifeq ($(INTEGRATION_TEST_ARGS),all)
 	$(eval INTEGRATION_TEST_ARGS := -r cluster-metrics-only -r node-metrics-only -r combined -r single-deployment -r default -r real-proxy-metrics)
 endif

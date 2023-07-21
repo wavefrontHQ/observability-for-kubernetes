@@ -24,10 +24,6 @@ while getopts "s:" opt; do
   esac
 done
 
-pushd ../../
-  make semver-cli
-popd
-
 OLD_OPERATOR_VERSION=$(get_operator_version)
 NEW_OPERATOR_VERSION=$(semver-cli inc "$OPERATOR_BUMP_COMPONENT" "$OLD_OPERATOR_VERSION")
 echo "$NEW_OPERATOR_VERSION" >../../release/OPERATOR_VERSION

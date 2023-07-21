@@ -8,7 +8,7 @@ pipeline {
   }
 
   environment {
-    PATH = "${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
+    PATH = "${env.WORKSPACE}/bin:${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
     GITHUB_TOKEN = credentials("GITHUB_TOKEN")
     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
@@ -59,12 +59,10 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector"
           }
           steps {
-            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-               sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
-               sh 'cd collector && make semver-cli'
-               sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-               sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
-            }
+             sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
+             sh 'cd collector'
+             sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+             sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
           }
         }
 
@@ -85,7 +83,7 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli clean-build'
+            sh 'cd operator && make clean-build'
             sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
             sh 'cd operator && make docker-xplatform-build'
             sh 'cd operator && ./hack/jenkins/create-rc-ci.sh'
@@ -103,9 +101,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           steps {
-            withEnv(["PATH+EXTRA=${HOME}/go/bin"]) {
-              sh 'cd collector && make checkfmt vet tests'
-            }
+            sh 'cd collector && make checkfmt vet tests'
           }
         }
         stage("Operator Go Tests") {
@@ -157,14 +153,12 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            withEnv(["PATH+GO=${HOME}/go/bin", "PATH+GCLOUD=${HOME}/google-cloud-sdk/bin"]) {
-              lock("integration-test-gke") {
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-                sh 'cd collector && make gke-connect-to-cluster'
-                sh 'cd collector && make clean-cluster'
-                sh 'cd collector && make integration-test'
-                sh 'cd collector && make clean-cluster'
-              }
+            lock("integration-test-gke") {
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+              sh 'cd collector && make gke-connect-to-cluster'
+              sh 'cd collector && make clean-cluster'
+              sh 'cd collector && make integration-test'
+              sh 'cd collector && make clean-cluster'
             }
           }
         }
@@ -184,14 +178,12 @@ pipeline {
             INTEGRATION_TEST_BUILD = "ci"
           }
           steps {
-            withEnv(["PATH+GO=${HOME}/go/bin"]) {
-              lock("integration-test-eks") {
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-                sh 'cd collector && make target-eks'
-                sh 'cd collector && make clean-cluster'
-                sh 'cd collector && make integration-test'
-                sh 'cd collector && make clean-cluster'
-              }
+            lock("integration-test-eks") {
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+              sh 'cd collector && make target-eks'
+              sh 'cd collector && make clean-cluster'
+              sh 'cd collector && make integration-test'
+              sh 'cd collector && make clean-cluster'
             }
           }
         }
@@ -210,16 +202,14 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            withEnv(["PATH+GO=${HOME}/go/bin"]) {
-             lock("integration-test-aks") {
-               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-                 sh 'cd collector && kubectl config use k8po-ci'
-                 sh 'cd collector && make clean-cluster'
-                 sh 'cd collector && make integration-test'
-                 sh 'cd collector && make clean-cluster'
-               }
-             }
+            lock("integration-test-aks") {
+              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+                sh 'kubectl config use k8po-ci'
+                sh 'cd collector && make clean-cluster'
+                sh 'cd collector && make integration-test'
+                sh 'cd collector && make clean-cluster'
+              }
             }
           }
         }
@@ -240,16 +230,14 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            withEnv(["PATH+GO=${HOME}/go/bin"]) {
-              lock("integration-test-tkgm") {
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
-                sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
-                sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
-                sh "mkdir -p $KUBECONFIG_DIR"
-                sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
-                sh "chmod go-r $KUBECONFIG"
-                sh 'cd collector; make clean-cluster integration-test; make clean-cluster'
-              }
+            lock("integration-test-tkgm") {
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
+              sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
+              sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
+              sh "mkdir -p $KUBECONFIG_DIR"
+              sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
+              sh "chmod go-r $KUBECONFIG"
+              sh 'cd collector; make clean-cluster integration-test; make clean-cluster'
             }
           }
         }
@@ -280,7 +268,6 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli'
             lock("integration-test-gke") {
               sh 'cd operator && make gke-connect-to-cluster'
               sh 'cd operator && make clean-cluster'
@@ -306,7 +293,6 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli'
             lock("integration-test-eks") {
               sh 'cd operator && make target-eks'
               sh 'cd operator && make clean-cluster'
@@ -327,10 +313,9 @@ pipeline {
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            sh 'cd operator && make semver-cli'
             lock("integration-test-aks") {
               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                sh 'cd operator && kubectl config use k8po-ci'
+                sh 'kubectl config use k8po-ci'
                 sh 'cd operator && make clean-cluster'
                 sh 'cd operator && make integration-test'
                 sh 'cd operator && make clean-cluster'
@@ -352,16 +337,14 @@ pipeline {
             GCP_CREDS = credentials("GCP_CREDS")
           }
           steps {
-            withEnv(["PATH+GO=${HOME}/go/bin"]) {
-              lock("integration-test-tkgm") {
-                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
-                sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
-                sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
-                sh "mkdir -p $KUBECONFIG_DIR"
-                sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
-                sh "chmod go-r $KUBECONFIG"
-                sh 'cd operator; make clean-cluster integration-test; make clean-cluster'
-              }
+            lock("integration-test-tkgm") {
+              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
+              sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
+              sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
+              sh "mkdir -p $KUBECONFIG_DIR"
+              sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
+              sh "chmod go-r $KUBECONFIG"
+              sh 'cd operator; make clean-cluster integration-test; make clean-cluster'
             }
           }
         }
