@@ -139,7 +139,7 @@ func serveMetrics(proxylines *broadcaster.Broadcaster[string]) {
 	cm := cmux.New(listener)
 
 	httpL := cm.Match(cmux.HTTP1())
-	grpcL := cm.Match(cmux.Any())
+	tcpL := cm.Match(cmux.Any())
 
 	go func() {
 		defer cm.Close()
@@ -154,7 +154,7 @@ func serveMetrics(proxylines *broadcaster.Broadcaster[string]) {
 	go httpS.Serve(httpL)
 
 	for {
-		conn, err := grpcL.Accept()
+		conn, err := tcpL.Accept()
 		if err != nil {
 			log.Error(err.Error())
 			continue
