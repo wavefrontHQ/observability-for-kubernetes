@@ -1,5 +1,6 @@
 **Operator / IAAS specific metric tests**
 
+[//]: # (TODO BUILD a light prom example; it's not the num flag that makes the metric load light)
 [//]: # (TODO add unwanted metric check for the additional tags)
 [//]: # (TODO re-enable prom-example but with light metrics: 1 instead of 10)
 [//]: # (TODO these are the remaining true missing:)

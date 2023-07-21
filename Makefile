@@ -28,10 +28,11 @@ clean-cluster:
 	@$(MONOREPO_DIR)/scripts/clean-cluster.sh
 
 #----- KIND ----#
+KIND_K8S_VERSION?=v1.25.9
 .PHONY: nuke-kind
 nuke-kind:
 	kind delete cluster
-	kind create cluster --image kindest/node:v1.25.9 # setting to v1.25.9 to avoid floating to 1.26 which we currently don't support
+	kind create cluster --image kindest/node:$(KIND_K8S_VERSION)
 
 nuke-kind-ha:
 	kind delete cluster
