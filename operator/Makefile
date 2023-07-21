@@ -147,7 +147,7 @@ clean-build:
 	rm -rf build
 
 .PHONY: docker-build
-docker-build: $(SEMVER_CLI_BIN) ## Build docker image with the manager.
+docker-build: ## Build docker image with the manager.
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) make build -o fmt -o vet
 	docker build -t ${IMG} -f Dockerfile build
 
