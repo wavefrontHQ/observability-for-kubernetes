@@ -9,10 +9,11 @@ import (
 const (
 	workloadStatusMetric = "workload.status"
 
-	workloadNameTag      = "workload_name"
-	workloadKindTag      = "workload_kind"
-	workloadAvailableTag = "available"
-	workloadDesiredTag   = "desired"
+	workloadNameTag         = "workload_name"
+	workloadKindTag         = "workload_kind"
+	workloadAvailableTag    = "available"
+	workloadDesiredTag      = "desired"
+	workloadFailedReasonTag = "reason"
 
 	workloadReady    = float64(1.0)
 	workloadNotReady = float64(0.0)
@@ -30,11 +31,14 @@ func buildWorkloadStatusMetric(prefix string, status float64, ts int64, source s
 	return metricPoint(prefix, workloadStatusMetric, status, ts, source, tags)
 }
 
-func buildWorkloadTags(kind string, name string, namespace string, desired int32, available int32, customTags map[string]string) map[string]string {
+func buildWorkloadTags(kind string, name string, namespace string, desired int32, available int32, reason string, customTags map[string]string) map[string]string {
 	tags := buildTags(workloadNameTag, name, namespace, customTags)
 	tags[workloadKindTag] = kind
 	tags[workloadAvailableTag] = fmt.Sprintf("%d", available)
 	tags[workloadDesiredTag] = fmt.Sprintf("%d", desired)
+	if reason != "" {
+		tags[workloadFailedReasonTag] = reason
+	}
 	return tags
 }
 

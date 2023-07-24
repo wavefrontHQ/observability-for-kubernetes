@@ -30,7 +30,7 @@ func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) [
 	ready := float64(daemonset.Status.NumberReady)
 
 	workloadStatus := getWorkloadStatus(daemonset.Status.DesiredNumberScheduled, daemonset.Status.NumberAvailable)
-	workloadTags := buildWorkloadTags(workloadKindDaemonSet, daemonset.Name, daemonset.Namespace, daemonset.Status.DesiredNumberScheduled, daemonset.Status.NumberAvailable, transforms.Tags)
+	workloadTags := buildWorkloadTags(workloadKindDaemonSet, daemonset.Name, daemonset.Namespace, daemonset.Status.DesiredNumberScheduled, daemonset.Status.NumberAvailable, "", transforms.Tags)
 	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags)
 
 	return []wf.Metric{
