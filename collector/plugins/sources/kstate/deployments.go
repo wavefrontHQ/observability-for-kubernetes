@@ -29,7 +29,7 @@ func pointsForDeployment(item interface{}, transforms configuration.Transforms) 
 	ready := float64(deployment.Status.ReadyReplicas)
 
 	workloadStatus := getWorkloadStatus(int32(desired), deployment.Status.AvailableReplicas)
-	workloadTags := buildWorkloadTags(workloadKindDeployment, deployment.Name, deployment.Namespace, int32(desired), deployment.Status.AvailableReplicas, transforms.Tags)
+	workloadTags := buildWorkloadTags(workloadKindDeployment, deployment.Name, deployment.Namespace, int32(desired), deployment.Status.AvailableReplicas, "", transforms.Tags)
 	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags)
 
 	return []wf.Metric{

@@ -106,6 +106,7 @@ func TestPointsForJob(t *testing.T) {
 		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
 		assert.Equal(t, testJob.Name, actualWorkloadStatusPoint.Tags()[workloadNameTag])
 		assert.Equal(t, workloadKindJob, actualWorkloadStatusPoint.Tags()[workloadKindTag])
+		assert.Equal(t, "", actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
 	})
 
 	t.Run("Non-parallel Job without OwnerReferences does not have a ready workload status", func(t *testing.T) {
@@ -116,6 +117,7 @@ func TestPointsForJob(t *testing.T) {
 
 		assert.Equal(t, workloadNotReady, actualWorkloadStatusPoint.Value)
 		assert.Equal(t, workloadKindJob, actualWorkloadStatusPoint.Tags()[workloadKindTag])
+		assert.Equal(t, "BackoffLimitExceeded", actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
 	})
 
 	t.Run("Non-parallel Job with OwnerReferences has a ready workload status", func(t *testing.T) {
@@ -132,6 +134,7 @@ func TestPointsForJob(t *testing.T) {
 		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
 		assert.Equal(t, expectedOwnerName, actualWorkloadStatusPoint.Tags()[workloadNameTag])
 		assert.Equal(t, workloadKindCronJob, actualWorkloadStatusPoint.Tags()[workloadKindTag])
+		assert.Equal(t, "", actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
 	})
 
 	t.Run("Non-parallel Job with OwnerReferences does not have a ready workload status", func(t *testing.T) {
@@ -194,6 +197,7 @@ func TestPointsForJob(t *testing.T) {
 
 		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
 		assert.Equal(t, workloadNotReady, actualWorkloadStatusPoint.Value)
+		assert.Equal(t, "BackoffLimitExceeded", actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
 	})
 
 	t.Run("Parallel Job with a with a work queue has a ready workload status", func(t *testing.T) {
@@ -240,5 +244,6 @@ func TestPointsForJob(t *testing.T) {
 
 		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
 		assert.Equal(t, workloadNotReady, actualWorkloadStatusPoint.Value)
+		assert.Equal(t, "BackoffLimitExceeded", actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
 	})
 }

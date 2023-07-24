@@ -43,7 +43,7 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 		numberDesired := int32(1)
 		numberAvailable := int32(1)
 
-		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, testTransform.Tags)
+		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, "", testTransform.Tags)
 
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
@@ -64,7 +64,7 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 		numberDesired := int32(1)
 		numberAvailable := int32(0)
 
-		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, testTransform.Tags)
+		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, "", testTransform.Tags)
 
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])

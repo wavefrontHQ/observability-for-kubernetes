@@ -219,6 +219,7 @@ func TestPodWorkloadStatus(t *testing.T) {
 			"workload_kind":  "Pod",
 			"available":      "0",
 			"desired":        "1",
+			"reason":         "CrashLoopBackOff",
 		}
 		expectedPodLabelValue := metrics.LabeledValue{
 			Name: "workload/status",

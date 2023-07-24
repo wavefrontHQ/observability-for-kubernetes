@@ -39,7 +39,7 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 		metricPoint(transforms.Prefix, "job.parallelism", parallelism, now, transforms.Source, tags),
 	}
 
-	var workloadKind, workloadName string
+	var workloadKind, workloadName, workloadFailedReason string
 
 	if len(job.OwnerReferences) == 0 {
 		workloadKind = workloadKindJob
@@ -49,11 +49,16 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 		workloadName = job.OwnerReferences[0].Name
 	}
 	workloadStatus := getWorkloadStatusForJob(job.Status.Conditions)
+	if failed != 0 {
+		workloadFailedReason = job.Status.Conditions[0].Reason
+	} else {
+		workloadFailedReason = ""
+	}
 	completionsCount := int32(1)
 	if job.Spec.Completions != nil {
 		completionsCount = *job.Spec.Completions
 	}
-	workloadTags := buildWorkloadTags(workloadKind, workloadName, job.Namespace, completionsCount, int32(succeeded), transforms.Tags)
+	workloadTags := buildWorkloadTags(workloadKind, workloadName, job.Namespace, completionsCount, int32(succeeded), workloadFailedReason, transforms.Tags)
 	points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
 
 	return points

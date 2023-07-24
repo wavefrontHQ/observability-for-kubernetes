@@ -45,7 +45,8 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 		if len(pod.OwnerReferences) == 0 {
 			workloadStatus := getWorkloadStatusForNonRunningPod(pod.Status.ContainerStatuses)
 			// non-running pods has a default available value of 0 because they are not running
-			workloadTags := buildWorkloadTags(workloadKindPod, pod.Name, pod.Namespace, 1, 0, transforms.Tags)
+			reason := getWorkloadFailedReasonForNonRunningPod(pod.Status)
+			workloadTags := buildWorkloadTags(workloadKindPod, pod.Name, pod.Namespace, 1, 0, reason, transforms.Tags)
 			points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
 		}
 		return points
@@ -72,6 +73,29 @@ func getWorkloadStatusForNonRunningPod(containerStatuses []v1.ContainerStatus) f
 		}
 	}
 	return workloadNotReady
+}
+
+func getWorkloadFailedReasonForNonRunningPod(podStatus v1.PodStatus) string {
+	var reason string
+	phaseValue := util.ConvertPodPhase(podStatus.Phase)
+	if phaseValue == util.POD_PHASE_PENDING {
+		for _, condition := range podStatus.Conditions {
+			if condition.Type == v1.PodScheduled && condition.Status == "False" {
+				reason = condition.Reason
+			} else if condition.Type == v1.ContainersReady && condition.Status == "False" {
+				reason = condition.Reason
+			}
+		}
+	}
+
+	if phaseValue == util.POD_PHASE_FAILED {
+		for _, condition := range podStatus.Conditions {
+			if condition.Type == v1.PodReady {
+				reason = condition.Reason
+			}
+		}
+	}
+	return reason
 }
 
 func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, sharedTags map[string]string, now int64) []wf.Metric {
