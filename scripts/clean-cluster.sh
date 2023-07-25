@@ -16,7 +16,7 @@ function delete_cluster_roles() {
 function delete_namespaces() {
   local ns=''
 
-  ns=$(kubectl get namespaces | awk '/wavefront|collector-targets|observability-system|custom-namespace/ {print $1}')
+  ns=$(kubectl get namespaces | awk '/wavefront|collector-targets|observability-system|custom-namespace|tanzu-observability-saas/ {print $1}')
 
   if [[ -n "${ns}" ]]; then
     echo -e "Found Namespaces:\n${ns}"
