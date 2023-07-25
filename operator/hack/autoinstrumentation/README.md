@@ -218,3 +218,13 @@ px demo delete px-sock-shop
 ```shell
 kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
 ```
+
+## Known Limitations
+
+### App Map
+
+Some edges may be missing from the app map. Edges should appear as long as:
+* They represent HTTP traffic.
+* They represent gRPC traffic and the server is a golang service compiled with debug symbols (the default for go).
+
+
