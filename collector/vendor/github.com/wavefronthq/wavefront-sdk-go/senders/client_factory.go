@@ -1,19 +1,25 @@
 package senders
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/wavefronthq/wavefront-sdk-go/internal"
 	"github.com/wavefronthq/wavefront-sdk-go/version"
 )
 
 const (
-	defaultTracesPort  = 30001
-	defaultMetricsPort = 2878
+	defaultTracesPort    = 30001
+	defaultMetricsPort   = 2878
+	defaultBatchSize     = 10_000
+	defaultBufferSize    = 50_000
+	defaultFlushInterval = 1 * time.Second
+	defaultTimeout       = 10 * time.Second
 )
 
 // Option Wavefront client configuration options
@@ -42,8 +48,13 @@ type configuration struct {
 
 	// interval (in seconds) at which to flush data to Wavefront. defaults to 1 Second.
 	// together with batch size controls the max theoretical throughput of the sender.
-	FlushIntervalSeconds int
-	SDKMetricsTags       map[string]string
+	FlushInterval  time.Duration
+	SDKMetricsTags map[string]string
+	Path           string
+
+	Timeout time.Duration
+
+	TLSConfig *tls.Config
 }
 
 func (c *configuration) Direct() bool {
@@ -65,22 +76,22 @@ func (c *configuration) setDefaultPort(port int) {
 
 // NewSender creates Wavefront client
 func NewSender(wfURL string, setters ...Option) (Sender, error) {
-	cfg, err := CreateConfig(wfURL, setters...)
+	cfg, err := createConfig(wfURL, setters...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create sender config: %s", err)
 	}
 	return newWavefrontClient(cfg)
 }
 
-// CreateConfig is for internal use only.
-func CreateConfig(wfURL string, setters ...Option) (*configuration, error) {
+func createConfig(wfURL string, setters ...Option) (*configuration, error) {
 	cfg := &configuration{
-		MetricsPort:          defaultMetricsPort,
-		TracesPort:           defaultTracesPort,
-		BatchSize:            defaultBatchSize,
-		MaxBufferSize:        defaultBufferSize,
-		FlushIntervalSeconds: defaultFlushInterval,
-		SDKMetricsTags:       map[string]string{},
+		MetricsPort:    defaultMetricsPort,
+		TracesPort:     defaultTracesPort,
+		BatchSize:      defaultBatchSize,
+		MaxBufferSize:  defaultBufferSize,
+		FlushInterval:  defaultFlushInterval,
+		SDKMetricsTags: map[string]string{},
+		Timeout:        defaultTimeout,
 	}
 
 	u, err := url.Parse(wfURL)
@@ -106,6 +117,11 @@ func CreateConfig(wfURL string, setters ...Option) (*configuration, error) {
 		return nil, fmt.Errorf("invalid scheme '%s' in '%s', only 'http' is supported", u.Scheme, u)
 	}
 
+	if u.Path != "" {
+		cfg.Path = u.Path
+		u.Path = ""
+	}
+
 	if u.Port() != "" {
 		port, err := strconv.Atoi(u.Port())
 		if err != nil {
@@ -124,9 +140,9 @@ func CreateConfig(wfURL string, setters ...Option) (*configuration, error) {
 
 // newWavefrontClient creates a Wavefront sender
 func newWavefrontClient(cfg *configuration) (Sender, error) {
-	metricsReporter := internal.NewReporter(fmt.Sprintf("%s:%d", cfg.Server, cfg.MetricsPort), cfg.Token)
-	tracesReporter := internal.NewReporter(fmt.Sprintf("%s:%d", cfg.Server, cfg.TracesPort), cfg.Token)
-
+	client := internal.NewClient(cfg.Timeout, cfg.TLSConfig)
+	metricsReporter := internal.NewReporter(cfg.metricsURL(), cfg.Token, client)
+	tracesReporter := internal.NewReporter(cfg.tracesURL(), cfg.Token, client)
 	sender := &wavefrontSender{
 		defaultSource: internal.GetHostname("wavefront_direct_sender"),
 		proxy:         !cfg.Direct(),
@@ -140,6 +156,14 @@ func newWavefrontClient(cfg *configuration) (Sender, error) {
 
 	sender.Start()
 	return sender, nil
+}
+
+func (c *configuration) tracesURL() string {
+	return fmt.Sprintf("%s:%d%s", c.Server, c.TracesPort, c.Path)
+}
+
+func (c *configuration) metricsURL() string {
+	return fmt.Sprintf("%s:%d%s", c.Server, c.MetricsPort, c.Path)
 }
 
 func (sender *wavefrontSender) initializeInternalMetrics(cfg *configuration) {
@@ -195,7 +219,14 @@ func MaxBufferSize(n int) Option {
 // FlushIntervalSeconds set the interval (in seconds) at which to flush data to Wavefront. Defaults to 1 Second.
 func FlushIntervalSeconds(n int) Option {
 	return func(cfg *configuration) {
-		cfg.FlushIntervalSeconds = n
+		cfg.FlushInterval = time.Second * time.Duration(n)
+	}
+}
+
+// FlushInterval set the interval at which to flush data to Wavefront. Defaults to 1 Second.
+func FlushInterval(interval time.Duration) Option {
+	return func(cfg *configuration) {
+		cfg.FlushInterval = interval
 	}
 }
 
@@ -210,6 +241,20 @@ func MetricsPort(port int) Option {
 func TracesPort(port int) Option {
 	return func(cfg *configuration) {
 		cfg.TracesPort = port
+	}
+}
+
+// Timeout sets the HTTP timeout (in seconds). Defaults to 10 seconds.
+func Timeout(timeout time.Duration) Option {
+	return func(cfg *configuration) {
+		cfg.Timeout = timeout
+	}
+}
+
+func TLSConfigOptions(tlsCfg *tls.Config) Option {
+	tlsCfgCopy := tlsCfg.Clone()
+	return func(cfg *configuration) {
+		cfg.TLSConfig = tlsCfgCopy
 	}
 }
 
