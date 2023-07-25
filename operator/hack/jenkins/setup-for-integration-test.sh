@@ -52,16 +52,6 @@ if ! [ -x "$(command -v yq)" ]; then
 fi
 
 #
-# kustomize
-#
-if ! [ -x "$(command -v kustomize)" ]; then
-  curl -H "Authorization: token ${GITHUB_TOKEN}" -L -s "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.4.0/kustomize_v4.4.0_linux_amd64.tar.gz" \
-    | tar xz --to-stdout \
-    | sudo tee /usr/local/bin/kustomize >/dev/null
-  sudo chmod +x /usr/local/bin/kustomize
-fi
-
-#
 # crane
 #
 if ! [ -x "$(command -v crane)" ]; then

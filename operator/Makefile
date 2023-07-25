@@ -184,11 +184,6 @@ CONTROLLER_GEN = $(OPERATOR_DIR)/bin/controller-gen
 controller-gen:
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.11.3)
 
-KUSTOMIZE = $(OPERATOR_DIR)/bin/kustomize
-.PHONY: kustomize
-kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.7)
-
 IMGPKG = $(OPERATOR_DIR)/bin/imgpkg
 $(IMGPKG):
 	curl --create-dirs --output $(IMGPKG) -L https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v0.33.0/imgpkg-$(shell go env GOOS)-$(shell go env GOARCH)
@@ -204,7 +199,7 @@ install-kube-linter: ## Download kube-linter locally if necessary.
 
 KUBE_SCORE = $(OPERATOR_DIR)/bin/kube-score
 .PHONY: install-kube-score
-install-kube-score: ## Download kustomize locally if necessary.
+install-kube-score: ## Download kube-score locally if necessary.
 	$(call go-get-tool,$(KUBE_SCORE),github.com/zegl/kube-score/cmd/kube-score@v1.14.0)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
@@ -242,14 +237,14 @@ custom-kustomization-yaml: $(OPERATOR_BUILD_DIR)
 		sed "s%YOUR_NAMESPACE%$(NS)%g" > $(KUSTOMIZATION_YAML)
 
 .PHONY: kubernetes-yaml
-kubernetes-yaml: manifests kustomize $(OPERATOR_BUILD_DIR)
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
-	$(KUSTOMIZE) build config/default > $(KUBERNETES_YAML)
+kubernetes-yaml: manifests $(OPERATOR_BUILD_DIR)
+	cd config/manager && kustomize edit set image controller=$(IMG)
+	kustomize build config/default > $(KUBERNETES_YAML)
 
 .PHONY: helm-kubernetes-yaml
 helm-kubernetes-yaml: copy-base-patches kubernetes-yaml
 	rm -f $(MONOREPO_DIR)/helm-charts/aria-integration/templates/*.yaml
-	$(KUSTOMIZE) build config/default -o $(MONOREPO_DIR)/helm-charts/aria-integration/templates
+	kustomize build config/default -o $(MONOREPO_DIR)/helm-charts/aria-integration/templates
 	rm $(MONOREPO_DIR)/helm-charts/aria-integration/templates/v1_namespace_observability-system.yaml
 
 .PHONY: rc-kubernetes-yaml

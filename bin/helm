@@ -8,11 +8,11 @@ HELM_OS=$(go env GOOS)
 HELM_ARCH=$(go env GOARCH)
 
 if [[ ! -f "$BIN_DIR"/.cache/helm ]] || ! "$BIN_DIR"/.cache/helm version | grep "$HELM_VERSION" &> /dev/null; then
-    printf "downloading helm %s ..." "$HELM_VERSION"
+    printf "downloading helm %s ..." "$HELM_VERSION" 1>&2
     mkdir -p "$BIN_DIR"/.cache
     curl --silent "https://get.helm.sh/helm-v$HELM_VERSION-$HELM_OS-$HELM_ARCH.tar.gz" | tar xz --to-stdout "$HELM_OS-$HELM_ARCH"/helm > "$BIN_DIR"/.cache/helm
     chmod +x "$BIN_DIR"/.cache/helm
-    echo " done."
+    echo " done." 1>&2
 fi
 
 # shellcheck disable=SC2086
