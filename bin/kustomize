@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BIN_DIR=$(dirname "$0")
+
+VERSION=5.1.0
+
+if [[ ! -f "$BIN_DIR/.cache/kustomize" ]] || ! "$BIN_DIR"/.cache/kustomize version 2> /dev/null | grep "$VERSION" &> /dev/null; then
+    printf "downloading kustomize %s ..." "$VERSION" 1>&2
+    mkdir -p "$BIN_DIR/.cache"
+    OS="$(go env GOOS)"
+    ARCH="$(go env GOARCH)"
+    curl -L -s "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv$VERSION/kustomize_v${VERSION}_${OS}_$ARCH.tar.gz" \
+        | tar xz --to-stdout \
+        | tee "$BIN_DIR/.cache/kustomize" >/dev/null
+    chmod +x "$BIN_DIR/.cache/kustomize"
+    echo " done." 1>&2
+fi
+
+# shellcheck disable=SC2086
+"$BIN_DIR"/.cache/kustomize $*

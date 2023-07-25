@@ -6,13 +6,13 @@ BIN_DIR=$(dirname "$0")
 VERSION=1.24.15
 
 if [[ ! -f "$BIN_DIR/.cache/kubectl" ]] || ! "$BIN_DIR"/.cache/kubectl version --client=true 2> /dev/null | grep "$VERSION" &> /dev/null; then
-    printf "downloading kubectl %s ..." "$VERSION"
+    printf "downloading kubectl %s ..." "$VERSION" 1>&2
     mkdir -p "$BIN_DIR/.cache"
     OS="$(go env GOOS)"
     ARCH="$(go env GOARCH)"
     curl --silent -L "https://dl.k8s.io/v$VERSION/bin/$OS/$ARCH/kubectl" > "$BIN_DIR/.cache/kubectl"
     chmod +x "$BIN_DIR/.cache/kubectl"
-    echo " done."
+    echo " done." 1>&2
 fi
 
 # shellcheck disable=SC2086

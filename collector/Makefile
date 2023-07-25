@@ -41,7 +41,7 @@ LDFLAGS=-w -X github.com/wavefronthq/observability-for-kubernetes/collector/inte
 all: container
 
 .PHONY: fmt
-fmt: $(GO_IMPORTS_BIN)
+fmt:
 	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
 
 .PHONY: deploy-targets clean-targets clean-deployment
@@ -103,7 +103,7 @@ sort-integrations-keys:
 	@$(COLLECTOR_REPO_ROOT)/hack/sort-json-keys-inplace.sh $(HOME)/workspace/integrations/kubernetes/dashboards/integration-kubernetes-control-plane.json
 
 .PHONY: checkfmt
-checkfmt: $(GO_IMPORTS_BIN)
+checkfmt:
 	@if [ $$(goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*") | wc -l) -gt 0 ]; then \
 		echo $$'\e[31mgoimports FAILED!!!\e[0m'; \
 		goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*"); \
