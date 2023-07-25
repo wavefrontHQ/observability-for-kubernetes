@@ -6,11 +6,6 @@ GOPATH?=$(or $(shell go env GOPATH),$(HOME)/go)
 GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
 
-GO_IMPORTS_BIN:=$(or $(shell which goimports),$(GOPATH)/bin/goimports)
-
-$(GO_IMPORTS_BIN):
-	cd $(MONOREPO_DIR); CGO_ENABLED=0 go install golang.org/x/tools/cmd/goimports@latest
-
 .PHONY: promote-internal
 promote-internal:
 	cp -a $(MONOREPO_DIR)/operator/dev-internal/* $(MONOREPO_DIR)/

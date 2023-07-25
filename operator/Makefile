@@ -81,11 +81,11 @@ api/v1alpha1/zz_generated.deepcopy.go: hack/boilerplate.go.txt api/v1alpha1/wave
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: fmt
-fmt: $(GO_IMPORTS_BIN)
-	find . -type f -name "*.go" | grep -v "./vendor*" | xargs $(GO_IMPORTS_BIN) -w
+fmt:
+	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
 
 .PHONY: checkfmt
-checkfmt: $(GO_IMPORTS_BIN)
+checkfmt:
 	@if [ $$(goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*") | wc -l) -gt 0 ]; then \
 		echo $$'\e[31mgoimports FAILED!!!\e[0m'; \
 		goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*"); \
