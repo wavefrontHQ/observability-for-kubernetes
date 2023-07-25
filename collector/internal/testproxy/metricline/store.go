@@ -57,6 +57,9 @@ func (s *Store) Subscribe(b *broadcaster.Broadcaster[string]) {
 	lines, _ := b.Subscribe()
 	go func() {
 		for line := range lines {
+			if line == "" {
+				continue
+			}
 			if isEvent(line) {
 				continue
 			}
