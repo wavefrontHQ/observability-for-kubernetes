@@ -222,7 +222,7 @@ spec:
                           enable:
                             default: true
                             description: Enable is whether to include kubernetes.controlplane.*
-                              metrics and whether to include kubernetes_control_plane_source
+                              metrics
                             type: boolean
                         required:
                         - enable
@@ -597,6 +597,35 @@ spec:
                         type: object
                     type: object
                 type: object
+              experimental:
+                description: Experimental features
+                properties:
+                  autoInstrumentation:
+                    properties:
+                      deployKey:
+                        type: string
+                      enable:
+                        type: boolean
+                    type: object
+                  kubernetesEvents:
+                    properties:
+                      enable:
+                        default: false
+                        description: Enable is whether to enable events. Defaults
+                          to false.
+                        type: boolean
+                      externalEndpointURL:
+                        type: string
+                    required:
+                    - externalEndpointURL
+                    type: object
+                type: object
+              imagePullSecret:
+                description: ImagePullSecret is the name of the secret to authenticate
+                  with a private custom registry.
+                maxLength: 253
+                pattern: ^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$
+                type: string
               wavefrontTokenSecret:
                 default: wavefront-secret
                 description: WavefrontTokenSecret is the name of the secret that contains
@@ -610,7 +639,6 @@ spec:
                 type: string
             required:
             - clusterName
-            - wavefrontUrl
             type: object
           status:
             description: WavefrontStatus defines the observed state of Wavefront
@@ -671,6 +699,16 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - get
@@ -681,8 +719,12 @@ rules:
   resources:
   - secrets
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - ""
@@ -692,8 +734,10 @@ rules:
   - create
   - delete
   - get
+  - list
   - patch
   - update
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -718,6 +762,39 @@ rules:
   - apps
   resources:
   - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
   verbs:
   - create
   - delete
@@ -792,7 +869,22 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   name: wavefront-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: wavefront-manager-role-scc
 rules:
 - apiGroups:
   - security.openshift.io
@@ -828,6 +920,8 @@ rules:
   - pods
   - services
   - replicationcontrollers
+  - persistentvolumeclaims
+  - persistentvolumes
   verbs:
   - get
   - list
@@ -933,6 +1027,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: wavefront-manager-rolebinding
+  namespace: observability-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -983,9 +1078,9 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.18.0-alpha-90985751
-  logging: 2.1.2
-  proxy: "12.3"
+  collector: 1.23.0-alpha-eca5fab5
+  logging: 2.1.6
+  proxy: 13.0.1
 kind: ConfigMap
 metadata:
   labels:
@@ -1055,7 +1150,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.6.0-alpha-90985751
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.11.0-alpha-eca5fab5
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
