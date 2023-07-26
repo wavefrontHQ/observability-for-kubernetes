@@ -77,11 +77,16 @@ function main() {
   local WAVEFRONT_TOKEN=
 
   # OPTIONAL/DEFAULT
-  local VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)"
-  local K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
-  local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
-  local COLLECTOR_YAML="${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
-  local COLLECTOR_CONFIG_YAML="${COLLECTOR_REPO_ROOT}/hack/test/base/collector-config.template.yaml"
+  local VERSION
+  VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)"
+  local K8S_ENV
+  K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
+  local K8S_CLUSTER_NAME
+  K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
+  local COLLECTOR_YAML
+  COLLECTOR_YAML="${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
+  local COLLECTOR_CONFIG_YAML
+  COLLECTOR_CONFIG_YAML="${COLLECTOR_REPO_ROOT}/hack/test/base/collector-config.template.yaml"
   local USE_TEST_PROXY="false"
   local EXPERIMENTAL_FEATURES=
 

@@ -25,7 +25,8 @@ function main() {
   local WAVEFRONT_LOGGING_TOKEN=
   local WAVEFRONT_URL="https://nimba.wavefront.com"
   local WF_CLUSTER=nimba
-  local CONFIG_CLUSTER_NAME=$(create_cluster_name)
+  local CONFIG_CLUSTER_NAME
+  CONFIG_CLUSTER_NAME=$(create_cluster_name)
 
   while getopts ":c:t:l:n:p:" opt; do
     case $opt in

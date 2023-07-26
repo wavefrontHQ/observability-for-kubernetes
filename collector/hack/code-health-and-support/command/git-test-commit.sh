@@ -3,9 +3,11 @@
 function gtc() {
     local message=$1
     # TODO automatically launch kind if not running
-    local kind_clusters=$(kind get clusters 2>&1 1>/dev/null)
+    local kind_clusters
+    kind_clusters=$(kind get clusters 2>&1 1>/dev/null)
 
-    local start_time=`date +%s`
+    local start_time
+    start_time=$(date +%s)
 
     if [ "${kind_clusters}" = "No kind clusters found." ]; then
         make nuke-kind
@@ -14,9 +16,11 @@ function gtc() {
     make tests || return 1
     make integration-test || return 1
 
-    local end_time=`date +%s`
+    local end_time
+    end_time=$(date +%s)
 
-    local total_runtime=$((end_time-start_time))
+    local total_runtime
+    total_runtime=$((end_time-start_time))
     git status
     git commit -m "${message}
 
@@ -26,7 +30,8 @@ function gtc() {
 
 function borkWIP() {
     local message=$1
-    local borked_branch=$(git rev-parse --abbrev-ref HEAD)
+    local borked_branch
+    borked_branch=$(git rev-parse --abbrev-ref HEAD)
     if [[ $borked_branch != "BORKWIP/"* ]]; then
         git checkout -b "BORKWIP/${borked_branch}"
         borked_branch="BORKWIP/${borked_branch}"
@@ -38,7 +43,8 @@ function borkWIP() {
 
 function unBork() {
     local message=$1
-    local borked_branch=$(git rev-parse --abbrev-ref HEAD)
+    local borked_branch
+    borked_branch=$(git rev-parse --abbrev-ref HEAD)
     if [[ $borked_branch != "BORKWIP/"* ]]; then
         echo 'you are already unborked.'
         exit 1

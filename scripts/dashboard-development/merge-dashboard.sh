@@ -76,7 +76,8 @@ function main() {
   jq ".url = \"${DEST_DASHBOARD}\"" ${SOURCE_DASHBOARD}.json > ${DEST_DASHBOARD}.json
 
   # Copy dashboard version from integration feature branch and increment it
-  local VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json 2> /dev/null)+1))
+  local VERSION
+  VERSION=$(($(jq ".systemDashboardVersion" ${INTEGRATION_DIR}/kubernetes/dashboards/${DEST_DASHBOARD}.json 2> /dev/null)+1))
   jq ". += {"systemDashboardVersion":${VERSION}}" ${DEST_DASHBOARD}.json > "tmp" && mv "tmp" ${DEST_DASHBOARD}.json
 
   # Do the sorting here so our systemDashboardVersion gets bumped to the top of the file

@@ -35,7 +35,8 @@ function main() {
   local K8S_ENV=
 
   # OPTIONAL/DEFAULT
-  local VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)"
+  local VERSION
+  VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/VERSION)"
   local K8S_CLUSTER_NAME=
   local COLLECTOR_YAML=
   local COLLECTOR_CONFIG_YAML=
