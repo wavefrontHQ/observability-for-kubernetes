@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BIN_DIR=$(dirname "$0")
+
+VERSION=1.53.2
+
+if [[ ! -f "$BIN_DIR/.cache/golangci-lint" ]] || ! "$BIN_DIR"/.cache/golangci-lint --version | grep "$VERSION" &> /dev/null; then
+    printf "downloading golangci-lint %s ..." "$VERSION" 1>&2
+    mkdir -p "$BIN_DIR/.cache"
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$BIN_DIR/.cache" "v$VERSION" &> /dev/null
+    chmod +x "$BIN_DIR/.cache/golangci-lint"
+    echo " done." 1>&2
+fi
+
+# shellcheck disable=SC2086
+"$BIN_DIR"/.cache/golangci-lint $*

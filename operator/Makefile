@@ -8,13 +8,6 @@ DOCKER_IMAGE?=kubernetes-operator-snapshot
 
 OS := $(shell uname -s | tr A-Z a-z)
 
-GOLANGCI_LINT_VERSION:="1.52.2"
-ifeq ($(OS), darwin)
-DARWIN_GOLANGCI_LINT_BIN:=$(or $(shell which golangci-lint),"/usr/local/bin/golangci-lint")
-else
-LINUX_GOLANGCI_LINT_BIN:=$(or $(shell which golangci-lint),$(GOPATH)/bin/golangci-lint)
-endif
-
 ifeq ($(origin VERSION_POSTFIX), undefined)
 VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
@@ -96,31 +89,9 @@ checkfmt:
 vet: ## Run go vet against code.
 	go vet ./...
 
-.PHONY: delete-old-linter
-delete-old-linter: ## Add as a prerequisite for linux-golangci-lint if you bump GOLANGCI_LINT_VERSION
-	$(eval LINT_VERSION := $(if $(shell command -v golangci-lint),$(shell golangci-lint version | awk '{print $$4}'),))
-	if [ ${GOLANGCI_LINT_VERSION} != "$(LINT_VERSION)" ]; then \
-		if which golangci-lint; then \
-			echo "Deleting golangci-lint version: $(LINT_VERSION)"; \
-			sudo rm -f "$(shell which golangci-lint)" || true; \
-		fi; \
-	fi
-
 .PHONY: golangci-lint
-golangci-lint: $(OS)-golangci-lint
+golangci-lint:
 	golangci-lint run
-
-.PHONY: darwin-golangci-lint
-darwin-golangci-lint: $(DARWIN_GOLANGCI_LINT_BIN)
-
-$(DARWIN_GOLANGCI_LINT_BIN):
-	brew install golangci-lint
-
-.PHONY: linux-golangci-lint
-linux-golangci-lint: $(LINUX_GOLANGCI_LINT_BIN)
-
-$(LINUX_GOLANGCI_LINT_BIN):
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v${GOLANGCI_LINT_VERSION}
 
 .PHONY: test
 test: manifests generate fmt vet ## Run tests.

@@ -113,7 +113,6 @@ pipeline {
           }
           steps {
             sh 'cd operator && make checkfmt vet test'
-            sh 'cd operator && make linux-golangci-lint'
             sh 'cd operator && make golangci-lint'
           }
         }
