@@ -45,7 +45,8 @@ function setup_test() {
   if [[ "$type" == "control-plane" ]]; then
     deploy_etcd_cert_printer
     create_etcd_cert_files
-    local operator_yaml_content=$(cat "${OPERATOR_REPO_ROOT}/build/operator/wavefront-operator.yaml")
+    local operator_yaml_content
+    operator_yaml_content=$(cat "${OPERATOR_REPO_ROOT}/build/operator/wavefront-operator.yaml")
 
     echo "---" >> hack/test/_v1alpha1_wavefront_test.yaml
     echo "${operator_yaml_content}" >> hack/test/_v1alpha1_wavefront_test.yaml
@@ -154,7 +155,8 @@ function run_k8s_events_checks() {
 
   "$REPO_ROOT/scripts/deploy/trigger-events.sh"
 
-  local external_events_results_file=$(mktemp)
+  local external_events_results_file
+  external_events_results_file=$(mktemp)
   local external_event_count=0
   for i in {1..5}; do
     while true; do # wait until we get a good connection
@@ -177,7 +179,8 @@ function run_k8s_events_checks() {
     exit 1
   fi
 
-  local external_events_fail_count=$(jq "(.BadEventJSONs | length) + (.MissingFields | length) + (.FirstTimestampsMissing | length) + (.LastTimestampsInvalid | length)" "$external_events_results_file")
+  local external_events_fail_count
+  external_events_fail_count=$(jq "(.BadEventJSONs | length) + (.MissingFields | length) + (.FirstTimestampsMissing | length) + (.LastTimestampsInvalid | length)" "$external_events_results_file")
 
   echo "external events results: $external_events_results_file"
   if [[ $external_events_fail_count -gt 0 ]]; then
@@ -257,7 +260,8 @@ function checks_to_remove() {
 
   for i in ${checks//,/ }; do
     tempFile=$(mktemp)
-    local excludeCheck=$(echo $i | sed -r 's/:/ /g')
+    local excludeCheck
+    excludeCheck=$(echo $i | sed -r 's/:/ /g')
     local awk_command="!/.*$excludeCheck.*$component_name|.*$component_name.*$excludeCheck/"
     cat "$file_name" | awk "$awk_command" >"$tempFile" && mv "$tempFile" "$file_name"
   done
@@ -265,21 +269,26 @@ function checks_to_remove() {
 
 function run_static_analysis() {
   local type=$1
-  local k8s_env=$(k8s_env)
+  local k8s_env
+  k8s_env=$(k8s_env)
   echo "Running static analysis ..."
 
-  local resources_yaml_file=$(mktemp)
+  local resources_yaml_file
+  resources_yaml_file=$(mktemp)
   local exit_status=0
   kubectl get "$(kubectl api-resources --verbs=list --namespaced -o name | tr '\n' ',' | sed s/,\$//)" --ignore-not-found -n $NS -o yaml |
     yq '.items[] | split_doc' - >"$resources_yaml_file"
 
   echo "Running static analysis: kube-linter"
 
-  local kube_lint_results_file=$(mktemp)
-  local kube_lint_check_errors=$(mktemp)
+  local kube_lint_results_file
+  kube_lint_results_file=$(mktemp)
+  local kube_lint_check_errors
+  kube_lint_check_errors=$(mktemp)
   kube-linter lint "$resources_yaml_file" --format json 1>"$kube_lint_results_file" 2>/dev/null || true
 
-  local current_lint_errors="$(jq '.Reports | length' "$kube_lint_results_file")"
+  local current_lint_errors
+  current_lint_errors="$(jq '.Reports | length' "$kube_lint_results_file")"
   yellow "Kube linter error count: ${current_lint_errors}"
 
   jq -r '.Reports[] | "|" + .Check + "|  " +.Object.K8sObject.GroupVersionKind.Kind + " " + .Object.K8sObject.Namespace + "/" +  .Object.K8sObject.Name + ": " + .Diagnostic.Message' "$kube_lint_results_file" 1>"$kube_lint_check_errors" 2>/dev/null || true
@@ -302,12 +311,15 @@ function run_static_analysis() {
   fi
 
   echo "Running static analysis: kube-score"
-  local kube_score_results_file=$(mktemp)
-  local kube_score_critical_errors=$(mktemp)
+  local kube_score_results_file
+  kube_score_results_file=$(mktemp)
+  local kube_score_critical_errors
+  kube_score_critical_errors=$(mktemp)
   kube-score score "$resources_yaml_file" --ignore-test pod-networkpolicy --output-format ci >"$kube_score_results_file" || true
 
   grep '\[CRITICAL\]' "$kube_score_results_file" >"$kube_score_critical_errors"
-  local current_score_errors=$(cat "$kube_score_critical_errors" | wc -l)
+  local current_score_errors
+  current_score_errors=$(cat "$kube_score_critical_errors" | wc -l)
   yellow "Kube score error count: ${current_score_errors}"
 
   #REMOVE KNOWN CHECKS
@@ -330,7 +342,8 @@ function run_static_analysis() {
 
   echo "Running static analysis: ServiceAccount automountServiceAccountToken checks"
   local automountToken=
-  local service_accounts=$(kubectl get serviceaccounts -l app.kubernetes.io/name=wavefront -n $NS -o name | tr '\n' ',' | sed "s/serviceaccount\///g" | sed s/,\$//)
+  local service_accounts
+  service_accounts=$(kubectl get serviceaccounts -l app.kubernetes.io/name=wavefront -n $NS -o name | tr '\n' ',' | sed "s/serviceaccount\///g" | sed s/,\$//)
 
   for i in ${service_accounts//,/ }; do
     automountToken=$(kubectl get serviceaccount $i -n $NS -o=jsonpath='{.automountServiceAccountToken}' | tr -d '\n')
@@ -341,7 +354,8 @@ function run_static_analysis() {
   done
 
   echo "Running static analysis: Pod automountServiceAccountToken checks"
-  local pods=$(kubectl get pods -l app.kubernetes.io/name=wavefront -n $NS -o name | tr '\n' ',' | sed "s/pod\///g" | sed s/,\$//)
+  local pods
+  pods=$(kubectl get pods -l app.kubernetes.io/name=wavefront -n $NS -o name | tr '\n' ',' | sed "s/pod\///g" | sed s/,\$//)
 
   for i in ${pods//,/ }; do
     automountToken=$(kubectl get pod $i -n $NS -o=jsonpath='{.spec.automountServiceAccountToken}' | tr -d '\n')
@@ -548,9 +562,12 @@ function main() {
 
   local WAVEFRONT_URL="https:\/\/nimba.wavefront.com"
   local WF_CLUSTER=nimba
-  local VERSION=$(get_next_operator_version)
-  local K8S_ENV=$(k8s_env)
-  local CONFIG_CLUSTER_NAME=$(create_cluster_name)
+  local VERSION
+  VERSION=$(get_next_operator_version)
+  local K8S_ENV
+  K8S_ENV=$(k8s_env)
+  local CONFIG_CLUSTER_NAME
+  CONFIG_CLUSTER_NAME=$(create_cluster_name)
   local tests_to_run=()
 
   while getopts ":t:c:v:n:r:d:e" opt; do

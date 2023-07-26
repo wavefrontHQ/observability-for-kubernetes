@@ -7,7 +7,8 @@ source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 function curl_query_to_wf_dashboard() {
   local query=$1
-  local AFTER_UNIX_TS="$(date '+%s')000"
+  local AFTER_UNIX_TS
+  AFTER_UNIX_TS="$(date '+%s')000"
 
   # NOTE: any output inside this function is concatenated and used as the return value;
   # otherwise we would love to put a log such as this in here to give us more information:
@@ -21,7 +22,8 @@ function curl_query_to_wf_dashboard() {
 function wait_for_query_match_tags() {
   local query=$1
   local expected_tags_json=$2
-  local actual_tags_json=$(mktemp)
+  local actual_tags_json
+  actual_tags_json=$(mktemp)
   local loop_count=0
 
   printf "Querying for tags %s ..."  "$query"
@@ -141,8 +143,10 @@ function main() {
   local WAVEFRONT_TOKEN=
   local CONFIG_CLUSTER_NAME=
 
-  local EXPECTED_COLLECTOR_VERSION=$(kubectl get configmaps --namespace observability-system wavefront-component-versions -o yaml | yq '.data.collector' | cut -d '-' -f1)
-  local EXPECTED_OPERATOR_VERSION="$(get_next_operator_version)"
+  local EXPECTED_COLLECTOR_VERSION
+  EXPECTED_COLLECTOR_VERSION=$(kubectl get configmaps --namespace observability-system wavefront-component-versions -o yaml | yq '.data.collector' | cut -d '-' -f1)
+  local EXPECTED_OPERATOR_VERSION
+  EXPECTED_OPERATOR_VERSION="$(get_next_operator_version)"
   local WF_CLUSTER=nimba
   local EXTRA_TESTS=
   local LOGGING_TEST_PROXY_NAME=
@@ -190,8 +194,10 @@ function main() {
 
   wait_for_cluster_ready "$NS"
 
-  local CLUSTER_UUID=$(kubectl get ns default -o json | jq  '.metadata.uid' |  tr -d '"')
-  local EXPECTED_TAGS_JSON=$(mktemp)
+  local CLUSTER_UUID
+  CLUSTER_UUID=$(kubectl get ns default -o json | jq  '.metadata.uid' |  tr -d '"')
+  local EXPECTED_TAGS_JSON
+  EXPECTED_TAGS_JSON=$(mktemp)
   jq -S -n --arg status Healthy \
      --arg proxy Healthy \
      --arg metrics Healthy \

@@ -103,8 +103,10 @@ function main() {
   local VERSION=
 
   # OPTIONAL/DEFAULT
-  local K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
-  local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
+  local K8S_ENV
+  K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
+  local K8S_CLUSTER_NAME
+  K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
   local EXPERIMENTAL_FEATURES=
   local tests_to_run=()
 

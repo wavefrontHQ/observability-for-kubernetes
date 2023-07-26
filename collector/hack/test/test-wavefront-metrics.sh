@@ -9,7 +9,8 @@ NS=wavefront-collector
 
 function curl_query_to_wf_dashboard() {
   local query=$1
-  local AFTER_UNIX_TS="$(date '+%s')000"
+  local AFTER_UNIX_TS
+  AFTER_UNIX_TS="$(date '+%s')000"
 
   # NOTE: any output inside this function is concatenated and used as the return value;
   # otherwise we would love to put a log such as this in here to give us more information:
@@ -111,9 +112,12 @@ function main() {
   local WAVEFRONT_TOKEN=
 
   local WF_CLUSTER=nimba
-  local VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/NEXT_RELEASE_VERSION)"
-  local K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
-  local K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
+  local VERSION
+  VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/NEXT_RELEASE_VERSION)"
+  local K8S_ENV
+  K8S_ENV=$(k8s_env | awk '{print tolower($0)}')
+  local K8S_CLUSTER_NAME
+  K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
 
   while getopts ":c:t:n:v:" opt; do
     case $opt in
@@ -141,33 +145,40 @@ function main() {
 
   # We aren't currently checking for units here (eg. 1250 MiB vs 1.25 GiB), so there's a possibility that the following check could fail
   # We don't believe that is likely to happen due to the size of our environments but we can modify this in the future if that is a problem.
-  local NODE_NAME="$(kubectl get nodes -o json | jq -r '.items[] | objects | .metadata.name')"
+  local NODE_NAME
+  NODE_NAME="$(kubectl get nodes -o json | jq -r '.items[] | objects | .metadata.name')"
 
   while IFS= read -r node; do
     echo "Checking node metrics for: ${node}"
 
-    local EXPECTED_NODE_CPU_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "cpu" | awk '{print $2}' | tr -dc '0-9\n')"
+    local EXPECTED_NODE_CPU_REQUEST
+    EXPECTED_NODE_CPU_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "cpu" | awk '{print $2}' | tr -dc '0-9\n')"
     if [[ "${EXPECTED_NODE_CPU_REQUEST}" =~ ^[0-9]$ ]]; then
       EXPECTED_NODE_CPU_REQUEST="${EXPECTED_NODE_CPU_REQUEST}000"
     fi
     exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_CPU_REQUEST}.000" "at(\"end\", 2m, ts(kubernetes.node.cpu.request, cluster=\"${K8S_CLUSTER_NAME}\"AND source=\"${node}\"))"
 
-    local EXPECTED_NODE_CPU_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "cpu" | awk '{print $4}' | tr -dc '0-9\n')"
+    local EXPECTED_NODE_CPU_LIMIT
+    EXPECTED_NODE_CPU_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "cpu" | awk '{print $4}' | tr -dc '0-9\n')"
     if [[ "${EXPECTED_NODE_CPU_LIMIT}" =~ ^[0-9]$ ]]; then
       EXPECTED_NODE_CPU_LIMIT="${EXPECTED_NODE_CPU_LIMIT}000"
     fi
     exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_CPU_LIMIT}.000" "at(\"end\", 2m, ts(kubernetes.node.cpu.limit, cluster=\"${K8S_CLUSTER_NAME}\"AND source=\"${node}\"))"
 
-    local EXPECTED_NODE_MEMORY_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "memory" | awk '{print $2}' | numfmt --from=auto)"
+    local EXPECTED_NODE_MEMORY_REQUEST
+    EXPECTED_NODE_MEMORY_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "memory" | awk '{print $2}' | numfmt --from=auto)"
     exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_MEMORY_REQUEST}.000" "at(\"end\", 2m, ts(kubernetes.node.memory.request, cluster=\"${K8S_CLUSTER_NAME}\" AND source=\"${node}\"))"
 
-    local EXPECTED_NODE_MEMORY_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "memory" | awk '{print $4}' | numfmt --from=auto)"
+    local EXPECTED_NODE_MEMORY_LIMIT
+    EXPECTED_NODE_MEMORY_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "memory" | awk '{print $4}' | numfmt --from=auto)"
     exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_MEMORY_LIMIT}.000" "at(\"end\", 2m, ts(kubernetes.node.memory.limit, cluster=\"${K8S_CLUSTER_NAME}\"AND source=\"${node}\"))"
 
-    local EXPECTED_NODE_EPHERMERAL_STORAGE_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "ephemeral-storage" | awk '{print $2}' | numfmt --from=auto)"
+    local EXPECTED_NODE_EPHERMERAL_STORAGE_REQUEST
+    EXPECTED_NODE_EPHERMERAL_STORAGE_REQUEST="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "ephemeral-storage" | awk '{print $2}' | numfmt --from=auto)"
     exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_EPHERMERAL_STORAGE_REQUEST}.000" "at(\"end\", 2m, ts(kubernetes.node.ephemeral_storage.request, cluster=\"${K8S_CLUSTER_NAME}\" AND source=\"${node}\"))"
 
-    local EXPECTED_NODE_EPHERMERAL_STORAGE_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "ephemeral-storage" | awk '{print $4}' | numfmt --from=auto)"
+    local EXPECTED_NODE_EPHERMERAL_STORAGE_LIMIT
+    EXPECTED_NODE_EPHERMERAL_STORAGE_LIMIT="$(kubectl describe node "${node}" | grep -A6 "Allocated resources" | grep "ephemeral-storage" | awk '{print $4}' | numfmt --from=auto)"
     exit_on_fail wait_for_query_match_exact "${EXPECTED_NODE_EPHERMERAL_STORAGE_LIMIT}.000" "at(\"end\", 2m, ts(kubernetes.node.ephemeral_storage.limit, cluster=\"${K8S_CLUSTER_NAME}\" AND source=\"${node}\"))"
   done <<< "${NODE_NAME}"
 

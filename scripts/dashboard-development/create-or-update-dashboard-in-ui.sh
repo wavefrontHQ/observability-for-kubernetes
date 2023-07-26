@@ -57,7 +57,8 @@ function main() {
 
   jq ".url = \"${NEW_DASHBOARD}\"" ${DASHBOARD_TO_CLONE}.json > ${NEW_DASHBOARD}.json
 
-  local RESULT=$(curl -X PUT --data "$(cat "${NEW_DASHBOARD}".json)" \
+  local RESULT
+  RESULT=$(curl -X PUT --data "$(cat "${NEW_DASHBOARD}".json)" \
     --header "Content-Type: application/json" \
     --header "Authorization: Bearer ${WAVEFRONT_TOKEN}" \
     "https://${WF_CLUSTER}.wavefront.com/api/v2/dashboard/${NEW_DASHBOARD}" \

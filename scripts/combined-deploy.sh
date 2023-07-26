@@ -11,7 +11,8 @@ source "${REPO_ROOT}/scripts/k8s-utils.sh"
 function main() {
   local BUILD_COLLECTOR=true
   local BUILD_OPERATOR=true
-  local COLLECTOR_VERSION="$(get_component_version collector)"
+  local COLLECTOR_VERSION
+  COLLECTOR_VERSION="$(get_component_version collector)"
 
   while getopts "co" opt; do
     case $opt in
@@ -29,7 +30,8 @@ function main() {
 
   if [[ "${BUILD_COLLECTOR}" == "true" ]]; then
     pushd ${REPO_ROOT}/collector
-      local output="$(PREFIX=${PREFIX} make docker-xplatform-build)"
+      local output
+      output="$(PREFIX=${PREFIX} make docker-xplatform-build)"
       COLLECTOR_VERSION="${output#*Built collector version: }"
     popd
   fi

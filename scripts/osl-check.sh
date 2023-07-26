@@ -42,15 +42,20 @@ function main() {
         branch_start='main'
     fi
 
-    local additions_file=$(mktemp)
-    local removals_file=$(mktemp)
+    local additions_file
+    additions_file=$(mktemp)
+    local removals_file
+    removals_file=$(mktemp)
 
     git diff "${branch_start}..HEAD" -- "${component}/go.mod" | grep -e '^+\s' | awk '{print $2}' | sort > "${additions_file}"
     git diff "${branch_start}..HEAD" -- "${component}/go.mod" | grep -e '^-\s' | awk '{print $2}' | sort > "${removals_file}"
 
-    local added_packages_file=$(mktemp)
-    local removed_packages_file=$(mktemp)
-    local upgraded_packages_file=$(mktemp)
+    local added_packages_file
+    added_packages_file=$(mktemp)
+    local removed_packages_file
+    removed_packages_file=$(mktemp)
+    local upgraded_packages_file
+    upgraded_packages_file=$(mktemp)
 
     comm -23 "${additions_file}" "${removals_file}" > "${added_packages_file}"
     comm -23 "${removals_file}" "${additions_file}" > "${removed_packages_file}"

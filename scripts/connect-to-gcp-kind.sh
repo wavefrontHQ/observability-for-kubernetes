@@ -52,7 +52,8 @@ function main() {
 
   ssh-keygen -F "${KIND_VM_IP}" -f "${known_hosts_filepath}" | grep -q found || ssh-keyscan "${KIND_VM_IP}" >> "${known_hosts_filepath}" 2>/dev/null
 
-  local kind_port=$(fetchKindPort)
+  local kind_port
+  kind_port=$(fetchKindPort)
 
   if [[ -z "${kind_port}" ]]; then
     nukeRemoteKind
