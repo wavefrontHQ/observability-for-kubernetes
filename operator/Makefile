@@ -150,11 +150,6 @@ endif
 copy-base-patches:
 	cp config/manager/patches-base.yaml config/manager/patches.yaml
 
-KUBE_SCORE = $(OPERATOR_DIR)/bin/kube-score
-.PHONY: install-kube-score
-install-kube-score: ## Download kube-score locally if necessary.
-	$(call go-get-tool,$(KUBE_SCORE),github.com/zegl/kube-score/cmd/kube-score@v1.14.0)
-
 # go-get-tool will 'go get' any package $2 and install it to $1.
 define go-get-tool
 @[ -f $(1) ] || { \
@@ -245,5 +240,5 @@ undeploy: operator-yaml
 	kubectl delete --ignore-not-found=$(ignore-not-found) -k $(OPERATOR_BUILD_DIR) || true
 
 .PHONY: integration-test
-integration-test: install-kube-score undeploy deploy
+integration-test: undeploy deploy
 	(cd $(OPERATOR_DIR)/hack/test && ./run-e2e-tests.sh -t $(WAVEFRONT_TOKEN) -d $(NS) -v $(NEXT_RELEASE_VERSION) $(INTEGRATION_TEST_ARGS))

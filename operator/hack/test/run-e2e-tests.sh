@@ -304,7 +304,7 @@ function run_static_analysis() {
   echo "Running static analysis: kube-score"
   local kube_score_results_file=$(mktemp)
   local kube_score_critical_errors=$(mktemp)
-  ${OPERATOR_REPO_ROOT}/bin/kube-score score "$resources_yaml_file" --ignore-test pod-networkpolicy --output-format ci >"$kube_score_results_file" || true
+  kube-score score "$resources_yaml_file" --ignore-test pod-networkpolicy --output-format ci >"$kube_score_results_file" || true
 
   grep '\[CRITICAL\]' "$kube_score_results_file" >"$kube_score_critical_errors"
   local current_score_errors=$(cat "$kube_score_critical_errors" | wc -l)
