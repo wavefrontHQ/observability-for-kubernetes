@@ -3,7 +3,7 @@ set -euo pipefail
 
 BIN_DIR=$(dirname "$0")
 
-VERSION=5.1.0
+VERSION=5.0.3 # Ignore 5.1.0 because they forgot to publish a darwin/arm64 version
 
 if [[ ! -f "$BIN_DIR/.cache/kustomize" ]] || ! "$BIN_DIR"/.cache/kustomize version 2> /dev/null | grep "$VERSION" &> /dev/null; then
     printf "downloading kustomize %s ..." "$VERSION" 1>&2
