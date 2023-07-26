@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BIN_DIR=$(dirname "$0")
+
+VERSION=0.33.0
+
+if [[ ! -f "$BIN_DIR/.cache/imgpkg" ]] || ! "$BIN_DIR/.cache/imgpkg" version | grep "$VERSION" &> /dev/null; then
+    printf "downloading imgpkg %s ..." "$VERSION" 1>&2
+    mkdir -p "$BIN_DIR/.cache"
+    OS="$(go env GOOS)"
+    ARCH="$(go env GOARCH)"
+    curl --silent --create-dirs --output "$BIN_DIR/.cache/imgpkg" -L "https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v$VERSION/imgpkg-$OS-$ARCH"
+    chmod +x "$BIN_DIR/.cache/imgpkg"
+    echo " done." 1>&2
+fi
+
+# shellcheck disable=SC2086
+"$BIN_DIR"/.cache/imgpkg $*

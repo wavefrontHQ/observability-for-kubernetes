@@ -150,14 +150,6 @@ endif
 copy-base-patches:
 	cp config/manager/patches-base.yaml config/manager/patches.yaml
 
-IMGPKG = $(OPERATOR_DIR)/bin/imgpkg
-$(IMGPKG):
-	curl --create-dirs --output $(IMGPKG) -L https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v0.33.0/imgpkg-$(shell go env GOOS)-$(shell go env GOARCH)
-	chmod +x $(IMGPKG)
-
-.PHONY: imgpkg
-imgpkg: $(IMGPKG)
-
 KUBE_LINTER = $(OPERATOR_DIR)/bin/kube-linter
 .PHONY: install-kube-linter
 install-kube-linter: ## Download kube-linter locally if necessary.

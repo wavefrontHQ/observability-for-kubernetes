@@ -6,7 +6,6 @@ OPERATOR_DIR="${REPO_ROOT}/operator"
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
 cd "${OPERATOR_DIR}"
-IMGPKG=${IMGPKG:-$OPERATOR_DIR/bin/imgpkg}
 
 function print_usage_and_exit() {
   echo "Failure: $1"
@@ -25,11 +24,10 @@ function copy-image-ref() {
     local image_name
 
     image_name=$(echo "$image_ref" | cut -d':' -f1)
-    ${IMGPKG} copy -i "$src_prefix/$image_ref" --to-repo "$dst_prefix/$image_name"
+    imgpkg copy -i "$src_prefix/$image_ref" --to-repo "$dst_prefix/$image_name"
 }
 
 function main() {
-  make imgpkg
   local src_prefix=
   local dst_prefix=
 
