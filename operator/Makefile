@@ -8,13 +8,6 @@ DOCKER_IMAGE?=kubernetes-operator-snapshot
 
 OS := $(shell uname -s | tr A-Z a-z)
 
-GOLANGCI_LINT_VERSION:="1.52.2"
-ifeq ($(OS), darwin)
-DARWIN_GOLANGCI_LINT_BIN:=$(or $(shell which golangci-lint),"/usr/local/bin/golangci-lint")
-else
-LINUX_GOLANGCI_LINT_BIN:=$(or $(shell which golangci-lint),$(GOPATH)/bin/golangci-lint)
-endif
-
 ifeq ($(origin VERSION_POSTFIX), undefined)
 VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
@@ -69,16 +62,16 @@ help: ## Display this help.
 
 ##@ Development
 .PHONY: manifests
-manifests: controller-gen config/crd/bases/wavefront.com_wavefronts.yaml
+manifests: config/crd/bases/wavefront.com_wavefronts.yaml
 
 config/crd/bases/wavefront.com_wavefronts.yaml: api/v1alpha1/wavefront_types.go controllers/wavefront_controller.go
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate
-generate: controller-gen api/v1alpha1/zz_generated.deepcopy.go
+generate: api/v1alpha1/zz_generated.deepcopy.go
 
 api/v1alpha1/zz_generated.deepcopy.go: hack/boilerplate.go.txt api/v1alpha1/wavefront_types.go
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: fmt
 fmt:
@@ -96,31 +89,9 @@ checkfmt:
 vet: ## Run go vet against code.
 	go vet ./...
 
-.PHONY: delete-old-linter
-delete-old-linter: ## Add as a prerequisite for linux-golangci-lint if you bump GOLANGCI_LINT_VERSION
-	$(eval LINT_VERSION := $(if $(shell command -v golangci-lint),$(shell golangci-lint version | awk '{print $$4}'),))
-	if [ ${GOLANGCI_LINT_VERSION} != "$(LINT_VERSION)" ]; then \
-		if which golangci-lint; then \
-			echo "Deleting golangci-lint version: $(LINT_VERSION)"; \
-			sudo rm -f "$(shell which golangci-lint)" || true; \
-		fi; \
-	fi
-
 .PHONY: golangci-lint
-golangci-lint: $(OS)-golangci-lint
+golangci-lint:
 	golangci-lint run
-
-.PHONY: darwin-golangci-lint
-darwin-golangci-lint: $(DARWIN_GOLANGCI_LINT_BIN)
-
-$(DARWIN_GOLANGCI_LINT_BIN):
-	brew install golangci-lint
-
-.PHONY: linux-golangci-lint
-linux-golangci-lint: $(LINUX_GOLANGCI_LINT_BIN)
-
-$(LINUX_GOLANGCI_LINT_BIN):
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v${GOLANGCI_LINT_VERSION}
 
 .PHONY: test
 test: manifests generate fmt vet ## Run tests.
@@ -178,29 +149,6 @@ endif
 .PHONY: copy-base-patches
 copy-base-patches:
 	cp config/manager/patches-base.yaml config/manager/patches.yaml
-
-CONTROLLER_GEN = $(OPERATOR_DIR)/bin/controller-gen
-.PHONY: controller-gen
-controller-gen:
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.11.3)
-
-IMGPKG = $(OPERATOR_DIR)/bin/imgpkg
-$(IMGPKG):
-	curl --create-dirs --output $(IMGPKG) -L https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/v0.33.0/imgpkg-$(shell go env GOOS)-$(shell go env GOARCH)
-	chmod +x $(IMGPKG)
-
-.PHONY: imgpkg
-imgpkg: $(IMGPKG)
-
-KUBE_LINTER = $(OPERATOR_DIR)/bin/kube-linter
-.PHONY: install-kube-linter
-install-kube-linter: ## Download kube-linter locally if necessary.
-	$(call go-get-tool,$(KUBE_LINTER),golang.stackrox.io/kube-linter/cmd/kube-linter@v0.4.0)
-
-KUBE_SCORE = $(OPERATOR_DIR)/bin/kube-score
-.PHONY: install-kube-score
-install-kube-score: ## Download kube-score locally if necessary.
-	$(call go-get-tool,$(KUBE_SCORE),github.com/zegl/kube-score/cmd/kube-score@v1.14.0)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 define go-get-tool
@@ -292,5 +240,5 @@ undeploy: operator-yaml
 	kubectl delete --ignore-not-found=$(ignore-not-found) -k $(OPERATOR_BUILD_DIR) || true
 
 .PHONY: integration-test
-integration-test: install-kube-score install-kube-linter undeploy deploy
+integration-test: undeploy deploy
 	(cd $(OPERATOR_DIR)/hack/test && ./run-e2e-tests.sh -t $(WAVEFRONT_TOKEN) -d $(NS) -v $(NEXT_RELEASE_VERSION) $(INTEGRATION_TEST_ARGS))
