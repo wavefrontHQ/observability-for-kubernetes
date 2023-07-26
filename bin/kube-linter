@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BIN_DIR=$(dirname "$0")
+
+VERSION=0.4.0
+
+if [[ ! -f "$BIN_DIR/.cache/kube-linter" ]]; then
+    printf "downloading kube-linter %s ..." "$VERSION" 1>&2
+    mkdir -p "$BIN_DIR/.cache"
+    GOBIN="$BIN_DIR/.cache" CGO_ENABLED=0 go install "golang.stackrox.io/kube-linter/cmd/kube-linter@v$VERSION" &> /dev/null
+    chmod +x "$BIN_DIR/.cache/kube-linter"
+    echo " done." 1>&2
+fi
+
+# shellcheck disable=SC2086
+"$BIN_DIR"/.cache/kube-linter $*

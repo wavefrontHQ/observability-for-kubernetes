@@ -277,7 +277,7 @@ function run_static_analysis() {
 
   local kube_lint_results_file=$(mktemp)
   local kube_lint_check_errors=$(mktemp)
-  ${OPERATOR_REPO_ROOT}/bin/kube-linter lint "$resources_yaml_file" --format json 1>"$kube_lint_results_file" 2>/dev/null || true
+  kube-linter lint "$resources_yaml_file" --format json 1>"$kube_lint_results_file" 2>/dev/null || true
 
   local current_lint_errors="$(jq '.Reports | length' "$kube_lint_results_file")"
   yellow "Kube linter error count: ${current_lint_errors}"

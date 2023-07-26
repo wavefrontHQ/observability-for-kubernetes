@@ -150,11 +150,6 @@ endif
 copy-base-patches:
 	cp config/manager/patches-base.yaml config/manager/patches.yaml
 
-KUBE_LINTER = $(OPERATOR_DIR)/bin/kube-linter
-.PHONY: install-kube-linter
-install-kube-linter: ## Download kube-linter locally if necessary.
-	$(call go-get-tool,$(KUBE_LINTER),golang.stackrox.io/kube-linter/cmd/kube-linter@v0.4.0)
-
 KUBE_SCORE = $(OPERATOR_DIR)/bin/kube-score
 .PHONY: install-kube-score
 install-kube-score: ## Download kube-score locally if necessary.
@@ -250,5 +245,5 @@ undeploy: operator-yaml
 	kubectl delete --ignore-not-found=$(ignore-not-found) -k $(OPERATOR_BUILD_DIR) || true
 
 .PHONY: integration-test
-integration-test: install-kube-score install-kube-linter undeploy deploy
+integration-test: install-kube-score undeploy deploy
 	(cd $(OPERATOR_DIR)/hack/test && ./run-e2e-tests.sh -t $(WAVEFRONT_TOKEN) -d $(NS) -v $(NEXT_RELEASE_VERSION) $(INTEGRATION_TEST_ARGS))
