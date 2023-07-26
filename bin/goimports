@@ -8,8 +8,6 @@ VERSION=0.11.0
 if [[ ! -f "$BIN_DIR/.cache/goimports" ]]; then
     printf "downloading goimports %s ..." "$VERSION" 1>&2
     mkdir -p "$BIN_DIR/.cache"
-    OS="$(go env GOOS)"
-    ARCH="$(go env GOARCH)"
     GOBIN="$BIN_DIR/.cache" CGO_ENABLED=0 go install "golang.org/x/tools/cmd/goimports@v$VERSION" &> /dev/null
     chmod +x "$BIN_DIR/.cache/goimports"
     echo " done." 1>&2

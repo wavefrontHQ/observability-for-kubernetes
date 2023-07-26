@@ -62,16 +62,16 @@ help: ## Display this help.
 
 ##@ Development
 .PHONY: manifests
-manifests: controller-gen config/crd/bases/wavefront.com_wavefronts.yaml
+manifests: config/crd/bases/wavefront.com_wavefronts.yaml
 
 config/crd/bases/wavefront.com_wavefronts.yaml: api/v1alpha1/wavefront_types.go controllers/wavefront_controller.go
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate
-generate: controller-gen api/v1alpha1/zz_generated.deepcopy.go
+generate: api/v1alpha1/zz_generated.deepcopy.go
 
 api/v1alpha1/zz_generated.deepcopy.go: hack/boilerplate.go.txt api/v1alpha1/wavefront_types.go
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: fmt
 fmt:
@@ -149,11 +149,6 @@ endif
 .PHONY: copy-base-patches
 copy-base-patches:
 	cp config/manager/patches-base.yaml config/manager/patches.yaml
-
-CONTROLLER_GEN = $(OPERATOR_DIR)/bin/controller-gen
-.PHONY: controller-gen
-controller-gen:
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.11.3)
 
 IMGPKG = $(OPERATOR_DIR)/bin/imgpkg
 $(IMGPKG):
