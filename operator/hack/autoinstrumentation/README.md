@@ -148,7 +148,7 @@ Refer to Pixie's [Setting up Kubernetes](https://docs.px.dev/installing-pixie/se
 6. Choose your cluster from the `Clusters` field.
 7. Set the `Summary Window (Seconds)` field to `10`.
 8. If the `Export URL` isn't already set to `wavefront-proxy.observability-system.svc.cluster.local:4317`, put that value in this field.
-8. Replace the contents of the `PxL Script` field with the script at [/operator/hack/autoinstrumentation/spans.pxl](/operator/hack/autoinstrumentation/spans.pxl).
+8. Replace the contents of the `PxL Script` field with the script at [/operator/hack/autoinstrumentation/spans.pxl](/operator/hack/autoinstrumentation/cluster-spans.pxl).
 9. Click the `CREATE` button.
 10. To validate that the data is being received by the Wavefront proxy, check logs for the the `wavefront-proxy` pod.
 

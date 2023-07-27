@@ -11,7 +11,7 @@ def exclude_known_namespaces(df):
 
     # Exclude DataFrames from kube-system
     #
-    # It is not useful to see metrics related to the functioning of Kubernete's system-components (such as the CNI,
+    # It is not useful to see metrics related to the functioning of Kubernetes's system-components (such as the CNI,
     # core-dns, aws-node, etc)
     df = df[df.ctx['namespace'] != 'kube-system']
     df = df[df.ctx['namespace'] != 'observability-system']
@@ -48,17 +48,8 @@ def exclude_known_req_path(df):
 
     return df
 
-def exclude_egress_traffic(df):
-    '''Exclude egress traffic i.e with trace_role=1.
-
-    Args:
-      @df: The DataFrames to filter.
-    '''
-    df = df[df['trace_role'] != 1]
-    return df
-
-def exclude_ingress_traffic(df):
-    '''Exclude ingress traffic i.e we don't expect remote_addr to resolve to a pod_id and hence it would be empty)
+def exclude_non_ingress_traffic(df):
+    '''Exclude non-ingress traffic
 
     Args:
       @df: The DataFrames to filter.
@@ -69,7 +60,9 @@ def exclude_ingress_traffic(df):
 
     # If remote_addr doesn't correspond to a pod, then it returns an empty string per
     # https://docs.px.dev/reference/pxl/udf/ip_to_pod_id/#name
-    df = df[px.ip_to_pod_id(df.remote_addr) != '']
+    df = df[px.ip_to_pod_id(df.remote_addr) == '']
+    df = df[df['trace_role'] == 1]
+    df = df[df.pod_id != '']
 
     return df
 
@@ -86,7 +79,7 @@ def xor(a, b):
 
 def add_trace_headers(df):
     df.span_id = px.substring(df.destination_pod_id, 19, 4) + px.substring(df.destination_pod_id, 24, 12)
-    df.parent_span_id = px.substring(df.source_pod_id, 19, 4) + px.substring(df.source_pod_id, 24, 12)
+    df.parent_span_id = px.substring(df.source_ip, 19, 4) + px.substring(df.source_ip, 24, 12)
 
     # If we have 16 decimal places of nanoseconds, then we will potentially have collisions about every 115 days.
     # Because of that, we are xor'ing the time and latency with the intention of generating a more unique trace id.
@@ -102,21 +95,11 @@ def add_source_dest_columns(df):
     df.destination_pod_id = df.pod_id
     df.destination_pod = remove_ns_prefix(df.pod)
     df.destination_deployment = remove_ns_prefix(default_none(px.pod_id_to_deployment_name(df.destination_pod_id)))
-    df.destination_service = strip_commas(remove_ns_prefix(default_none(px.pod_id_to_service_name(df.destination_pod_id))))
+    df.destination_service = remove_ns_prefix(default_none(px.pod_id_to_service_name(df.destination_pod_id)))
     df.destination_namespace = px.pod_id_to_namespace(df.destination_pod_id)
     df.destination_node = df.node
 
-    # After excluding ingress and egress traffic, remote_addr is guaranteed to be a pod. So pod_id can't be empty.
-    df.source_pod_id = px.ip_to_pod_id(df.remote_addr)
-    df.source_pod = remove_ns_prefix(px.pod_id_to_pod_name(df.source_pod_id))
-    df.source_deployment = remove_ns_prefix(default_none(px.pod_id_to_deployment_name(df.source_pod_id)))
-
-    # order of precedence: service = service_name > deployment_name > unknown_ingress
-    df.source_service = strip_commas(remove_ns_prefix(px.pod_id_to_service_name(df.source_pod_id)))
-    df.source_service = px.select(df.source_service == '', df.source_deployment, df.source_service)
-    df.source_service = px.select(df.source_service == '', 'unknown_ingress', df.source_service)
-    df.source_node = px.pod_id_to_node_name(df.source_pod_id)
-    df.source_namespace = px.pod_id_to_namespace(df.source_pod_id)
+    df.source_ip = px.select(df.remote_addr != '', df.remote_addr, 'unknown_ingress')
 
     return df
 
@@ -130,15 +113,11 @@ def add_error_tag(df):
 
     return df
 
-def strip_commas(column):
-    return px.replace(',', column, '_')
-
 df = px.DataFrame('http_events', start_time=px.plugin.start_time, end_time=px.plugin.end_time)
 
 df = exclude_known_namespaces(df)
 df = exclude_known_req_path(df)
-df = exclude_egress_traffic(df)
-df = exclude_ingress_traffic(df)
+df = exclude_non_ingress_traffic(df)
 df = add_source_dest_columns(df)
 df = add_trace_headers(df)
 df = add_error_tag(df)
@@ -180,17 +159,10 @@ px.export(
                 start_time=df.start_time,
                 end_time=df.time_,
                 trace_id=df.trace_id,
-                span_id=df.span_id,
-                parent_span_id=df.parent_span_id,
-                kind=px.otel.trace.SPAN_KIND_SERVER,
+                span_id=df.parent_span_id,
+                kind=px.otel.trace.SPAN_KIND_CLIENT,
                 attributes={
                     # NOTE: the integration handles splitting of services.
-
-                    # OTEL K8s Resource Conventions
-                    'k8s.pod.name': df.destination_pod,
-                    'k8s.node.name': df.destination_node,
-                    'k8s.deployment.name': df.destination_deployment,
-                    'k8s.namespace.name': df.destination_namespace,
 
                     # Wavefront Conventions
                     'service': df.destination_service,
@@ -198,6 +170,7 @@ px.export(
                     'application': df.destination_namespace,
                     # We follow pixie's convention of setting an error tag only for a server span.
                     'error': df.error,
+                    '_inboundExternalService' : df.source_ip,
 
                     # OTEL HTTP Conventions
                     'http.status_code': df.resp_status,
@@ -216,21 +189,25 @@ px.export(
                 start_time=df.start_time,
                 end_time=df.time_,
                 trace_id=df.trace_id,
-                span_id=df.parent_span_id,
-                kind=px.otel.trace.SPAN_KIND_CLIENT,
+                span_id=df.span_id,
+                parent_span_id=df.parent_span_id,
+                kind=px.otel.trace.SPAN_KIND_SERVER,
                 attributes={
                     # NOTE: the integration handles splitting of services.
 
                     # OTEL K8s Resource Conventions
-                    'k8s.pod.name': df.source_pod,
-                    'k8s.node.name': df.source_node,
-                    'k8s.deployment.name': df.source_deployment,
-                    'k8s.namespace.name': df.source_namespace,
+                    'k8s.pod.name': df.destination_pod,
+                    'k8s.node.name': df.destination_node,
+                    'k8s.deployment.name': df.destination_deployment,
+                    'k8s.namespace.name': df.destination_namespace,
 
                     # Wavefront Conventions
-                    'service': df.source_service,
-                    'source': df.source_pod,
-                    'application': df.source_namespace,
+                    'service': df.destination_service,
+                    'source': df.destination_pod,
+                    'application': df.destination_namespace,
+                    # We follow pixie's convention of setting an error tag only for a server span.
+                    'error': df.error,
+                    '_inboundExternalService' : df.source_ip,
 
                     # OTEL HTTP Conventions
                     'http.status_code': df.resp_status,
