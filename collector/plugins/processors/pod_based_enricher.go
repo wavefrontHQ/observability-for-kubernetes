@@ -221,7 +221,8 @@ func (pbe *PodBasedEnricher) addWorkloadStatusMetric(podMs *metrics.Set, pod *ku
 	for _, containerStatus := range pod.Status.ContainerStatuses {
 		if !containerStatus.Ready && containerStatus.State.Waiting != nil {
 			workloadStatus = 0
-			workloadMs.Labels["reason"] = containerStatus.State.Waiting.Reason
+			workloadMs.Labels[metrics.LabelReason.Key] = containerStatus.State.Waiting.Reason
+			workloadMs.Labels[metrics.LabelMessage.Key] = containerStatus.State.Waiting.Message
 			break
 		}
 	}

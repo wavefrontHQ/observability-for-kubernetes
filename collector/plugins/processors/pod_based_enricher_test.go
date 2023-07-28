@@ -32,7 +32,16 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 )
 
-const otherResource = "example.com/resource1"
+const (
+	otherResource = "example.com/resource1"
+
+	testNamespaceName = "ns1"
+	testPodName       = "pod1"
+	testContainerName = "c1"
+
+	testWorkloadName = "my-workload-name"
+	testWorkloadKind = "Pod"
+)
 
 type enricherTestContext struct {
 	pod                *kube_api.Pod
@@ -51,14 +60,14 @@ func TestPodEnricherHandlesContainerBatches(t *testing.T) {
 	t.Run("Updates the pod container metric set with information from the kube_api", func(t *testing.T) {
 		expectedContainerLabels := map[string]string{
 			"container_base_image": "k8s.gcr.io/pause:2.0",
-			"container_name":       "c1",
+			"container_name":       testContainerName,
 			"labels":               "",
-			"namespace_name":       "ns1",
+			"namespace_name":       testNamespaceName,
 			"pod_id":               "",
-			"pod_name":             "pod1",
+			"pod_name":             testPodName,
 			"type":                 "pod_container",
-			"workload_name":        "my-workload-name",
-			"workload_kind":        "my-workload-kind",
+			"workload_name":        testWorkloadName,
+			"workload_kind":        testWorkloadKind,
 		}
 		expectedContainerValues := map[string]metrics.Value{
 			"cpu/limit":                 {IntValue: 0},
@@ -69,7 +78,7 @@ func TestPodEnricherHandlesContainerBatches(t *testing.T) {
 			"memory/request":            {IntValue: 555},
 		}
 
-		containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+		containerMs, found := batch.Sets[metrics.PodContainerKey(testNamespaceName, testPodName, testContainerName)]
 
 		assert.True(t, found)
 		assert.Equal(t, expectedContainerLabels, containerMs.Labels)
@@ -84,13 +93,13 @@ func TestPodEnricherHandlesContainerBatches(t *testing.T) {
 			"host_id":              "",
 			"hostname":             "",
 			"labels":               "",
-			"namespace_name":       "ns1",
+			"namespace_name":       testNamespaceName,
 			"nodename":             "",
 			"pod_id":               "",
-			"pod_name":             "pod1",
+			"pod_name":             testPodName,
 			"type":                 "pod_container",
-			"workload_name":        "my-workload-name",
-			"workload_kind":        "my-workload-kind",
+			"workload_name":        testWorkloadName,
+			"workload_kind":        testWorkloadKind,
 		}
 		expectedContainerValues := map[string]metrics.Value{
 			"cpu/limit":                     {IntValue: 2222},
@@ -102,7 +111,7 @@ func TestPodEnricherHandlesContainerBatches(t *testing.T) {
 			"memory/request":                {IntValue: 1000},
 		}
 
-		containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "nginx")]
+		containerMs, found := batch.Sets[metrics.PodContainerKey(testNamespaceName, testPodName, "nginx")]
 
 		assert.True(t, found)
 		assert.Equal(t, expectedContainerLabels, containerMs.Labels)
@@ -115,13 +124,13 @@ func TestPodEnricherHandlesContainerBatches(t *testing.T) {
 			"host_id":        "",
 			"hostname":       "",
 			"labels":         "",
-			"namespace_name": "ns1",
+			"namespace_name": testNamespaceName,
 			"nodename":       "",
 			"pod_id":         "",
-			"pod_name":       "pod1",
+			"pod_name":       testPodName,
 			"type":           "pod",
-			"workload_name":  "my-workload-name",
-			"workload_kind":  "my-workload-kind",
+			"workload_name":  testWorkloadName,
+			"workload_kind":  testWorkloadKind,
 		}
 		expectedPodLabelValue := metrics.LabeledValue{
 			Name: "status/phase",
@@ -133,7 +142,7 @@ func TestPodEnricherHandlesContainerBatches(t *testing.T) {
 			},
 		}
 
-		podMs, found := batch.Sets[metrics.PodKey("ns1", "pod1")]
+		podMs, found := batch.Sets[metrics.PodKey(testNamespaceName, testPodName)]
 
 		assert.True(t, found)
 		assert.Equal(t, expectedPodLabels, podMs.Labels)
@@ -147,29 +156,28 @@ func TestPodWorkloadStatus(t *testing.T) {
 	t.Run("Adds workload status metric for pods with no owner", func(t *testing.T) {
 		tc := setup()
 		tc.pod.OwnerReferences = nil
+		tc.pod.Name = testWorkloadName
 		tc.workloadCache = testWorkloadCache{
-			workloadName: "pod1",
-			workloadKind: "Pod",
+			workloadName: testWorkloadName,
+			workloadKind: testWorkloadKind,
 		}
-		tc.pod.Status.ContainerStatuses = []kube_api.ContainerStatus{
-			kube_api.ContainerStatus{
-				ContainerID: "container id",
-				Name:        "pod-container",
-				State: kube_api.ContainerState{
-					Running: &kube_api.ContainerStateRunning{},
-				},
+		tc.pod.Status.ContainerStatuses = []kube_api.ContainerStatus{{
+			ContainerID: "container id",
+			Name:        "pod-container",
+			State: kube_api.ContainerState{
+				Running: &kube_api.ContainerStateRunning{},
 			},
-		}
+		}}
 
 		podBasedEnricher := createEnricher(t, tc)
 
-		batch, err := podBasedEnricher.Process(createPodBatch())
+		batch, err := podBasedEnricher.Process(createPodBatch(testWorkloadName))
 		assert.NoError(t, err)
 
 		expectedPodLabels := map[string]string{
-			"namespace_name": "ns1",
-			"workload_name":  "pod1",
-			"workload_kind":  "Pod",
+			"namespace_name": testNamespaceName,
+			"workload_name":  testWorkloadName,
+			"workload_kind":  testWorkloadKind,
 			"available":      "1",
 			"desired":        "1",
 		}
@@ -180,7 +188,7 @@ func TestPodWorkloadStatus(t *testing.T) {
 			},
 		}
 
-		podMs, found := batch.Sets[metrics.WorkloadStatusPodKey("ns1", "pod1")]
+		podMs, found := batch.Sets[metrics.WorkloadStatusPodKey(testNamespaceName, testWorkloadName)]
 
 		assert.True(t, found)
 		assert.Equal(t, expectedPodLabels, podMs.Labels)
@@ -192,34 +200,36 @@ func TestPodWorkloadStatus(t *testing.T) {
 	t.Run("workload status for a pod with no owner and has a CrashLoopBackOff container", func(t *testing.T) {
 		tc := setup()
 		tc.pod.OwnerReferences = nil
+		tc.pod.Name = testWorkloadName
 		tc.workloadCache = testWorkloadCache{
-			workloadName: "pod1",
-			workloadKind: "Pod",
+			workloadName: testWorkloadName,
+			workloadKind: testWorkloadKind,
 		}
-		tc.pod.Status.ContainerStatuses = []kube_api.ContainerStatus{
-			kube_api.ContainerStatus{
-				ContainerID: "container id",
-				Name:        "pod-container",
-				State: kube_api.ContainerState{
-					Waiting: &kube_api.ContainerStateWaiting{
-						Message: "back-off 5m0s restarting failed container=pod-container",
-						Reason:  "CrashLoopBackOff",
-					},
+		expectedReason := "CrashLoopBackOff"
+		expectedMessage := "back-off 5m0s restarting failed container=pod-container"
+		tc.pod.Status.ContainerStatuses = []kube_api.ContainerStatus{{
+			ContainerID: "container id",
+			Name:        "pod-container",
+			State: kube_api.ContainerState{
+				Waiting: &kube_api.ContainerStateWaiting{
+					Reason:  expectedReason,
+					Message: expectedMessage,
 				},
 			},
-		}
+		}}
 		podBasedEnricher := createEnricher(t, tc)
 
-		batch, err := podBasedEnricher.Process(createPodBatch())
+		batch, err := podBasedEnricher.Process(createPodBatch(testWorkloadName))
 		assert.NoError(t, err)
 
 		expectedPodLabels := map[string]string{
-			"namespace_name": "ns1",
-			"workload_name":  "pod1",
-			"workload_kind":  "Pod",
+			"namespace_name": testNamespaceName,
+			"workload_name":  testWorkloadName,
+			"workload_kind":  testWorkloadKind,
 			"available":      "0",
 			"desired":        "1",
-			"reason":         "CrashLoopBackOff",
+			"reason":         expectedReason,
+			"message":        expectedMessage,
 		}
 		expectedPodLabelValue := metrics.LabeledValue{
 			Name: "workload/status",
@@ -228,7 +238,7 @@ func TestPodWorkloadStatus(t *testing.T) {
 			},
 		}
 
-		podMs, found := batch.Sets[metrics.WorkloadStatusPodKey("ns1", "pod1")]
+		podMs, found := batch.Sets[metrics.WorkloadStatusPodKey(testNamespaceName, testWorkloadName)]
 
 		assert.True(t, found)
 		assert.Equal(t, expectedPodLabels, podMs.Labels)
@@ -243,8 +253,8 @@ func TestPodWorkloadStatus(t *testing.T) {
 
 		batch, err := podBasedEnricher.Process(createPodBatch())
 		assert.NoError(t, err)
-		_, found := batch.Sets[metrics.WorkloadStatusPodKey("ns1", "pod1")]
 
+		_, found := batch.Sets[metrics.WorkloadStatusPodKey(testNamespaceName, testWorkloadName)]
 		assert.False(t, found)
 	})
 }
@@ -259,12 +269,12 @@ func TestPodEnricherHandlesPodBatches(t *testing.T) {
 	t.Run("Updates the pod metric set placeholder with some information", func(t *testing.T) {
 		expectedPodLabels := map[string]string{
 			"labels":         "",
-			"namespace_name": "ns1",
+			"namespace_name": testNamespaceName,
 			"pod_id":         "",
-			"pod_name":       "pod1",
+			"pod_name":       testPodName,
 			"type":           "pod",
-			"workload_name":  "my-workload-name",
-			"workload_kind":  "my-workload-kind",
+			"workload_name":  testWorkloadName,
+			"workload_kind":  testWorkloadKind,
 		}
 		expectedPodLabelValue := metrics.LabeledValue{
 			Name: "status/phase",
@@ -276,7 +286,7 @@ func TestPodEnricherHandlesPodBatches(t *testing.T) {
 			},
 		}
 
-		podMs, found := batch.Sets[metrics.PodKey("ns1", "pod1")]
+		podMs, found := batch.Sets[metrics.PodKey(testNamespaceName, testPodName)]
 
 		assert.True(t, found)
 		assert.Equal(t, expectedPodLabels, podMs.Labels)
@@ -288,17 +298,17 @@ func TestPodEnricherHandlesPodBatches(t *testing.T) {
 	t.Run("Creates a pod container metric set with information from the kube_api", func(t *testing.T) {
 		expectedContainerLabels := map[string]string{
 			"container_base_image": "k8s.gcr.io/pause:2.0",
-			"container_name":       "c1",
+			"container_name":       testContainerName,
 			"host_id":              "",
 			"hostname":             "",
 			"labels":               "",
-			"namespace_name":       "ns1",
+			"namespace_name":       testNamespaceName,
 			"nodename":             "",
 			"pod_id":               "",
-			"pod_name":             "pod1",
+			"pod_name":             testPodName,
 			"type":                 "pod_container",
-			"workload_name":        "my-workload-name",
-			"workload_kind":        "my-workload-kind",
+			"workload_name":        testWorkloadName,
+			"workload_kind":        testWorkloadKind,
 		}
 		expectedContainerValues := map[string]metrics.Value{
 			"cpu/limit":                 {IntValue: 0},
@@ -309,7 +319,7 @@ func TestPodEnricherHandlesPodBatches(t *testing.T) {
 			"memory/request":            {IntValue: 555},
 		}
 
-		containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+		containerMs, found := batch.Sets[metrics.PodContainerKey(testNamespaceName, testPodName, testContainerName)]
 
 		assert.True(t, found)
 		assert.Equal(t, expectedContainerLabels, containerMs.Labels)
@@ -324,13 +334,13 @@ func TestPodEnricherHandlesPodBatches(t *testing.T) {
 			"host_id":              "",
 			"hostname":             "",
 			"labels":               "",
-			"namespace_name":       "ns1",
+			"namespace_name":       testNamespaceName,
 			"nodename":             "",
 			"pod_id":               "",
-			"pod_name":             "pod1",
+			"pod_name":             testPodName,
 			"type":                 "pod_container",
-			"workload_name":        "my-workload-name",
-			"workload_kind":        "my-workload-kind",
+			"workload_name":        testWorkloadName,
+			"workload_kind":        testWorkloadKind,
 		}
 		expectedContainerValues := map[string]metrics.Value{
 			"cpu/limit":                     {IntValue: 2222},
@@ -342,7 +352,7 @@ func TestPodEnricherHandlesPodBatches(t *testing.T) {
 			"memory/request":                {IntValue: 1000},
 		}
 
-		containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "nginx")]
+		containerMs, found := batch.Sets[metrics.PodContainerKey(testNamespaceName, testPodName, "nginx")]
 
 		assert.True(t, found)
 		assert.Equal(t, expectedContainerLabels, containerMs.Labels)
@@ -361,7 +371,7 @@ func TestDropsContainerMetricWhenPodMissing(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 0, len(batch.Sets))
-	_, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	_, found := batch.Sets[metrics.PodContainerKey(testNamespaceName, testPodName, testContainerName)]
 	assert.False(t, found)
 }
 
@@ -375,7 +385,7 @@ func TestDropsPodMetricWhenPodMissing(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 0, len(batch.Sets))
-	_, found := batch.Sets[metrics.PodKey("ns1", "pod1")]
+	_, found := batch.Sets[metrics.PodKey(testNamespaceName, testPodName)]
 	assert.False(t, found)
 }
 
@@ -412,13 +422,13 @@ func runAndCheckNoEnrichedMetrics(t *testing.T, tc *enricherTestContext) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(batch.Sets))
-	podMetric, _ := batch.Sets[metrics.PodKey("ns1", "pod1")]
+	podMetric, _ := batch.Sets[metrics.PodKey(testNamespaceName, testPodName)]
 	assert.Nil(t, podMetric.LabeledValues)
 }
 
 func TestMultiplePodsWithOneMissing(t *testing.T) {
 	tc := setup() // only returns pod1
-	tc.batch = createPodBatch("pod1", "MissingPod")
+	tc.batch = createPodBatch(testPodName, "MissingPod")
 	podBasedEnricher := createEnricher(t, tc)
 
 	batch, err := podBasedEnricher.Process(tc.batch)
@@ -426,10 +436,10 @@ func TestMultiplePodsWithOneMissing(t *testing.T) {
 
 	assert.Equal(t, 3, len(batch.Sets))
 
-	_, found := batch.Sets[metrics.PodKey("ns1", "MissingPod")]
+	_, found := batch.Sets[metrics.PodKey(testNamespaceName, "MissingPod")]
 	assert.False(t, found)
 
-	_, found = batch.Sets[metrics.PodKey("ns1", "pod1")]
+	_, found = batch.Sets[metrics.PodKey(testNamespaceName, testPodName)]
 	assert.True(t, found)
 }
 
@@ -438,7 +448,7 @@ func TestStatusRunning(t *testing.T) {
 	tc.pod.Status = kube_api.PodStatus{
 		ContainerStatuses: []kube_api.ContainerStatus{
 			{
-				Name:  "c1",
+				Name:  testContainerName,
 				State: createGoodState(time.Now().Add(-5 * time.Second)),
 			},
 		},
@@ -449,7 +459,7 @@ func TestStatusRunning(t *testing.T) {
 	batch, err := podBasedEnricher.Process(tc.batch)
 	assert.NoError(t, err)
 
-	containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	containerMs, found := batch.Sets[metrics.PodContainerKey(testNamespaceName, testPodName, testContainerName)]
 	assert.True(t, found)
 
 	expectedStatus := metrics.LabeledValue{
@@ -467,12 +477,10 @@ func TestStatusRunning(t *testing.T) {
 func TestStatusTerminated(t *testing.T) {
 	tc := setup()
 	tc.pod.Status = kube_api.PodStatus{
-		ContainerStatuses: []kube_api.ContainerStatus{
-			{
-				Name:  "c1",
-				State: createCrashState(time.Now().Add(-10*time.Minute), time.Now().Add(-5*time.Minute)),
-			},
-		},
+		ContainerStatuses: []kube_api.ContainerStatus{{
+			Name:  testContainerName,
+			State: createCrashState(time.Now().Add(-10*time.Minute), time.Now().Add(-5*time.Minute)),
+		}},
 	}
 
 	podBasedEnricher := createEnricher(t, tc)
@@ -480,7 +488,7 @@ func TestStatusTerminated(t *testing.T) {
 	batch, err := podBasedEnricher.Process(tc.batch)
 	assert.NoError(t, err)
 
-	containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	containerMs, found := batch.Sets[metrics.PodContainerKey(testNamespaceName, testPodName, testContainerName)]
 	assert.True(t, found)
 
 	expectedStatus := metrics.LabeledValue{
@@ -508,13 +516,11 @@ func TestStatusMissedTermination(t *testing.T) {
 	missedCollectionTime := now
 
 	tc.pod.Status = kube_api.PodStatus{
-		ContainerStatuses: []kube_api.ContainerStatus{
-			{
-				Name:                 "c1",
-				State:                createGoodState(latestStart),
-				LastTerminationState: createCrashState(firstStart, crashTime),
-			},
-		},
+		ContainerStatuses: []kube_api.ContainerStatus{{
+			Name:                 testContainerName,
+			State:                createGoodState(latestStart),
+			LastTerminationState: createCrashState(firstStart, crashTime),
+		}},
 	}
 
 	podBasedEnricher := createEnricher(t, tc)
@@ -545,13 +551,11 @@ func TestStatusPassedTermination(t *testing.T) {
 	followingCollectionTime := now.Add(tc.collectionInterval)
 
 	tc.pod.Status = kube_api.PodStatus{
-		ContainerStatuses: []kube_api.ContainerStatus{
-			{
-				Name:                 "c1",
-				State:                createGoodState(latestStart),
-				LastTerminationState: createCrashState(firstStart, crashTime),
-			},
-		},
+		ContainerStatuses: []kube_api.ContainerStatus{{
+			Name:                 testContainerName,
+			State:                createGoodState(latestStart),
+			LastTerminationState: createCrashState(firstStart, crashTime),
+		}},
 	}
 
 	podBasedEnricher := createEnricher(t, tc)
@@ -575,7 +579,7 @@ func processBatch(t assert.TestingT, podBasedEnricher *PodBasedEnricher, batch *
 	batch, err = podBasedEnricher.Process(batch)
 	assert.NoError(t, err)
 
-	containerMs, found := batch.Sets[metrics.PodContainerKey("ns1", "pod1", "c1")]
+	containerMs, found := batch.Sets[metrics.PodContainerKey(testNamespaceName, testPodName, testContainerName)]
 	assert.True(t, found)
 	return containerMs.LabeledValues[0]
 }
@@ -613,8 +617,8 @@ func setup() *enricherTestContext {
 		batch:              createContainerBatch(),
 		pod: &kube_api.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "pod1",
-				Namespace: "ns1",
+				Name:      testPodName,
+				Namespace: testNamespaceName,
 				OwnerReferences: []metav1.OwnerReference{{
 					Kind: "ReplicaSet",
 					Name: "someReplicaset",
@@ -627,7 +631,7 @@ func setup() *enricherTestContext {
 				NodeName: "node1",
 				Containers: []kube_api.Container{
 					{
-						Name:  "c1",
+						Name:  testContainerName,
 						Image: "k8s.gcr.io/pause:2.0",
 						Resources: kube_api.ResourceRequirements{
 							Requests: kube_api.ResourceList{
@@ -659,8 +663,8 @@ func setup() *enricherTestContext {
 			},
 		},
 		workloadCache: testWorkloadCache{
-			workloadName: "my-workload-name",
-			workloadKind: "my-workload-kind",
+			workloadName: testWorkloadName,
+			workloadKind: testWorkloadKind,
 		},
 	}
 }
@@ -669,12 +673,12 @@ func createContainerBatch() *metrics.Batch {
 	return &metrics.Batch{
 		Timestamp: time.Now(),
 		Sets: map[metrics.ResourceKey]*metrics.Set{
-			metrics.PodContainerKey("ns1", "pod1", "c1"): {
+			metrics.PodContainerKey(testNamespaceName, testPodName, testContainerName): {
 				Labels: map[string]string{
 					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
-					metrics.LabelPodName.Key:       "pod1",
-					metrics.LabelNamespaceName.Key: "ns1",
-					metrics.LabelContainerName.Key: "c1",
+					metrics.LabelPodName.Key:       testPodName,
+					metrics.LabelNamespaceName.Key: testNamespaceName,
+					metrics.LabelContainerName.Key: testContainerName,
 				},
 				Values: map[string]metrics.Value{},
 			},
@@ -684,18 +688,18 @@ func createContainerBatch() *metrics.Batch {
 
 func createPodBatch(podNames ...string) *metrics.Batch {
 	if len(podNames) == 0 {
-		podNames = append(podNames, "pod1")
+		podNames = append(podNames, testPodName)
 	}
 	dataBatch := metrics.Batch{
 		Timestamp: time.Now(),
 		Sets:      map[metrics.ResourceKey]*metrics.Set{},
 	}
 	for _, podName := range podNames {
-		dataBatch.Sets[metrics.PodKey("ns1", podName)] = &metrics.Set{
+		dataBatch.Sets[metrics.PodKey(testNamespaceName, podName)] = &metrics.Set{
 			Labels: map[string]string{
 				metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
 				metrics.LabelPodName.Key:       podName,
-				metrics.LabelNamespaceName.Key: "ns1",
+				metrics.LabelNamespaceName.Key: testNamespaceName,
 			},
 			Values: map[string]metrics.Value{},
 		}
