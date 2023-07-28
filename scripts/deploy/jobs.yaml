@@ -6,7 +6,7 @@ metadata:
 spec:
   completions: 1
   parallelism: 1
-  backoffLimit: 2
+  backoffLimit: 1
   template:
     metadata:
       name: job-failure
@@ -14,10 +14,11 @@ spec:
         name: jobs
         exclude-me: "true"
     spec:
-      hostNetwork: true
+      restartPolicy: Never
       containers:
-        - name: hello
+        - name: job-failure
           image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+          imagePullPolicy: IfNotPresent
           args:
             - /bin/sh
             - -c
@@ -29,7 +30,6 @@ spec:
             limits:
               cpu: 200m
               memory: 200Mi
-      restartPolicy: Never
 ---
 apiVersion: batch/v1
 kind: Job
@@ -42,14 +42,16 @@ spec:
   backoffLimit: 2
   template:
     metadata:
-      name: say-something
+      name: job-success
       labels:
         name: jobs
         exclude-me: "true"
     spec:
+      restartPolicy: OnFailure
       containers:
-        - name: say-something
+        - name: job-success
           image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+          imagePullPolicy: IfNotPresent
           command: ["echo", "Running a job"]
           resources:
             requests:
@@ -58,4 +60,133 @@ spec:
             limits:
               cpu: 200m
               memory: 200Mi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-failure-fixed-completion-count
+  namespace: collector-targets
+spec:
+  completions: 12
+  parallelism: 2
+  backoffLimit: 3
+  template:
+    metadata:
+      name: job-failure-fixed-completion-count
+      labels:
+        name: fixed-completion-count-jobs
+        exclude-me: "true"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: job-failure-fixed-completion-count
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+        imagePullPolicy: IfNotPresent
+        args:
+        - /bin/sh
+        - -c
+        - EXIT_CODE=$(( $RANDOM % 2 > 0));date; echo Am I down; exit $EXIT_CODE
+        resources:
+          requests:
+            cpu: 50m
+            memory: 20Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-success-fixed-completion-count
+  namespace: collector-targets
+spec:
+  completions: 2
+  parallelism: 2
+  backoffLimit: 6
+  template:
+    metadata:
+      name: job-success-fixed-completion-count
+      labels:
+        name: fixed-completion-count-jobs
+        exclude-me: "true"
+    spec:
       restartPolicy: OnFailure
+      containers:
+      - name: job-success-fixed-completion-count
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+        imagePullPolicy: IfNotPresent
+        args:
+        - /bin/sh
+        - -c
+        - EXIT_CODE=$(( $RANDOM % 2 > 0));date; echo Am I down; exit $EXIT_CODE
+        resources:
+          requests:
+            cpu: 50m
+            memory: 20Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-failure-work-queue
+  namespace: collector-targets
+spec:
+  parallelism: 2
+  backoffLimit: 3
+  template:
+    metadata:
+      name: job-failure-work-queue
+      labels:
+        name: work-queue-jobs
+        exclude-me: "true"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: job-failure-work-queue
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+        imagePullPolicy: IfNotPresent
+        args:
+        - /bin/sh
+        - -c
+        - date; echo I am down; exit 1
+        resources:
+          requests:
+            cpu: 50m
+            memory: 20Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-success-work-queue
+  namespace: collector-targets
+spec:
+  parallelism: 2
+  backoffLimit: 6
+  template:
+    metadata:
+      name: job-success-work-queue
+      labels:
+        name: work-queue-jobs
+        exclude-me: "true"
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: job-success-work-queue
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+        imagePullPolicy: IfNotPresent
+        args:
+        - /bin/sh
+        - -c
+        - EXIT_CODE=$(( $RANDOM % 2 > 0));date; echo Am I down; exit $EXIT_CODE
+        resources:
+          requests:
+            cpu: 50m
+            memory: 20Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi

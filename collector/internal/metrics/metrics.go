@@ -749,6 +749,16 @@ var MetricPodPhase = Metric{
 	},
 }
 
+var MetricWorkloadStatus = Metric{
+	MetricDescriptor: MetricDescriptor{
+		Name:        "workload/status",
+		Description: "Status of the workload",
+		Type:        Gauge,
+		ValueType:   ValueInt64,
+		Units:       Count,
+	},
+}
+
 var MetricContainerStatus = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "status",

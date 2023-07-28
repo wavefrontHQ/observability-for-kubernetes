@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cronjob-hello
+  namespace: collector-targets
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          name: cronjob-hello
+          labels:
+            name: cronjob-hello
+            exclude-me: "true"
+        spec:
+          containers:
+          - name: cronjob-hello
+            image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+            imagePullPolicy: IfNotPresent
+            args:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the cronjob; exit 0
+          restartPolicy: OnFailure

@@ -168,6 +168,11 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 	podMs.Labels[metrics.LabelWorkloadName.Key] = workloadName
 	podMs.Labels[metrics.LabelWorkloadKind.Key] = workloadKind
 
+	// Add workload status metric for pods with no owner references
+	if len(pod.OwnerReferences) == 0 {
+		pbe.addWorkloadStatusMetric(podMs, pod, newMs)
+	}
+
 	// Add cpu/mem requests and limits to containers
 	for _, container := range pod.Spec.Containers {
 		containerKey := metrics.PodContainerKey(pod.Namespace, pod.Name, container.Name)
@@ -200,6 +205,26 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 		newMs[containerKey] = containerMs
 	}
 	pbe.updateContainerStatus(newMs, pod, pod.Status.ContainerStatuses, batch.Timestamp)
+}
+
+func (pbe *PodBasedEnricher) addWorkloadStatusMetric(podMs *metrics.Set, pod *kube_api.Pod, newMs map[metrics.ResourceKey]*metrics.Set) {
+	workloadMs := &metrics.Set{
+		Values: make(map[string]metrics.Value),
+		Labels: map[string]string{
+			metrics.LabelNamespaceName.Key: pod.Namespace,
+			metrics.LabelWorkloadName.Key:  podMs.Labels[metrics.LabelWorkloadName.Key],
+			metrics.LabelWorkloadKind.Key:  podMs.Labels[metrics.LabelWorkloadKind.Key],
+		},
+	}
+	workloadStatus := 1
+	for _, containerStatus := range pod.Status.ContainerStatuses {
+		if !containerStatus.Ready && containerStatus.State.Waiting != nil {
+			workloadStatus = 0
+			break
+		}
+	}
+	addLabeledIntMetric(workloadMs, &metrics.MetricWorkloadStatus, nil, int64(workloadStatus))
+	newMs[metrics.WorkloadStatusPodKey(pod.Namespace, pod.Name)] = workloadMs
 }
 
 func updateContainerResourcesAndLimits(metricSet *metrics.Set, container kube_api.Container) {

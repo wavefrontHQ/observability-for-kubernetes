@@ -32,8 +32,9 @@ func setupReplicaSetWithOwner() *appsv1.ReplicaSet {
 	return replicaset
 }
 
-func Test_pointsForReplicaSet(t *testing.T) {
+func TestPointsForReplicaSet(t *testing.T) {
 	testTransform := setupWorkloadTransform()
+	workloadMetricName := testTransform.Prefix + workloadStatusMetric
 
 	t.Run("test for ReplicaSet metrics with OwnerReferences", func(t *testing.T) {
 		testReplicaSet := setupBasicReplicaSet()
@@ -76,17 +77,16 @@ func Test_pointsForReplicaSet(t *testing.T) {
 
 	t.Run("test for ReplicaSet with healthy status and no OwnerReferences", func(t *testing.T) {
 		testReplicaSet := setupBasicReplicaSet()
-		workloadMetricName := "kubernetes.workload.status"
 
 		actualWFPointsMap := getWFPointsMap(pointsForReplicaSet(testReplicaSet, testTransform))
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindReplicaSet, actualWFPoint.Tags()[workloadKindTag])
 	})
 
 	t.Run("test for ReplicaSet with non healthy status and no OwnerReferences", func(t *testing.T) {
 		testReplicaSet := setupBasicReplicaSet()
-		workloadMetricName := "kubernetes.workload.status"
 		testReplicaSet.Status.ReadyReplicas = 0
 		testReplicaSet.Status.AvailableReplicas = 0
 
@@ -94,6 +94,7 @@ func Test_pointsForReplicaSet(t *testing.T) {
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindReplicaSet, actualWFPoint.Tags()[workloadKindTag])
 	})
 
 }

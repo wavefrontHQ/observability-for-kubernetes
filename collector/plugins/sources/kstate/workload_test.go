@@ -13,13 +13,10 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
-func setupBasicWorkload() *appsv1.Deployment {
+func setupBasicDeploymentWorkload() *appsv1.Deployment {
 	return &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Deployment",
-		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   "basic-workload",
+			Name:   "basic-deployment-workload",
 			Labels: nil,
 		},
 		Spec: appsv1.DeploymentSpec{},
@@ -34,41 +31,46 @@ func setupWorkloadTransform() configuration.Transforms {
 	return configuration.Transforms{Prefix: "kubernetes.", Source: "test-source-workload"}
 }
 
-func Test_buildWorkloadStatusMetric(t *testing.T) {
+func TestBuildWorkloadStatusMetric(t *testing.T) {
 	testTransform := setupWorkloadTransform()
 	timestamp := time.Now().Unix()
+	workloadStatusMetricName := testTransform.Prefix + workloadStatusMetric
 
-	t.Run("test for workload status ready", func(t *testing.T) {
-		testDeployment := setupBasicWorkload()
-		numberDesired := 1.0
-		numberReady := 1.0
+	t.Run("test for deployment workload status ready", func(t *testing.T) {
+		testDeployment := setupBasicDeploymentWorkload()
+		expectedWorkloadName := testDeployment.Name
+		numberDesired := int32(1)
+		numberAvailable := int32(1)
 
-		testTags := buildWorkloadTags(testDeployment.Kind, testDeployment.Name, "", testTransform.Tags)
+		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", testTransform.Tags)
 
-		assert.Equal(t, "basic-workload", testTags[workloadNameTag])
-		assert.Equal(t, "Deployment", testTags[workloadKindTag])
+		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
+		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
 
-		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, numberDesired, numberReady, timestamp, testTransform.Source, testTags)
+		workloadStatus := getWorkloadStatus(numberDesired, numberAvailable)
+		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, workloadStatus, timestamp, testTransform.Source, testTags)
 		point := actualWFPoint.(*wf.Point)
 
-		assert.Equal(t, "kubernetes.workload.status", point.Name())
+		assert.Equal(t, workloadStatusMetricName, point.Name())
 		assert.Equal(t, workloadReady, point.Value)
 	})
 
-	t.Run("test for workload status not ready", func(t *testing.T) {
-		testDeployment := setupBasicWorkload()
-		numberDesired := 1.0
-		numberReady := 0.0
+	t.Run("test for deployment workload status not ready", func(t *testing.T) {
+		testDeployment := setupBasicDeploymentWorkload()
+		expectedWorkloadName := testDeployment.Name
+		numberDesired := int32(1)
+		numberAvailable := int32(0)
 
-		testTags := buildWorkloadTags(testDeployment.Kind, testDeployment.Name, "", testTransform.Tags)
+		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", testTransform.Tags)
 
-		assert.Equal(t, "basic-workload", testTags[workloadNameTag])
-		assert.Equal(t, "Deployment", testTags[workloadKindTag])
+		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
+		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
 
-		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, numberDesired, numberReady, timestamp, testTransform.Source, testTags)
+		workloadStatus := getWorkloadStatus(numberDesired, numberAvailable)
+		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, workloadStatus, timestamp, testTransform.Source, testTags)
 		point := actualWFPoint.(*wf.Point)
 
-		assert.Equal(t, "kubernetes.workload.status", point.Name())
+		assert.Equal(t, workloadStatusMetricName, point.Name())
 		assert.Equal(t, workloadNotReady, point.Value)
 	})
 }

@@ -23,8 +23,9 @@ func setupBasicDeployment() *appsv1.Deployment {
 	}
 }
 
-func Test_pointsForDeployment(t *testing.T) {
+func TestPointsForDeployment(t *testing.T) {
 	testTransform := setupWorkloadTransform()
+	workloadMetricName := testTransform.Prefix + workloadStatusMetric
 
 	t.Run("test for Deployment metrics", func(t *testing.T) {
 		testDeployment := setupBasicDeployment()
@@ -48,17 +49,16 @@ func Test_pointsForDeployment(t *testing.T) {
 
 	t.Run("test for Deployment workload with healthy status", func(t *testing.T) {
 		testDeployment := setupBasicDeployment()
-		workloadMetricName := "kubernetes.workload.status"
 
 		actualWFPointsMap := getWFPointsMap(pointsForDeployment(testDeployment, testTransform))
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindDeployment, actualWFPoint.Tags()[workloadKindTag])
 	})
 
 	t.Run("test for Deployment workload with non healthy status", func(t *testing.T) {
 		testDeployment := setupBasicDeployment()
-		workloadMetricName := "kubernetes.workload.status"
 		testDeployment.Status.AvailableReplicas = 0
 		testDeployment.Status.ReadyReplicas = 0
 
@@ -66,5 +66,6 @@ func Test_pointsForDeployment(t *testing.T) {
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindDeployment, actualWFPoint.Tags()[workloadKindTag])
 	})
 }

@@ -24,8 +24,9 @@ func setupBasicStatefulSet() *appsv1.StatefulSet {
 	}
 }
 
-func Test_pointsForStatefulSet(t *testing.T) {
+func TestPointsForStatefulSet(t *testing.T) {
 	testTransform := setupWorkloadTransform()
+	workloadMetricName := testTransform.Prefix + workloadStatusMetric
 
 	t.Run("test for StatefulSet metrics", func(t *testing.T) {
 		testStatefulSet := setupBasicStatefulSet()
@@ -50,17 +51,16 @@ func Test_pointsForStatefulSet(t *testing.T) {
 
 	t.Run("test for StatefulSet with healthy status", func(t *testing.T) {
 		testStatefulSet := setupBasicStatefulSet()
-		workloadMetricName := "kubernetes.workload.status"
 
 		actualWFPointsMap := getWFPointsMap(pointsForStatefulSet(testStatefulSet, testTransform))
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindStatefulSet, actualWFPoint.Tags()[workloadKindTag])
 	})
 
 	t.Run("test for StatefulSet with non healthy status", func(t *testing.T) {
 		testStatefulSet := setupBasicStatefulSet()
-		workloadMetricName := "kubernetes.workload.status"
 		testStatefulSet.Status.ReadyReplicas = 0
 		testStatefulSet.Status.CurrentReplicas = 0
 
@@ -68,6 +68,7 @@ func Test_pointsForStatefulSet(t *testing.T) {
 		actualWFPoint := actualWFPointsMap[workloadMetricName]
 
 		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
+		assert.Equal(t, workloadKindStatefulSet, actualWFPoint.Tags()[workloadKindTag])
 	})
 
 }

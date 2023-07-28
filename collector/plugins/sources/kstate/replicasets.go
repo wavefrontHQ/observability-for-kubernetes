@@ -33,9 +33,12 @@ func pointsForReplicaSet(item interface{}, transforms configuration.Transforms) 
 		metricPoint(transforms.Prefix, "replicaset.available_replicas", available, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "replicaset.ready_replicas", ready, now, transforms.Source, tags),
 	}
-	if rs.OwnerReferences == nil || len(rs.OwnerReferences) == 0 {
-		workloadTags := buildWorkloadTags("ReplicaSet", rs.Name, rs.Namespace, transforms.Tags)
-		points = append(points, buildWorkloadStatusMetric(transforms.Prefix, desired, ready, now, transforms.Source, workloadTags))
+
+	// emit workload.status metric for replica sets with no owner references
+	if len(rs.OwnerReferences) == 0 {
+		workloadStatus := getWorkloadStatus(int32(desired), rs.Status.AvailableReplicas)
+		workloadTags := buildWorkloadTags(workloadKindReplicaSet, rs.Name, rs.Namespace, transforms.Tags)
+		points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
 	}
 
 	return points

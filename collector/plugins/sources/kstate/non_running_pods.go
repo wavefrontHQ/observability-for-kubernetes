@@ -28,8 +28,8 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 
 		workloadName, workloadKind := workloadCache.GetWorkloadForPod(pod)
 		sharedTags := make(map[string]string, len(pod.GetLabels())+2)
-		sharedTags["workload_name"] = workloadName
-		sharedTags["workload_kind"] = workloadKind
+		sharedTags[workloadNameTag] = workloadName
+		sharedTags[workloadKindTag] = workloadKind
 
 		copyLabels(pod.GetLabels(), sharedTags)
 		now := time.Now().Unix()
@@ -40,6 +40,13 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 		}
 
 		points = append(points, buildContainerStatusMetrics(pod, sharedTags, transforms, now)...)
+
+		// emit workload.status metric for single pods with no owner references
+		if len(pod.OwnerReferences) == 0 {
+			workloadStatus := getWorkloadStatusForNonRunningPod(pod.Status.ContainerStatuses)
+			workloadTags := buildWorkloadTags(workloadKindPod, pod.Name, pod.Namespace, transforms.Tags)
+			points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
+		}
 		return points
 	}
 }
@@ -50,6 +57,20 @@ func truncateMessage(message string) string {
 		return message[0:maxPointTagLength]
 	}
 	return message
+}
+
+func getWorkloadStatusForNonRunningPod(containerStatuses []v1.ContainerStatus) float64 {
+	if len(containerStatuses) == 0 {
+		return workloadNotReady
+	}
+
+	for _, containerStatus := range containerStatuses {
+		containerStateInfo := util.NewContainerStateInfo(containerStatus.State)
+		if containerStateInfo.Value == util.CONTAINER_STATE_TERMINATED && containerStateInfo.Reason == "Completed" {
+			return workloadReady
+		}
+	}
+	return workloadNotReady
 }
 
 func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, sharedTags map[string]string, now int64) []wf.Metric {

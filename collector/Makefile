@@ -161,7 +161,7 @@ docker-xplatform-build:
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) -f Dockerfile $(OUT_DIR)
 	@echo "Built collector version: $(VERSION)"
 
-# latest test-proxy version: 2.4.3
+# latest version test-proxy:2.9.2
 TEST_PROXY_VERSION?=
 
 .PHONY: test-proxy-container
