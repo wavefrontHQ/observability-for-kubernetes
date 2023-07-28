@@ -63,6 +63,14 @@ var (
 		Key:         "available",
 		Description: "The available number for the Pod",
 	}
+	LabelReason = LabelDescriptor{
+		Key:         "reason",
+		Description: "The failure reason for the Pod",
+	}
+	LabelMessage = LabelDescriptor{
+		Key:         "message",
+		Description: "The failure message for the Pod",
+	}
 	LabelPodNamespaceUID = LabelDescriptor{
 		Key:         "namespace_id",
 		Description: "The UID of namespace of the pod",
