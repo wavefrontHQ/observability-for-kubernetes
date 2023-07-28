@@ -13,17 +13,33 @@ def exclude_known_namespaces(df):
     #
     # It is not useful to see metrics related to the functioning of Kubernetes's system-components (such as the CNI,
     # core-dns, aws-node, etc)
-    df = df[df.ctx['namespace'] != 'kube-system']
-    df = df[df.ctx['namespace'] != 'observability-system']
-    df = df[df.ctx['namespace'] != 'olm']
-    df = df[df.ctx['namespace'] != 'pl']
-    df = df[df.ctx['namespace'] != 'px-operator']
+    df = df[df.destination_namespace != 'kube-system']
+    df = df[df.destination_namespace != 'observability-system']
+    df = df[df.destination_namespace != 'olm']
+    df = df[df.destination_namespace != 'pl']
+    df = df[df.destination_namespace != 'px-operator']
 
     # Exclude DataFrames from aria-k8s
     #
     # This namespace is where the k8s-collector and telegraf-collector live. Excluding this namespace ensures that data
     # sent to Lemans from telegraf will not be re-reported by Pixie (since sending to Lemans happens over HTTP(s)
-    df = df[df.ctx['namespace'] != 'aria-k8s']
+    df = df[df.destination_namespace != 'aria-k8s']
+
+    # Exclude DataFrames from kube-system
+    #
+    # It is not useful to see metrics related to the functioning of Kubernetes's system-components (such as the CNI,
+    # core-dns, aws-node, etc)
+    df = df[df.source_namespace != 'kube-system']
+    df = df[df.source_namespace != 'observability-system']
+    df = df[df.source_namespace != 'olm']
+    df = df[df.source_namespace != 'pl']
+    df = df[df.source_namespace != 'px-operator']
+
+    # Exclude DataFrames from aria-k8s
+    #
+    # This namespace is where the k8s-collector and telegraf-collector live. Excluding this namespace ensures that data
+    # sent to Lemans from telegraf will not be re-reported by Pixie (since sending to Lemans happens over HTTP(s)
+    df = df[df.source_namespace != 'aria-k8s']
 
     return df
 
@@ -50,6 +66,8 @@ def exclude_known_req_path(df):
 
 def exclude_egress_traffic(df):
     '''Exclude egress traffic i.e with trace_role=1.
+    Pixie prefers to instrument on the server side and only falls back to trace_role=1 (client) when it cannot
+    instrument the server (when we're egress-ing to a server outside our control).
 
     Args:
       @df: The DataFrames to filter.
@@ -135,11 +153,11 @@ def strip_commas(column):
 
 df = px.DataFrame('http_events', start_time=px.plugin.start_time, end_time=px.plugin.end_time)
 
-df = exclude_known_namespaces(df)
 df = exclude_known_req_path(df)
 df = exclude_egress_traffic(df)
 df = exclude_ingress_traffic(df)
 df = add_source_dest_columns(df)
+df = exclude_known_namespaces(df)
 df = add_trace_headers(df)
 df = add_error_tag(df)
 df = df.head(15000)

@@ -58,10 +58,8 @@ def exclude_non_ingress_traffic(df):
     df.pod_id = df.ctx['pod_id']
     df.node = df.ctx['node']
 
-    # If remote_addr doesn't correspond to a pod, then it returns an empty string per
-    # https://docs.px.dev/reference/pxl/udf/ip_to_pod_id/#name
     df = df[px.ip_to_pod_id(df.remote_addr) == '']
-    df = df[df['trace_role'] == 2]
+    df = df[df['trace_role'] == 2] # trace_role=2 means df was captured from the server-side of the HTTP request/response
     df = df[df.pod_id != '']
 
     return df
