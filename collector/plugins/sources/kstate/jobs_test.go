@@ -80,14 +80,40 @@ func TestPointsForJob(t *testing.T) {
 	t.Run("workload status metrics should have available and desired tags", func(t *testing.T) {
 		testJob := setupBasicJob()
 
-		actualWFPoints := pointsForJob(testJob, testTransform)
-		actualWFPointsMap := getWFPointsMap(actualWFPoints)
-		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
+		actualWFPointsMap := getWFPointsMap(pointsForJob(testJob, testTransform))
+		actualWorkloadStatusPoint, found := actualWFPointsMap[workloadStatusMetricName]
+		assert.True(t, found)
 
 		expectedAvailable := "1"
 		expectedDesired := "1"
 		assert.Equal(t, expectedAvailable, actualWorkloadStatusPoint.Tags()[workloadAvailableTag])
 		assert.Equal(t, expectedDesired, actualWorkloadStatusPoint.Tags()[workloadDesiredTag])
+	})
+
+	t.Run("healthy workload status metrics should not have reason and message tags", func(t *testing.T) {
+		testJob := setupBasicJob()
+
+		actualWFPointsMap := getWFPointsMap(pointsForJob(testJob, testTransform))
+		actualWorkloadStatusPoint, found := actualWFPointsMap[workloadStatusMetricName]
+		assert.True(t, found)
+
+		assert.NotContains(t, actualWorkloadStatusPoint.Tags(), workloadFailedReasonTag)
+		assert.NotContains(t, actualWorkloadStatusPoint.Tags(), workloadFailedMessageTag)
+	})
+
+	t.Run("unhealthy workload status metrics should have reason and message tags", func(t *testing.T) {
+		testJob := setupFailedJob()
+		expectedReason := testJob.Status.Conditions[0].Reason
+		expectedMessage := testJob.Status.Conditions[0].Message
+
+		actualWFPointsMap := getWFPointsMap(pointsForJob(testJob, testTransform))
+		actualWorkloadStatusPoint, found := actualWFPointsMap[workloadStatusMetricName]
+		assert.True(t, found)
+
+		assert.Contains(t, actualWorkloadStatusPoint.Tags(), workloadFailedReasonTag)
+		assert.Contains(t, actualWorkloadStatusPoint.Tags(), workloadFailedMessageTag)
+		assert.Equal(t, expectedReason, actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
+		assert.Equal(t, expectedMessage, actualWorkloadStatusPoint.Tags()[workloadFailedMessageTag])
 	})
 
 	t.Run("Non-parallel Job without OwnerReferences has a ready workload status", func(t *testing.T) {
@@ -105,7 +131,6 @@ func TestPointsForJob(t *testing.T) {
 		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
 		assert.Equal(t, testJob.Name, actualWorkloadStatusPoint.Tags()[workloadNameTag])
 		assert.Equal(t, workloadKindJob, actualWorkloadStatusPoint.Tags()[workloadKindTag])
-		assert.Equal(t, "", actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
 	})
 
 	t.Run("Non-parallel Job without OwnerReferences does not have a ready workload status", func(t *testing.T) {
@@ -116,7 +141,6 @@ func TestPointsForJob(t *testing.T) {
 
 		assert.Equal(t, workloadNotReady, actualWorkloadStatusPoint.Value)
 		assert.Equal(t, workloadKindJob, actualWorkloadStatusPoint.Tags()[workloadKindTag])
-		assert.Equal(t, "BackoffLimitExceeded", actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
 	})
 
 	t.Run("Non-parallel Job with OwnerReferences has a ready workload status", func(t *testing.T) {
@@ -133,12 +157,12 @@ func TestPointsForJob(t *testing.T) {
 		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
 		assert.Equal(t, expectedOwnerName, actualWorkloadStatusPoint.Tags()[workloadNameTag])
 		assert.Equal(t, workloadKindCronJob, actualWorkloadStatusPoint.Tags()[workloadKindTag])
-		assert.Equal(t, "", actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
 	})
 
 	t.Run("Non-parallel Job with OwnerReferences does not have a ready workload status", func(t *testing.T) {
 		testJob := setupJobWithOwner()
 		testJob.Status.Conditions[0].Type = batchv1.JobFailed
+		testJob.Status.Conditions[0].Status = corev1.ConditionTrue
 		testJob.Status.Failed = 2
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
@@ -155,8 +179,8 @@ func TestPointsForJob(t *testing.T) {
 		testJob.Status.Succeeded = 2
 		completionsCount := 2
 		parallelismCount := 2
-		testJob.Spec.Completions = genericPointer[int32](int32(completionsCount))
-		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
+		testJob.Spec.Completions = genericPointer(int32(completionsCount))
+		testJob.Spec.Parallelism = genericPointer(int32(parallelismCount))
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
 		actualWFPointsMap := getWFPointsMap(actualWFPoints)
@@ -170,9 +194,6 @@ func TestPointsForJob(t *testing.T) {
 
 		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
 		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
-
-		assert.Equal(t, fmt.Sprintf("%d", testJob.Status.Succeeded), actualWorkloadStatusPoint.Tags()[workloadAvailableTag])
-		assert.Equal(t, fmt.Sprintf("%d", *testJob.Spec.Completions), actualWorkloadStatusPoint.Tags()[workloadDesiredTag])
 	})
 
 	t.Run("Parallel Job with a fixed completion count does not have a ready workload status", func(t *testing.T) {
@@ -181,8 +202,8 @@ func TestPointsForJob(t *testing.T) {
 		testJob.Status.Succeeded = 3
 		completionsCount := 12
 		parallelismCount := 3
-		testJob.Spec.Completions = genericPointer[int32](int32(completionsCount))
-		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
+		testJob.Spec.Completions = genericPointer(int32(completionsCount))
+		testJob.Spec.Parallelism = genericPointer(int32(parallelismCount))
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
 		actualWFPointsMap := getWFPointsMap(actualWFPoints)
@@ -196,7 +217,6 @@ func TestPointsForJob(t *testing.T) {
 
 		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
 		assert.Equal(t, workloadNotReady, actualWorkloadStatusPoint.Value)
-		assert.Equal(t, "BackoffLimitExceeded", actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
 	})
 
 	t.Run("Parallel Job with a with a work queue has a ready workload status", func(t *testing.T) {
@@ -205,7 +225,7 @@ func TestPointsForJob(t *testing.T) {
 		testJob := setupBasicJob()
 		testJob.Status.Succeeded = 2
 		parallelismCount := 2
-		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
+		testJob.Spec.Parallelism = genericPointer(int32(parallelismCount))
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
 		actualWFPointsMap := getWFPointsMap(actualWFPoints)
@@ -219,17 +239,13 @@ func TestPointsForJob(t *testing.T) {
 
 		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
 		assert.Equal(t, workloadReady, actualWorkloadStatusPoint.Value)
-
-		expectedDesired := "1"
-		assert.Equal(t, fmt.Sprintf("%d", testJob.Status.Succeeded), actualWorkloadStatusPoint.Tags()[workloadAvailableTag])
-		assert.Equal(t, expectedDesired, actualWorkloadStatusPoint.Tags()[workloadDesiredTag])
 	})
 
 	t.Run("Parallel Job with a with a work queue does not have a ready workload status", func(t *testing.T) {
 		testJob := setupFailedJob()
 		testJob.Status.Failed = 5
 		parallelismCount := 2
-		testJob.Spec.Parallelism = genericPointer[int32](int32(parallelismCount))
+		testJob.Spec.Parallelism = genericPointer(int32(parallelismCount))
 
 		actualWFPoints := pointsForJob(testJob, testTransform)
 		actualWFPointsMap := getWFPointsMap(actualWFPoints)
@@ -243,6 +259,5 @@ func TestPointsForJob(t *testing.T) {
 
 		actualWorkloadStatusPoint := actualWFPointsMap[workloadStatusMetricName]
 		assert.Equal(t, workloadNotReady, actualWorkloadStatusPoint.Value)
-		assert.Equal(t, "BackoffLimitExceeded", actualWorkloadStatusPoint.Tags()[workloadFailedReasonTag])
 	})
 }
