@@ -54,13 +54,20 @@ func TestPointsForDaemonSet(t *testing.T) {
 
 	t.Run("test for DaemonSet with healthy status", func(t *testing.T) {
 		testDaemonSet := setupBasicDaemonSet()
+		expectedAvailable := fmt.Sprint(testDaemonSet.Status.NumberAvailable)
+		expectedDesired := fmt.Sprint(testDaemonSet.Status.DesiredNumberScheduled)
 
 		actualWFPointsMap := getWFPointsMap(pointsForDaemonSet(testDaemonSet, testTransform))
-		actualWFPoint := actualWFPointsMap[workloadMetricName]
+		actualWFPoint, found := actualWFPointsMap[workloadMetricName]
+		assert.True(t, found)
 
 		assert.Equal(t, workloadReady, actualWFPoint.Value)
 		assert.Equal(t, workloadKindDaemonSet, actualWFPoint.Tags()[workloadKindTag])
-		assert.Equal(t, "", actualWFPoint.Tags()[workloadFailedReasonTag])
+
+		assert.Equal(t, expectedAvailable, actualWFPoint.Tags()[workloadAvailableTag])
+		assert.Equal(t, expectedDesired, actualWFPoint.Tags()[workloadDesiredTag])
+		assert.NotContains(t, actualWFPoint.Tags(), workloadFailedReasonTag)
+		assert.NotContains(t, actualWFPoint.Tags(), workloadFailedMessageTag)
 	})
 
 	t.Run("test for DaemonSet with non healthy status", func(t *testing.T) {
@@ -68,13 +75,18 @@ func TestPointsForDaemonSet(t *testing.T) {
 		testDaemonSet.Status.CurrentNumberScheduled = 0
 		testDaemonSet.Status.NumberReady = 0
 		testDaemonSet.Status.NumberAvailable = 0
+		expectedAvailable := fmt.Sprint(testDaemonSet.Status.NumberAvailable)
 
 		actualWFPointsMap := getWFPointsMap(pointsForDaemonSet(testDaemonSet, testTransform))
-		actualWFPoint := actualWFPointsMap[workloadMetricName]
+		actualWFPoint, found := actualWFPointsMap[workloadMetricName]
+		assert.True(t, found)
 
 		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
 		assert.Equal(t, workloadKindDaemonSet, actualWFPoint.Tags()[workloadKindTag])
-		//assert.NotEqual(t, "", actualWFPoint.Tags()[workloadFailedReasonTag])
 
+		assert.Equal(t, expectedAvailable, actualWFPoint.Tags()[workloadAvailableTag])
+		assert.NotEqual(t, actualWFPoint.Tags()[workloadDesiredTag], actualWFPoint.Tags()[workloadAvailableTag])
+		assert.Contains(t, actualWFPoint.Tags(), workloadFailedReasonTag)
+		assert.Contains(t, actualWFPoint.Tags(), workloadFailedMessageTag)
 	})
 }
