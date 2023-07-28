@@ -42,9 +42,9 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 		// emit workload.status metric for single pods with no owner references
 		if !util.HasOwnerReference(pod.OwnerReferences) {
 			workloadStatus := getWorkloadStatusForNonRunningPod(pod.Status.ContainerStatuses)
+			reason, message := getWorkloadReasonAndMessageForNonRunningPod(workloadStatus, pod)
 			// non-running pods has a default available value of 0 because they are not running
-			reason := getWorkloadFailedReasonForNonRunningPod(pod.Status)
-			workloadTags := buildWorkloadTags(workloadKindPod, pod.Name, pod.Namespace, 1, 0, reason, transforms.Tags)
+			workloadTags := buildWorkloadTags(workloadKindPod, pod.Name, pod.Namespace, 1, 0, reason, message, transforms.Tags)
 			points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
 		}
 		return points
@@ -73,27 +73,43 @@ func getWorkloadStatusForNonRunningPod(containerStatuses []v1.ContainerStatus) f
 	return workloadNotReady
 }
 
-func getWorkloadFailedReasonForNonRunningPod(podStatus v1.PodStatus) string {
-	var reason string
-	phaseValue := util.ConvertPodPhase(podStatus.Phase)
-	if phaseValue == util.POD_PHASE_PENDING {
-		for _, condition := range podStatus.Conditions {
-			if condition.Type == v1.PodScheduled && condition.Status == "False" {
-				reason = condition.Reason
-			} else if condition.Type == v1.ContainersReady && condition.Status == "False" {
-				reason = condition.Reason
+func getWorkloadReasonAndMessageForNonRunningPod(status float64, pod *v1.Pod) (reason, message string) {
+	if status == workloadReady {
+		return "", ""
+	}
+
+	podPhase := util.ConvertPodPhase(pod.Status.Phase)
+	if len(pod.Status.ContainerStatuses) > 0 {
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			switch podPhase {
+			case util.POD_PHASE_PENDING:
+				if !containerStatus.Ready && containerStatus.State.Waiting != nil {
+					reason = containerStatus.State.Waiting.Reason
+					message = truncateMessage(containerStatus.State.Waiting.Message)
+					return reason, message
+				}
+			case util.POD_PHASE_FAILED:
+				if !containerStatus.Ready && containerStatus.State.Terminated != nil {
+					reason = containerStatus.State.Terminated.Reason
+					message = truncateMessage(containerStatus.State.Terminated.Message)
+					return reason, message
+				}
+			}
+		}
+	} else if podPhase == util.POD_PHASE_PENDING {
+		for _, condition := range pod.Status.Conditions {
+			if util.PodConditionIsUnchedulable(condition) {
+				reason, message = condition.Reason, truncateMessage(condition.Message)
+				if pod.DeletionTimestamp != nil {
+					// TODO: Add failure message for pods stuck in terminating
+					reason = "Terminating"
+				}
+				return reason, message
 			}
 		}
 	}
 
-	if phaseValue == util.POD_PHASE_FAILED {
-		for _, condition := range podStatus.Conditions {
-			if condition.Type == v1.PodReady {
-				reason = condition.Reason
-			}
-		}
-	}
-	return reason
+	return reason, message
 }
 
 func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, sharedTags map[string]string, now int64) []wf.Metric {
