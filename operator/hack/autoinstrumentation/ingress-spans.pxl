@@ -98,6 +98,8 @@ def add_source_dest_columns(df):
     df.destination_namespace = px.pod_id_to_namespace(df.destination_pod_id)
     df.destination_node = df.node
 
+    df.source_name = 'external'
+
     return df
 
 def add_error_tag(df):
@@ -148,7 +150,6 @@ px.export(
 
             # Field used in OpApps cluster to differentiate between manual DT instrumentation and auto-instrumentation
             'origin': 'opapps-auto',
-
         },
         data=[
             px.otel.trace.Span(
@@ -173,7 +174,7 @@ px.export(
                     'application': df.destination_namespace,
                     # We follow pixie's convention of setting an error tag only for a server span.
                     'error': df.error,
-                    '_inboundExternalService' : 'external',
+                    '_inboundExternalService' : df.source_name,
 
                     # OTEL HTTP Conventions
                     'http.status_code': df.resp_status,
