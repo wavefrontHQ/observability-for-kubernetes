@@ -102,7 +102,7 @@ def add_source_dest_columns(df):
     df.destination_pod_id = df.pod_id
     df.destination_pod = remove_ns_prefix(df.pod)
     df.destination_deployment = remove_ns_prefix(default_none(px.pod_id_to_deployment_name(df.destination_pod_id)))
-    df.destination_service = remove_ns_prefix(default_none(px.pod_id_to_service_name(df.destination_pod_id)))
+    df.destination_service = strip_commas(remove_ns_prefix(default_none(px.pod_id_to_service_name(df.destination_pod_id))))
     df.destination_namespace = px.pod_id_to_namespace(df.destination_pod_id)
     df.destination_node = df.node
 
@@ -112,7 +112,7 @@ def add_source_dest_columns(df):
     df.source_deployment = remove_ns_prefix(default_none(px.pod_id_to_deployment_name(df.source_pod_id)))
 
     # order of precedence: service = service_name > deployment_name > unknown_ingress
-    df.source_service = remove_ns_prefix(px.pod_id_to_service_name(df.source_pod_id))
+    df.source_service = strip_commas(remove_ns_prefix(px.pod_id_to_service_name(df.source_pod_id)))
     df.source_service = px.select(df.source_service == '', df.source_deployment, df.source_service)
     df.source_service = px.select(df.source_service == '', 'unknown_ingress', df.source_service)
     df.source_node = px.pod_id_to_node_name(df.source_pod_id)
@@ -129,6 +129,9 @@ def add_error_tag(df):
     df.error = px.select((df.resp_status >= 400), "true", "false")
 
     return df
+
+def strip_commas(column):
+    return px.replace(',', column, '_')
 
 df = px.DataFrame('http_events', start_time=px.plugin.start_time, end_time=px.plugin.end_time)
 
