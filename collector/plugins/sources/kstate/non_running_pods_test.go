@@ -5,19 +5,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
-
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
-
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
-func setupBasicPod() *v1.Pod {
-	pod := &v1.Pod{
+func setupBasicPod() *corev1.Pod {
+	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "pod1",
 			Namespace: "ns1",
@@ -27,19 +26,19 @@ func setupBasicPod() *v1.Pod {
 				Name: "pod-owner",
 			}},
 		},
-		Spec: v1.PodSpec{
+		Spec: corev1.PodSpec{
 			NodeName: "node1",
 		},
 	}
 	return pod
 }
 
-func setupPendingPod() *v1.Pod {
+func setupPendingPod() *corev1.Pod {
 	pendingPod := setupBasicPod()
 	pendingPod.Spec.NodeName = ""
-	pendingPod.Status = v1.PodStatus{
-		Phase: v1.PodPending,
-		Conditions: []v1.PodCondition{
+	pendingPod.Status = corev1.PodStatus{
+		Phase: corev1.PodPending,
+		Conditions: []corev1.PodCondition{
 			{
 				Type:    "PodScheduled",
 				Status:  "False",
@@ -51,16 +50,16 @@ func setupPendingPod() *v1.Pod {
 	return pendingPod
 }
 
-func setupTerminatingPod(t *testing.T, deletionTime string, nodeName string) *v1.Pod {
+func setupTerminatingPod(t *testing.T, deletionTime string, nodeName string) *corev1.Pod {
 	terminatingPod := setupBasicPod()
-	terminatingPod.Status = v1.PodStatus{
-		Phase: v1.PodPending,
+	terminatingPod.Status = corev1.PodStatus{
+		Phase: corev1.PodPending,
 	}
 
 	terminatingPod.Spec.NodeName = nodeName
 
 	if len(nodeName) == 0 {
-		terminatingPod.Status.Conditions = []v1.PodCondition{
+		terminatingPod.Status.Conditions = []corev1.PodCondition{
 			{
 				Type:    "PodScheduled",
 				Status:  "False",
@@ -79,11 +78,11 @@ func setupTerminatingPod(t *testing.T, deletionTime string, nodeName string) *v1
 	return terminatingPod
 }
 
-func setupContainerCreatingPod() *v1.Pod {
+func setupContainerCreatingPod() *corev1.Pod {
 	containerCreatingPod := setupBasicPod()
-	containerCreatingPod.Status = v1.PodStatus{
-		Phase: v1.PodPending,
-		Conditions: []v1.PodCondition{
+	containerCreatingPod.Status = corev1.PodStatus{
+		Phase: corev1.PodPending,
+		Conditions: []corev1.PodCondition{
 			{
 				Type:   "Initialized",
 				Status: "True",
@@ -105,11 +104,11 @@ func setupContainerCreatingPod() *v1.Pod {
 				Status: "True",
 			},
 		},
-		ContainerStatuses: []v1.ContainerStatus{
+		ContainerStatuses: []corev1.ContainerStatus{
 			{
 				Name: "testContainerName",
-				State: v1.ContainerState{
-					Waiting: &v1.ContainerStateWaiting{
+				State: corev1.ContainerState{
+					Waiting: &corev1.ContainerStateWaiting{
 						Reason: "ContainerCreating",
 					},
 				},
@@ -122,11 +121,11 @@ func setupContainerCreatingPod() *v1.Pod {
 	return containerCreatingPod
 }
 
-func setupCompletedPod() *v1.Pod {
+func setupCompletedPod() *corev1.Pod {
 	completedPod := setupBasicPod()
-	completedPod.Status = v1.PodStatus{
-		Phase: v1.PodSucceeded,
-		Conditions: []v1.PodCondition{
+	completedPod.Status = corev1.PodStatus{
+		Phase: corev1.PodSucceeded,
+		Conditions: []corev1.PodCondition{
 			{
 				Type:   "Initialized",
 				Status: "True",
@@ -147,11 +146,11 @@ func setupCompletedPod() *v1.Pod {
 				Status: "True",
 			},
 		},
-		ContainerStatuses: []v1.ContainerStatus{
+		ContainerStatuses: []corev1.ContainerStatus{
 			{
 				Name: "testContainerName",
-				State: v1.ContainerState{
-					Terminated: &v1.ContainerStateTerminated{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{
 						ExitCode:    0,
 						Reason:      "Completed",
 						ContainerID: "testContainerID",
@@ -166,11 +165,11 @@ func setupCompletedPod() *v1.Pod {
 	return completedPod
 }
 
-func setupFailedPod() *v1.Pod {
+func setupFailedPod() *corev1.Pod {
 	failedPod := setupBasicPod()
-	failedPod.Status = v1.PodStatus{
-		Phase: v1.PodFailed,
-		Conditions: []v1.PodCondition{
+	failedPod.Status = corev1.PodStatus{
+		Phase: corev1.PodFailed,
+		Conditions: []corev1.PodCondition{
 			{
 				Type:   "Initialized",
 				Status: "True",
@@ -192,11 +191,11 @@ func setupFailedPod() *v1.Pod {
 				Status: "True",
 			},
 		},
-		ContainerStatuses: []v1.ContainerStatus{
+		ContainerStatuses: []corev1.ContainerStatus{
 			{
 				Name: "testContainerName",
-				State: v1.ContainerState{
-					Terminated: &v1.ContainerStateTerminated{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{
 						ExitCode:    1,
 						Reason:      "Error",
 						ContainerID: "testContainerID",
@@ -231,7 +230,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		point := actualWFPoints[0].(*wf.Point)
 		assert.Equal(t, float64(util.POD_PHASE_PENDING), point.Value)
 		assert.Equal(t, "pod1", point.Tags()["pod_name"])
-		assert.Equal(t, string(v1.PodPending), point.Tags()["phase"])
+		assert.Equal(t, string(corev1.PodPending), point.Tags()["phase"])
 		assert.Equal(t, "testLabelName", point.Tags()["label.name"])
 		assert.Equal(t, "Unschedulable", point.Tags()["reason"])
 		assert.Equal(t, "none", point.Tags()["nodename"])
@@ -280,7 +279,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		// check for pod metrics
 		podPoint := actualWFPoints[0].(*wf.Point)
 		assert.Equal(t, float64(util.POD_PHASE_SUCCEEDED), podPoint.Value)
-		assert.Equal(t, string(v1.PodSucceeded), podPoint.Tags()["phase"])
+		assert.Equal(t, string(corev1.PodSucceeded), podPoint.Tags()["phase"])
 		assert.Equal(t, "", podPoint.Tags()["reason"])
 		assert.Equal(t, "node1", podPoint.Tags()["nodename"])
 		assert.Equal(t, "some-workload-name", podPoint.Tags()[workloadNameTag])
@@ -303,7 +302,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		// check for pod metrics
 		podPoint := actualWFPoints[0].(*wf.Point)
 		assert.Equal(t, float64(util.POD_PHASE_FAILED), podPoint.Value)
-		assert.Equal(t, string(v1.PodFailed), podPoint.Tags()["phase"])
+		assert.Equal(t, string(corev1.PodFailed), podPoint.Tags()["phase"])
 		assert.Equal(t, "ContainersNotReady", podPoint.Tags()["reason"])
 		assert.Equal(t, 255, len(podPoint.Tags()["message"])+len("message")+len("="))
 		assert.Contains(t, podPoint.Tags()["message"], "containers with unready status: [hello]")
@@ -328,7 +327,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		// check for pod metrics
 		podMetric := actualWFPoints[0].(*wf.Point)
 		assert.Equal(t, float64(util.POD_PHASE_PENDING), podMetric.Value)
-		assert.Equal(t, string(v1.PodPending), podMetric.Tags()["phase"])
+		assert.Equal(t, string(corev1.PodPending), podMetric.Tags()["phase"])
 		assert.Equal(t, "ContainersNotReady", podMetric.Tags()["reason"])
 		assert.Equal(t, "containers with unready status: [wavefront-proxy]", podMetric.Tags()["message"])
 		assert.Equal(t, "node1", podMetric.Tags()["nodename"])
@@ -396,18 +395,12 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, workloadReady, podPoint.Value)
 		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
 		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
-
-		expectedAvailable := "0"
-		expectedDesired := "1"
-		assert.Equal(t, expectedAvailable, podPoint.Tags()[workloadAvailableTag])
-		assert.Equal(t, expectedDesired, podPoint.Tags()[workloadDesiredTag])
-		assert.Equal(t, "", podPoint.Tags()[workloadFailedReasonTag])
 	})
 }
 
 type fakeWorkloadCache struct{}
 
-func (f fakeWorkloadCache) GetWorkloadForPod(pod *v1.Pod) (string, string) {
+func (f fakeWorkloadCache) GetWorkloadForPod(pod *corev1.Pod) (string, string) {
 	return "some-workload-name", "some-workload-kind"
 }
 

@@ -7,15 +7,13 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
-
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
 func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interface{}, transforms configuration.Transforms) []wf.Metric {
@@ -42,7 +40,7 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 		points = append(points, buildContainerStatusMetrics(pod, sharedTags, transforms, now)...)
 
 		// emit workload.status metric for single pods with no owner references
-		if len(pod.OwnerReferences) == 0 {
+		if !util.HasOwnerReference(pod.OwnerReferences) {
 			workloadStatus := getWorkloadStatusForNonRunningPod(pod.Status.ContainerStatuses)
 			// non-running pods has a default available value of 0 because they are not running
 			reason := getWorkloadFailedReasonForNonRunningPod(pod.Status)

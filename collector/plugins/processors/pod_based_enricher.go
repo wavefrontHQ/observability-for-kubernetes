@@ -22,12 +22,11 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	kube_api "k8s.io/api/core/v1"
+	v1listers "k8s.io/client-go/listers/core/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
-
-	kube_api "k8s.io/api/core/v1"
-	v1listers "k8s.io/client-go/listers/core/v1"
 )
 
 type PodBasedEnricher struct {
@@ -169,7 +168,7 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 	podMs.Labels[metrics.LabelWorkloadKind.Key] = workloadKind
 
 	// Add workload status metric for pods with no owner references
-	if len(pod.OwnerReferences) == 0 {
+	if !util.HasOwnerReference(pod.OwnerReferences) {
 		pbe.addWorkloadStatusMetric(podMs, pod, newMs)
 	}
 

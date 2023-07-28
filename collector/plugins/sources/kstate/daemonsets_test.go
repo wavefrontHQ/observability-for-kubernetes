@@ -1,6 +1,7 @@
 package kstate
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 

@@ -73,13 +73,13 @@ func (wc workloadCache) GetWorkloadForPodName(podName, ns string) (name, kind, n
 }
 
 // GetWorkloadForPod determines Workload Name and Workload Kind for a Pod.
-func (wc workloadCache) GetWorkloadForPod(pod *corev1.Pod) (string, string) {
+func (wc workloadCache) GetWorkloadForPod(pod *corev1.Pod) (name, kind string) {
 	if len(pod.Name) == 0 {
 		return "", ""
 	}
 
 	// Hard-coding Kind due to https://github.com/kubernetes/client-go/issues/308
-	if len(pod.OwnerReferences) == 0 {
+	if !HasOwnerReference(pod.OwnerReferences) {
 		return pod.Name, "Pod"
 	}
 
