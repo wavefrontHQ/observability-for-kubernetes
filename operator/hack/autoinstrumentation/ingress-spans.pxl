@@ -61,7 +61,7 @@ def exclude_non_ingress_traffic(df):
     # If remote_addr doesn't correspond to a pod, then it returns an empty string per
     # https://docs.px.dev/reference/pxl/udf/ip_to_pod_id/#name
     df = df[px.ip_to_pod_id(df.remote_addr) == '']
-    df = df[df['trace_role'] == 1]
+    df = df[df['trace_role'] == 2]
     df = df[df.pod_id != '']
 
     return df
@@ -79,12 +79,11 @@ def xor(a, b):
 
 def add_trace_headers(df):
     df.span_id = px.substring(df.destination_pod_id, 19, 4) + px.substring(df.destination_pod_id, 24, 12)
-    df.parent_span_id = px.substring(df.source_ip, 19, 4) + px.substring(df.source_ip, 24, 12)
 
     # If we have 16 decimal places of nanoseconds, then we will potentially have collisions about every 115 days.
     # Because of that, we are xor'ing the time and latency with the intention of generating a more unique trace id.
     trace_id_time_part = "0000000000000000" + px.itoa(xor(px.time_to_int64(df.time_), df.latency))
-    df.trace_id = px.substring(df.span_id, 8, 8) + px.substring(df.parent_span_id, 8, 8) + px.substring(trace_id_time_part, px.length(trace_id_time_part)-16, 16)
+    df.trace_id = px.substring(df.span_id, 8, 8) + '00000000' + px.substring(trace_id_time_part, px.length(trace_id_time_part)-16, 16)
     return df
 
 def default_none(value):
@@ -98,8 +97,6 @@ def add_source_dest_columns(df):
     df.destination_service = remove_ns_prefix(default_none(px.pod_id_to_service_name(df.destination_pod_id)))
     df.destination_namespace = px.pod_id_to_namespace(df.destination_pod_id)
     df.destination_node = df.node
-
-    df.source_ip = px.select(df.remote_addr != '', df.remote_addr, 'unknown_ingress')
 
     return df
 
@@ -159,38 +156,7 @@ px.export(
                 start_time=df.start_time,
                 end_time=df.time_,
                 trace_id=df.trace_id,
-                span_id=df.parent_span_id,
-                kind=px.otel.trace.SPAN_KIND_CLIENT,
-                attributes={
-                    # NOTE: the integration handles splitting of services.
-
-                    # Wavefront Conventions
-                    'service': df.destination_service,
-                    'source': df.destination_pod,
-                    'application': df.destination_namespace,
-                    # We follow pixie's convention of setting an error tag only for a server span.
-                    'error': df.error,
-                    '_inboundExternalService' : df.source_ip,
-
-                    # OTEL HTTP Conventions
-                    'http.status_code': df.resp_status,
-                    'http.request_content_length': df.req_body_size,
-                    'http.response_content_length': df.req_body_size,
-                    'http.method': df.req_method,
-                    'http.url': df.req_url,
-                    'http.target': df.req_path,
-                    'net.host.name': df.host_name,
-                    'net.host.port': df.remote_port,
-                    'user_agent.original': df.user_agent,
-                },
-            ),
-            px.otel.trace.Span(
-                name=df.req_path,
-                start_time=df.start_time,
-                end_time=df.time_,
-                trace_id=df.trace_id,
                 span_id=df.span_id,
-                parent_span_id=df.parent_span_id,
                 kind=px.otel.trace.SPAN_KIND_SERVER,
                 attributes={
                     # NOTE: the integration handles splitting of services.
@@ -207,7 +173,7 @@ px.export(
                     'application': df.destination_namespace,
                     # We follow pixie's convention of setting an error tag only for a server span.
                     'error': df.error,
-                    '_inboundExternalService' : df.source_ip,
+                    '_inboundExternalService' : 'external',
 
                     # OTEL HTTP Conventions
                     'http.status_code': df.resp_status,
