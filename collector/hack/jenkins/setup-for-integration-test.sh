@@ -24,12 +24,6 @@ if [[ -z ${K8S_ENV} ]]; then
 fi
 
 if [[ "${K8S_ENV}" == "gke" ]]; then
-  if ! [ -x "$(command -v gcloud)" ]; then
-    curl https://sdk.cloud.google.com > install.sh
-    chmod +x ./install.sh
-    sudo PREFIX=$HOME ./install.sh --disable-prompts >/dev/null;
-    sudo /home/worker/google-cloud-sdk/bin/gcloud components install gke-gcloud-auth-plugin >/dev/null
-  fi
   gcloud auth activate-service-account --key-file "$GCP_CREDS"
   gcloud config set project wavefront-gcp-dev
 
