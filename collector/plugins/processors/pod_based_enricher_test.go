@@ -22,14 +22,14 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
-
 	kube_api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 )
 
 const otherResource = "example.com/resource1"
@@ -368,7 +368,6 @@ func TestDropsContainerMetricWhenPodMissing(t *testing.T) {
 func TestDropsPodMetricWhenPodMissing(t *testing.T) {
 	tc := setup()
 	tc.pod = nil
-	//tc.batch = createPodBatch()
 
 	podBasedEnricher := createEnricher(t, tc)
 

@@ -7,12 +7,12 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
-
 	log "github.com/sirupsen/logrus"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	appsv1 "k8s.io/api/apps/v1"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
 func pointsForDeployment(item interface{}, transforms configuration.Transforms) []wf.Metric {

@@ -7,13 +7,12 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
-	corev1 "k8s.io/api/core/v1"
-
 	log "github.com/sirupsen/logrus"
+	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	batchv1 "k8s.io/api/batch/v1"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
 func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Metric {

@@ -54,6 +54,13 @@ func floatValOrDefault(i *int32, f float64) float64 {
 	return f
 }
 
+func intValOrDefault(val *int32, i int32) int32 {
+	if val != nil {
+		return *val
+	}
+	return i
+}
+
 func genericPointer[T any](val T) *T {
 	return &val
 }
