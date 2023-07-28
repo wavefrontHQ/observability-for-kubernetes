@@ -38,29 +38,21 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 		metricPoint(transforms.Prefix, "job.parallelism", parallelism, now, transforms.Source, tags),
 	}
 
-	var workloadKind, workloadName, workloadFailedReason string
-
-	if len(job.OwnerReferences) == 0 {
-		workloadKind = workloadKindJob
-		workloadName = job.Name
-	} else {
-		workloadKind = job.OwnerReferences[0].Kind
-		workloadName = job.OwnerReferences[0].Name
-	}
+	workloadName, workloadKind := getWorkloadNameAndKindForJob(job)
 	workloadStatus := getWorkloadStatusForJob(job.Status.Conditions)
-	if failed != 0 {
-		workloadFailedReason = job.Status.Conditions[0].Reason
-	} else {
-		workloadFailedReason = ""
-	}
-	completionsCount := int32(1)
-	if job.Spec.Completions != nil {
-		completionsCount = *job.Spec.Completions
-	}
-	workloadTags := buildWorkloadTags(workloadKind, workloadName, job.Namespace, completionsCount, int32(succeeded), workloadFailedReason, transforms.Tags)
+	reason, message := getWorkloadReasonAndMessageForJob(workloadStatus, job)
+	desired := intValOrDefault(job.Spec.Completions, 1)
+	workloadTags := buildWorkloadTags(workloadKind, workloadName, job.Namespace, desired, int32(succeeded), reason, message, transforms.Tags)
 	points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
 
 	return points
+}
+
+func getWorkloadNameAndKindForJob(job *batchv1.Job) (name, kind string) {
+	if util.HasOwnerReference(job.OwnerReferences) {
+		return job.OwnerReferences[0].Name, job.OwnerReferences[0].Kind
+	}
+	return job.Name, workloadKindJob
 }
 
 func getWorkloadStatusForJob(jobConditions []batchv1.JobCondition) float64 {
@@ -69,10 +61,24 @@ func getWorkloadStatusForJob(jobConditions []batchv1.JobCondition) float64 {
 	}
 
 	for _, jobCondition := range jobConditions {
-		// When a specified number of successful completions is reached, the Job is complete.
-		if jobCondition.Type == batchv1.JobComplete && jobCondition.Status == corev1.ConditionTrue {
-			return workloadReady
+		if util.JobConditionIsFailed(jobCondition) {
+			return workloadNotReady
 		}
 	}
-	return workloadNotReady
+	return workloadReady
+}
+
+func getWorkloadReasonAndMessageForJob(status float64, job *batchv1.Job) (reason, message string) {
+	if status == workloadReady {
+		return "", ""
+	}
+
+	if job.Status.Failed > 0 {
+		for _, condition := range job.Status.Conditions {
+			if util.JobConditionIsFailed(condition) {
+				return condition.Reason, condition.Message
+			}
+		}
+	}
+	return reason, message
 }

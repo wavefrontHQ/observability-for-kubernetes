@@ -28,14 +28,27 @@ func pointsForDeployment(item interface{}, transforms configuration.Transforms) 
 	available := float64(deployment.Status.AvailableReplicas)
 	ready := float64(deployment.Status.ReadyReplicas)
 
-	workloadStatus := getWorkloadStatus(int32(desired), deployment.Status.AvailableReplicas)
-	workloadTags := buildWorkloadTags(workloadKindDeployment, deployment.Name, deployment.Namespace, int32(desired), deployment.Status.AvailableReplicas, "", transforms.Tags)
-	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags)
+	workloadStatus := getWorkloadStatus(int32(desired), int32(available))
+	reason, message := getWorkloadReasonAndMessageForDeployment(workloadStatus, deployment)
+	workloadTags := buildWorkloadTags(workloadKindDeployment, deployment.Name, deployment.Namespace, int32(desired), int32(available), reason, message, transforms.Tags)
 
 	return []wf.Metric{
 		metricPoint(transforms.Prefix, "deployment.desired_replicas", desired, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "deployment.available_replicas", available, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "deployment.ready_replicas", ready, now, transforms.Source, tags),
-		workloadPoint,
+		buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags),
 	}
+}
+
+func getWorkloadReasonAndMessageForDeployment(status float64, deployment *appsv1.Deployment) (reason, message string) {
+	if status == workloadReady {
+		return "", ""
+	}
+
+	for _, condition := range deployment.Status.Conditions {
+		if condition.Type == appsv1.DeploymentAvailable && condition.Status == corev1.ConditionFalse {
+			return condition.Reason, condition.Message
+		}
+	}
+	return reason, message
 }
