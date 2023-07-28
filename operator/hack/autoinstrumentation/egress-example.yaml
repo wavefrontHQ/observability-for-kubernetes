@@ -1,0 +1,37 @@
+# Deploys collector as a single deployment that scrapes cluster and node metrics
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: egress-example
+  namespace: default
+  labels:
+    name: egress-example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: egress-example
+  template:
+    metadata:
+      labels:
+        name: egress-example
+    spec:
+      containers:
+      - name: container
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
+        resources:
+          requests:
+            memory: 50Mi
+            cpu: 50m
+            ephemeral-storage: 256Mi
+          limits:
+            memory: 75Mi
+            cpu: 75m
+            ephemeral-storage: 512Mi
+        args:
+          - /bin/sh
+          - -c
+          - |
+            while true; do
+              wget -O /dev/null http://example.com
+            done
