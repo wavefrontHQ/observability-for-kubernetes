@@ -198,6 +198,7 @@ func setupFailedPod() *corev1.Pod {
 					Terminated: &corev1.ContainerStateTerminated{
 						ExitCode:    1,
 						Reason:      "Error",
+						Message:     "Error message.",
 						ContainerID: "testContainerID",
 					},
 				},
@@ -355,7 +356,60 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "some-workload-kind", containerMetric.Tags()[workloadKindTag])
 	})
 
-	t.Run("non-running pods without owner references should have workload.status metric", func(t *testing.T) {
+	t.Run("workload status metrics should have available and desired tags", func(t *testing.T) {
+		testPod := setupBasicPod()
+		testPod.OwnerReferences = nil
+		expectedMetric := testTransform.Prefix + workloadStatusMetric
+		workloadCache := fakeWorkloadCache{}
+
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
+		assert.NotEmpty(t, actualWFPoints)
+
+		podPoint := getWFPointsMap(actualWFPoints)[expectedMetric]
+		expectedAvailable := "0"
+		expectedDesired := "1"
+		assert.Equal(t, expectedMetric, podPoint.Metric)
+		assert.Equal(t, expectedAvailable, podPoint.Tags()[workloadAvailableTag])
+		assert.Equal(t, expectedDesired, podPoint.Tags()[workloadDesiredTag])
+	})
+
+	t.Run("healthy workload status metrics should not have reason and message tags", func(t *testing.T) {
+		testPod := setupCompletedPod()
+		testPod.OwnerReferences = nil
+		expectedMetric := testTransform.Prefix + workloadStatusMetric
+		workloadCache := fakeWorkloadCache{}
+
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
+		assert.NotEmpty(t, actualWFPoints)
+
+		podPoint := getWFPointsMap(actualWFPoints)[expectedMetric]
+		assert.Equal(t, expectedMetric, podPoint.Metric)
+		assert.Equal(t, workloadReady, podPoint.Value)
+		assert.NotContains(t, podPoint.Tags(), workloadFailedReasonTag)
+		assert.NotContains(t, podPoint.Tags(), workloadFailedMessageTag)
+	})
+
+	t.Run("unhealthy workload status metrics should have reason and message tags", func(t *testing.T) {
+		testPod := setupFailedPod()
+		testPod.OwnerReferences = nil
+		expectedMetric := testTransform.Prefix + workloadStatusMetric
+		workloadCache := fakeWorkloadCache{}
+		expectedReason := testPod.Status.ContainerStatuses[0].State.Terminated.Reason
+		expectedMessage := testPod.Status.ContainerStatuses[0].State.Terminated.Message
+
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
+		assert.NotEmpty(t, actualWFPoints)
+
+		podPoint := getWFPointsMap(actualWFPoints)[expectedMetric]
+		assert.Equal(t, expectedMetric, podPoint.Metric)
+		assert.Equal(t, workloadNotReady, podPoint.Value)
+		assert.Contains(t, podPoint.Tags(), workloadFailedReasonTag)
+		assert.Contains(t, podPoint.Tags(), workloadFailedMessageTag)
+		assert.Equal(t, expectedReason, podPoint.Tags()[workloadFailedReasonTag])
+		assert.Equal(t, expectedMessage, podPoint.Tags()[workloadFailedMessageTag])
+	})
+
+	t.Run("failed pods without owner references should have an unhealthy workload status", func(t *testing.T) {
 		testPod := setupFailedPod()
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
@@ -371,15 +425,83 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, workloadNotReady, podPoint.Value)
 		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
 		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
-
-		expectedAvailable := "0"
-		expectedDesired := "1"
-		assert.Equal(t, expectedAvailable, podPoint.Tags()[workloadAvailableTag])
-		assert.Equal(t, expectedDesired, podPoint.Tags()[workloadDesiredTag])
-		assert.NotEqual(t, "", podPoint.Tags()[workloadFailedReasonTag])
+		assert.Contains(t, podPoint.Tags(), workloadFailedReasonTag)
+		assert.Contains(t, podPoint.Tags(), workloadFailedMessageTag)
 	})
 
-	t.Run("non-running completed pods without owner references should have workload.status metric", func(t *testing.T) {
+	t.Run("pod image cannot be loaded without owner references should have an unhealthy workload status", func(t *testing.T) {
+		testPod := setupContainerCreatingPod()
+		testPod.OwnerReferences = nil
+		expectedMetric := testTransform.Prefix + workloadStatusMetric
+		expectedWorkloadName := testPod.Name
+		workloadCache := fakeWorkloadCache{}
+
+		expectedReason := "ImagePullBackOff"
+		expectedMessage := `Back-off pulling image "busybox123"`
+		testPod.Status.ContainerStatuses[0].State.Waiting.Reason = expectedReason
+		testPod.Status.ContainerStatuses[0].State.Waiting.Message = expectedMessage
+
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
+		assert.NotNil(t, actualWFPoints)
+		assert.Greater(t, len(actualWFPoints), 0)
+
+		podPoint := getWFPointsMap(actualWFPoints)[expectedMetric]
+		assert.Equal(t, expectedMetric, podPoint.Metric)
+		assert.Equal(t, workloadNotReady, podPoint.Value)
+		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
+		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
+		assert.Equal(t, expectedReason, podPoint.Tags()[workloadFailedReasonTag])
+		assert.Equal(t, expectedMessage, podPoint.Tags()[workloadFailedMessageTag])
+	})
+
+	t.Run("pod cannot be scheduled without owner references should have an unhealthy workload status", func(t *testing.T) {
+		testPod := setupPendingPod()
+		testPod.OwnerReferences = nil
+		expectedMetric := testTransform.Prefix + workloadStatusMetric
+		expectedWorkloadName := testPod.Name
+		workloadCache := fakeWorkloadCache{}
+
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
+		assert.NotNil(t, actualWFPoints)
+		assert.Greater(t, len(actualWFPoints), 0)
+
+		podPoint := getWFPointsMap(actualWFPoints)[expectedMetric]
+		assert.Equal(t, expectedMetric, podPoint.Metric)
+		assert.Equal(t, workloadNotReady, podPoint.Value)
+		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
+		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
+
+		expectedReason := testPod.Status.Conditions[0].Reason
+		expectedMessage := testPod.Status.Conditions[0].Message
+		assert.Equal(t, expectedReason, podPoint.Tags()[workloadFailedReasonTag])
+		assert.Equal(t, expectedMessage, podPoint.Tags()[workloadFailedMessageTag])
+	})
+
+	t.Run("terminating pods without owner references should have an unhealthy workload status", func(t *testing.T) {
+		deletionTime := "2023-06-08T18:35:37Z"
+		testPod := setupTerminatingPod(t, deletionTime, "")
+		testPod.OwnerReferences = nil
+		expectedMetric := testTransform.Prefix + workloadStatusMetric
+		expectedWorkloadName := testPod.Name
+		workloadCache := fakeWorkloadCache{}
+
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
+		assert.NotNil(t, actualWFPoints)
+		assert.Greater(t, len(actualWFPoints), 0)
+
+		podPoint := getWFPointsMap(actualWFPoints)[expectedMetric]
+		assert.Equal(t, expectedMetric, podPoint.Metric)
+		assert.Equal(t, workloadNotReady, podPoint.Value)
+		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
+		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
+
+		expectedReason := "Terminating"
+		expectedMessage := testPod.Status.Conditions[0].Message
+		assert.Equal(t, expectedReason, podPoint.Tags()[workloadFailedReasonTag])
+		assert.Equal(t, expectedMessage, podPoint.Tags()[workloadFailedMessageTag])
+	})
+
+	t.Run("completed pods without owner references should have a healthy workload status", func(t *testing.T) {
 		testPod := setupCompletedPod()
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
