@@ -13,17 +13,17 @@ def exclude_known_namespaces(df):
     #
     # It is not useful to see metrics related to the functioning of Kubernetes's system-components (such as the CNI,
     # core-dns, aws-node, etc)
-    df = df[df.ctx['namespace'] != 'kube-system']
-    df = df[df.ctx['namespace'] != 'observability-system']
-    df = df[df.ctx['namespace'] != 'olm']
-    df = df[df.ctx['namespace'] != 'pl']
-    df = df[df.ctx['namespace'] != 'px-operator']
+    df = df[df.destination_namespace != 'kube-system']
+    df = df[df.destination_namespace != 'observability-system']
+    df = df[df.destination_namespace != 'olm']
+    df = df[df.destination_namespace != 'pl']
+    df = df[df.destination_namespace != 'px-operator']
 
     # Exclude DataFrames from aria-k8s
     #
     # This namespace is where the k8s-collector and telegraf-collector live. Excluding this namespace ensures that data
     # sent to Lemans from telegraf will not be re-reported by Pixie (since sending to Lemans happens over HTTP(s)
-    df = df[df.ctx['namespace'] != 'aria-k8s']
+    df = df[df.destination_namespace != 'aria-k8s']
 
     return df
 
@@ -84,15 +84,14 @@ def add_trace_headers(df):
     df.trace_id = px.substring(df.span_id, 8, 8) + '00000000' + px.substring(trace_id_time_part, px.length(trace_id_time_part)-16, 16)
     return df
 
-def default_none(value):
-    return px.select(value != '', value, 'none')
-
 # Assumes only server side http events (i.e. trace_role=2)
 def add_source_dest_columns(df):
     df.destination_pod_id = df.pod_id
     df.destination_pod = remove_ns_prefix(df.pod)
-    df.destination_deployment = remove_ns_prefix(default_none(px.pod_id_to_deployment_name(df.destination_pod_id)))
-    df.destination_service = remove_ns_prefix(default_none(px.pod_id_to_service_name(df.destination_pod_id)))
+    df.destination_deployment = remove_ns_prefix(px.pod_id_to_deployment_name(df.destination_pod_id))
+    df.destination_deployment = px.select(df.destination_deployment != '', df.destination_deployment, 'none')
+    df.destination_service = remove_ns_prefix(px.pod_id_to_service_name(df.destination_pod_id))
+    df.destination_service = px.select(df.destination_service != '', df.destination_service, 'none')
     df.destination_namespace = px.pod_id_to_namespace(df.destination_pod_id)
     df.destination_node = df.node
 
@@ -112,10 +111,10 @@ def add_error_tag(df):
 
 df = px.DataFrame('http_events', start_time=px.plugin.start_time, end_time=px.plugin.end_time)
 
-df = exclude_known_namespaces(df)
 df = exclude_known_req_path(df)
 df = exclude_non_ingress_traffic(df)
 df = add_source_dest_columns(df)
+df = exclude_known_namespaces(df)
 df = add_trace_headers(df)
 df = add_error_tag(df)
 df = df.head(15000)

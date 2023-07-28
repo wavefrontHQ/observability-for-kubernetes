@@ -143,15 +143,16 @@ Refer to Pixie's [Setting up Kubernetes](https://docs.px.dev/installing-pixie/se
 1. Navigate to the `Data Retention Scripts` at https://work.withpixie.ai/configure-data-export.
 2. The OpenTelemetry plugin comes with several pre-configured OTel export PxL scripts (Connection Stats, Network Stats, Resource Summary). Click the toggle to disable these scripts (if not already disabled). A custom Operations for Applications PxL script will be used to gather compatible instrumentation data.
 3. Select the `+ CREATE SCRIPT` button.
-4. Enter `Operations for Applications Spans (YOUR_CLUSTER_NAME)` in the `Script Name` field.
+4. Enter `Operations for Applications Cluster Spans (YOUR_CLUSTER_NAME)` in the `Script Name` field.
 5. Select `OpenTelemetry` in the `Plugin` field.
 6. Choose your cluster from the `Clusters` field.
 7. Set the `Summary Window (Seconds)` field to `10`.
 8. If the `Export URL` isn't already set to `wavefront-proxy.observability-system.svc.cluster.local:4317`, put that value in this field.
 8. Replace the contents of the `PxL Script` field with the script at [/operator/hack/autoinstrumentation/cluster-spans.pxl](/operator/hack/autoinstrumentation/cluster-spans.pxl).
 9. Click the `CREATE` button.
-10. Do steps 3-9 again using [/operator/hack/autoinstrumentation/ingress-spans.pxl](/operator/hack/autoinstrumentation/ingress-spans.pxl) for step 8.
-11. To validate that the data is being received by the Wavefront proxy, check logs for the `wavefront-proxy` pod.
+10. Do steps 3-9 again using `Operations for Applications Ingress Spans (YOUR_CLUSTER_NAME)` for step 4 and  [/operator/hack/autoinstrumentation/ingress-spans.pxl](/operator/hack/autoinstrumentation/ingress-spans.pxl) for step 8.
+11. Do steps 3-9 again using `Operations for Applications Egress Spans (YOUR_CLUSTER_NAME)` for step 4 and [/operator/hack/autoinstrumentation/egress-spans.pxl](/operator/hack/autoinstrumentation/egress-spans.pxl) for step 8.
+12. To validate that the data is being received by the Wavefront proxy, check logs for the `wavefront-proxy` pod.
 
    ```bash
    kubectl logs deployment/wavefront-proxy -n observability-system | grep "Spans received rate:"
