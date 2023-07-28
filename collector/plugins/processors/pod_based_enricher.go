@@ -219,14 +219,21 @@ func (pbe *PodBasedEnricher) addWorkloadStatusMetric(podMs *metrics.Set, pod *ku
 	}
 	workloadStatus := 1
 	for _, containerStatus := range pod.Status.ContainerStatuses {
-		if !containerStatus.Ready && containerStatus.State.Waiting != nil {
-			workloadStatus = 0
-			workloadMs.Labels[metrics.LabelReason.Key] = containerStatus.State.Waiting.Reason
-			workloadMs.Labels[metrics.LabelMessage.Key] = containerStatus.State.Waiting.Message
-			break
+		if !containerStatus.Ready {
+			if containerStatus.State.Waiting != nil {
+				workloadStatus = 0
+				workloadMs.Labels[metrics.LabelReason.Key] = containerStatus.State.Waiting.Reason
+				workloadMs.Labels[metrics.LabelMessage.Key] = containerStatus.State.Waiting.Message
+				break
+			} else if containerStatus.State.Terminated != nil {
+				workloadStatus = 0
+				workloadMs.Labels[metrics.LabelReason.Key] = containerStatus.State.Terminated.Reason
+				workloadMs.Labels[metrics.LabelMessage.Key] = containerStatus.State.Terminated.Message
+				break
+			}
 		}
 	}
-	workloadMs.Labels[metrics.LabelAvailable.Key] = fmt.Sprintf("%d", workloadStatus)
+	workloadMs.Labels[metrics.LabelAvailable.Key] = fmt.Sprint(workloadStatus)
 	workloadMs.Labels[metrics.LabelDesired.Key] = "1"
 
 	addLabeledIntMetric(workloadMs, &metrics.MetricWorkloadStatus, nil, int64(workloadStatus))

@@ -197,7 +197,7 @@ func TestPodWorkloadStatus(t *testing.T) {
 		assert.Equal(t, expectedPodLabelValue, podMs.LabeledValues[0])
 	})
 
-	t.Run("workload status for a pod with no owner and has a CrashLoopBackOff container", func(t *testing.T) {
+	t.Run("workload status for a waiting pod with no owner and has a CrashLoopBackOff container", func(t *testing.T) {
 		tc := setup()
 		tc.pod.OwnerReferences = nil
 		tc.pod.Name = testWorkloadName
@@ -212,6 +212,56 @@ func TestPodWorkloadStatus(t *testing.T) {
 			Name:        "pod-container",
 			State: kube_api.ContainerState{
 				Waiting: &kube_api.ContainerStateWaiting{
+					Reason:  expectedReason,
+					Message: expectedMessage,
+				},
+			},
+		}}
+		podBasedEnricher := createEnricher(t, tc)
+
+		batch, err := podBasedEnricher.Process(createPodBatch(testWorkloadName))
+		assert.NoError(t, err)
+
+		expectedPodLabels := map[string]string{
+			"namespace_name": testNamespaceName,
+			"workload_name":  testWorkloadName,
+			"workload_kind":  testWorkloadKind,
+			"available":      "0",
+			"desired":        "1",
+			"reason":         expectedReason,
+			"message":        expectedMessage,
+		}
+		expectedPodLabelValue := metrics.LabeledValue{
+			Name: "workload/status",
+			Value: metrics.Value{
+				IntValue: 0,
+			},
+		}
+
+		podMs, found := batch.Sets[metrics.WorkloadStatusPodKey(testNamespaceName, testWorkloadName)]
+
+		assert.True(t, found)
+		assert.Equal(t, expectedPodLabels, podMs.Labels)
+		assert.Empty(t, podMs.Values)
+		assert.Len(t, podMs.LabeledValues, 1)
+		assert.Equal(t, expectedPodLabelValue, podMs.LabeledValues[0])
+	})
+
+	t.Run("workload status for a terminated pod with no owner and has a CrashLoopBackOff container", func(t *testing.T) {
+		tc := setup()
+		tc.pod.OwnerReferences = nil
+		tc.pod.Name = testWorkloadName
+		tc.workloadCache = testWorkloadCache{
+			workloadName: testWorkloadName,
+			workloadKind: testWorkloadKind,
+		}
+		expectedReason := "Error"
+		expectedMessage := "Some error message."
+		tc.pod.Status.ContainerStatuses = []kube_api.ContainerStatus{{
+			ContainerID: "container id",
+			Name:        "pod-container",
+			State: kube_api.ContainerState{
+				Terminated: &kube_api.ContainerStateTerminated{
 					Reason:  expectedReason,
 					Message: expectedMessage,
 				},
