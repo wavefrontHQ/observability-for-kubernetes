@@ -401,7 +401,7 @@ function run_logging_integration_checks() {
   trap 'stop_forward_test_proxy "/dev/null"' EXIT
   trap 'clean_up_port_forward' EXIT
 
-  for _ in {1..10}; do
+  for _ in {1..60}; do
     CURL_CODE=$(curl --silent --show-error --output "$CURL_OUT" --stderr "$CURL_ERR" --write-out "%{http_code}" "http://localhost:8888/logs/assert" || echo "000")
     if [[ $CURL_CODE -eq 200 ]]; then
       break
