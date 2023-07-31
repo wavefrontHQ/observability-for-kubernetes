@@ -191,10 +191,6 @@ px.export(
                 attributes={
                     # NOTE: the integration handles splitting of services.
 
-                    # OTEL K8s Resource Conventions
-                    'k8s.deployment.name': df.destination_deployment,
-                    'k8s.namespace.name': df.destination_namespace,
-
                     # Wavefront Conventions
                     'service': df.destination_service,
                     'application': df.destination_namespace,
@@ -215,10 +211,6 @@ px.export(
                 kind=px.otel.trace.SPAN_KIND_CLIENT,
                 attributes={
                     # NOTE: the integration handles splitting of services.
-
-                    # OTEL K8s Resource Conventions
-                    'k8s.deployment.name': df.source_deployment,
-                    'k8s.namespace.name': df.source_namespace,
 
                     # Wavefront Conventions
                     'service': df.source_service,

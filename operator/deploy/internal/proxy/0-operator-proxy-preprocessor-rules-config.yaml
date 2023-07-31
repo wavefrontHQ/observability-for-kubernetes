@@ -46,3 +46,6 @@ data:
       action: spanAddTag
       key: cluster
       value: "{{ .ClusterName }}"
+    - rule: span-drop-px-cloud-address
+      action: spanDropTag
+      key: px.cloud.address
