@@ -69,7 +69,7 @@ metadata:
 spec:
   completions: 12
   parallelism: 2
-  backoffLimit: 3
+  backoffLimit: 2
   template:
     metadata:
       name: job-failure-fixed-completion-count
@@ -102,7 +102,7 @@ metadata:
 spec:
   completions: 2
   parallelism: 2
-  backoffLimit: 6
+  backoffLimit: 12
   template:
     metadata:
       name: job-success-fixed-completion-count
@@ -134,7 +134,7 @@ metadata:
   namespace: collector-targets
 spec:
   parallelism: 2
-  backoffLimit: 3
+  backoffLimit: 2
   template:
     metadata:
       name: job-failure-work-queue
@@ -166,7 +166,7 @@ metadata:
   namespace: collector-targets
 spec:
   parallelism: 2
-  backoffLimit: 6
+  backoffLimit: 12
   template:
     metadata:
       name: job-success-work-queue
