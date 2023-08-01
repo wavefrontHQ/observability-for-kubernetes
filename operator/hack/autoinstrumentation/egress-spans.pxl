@@ -55,7 +55,6 @@ def exclude_non_egress_traffic(df):
     '''
     df.pod = df.ctx['pod']
     df.pod_id = df.ctx['pod_id']
-    df.node = df.ctx['node']
 
     df = df[df['trace_role'] == 1] # trace_role=1 means df was captured from the client-side of the HTTP request/response
     df = df[df.pod_id != '']
@@ -65,10 +64,6 @@ def exclude_non_egress_traffic(df):
 def remove_ns_prefix(column):
     return px.replace('[a-z0-9\-]*/', column, '')
 
-
-def parse_host_name(host_header):
-    index = px.find(host_header, ':')
-    return px.select(index > -1, px.substring(host_header, 0, index), host_header)
 
 def xor(a, b):
     return a + b - 2 * a * b
@@ -91,8 +86,8 @@ def add_source_dest_columns(df):
     df.source_service = remove_ns_prefix(px.pod_id_to_service_name(df.pod_id))
     df.source_service = px.select(df.source_service == '', df.source_deployment, df.source_service)
     df.source_service = px.select(df.source_service == '', df.source_pod, df.source_service)
+    df.source_service = strip_commas(df.source_service)
     df.source_namespace = px.pod_id_to_namespace(df.pod_id)
-    df.source_node = df.node
 
     df.destination_name = 'external'
 
@@ -108,6 +103,9 @@ def add_error_tag(df):
 
     return df
 
+def strip_commas(column):
+    return px.replace(',', column, '_')
+
 df = px.DataFrame('http_events', start_time=px.plugin.start_time, end_time=px.plugin.end_time)
 
 df = exclude_known_req_path(df)
@@ -118,16 +116,6 @@ df = add_trace_headers(df)
 df = add_error_tag(df)
 df = df.head(15000)
 df.start_time = df.time_ - df.latency
-
-host_header = px.pluck(df.req_headers, 'Host')
-host_header = px.select(host_header != '', host_header, 'none')
-df.host_name = parse_host_name(host_header)
-
-scheme = px.select(df.remote_port == 443, "https://", "http://")
-df.req_url = scheme + host_header + df.req_path
-
-df.user_agent = px.pluck(df.req_headers, 'User-Agent')
-df.user_agent = px.select(df.user_agent != '', df.user_agent, 'none')
 
 # Strip out all but the actual path value from req_path
 df.req_path = px.uri_recompose('', '', '', 0, px.pluck(px.uri_parse(df.req_path), 'path'), '', '')
@@ -142,7 +130,6 @@ px.export(
 
             # OTel Resource Conventions
             'service.name': df.source_service,
-            'service.instance.id': df.source_pod,
 
             # Field used in OpApps cluster to differentiate between manual DT instrumentation and auto-instrumentation
             'origin': 'opapps-auto',
@@ -158,15 +145,8 @@ px.export(
                 attributes={
                     # NOTE: the integration handles splitting of services.
 
-                    # OTEL K8s Resource Conventions
-                    'k8s.pod.name': df.source_pod,
-                    'k8s.node.name': df.source_node,
-                    'k8s.deployment.name': df.source_deployment,
-                    'k8s.namespace.name': df.source_namespace,
-
                     # Wavefront Conventions
                     'service': df.source_service,
-                    'source': df.source_pod,
                     'application': df.source_namespace,
                     # We follow pixie's convention of setting an error tag only for a server span.
                     'error': df.error,
@@ -174,14 +154,7 @@ px.export(
 
                     # OTEL HTTP Conventions
                     'http.status_code': df.resp_status,
-                    'http.request_content_length': df.req_body_size,
-                    'http.response_content_length': df.req_body_size,
                     'http.method': df.req_method,
-                    'http.url': df.req_url,
-                    'http.target': df.req_path,
-                    'net.host.name': df.host_name,
-                    'net.host.port': df.remote_port,
-                    'user_agent.original': df.user_agent,
                 },
             ),
         ],
