@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: workload-not-ready
+  name: deployment-not-ready
   namespace: collector-targets
   labels:
-    app: workload-not-ready
+    app: deployment-not-ready
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: workload-not-ready
+      app: deployment-not-ready
   template:
     metadata:
       labels:
-        app: workload-not-ready
+        app: deployment-not-ready
         exclude-me: "true"
     spec:
       containers:
-      - name: workload-not-ready
+      - name: deployment-not-ready
         image: busybox123
         resources:
           requests:

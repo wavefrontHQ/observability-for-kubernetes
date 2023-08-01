@@ -12,7 +12,6 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 func pointsForReplicaSet(item interface{}, transforms configuration.Transforms) []wf.Metric {
@@ -49,10 +48,7 @@ func getWorkloadReasonAndMessageForReplicaSet(status float64, replicaset *appsv1
 	if status == workloadReady {
 		return "", ""
 	}
-	for _, condition := range replicaset.Status.Conditions {
-		if condition.Type == appsv1.ReplicaSetReplicaFailure && condition.Status == corev1.ConditionTrue {
-			return condition.Reason, truncateMessage(condition.Message)
-		}
-	}
+	reason = "MinimumReplicasUnavailable"
+	message = "ReplicaSet does not have minimum availability."
 	return reason, message
 }

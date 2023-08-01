@@ -113,8 +113,6 @@ func TestPointsForReplicaSet(t *testing.T) {
 		testReplicaSet.Status.ReadyReplicas = 0
 		testReplicaSet.Status.AvailableReplicas = 0
 		expectedAvailable := fmt.Sprint(testReplicaSet.Status.AvailableReplicas)
-		expectedReason := testReplicaSet.Status.Conditions[0].Reason
-		expectedMessage := testReplicaSet.Status.Conditions[0].Message
 
 		actualWFPointsMap := getWFPointsMap(pointsForReplicaSet(testReplicaSet, testTransform))
 		actualWFPoint, found := actualWFPointsMap[workloadMetricName]
@@ -127,8 +125,6 @@ func TestPointsForReplicaSet(t *testing.T) {
 		assert.NotEqual(t, actualWFPoint.Tags()[workloadDesiredTag], actualWFPoint.Tags()[workloadAvailableTag])
 		assert.Contains(t, actualWFPoint.Tags(), workloadFailedReasonTag)
 		assert.Contains(t, actualWFPoint.Tags(), workloadFailedMessageTag)
-		assert.Equal(t, expectedReason, actualWFPoint.Tags()[workloadFailedReasonTag])
-		assert.Equal(t, expectedMessage, actualWFPoint.Tags()[workloadFailedMessageTag])
 	})
 
 }
