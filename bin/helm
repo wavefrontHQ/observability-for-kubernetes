@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BIN_DIR=$(dirname "$0")
+BIN_DIR=$(dirname $(realpath "$0"))
 
 HELM_VERSION=3.12.2
 HELM_OS=$(go env GOOS)
