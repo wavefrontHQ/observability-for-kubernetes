@@ -301,7 +301,7 @@ pipeline {
             GCP_CREDS = credentials("GCP_CREDS")
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-            INTEGRATION_TEST_ARGS="-r advanced"
+            INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"
           }
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -322,7 +322,7 @@ pipeline {
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
             AKS_CLUSTER_NAME = "k8po-ci"
-            INTEGRATION_TEST_ARGS = '-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install'
+            INTEGRATION_TEST_ARGS = '-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics'
           }
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
