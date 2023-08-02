@@ -203,7 +203,7 @@ function run_k8s_events_checks() {
   source "$REPO_ROOT/scripts/compare-test-proxy-metrics.sh"
 }
 
-function run_metrics_checks() {
+function run_common_metrics_checks() {
   OPERATOR_TEST=true "$REPO_ROOT/scripts/deploy/deploy-targets.sh"
   wait_for_cluster_ready
 
@@ -544,7 +544,7 @@ function run_test() {
   fi
 
   if [[ " ${checks[*]} " =~ " common-metrics-check " ]]; then
-    run_metrics_checks
+    run_common_metrics_checks
   fi
 
 	if ! $NO_CLEANUP; then
@@ -624,6 +624,7 @@ function main() {
       "with-http-proxy"
       "k8s-events-only"
       "control-plane"
+      "common-metrics"
     )
   fi
 
@@ -659,9 +660,7 @@ function main() {
     run_test "basic" "health" "static_analysis"
   fi
   if [[ " ${tests_to_run[*]} " =~ " common-metrics " ]]; then
-#    run_test "common-metrics" "proxy"
-    run_test "common-metrics" "common-metrics-check" "proxy"
-#    TODO real proxy to see what's actually missing if necessary
+    run_test "common-metrics" "common-metrics-check"
   fi
   if [[ " ${tests_to_run[*]} " =~ " advanced " ]]; then
     run_test "advanced" "health" "test_wavefront_metrics" "logging" "proxy"
