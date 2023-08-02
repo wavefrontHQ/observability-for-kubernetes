@@ -93,6 +93,18 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 		assert.Equal(t, workloadStatusMetricName, point.Metric)
 		assert.Equal(t, workloadNotReady, point.Value)
 	})
+
+	t.Run("sanitizes message tags with double quotes", func(t *testing.T) {
+		failureMessage := "Back-off pulling image \"busybox123\"."
+		failureMessageRawString := `Back-off pulling image "busybox123".`
+		expectedMessage := "Back-off pulling image busybox123."
+
+		testTags := buildWorkloadTags(workloadKindDeployment, "some-name", "", 1, 0, "SomeReason", failureMessage, map[string]string{})
+		assert.Equal(t, expectedMessage, testTags[workloadFailedMessageTag])
+
+		testTagsRawString := buildWorkloadTags(workloadKindDeployment, "some-name", "", 1, 0, "SomeReason", failureMessageRawString, map[string]string{})
+		assert.Equal(t, expectedMessage, testTagsRawString[workloadFailedMessageTag])
+	})
 }
 
 func getTestWFMetricNames(points []wf.Metric) []string {

@@ -96,15 +96,18 @@ func getWorkloadReasonAndMessageForNonRunningPod(status float64, pod *v1.Pod) (r
 				}
 			}
 		}
-	} else if podPhase == util.POD_PHASE_PENDING {
+	} else if len(pod.Status.Conditions) > 0 {
 		for _, condition := range pod.Status.Conditions {
-			if util.PodConditionIsUnchedulable(condition) {
-				reason, message = condition.Reason, truncateMessage(condition.Message)
-				if pod.DeletionTimestamp != nil {
-					// TODO: Add failure message for pods stuck in terminating
-					reason = "Terminating"
+			switch podPhase {
+			case util.POD_PHASE_PENDING, util.POD_PHASE_FAILED:
+				if util.PodConditionIsUnchedulable(condition) {
+					reason, message = condition.Reason, truncateMessage(condition.Message)
+					if pod.DeletionTimestamp != nil {
+						// TODO: Add failure message for pods stuck in terminating
+						reason = "Terminating"
+					}
+					return reason, message
 				}
-				return reason, message
 			}
 		}
 	}

@@ -1,7 +1,6 @@
 package kstate
 
 import (
-	"fmt"
 	"sort"
 	"testing"
 
@@ -54,8 +53,8 @@ func TestPointsForDaemonSet(t *testing.T) {
 
 	t.Run("test for DaemonSet with healthy status", func(t *testing.T) {
 		testDaemonSet := setupBasicDaemonSet()
-		expectedAvailable := fmt.Sprint(testDaemonSet.Status.NumberAvailable)
-		expectedDesired := fmt.Sprint(testDaemonSet.Status.DesiredNumberScheduled)
+		expectedAvailable := "1"
+		expectedDesired := "1"
 
 		actualWFPointsMap := getWFPointsMap(pointsForDaemonSet(testDaemonSet, testTransform))
 		actualWFPoint, found := actualWFPointsMap[workloadMetricName]
@@ -72,10 +71,9 @@ func TestPointsForDaemonSet(t *testing.T) {
 
 	t.Run("test for DaemonSet with non healthy status", func(t *testing.T) {
 		testDaemonSet := setupBasicDaemonSet()
-		testDaemonSet.Status.CurrentNumberScheduled = 0
 		testDaemonSet.Status.NumberReady = 0
 		testDaemonSet.Status.NumberAvailable = 0
-		expectedAvailable := fmt.Sprint(testDaemonSet.Status.NumberAvailable)
+		expectedAvailable := "0"
 
 		actualWFPointsMap := getWFPointsMap(pointsForDaemonSet(testDaemonSet, testTransform))
 		actualWFPoint, found := actualWFPointsMap[workloadMetricName]

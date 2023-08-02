@@ -47,7 +47,7 @@ func getWorkloadReasonAndMessageForDeployment(status float64, deployment *appsv1
 
 	for _, condition := range deployment.Status.Conditions {
 		if condition.Type == appsv1.DeploymentAvailable && condition.Status == corev1.ConditionFalse {
-			return condition.Reason, condition.Message
+			return condition.Reason, truncateMessage(condition.Message)
 		}
 	}
 	return reason, message

@@ -76,7 +76,7 @@ func getWorkloadReasonAndMessageForJob(status float64, job *batchv1.Job) (reason
 	if job.Status.Failed > 0 {
 		for _, condition := range job.Status.Conditions {
 			if util.JobConditionIsFailed(condition) {
-				return condition.Reason, condition.Message
+				return condition.Reason, truncateMessage(condition.Message)
 			}
 		}
 	}

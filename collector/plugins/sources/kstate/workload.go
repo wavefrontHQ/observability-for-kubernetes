@@ -2,6 +2,7 @@ package kstate
 
 import (
 	"fmt"
+	s "strings"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
@@ -42,7 +43,7 @@ func buildWorkloadTags(kind string, name string, namespace string, desired int32
 		tags[workloadFailedReasonTag] = reason
 	}
 	if len(message) > 0 {
-		tags[workloadFailedMessageTag] = message
+		tags[workloadFailedMessageTag] = sanitizeMessage(message)
 	}
 	return tags
 }
@@ -52,4 +53,11 @@ func getWorkloadStatus(desired, available int32) float64 {
 		return workloadReady
 	}
 	return workloadNotReady
+}
+
+func sanitizeMessage(message string) string {
+	if s.ContainsAny(message, "\"") {
+		message = s.ReplaceAll(message, "\"", "")
+	}
+	return message
 }

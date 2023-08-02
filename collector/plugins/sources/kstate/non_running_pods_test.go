@@ -437,9 +437,9 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		workloadCache := fakeWorkloadCache{}
 
 		expectedReason := "ImagePullBackOff"
-		expectedMessage := `Back-off pulling image "busybox123"`
+		expectedMessage := "Back-off pulling image busybox123."
 		testPod.Status.ContainerStatuses[0].State.Waiting.Reason = expectedReason
-		testPod.Status.ContainerStatuses[0].State.Waiting.Message = expectedMessage
+		testPod.Status.ContainerStatuses[0].State.Waiting.Message = "Back-off pulling image \"busybox123\"."
 
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.NotNil(t, actualWFPoints)
@@ -477,10 +477,35 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, expectedMessage, podPoint.Tags()[workloadFailedMessageTag])
 	})
 
-	t.Run("terminating pods without owner references should have an unhealthy workload status", func(t *testing.T) {
+	t.Run("terminating pending pods without owner references should have an unhealthy workload status", func(t *testing.T) {
 		deletionTime := "2023-06-08T18:35:37Z"
 		testPod := setupTerminatingPod(t, deletionTime, "")
 		testPod.OwnerReferences = nil
+		expectedMetric := testTransform.Prefix + workloadStatusMetric
+		expectedWorkloadName := testPod.Name
+		workloadCache := fakeWorkloadCache{}
+
+		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
+		assert.NotNil(t, actualWFPoints)
+		assert.Greater(t, len(actualWFPoints), 0)
+
+		podPoint := getWFPointsMap(actualWFPoints)[expectedMetric]
+		assert.Equal(t, expectedMetric, podPoint.Metric)
+		assert.Equal(t, workloadNotReady, podPoint.Value)
+		assert.Equal(t, expectedWorkloadName, podPoint.Tags()[workloadNameTag])
+		assert.Equal(t, workloadKindPod, podPoint.Tags()[workloadKindTag])
+
+		expectedReason := "Terminating"
+		expectedMessage := testPod.Status.Conditions[0].Message
+		assert.Equal(t, expectedReason, podPoint.Tags()[workloadFailedReasonTag])
+		assert.Equal(t, expectedMessage, podPoint.Tags()[workloadFailedMessageTag])
+	})
+
+	t.Run("terminating failed pods without owner references should have an unhealthy workload status", func(t *testing.T) {
+		deletionTime := "2023-06-08T18:35:37Z"
+		testPod := setupTerminatingPod(t, deletionTime, "")
+		testPod.OwnerReferences = nil
+		testPod.Status.Phase = corev1.PodFailed
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
 		expectedWorkloadName := testPod.Name
 		workloadCache := fakeWorkloadCache{}
