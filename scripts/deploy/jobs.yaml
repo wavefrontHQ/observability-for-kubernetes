@@ -85,7 +85,7 @@ spec:
         args:
         - /bin/sh
         - -c
-        - EXIT_CODE=$(( $RANDOM % 2 > 0));date; echo Am I down; exit $EXIT_CODE
+        - date; echo I am down; exit 1
         resources:
           requests:
             cpu: 50m
@@ -118,7 +118,7 @@ spec:
         args:
         - /bin/sh
         - -c
-        - date; echo Am I down; exit 0
+        - date; echo Running a job; exit 0
         resources:
           requests:
             cpu: 50m
@@ -182,7 +182,7 @@ spec:
         args:
         - /bin/sh
         - -c
-        - date; echo Am I down; exit 0
+        - date; echo Running a job; exit 0
         resources:
           requests:
             cpu: 50m
