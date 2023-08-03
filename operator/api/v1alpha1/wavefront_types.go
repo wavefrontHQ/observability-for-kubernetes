@@ -433,6 +433,9 @@ type KubernetesEvents struct {
 	Enable bool `json:"enable,omitempty"`
 
 	ExternalEndpointURL string `json:"externalEndpointURL,required"`
+
+	// SecretName is for internal use
+	SecretName string `json:"-"`
 }
 
 // WavefrontStatus defines the observed state of Wavefront
