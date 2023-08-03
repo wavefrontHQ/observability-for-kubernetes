@@ -1,7 +1,7 @@
 {"Name":"kubernetes.controlplane.apiserver.request.duration.seconds","Tags":{"cluster":"","resource":"","scope":"","source":"","verb":""}}
 {"Name":"kubernetes.controlplane.apiserver.request.total.counter","Tags":{"cluster":"","code":"","group":"","resource":"","scope":"","source":"","verb":""}}
 {"Name":"kubernetes.controlplane.apiserver.storage.objects.gauge","Tags":{"cluster":"","!code":"","!group":"","resource":"","!scope":"","source":"","!verb":""}}
-{"Name":"kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge","Tags":{"cluster":"","endpoint":"https://127.0.0.1:2379","source":""}}
+{"Name":"kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge","Tags":{"cluster":"","endpoint":"","source":""}}
 {"Name":"kubernetes.controlplane.etcd.request.duration.seconds","Tags":{"cluster":"","operation":"","source":"","type":""}}
 {"Name":"kubernetes.controlplane.workqueue.adds.total.counter","Tags":{"cluster":"","name":"","source":""}}
 {"Name":"kubernetes.controlplane.workqueue.queue.duration.seconds","Tags":{"cluster":"","name":"","source":""}}
