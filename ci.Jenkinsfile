@@ -248,6 +248,7 @@ pipeline {
       environment {
         OPERATOR_YAML_TYPE="rc"
         TOKEN = credentials('GITHUB_TOKEN')
+        COMBINED_DEPLOY_ARGS = '-c -o'
       }
 
       parallel {
