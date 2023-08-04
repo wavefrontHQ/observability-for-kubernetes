@@ -95,6 +95,7 @@ data:
            metricAllowList:
            - 'kubernetes.controlplane.etcd.request.duration.seconds'
            - 'kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge'
+           - 'kubernetes.controlplane.apiserver.storage.db.total.size.in.bytes.gauge'
            - 'kubernetes.controlplane.workqueue.adds.total.counter'
            - 'kubernetes.controlplane.workqueue.queue.duration.seconds'
 
