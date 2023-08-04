@@ -608,6 +608,8 @@ spec:
                         type: boolean
                     type: object
                   kubernetesEvents:
+                    description: KubernetesEvents is deprecated, please use aria-insights-secret
+                      instead
                     properties:
                       enable:
                         default: false
@@ -1078,7 +1080,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.23.0-alpha-7779a7f6
+  collector: 1.23.0-alpha-aa88e821
   logging: 2.1.6
   proxy: 13.0.1
 kind: ConfigMap
@@ -1150,7 +1152,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.11.0-alpha-7779a7f6
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.11.0-alpha-aa88e821
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
