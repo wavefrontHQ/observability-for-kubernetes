@@ -378,7 +378,6 @@ func TestProcessExperimental(t *testing.T) {
 
 		err := PreProcess(setup(), wfcr)
 
-		require.Error(t, err)
 		require.ErrorContains(t, err, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'testWavefrontSecret' was not found")
 	})
 
