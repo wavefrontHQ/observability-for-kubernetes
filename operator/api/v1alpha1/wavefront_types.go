@@ -81,6 +81,7 @@ type WavefrontSpec struct {
 type Experimental struct {
 	AutoInstrumentation AutoInstrumentation `json:"autoInstrumentation,omitempty"`
 
+	// KubernetesEvents is deprecated, please use aria-insights-secret instead
 	KubernetesEvents KubernetesEvents `json:"kubernetesEvents,omitempty"`
 }
 
