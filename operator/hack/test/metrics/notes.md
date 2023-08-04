@@ -11,7 +11,8 @@
 - proxy/ preprocessing rules will require e2e
 - goal: really want to know if we break
   `/operator/deploy/internal/...`
-
+- add versioning to kind metrics tests for collector to get
+  fine-grained picture of metrics per k8s version
 
 
 **Operator / IAAS specific metric tests**
@@ -25,6 +26,7 @@ COVERED autodiscovery - works (prom example)
 COVERED runtime plugin config - basic (memcached)
 
 **Collector / non specific** on kind VMs
+Including k8s versions tests
 Cadvisor
 Telegraf
 prometheus
