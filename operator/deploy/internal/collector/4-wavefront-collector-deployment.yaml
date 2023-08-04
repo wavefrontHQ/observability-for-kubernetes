@@ -74,7 +74,7 @@ spec:
             - name: K8S_EVENTS_ENDPOINT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ .WavefrontTokenSecret }}
+                  name: {{ .Experimental.KubernetesEvents.SecretName }}
                   key: k8s-events-endpoint-token
           {{- end }}
           ports:
