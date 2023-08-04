@@ -12,3 +12,5 @@ const MaxTagLength = 255
 const WavefrontTokenAuthType = "wavefront-token"
 const CSPTokenAuthType = "csp-api-token"
 const CSPAppAuthType = "csp-app-oauth"
+
+const AriaInsightsSecret = "aria-insights-secret"

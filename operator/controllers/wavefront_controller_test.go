@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -1514,7 +1513,7 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 		cr := wftest.CR()
 		secret := &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      preprocessor.AriaInsightsSecret,
+				Name:      util.AriaInsightsSecret,
 				Namespace: wftest.DefaultNamespace,
 			},
 			Data: map[string][]byte{
@@ -1559,7 +1558,7 @@ func TestReconcileKubernetesEvents(t *testing.T) {
 		}
 		ariaInsightsSecret := &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      preprocessor.AriaInsightsSecret,
+				Name:      util.AriaInsightsSecret,
 				Namespace: wftest.DefaultNamespace,
 			},
 			Data: map[string][]byte{

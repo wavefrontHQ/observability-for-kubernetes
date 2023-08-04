@@ -17,8 +17,6 @@ import (
 	crClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const AriaInsightsSecret = "aria-insights-secret"
-
 type rule struct {
 	Rule   string
 	Action string
@@ -156,7 +154,7 @@ func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		}
 		wfSpec.Experimental.KubernetesEvents.SecretName = wfSpec.WavefrontTokenSecret
 	}
-	if secret, err := findSecret(client, AriaInsightsSecret, wfSpec.Namespace); err == nil {
+	if secret, err := findSecret(client, util.AriaInsightsSecret, wfSpec.Namespace); err == nil {
 		if len(secret.Data["k8s-events-endpoint-url"]) == 0 {
 			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' is missing Data 'k8s-events-endpoint-url'", secret.Name)
 		}
