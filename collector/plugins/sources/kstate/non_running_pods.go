@@ -7,15 +7,13 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
-
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
+	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
 func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interface{}, transforms configuration.Transforms) []wf.Metric {
@@ -42,9 +40,11 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 		points = append(points, buildContainerStatusMetrics(pod, sharedTags, transforms, now)...)
 
 		// emit workload.status metric for single pods with no owner references
-		if len(pod.OwnerReferences) == 0 {
+		if !util.HasOwnerReference(pod.OwnerReferences) {
 			workloadStatus := getWorkloadStatusForNonRunningPod(pod.Status.ContainerStatuses)
-			workloadTags := buildWorkloadTags(workloadKindPod, pod.Name, pod.Namespace, transforms.Tags)
+			reason, message := getWorkloadReasonAndMessageForNonRunningPod(workloadStatus, pod)
+			// non-running pods has a default available value of 0 because they are not running
+			workloadTags := buildWorkloadTags(workloadKindPod, pod.Name, pod.Namespace, 1, 0, reason, message, transforms.Tags)
 			points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
 		}
 		return points
@@ -71,6 +71,48 @@ func getWorkloadStatusForNonRunningPod(containerStatuses []v1.ContainerStatus) f
 		}
 	}
 	return workloadNotReady
+}
+
+func getWorkloadReasonAndMessageForNonRunningPod(status float64, pod *v1.Pod) (reason, message string) {
+	if status == workloadReady {
+		return "", ""
+	}
+
+	podPhase := util.ConvertPodPhase(pod.Status.Phase)
+	if len(pod.Status.ContainerStatuses) > 0 {
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			switch podPhase {
+			case util.POD_PHASE_PENDING:
+				if !containerStatus.Ready && containerStatus.State.Waiting != nil {
+					reason = containerStatus.State.Waiting.Reason
+					message = truncateMessage(containerStatus.State.Waiting.Message)
+					return reason, message
+				}
+			case util.POD_PHASE_FAILED:
+				if !containerStatus.Ready && containerStatus.State.Terminated != nil {
+					reason = containerStatus.State.Terminated.Reason
+					message = truncateMessage(containerStatus.State.Terminated.Message)
+					return reason, message
+				}
+			}
+		}
+	} else if len(pod.Status.Conditions) > 0 {
+		for _, condition := range pod.Status.Conditions {
+			switch podPhase {
+			case util.POD_PHASE_PENDING, util.POD_PHASE_FAILED:
+				if util.PodConditionIsUnchedulable(condition) {
+					reason, message = condition.Reason, truncateMessage(condition.Message)
+					if pod.DeletionTimestamp != nil {
+						// TODO: Add failure message for pods stuck in terminating
+						reason = "Terminating"
+					}
+					return reason, message
+				}
+			}
+		}
+	}
+
+	return reason, message
 }
 
 func buildPodPhaseMetrics(pod *v1.Pod, transforms configuration.Transforms, sharedTags map[string]string, now int64) []wf.Metric {

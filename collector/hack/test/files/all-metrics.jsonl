@@ -502,26 +502,32 @@
 {"Name":"kubernetes.statefulset.desired_replicas","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","statefulset":"mysql-release"}}
 {"Name":"kubernetes.statefulset.ready_replicas","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","statefulset":"mysql-release"}}
 {"Name":"kubernetes.statefulset.updated_replicas","Tags":{"cluster":"","namespace_name": "collector-targets","source":"","statefulset":"mysql-release"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"kube-system","source":"","workload_name":"kube-proxy","workload_kind":"DaemonSet"}}
-{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"workload-not-ready","workload_kind":"Deployment"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"memcached-release","workload_kind":"Deployment"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"mysql-release","workload_kind":"StatefulSet"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"replicaset-no-owner","workload_kind":"ReplicaSet"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","workload_name":"wavefront-collector","workload_kind":""}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","workload_name":"wavefront-proxy","workload_kind":"Deployment"}}
-{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-failure","workload_kind":"Job"}}
-{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-failure-work-queue","workload_kind":"Job"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success","workload_kind":"Job"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success-fixed-completion-count","workload_kind":"Job"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"cronjob-hello","workload_kind":"CronJob"}}
-{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-cannot-be-scheduled","workload_kind":"Pod"}}
-{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-crash-loop-backoff","workload_kind":"Pod"}}
-{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-image-cannot-be-loaded","workload_kind":"Pod"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-large-init-container","workload_kind":"Pod"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-small-init-container","workload_kind":"Pod"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"prom-example","workload_kind":"Pod"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"running-pod","workload_kind":"Pod"}}
-{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-completed","workload_kind":"Pod"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"kube-system","source":"","workload_name":"kube-proxy","workload_kind":"DaemonSet","available":"","desired":""}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"deployment-not-ready","workload_kind":"Deployment","available":"0","desired":"3","reason":"MinimumReplicasUnavailable","message":""}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"replicaset-not-ready","workload_kind":"ReplicaSet","available":"0","desired":"3","reason":"MinimumReplicasUnavailable","message":"ReplicaSet does not have minimum availability."}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"daemonset-not-ready","workload_kind":"DaemonSet","available":"0","desired":"","reason":"MinimumNodesUnavailable","message":"DaemonSet does not have minimum number of nodes that should be running the daemon pod."}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"statefulset-not-ready","workload_kind":"StatefulSet","available":"0","desired":"3","reason":"MinimumReplicasUnavailable","message":"StatefulSet does not have minimum availability."}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"memcached-release","workload_kind":"Deployment","available":"1","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"mysql-release","workload_kind":"StatefulSet","available":"1","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"replicaset-no-owner","workload_kind":"ReplicaSet","available":"1","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","workload_name":"wavefront-collector","workload_kind":"","available":"","desired":""}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"wavefront-collector","source":"","workload_name":"wavefront-proxy","workload_kind":"Deployment","available":"1","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-failure","workload_kind":"Job","available":"0","desired":"1","reason":"BackoffLimitExceeded","message":""}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-failure-fixed-completion-count","workload_kind":"Job","available":"","desired":"12","reason":"BackoffLimitExceeded","message":""}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-failure-work-queue","workload_kind":"Job","available":"0","desired":"1","reason":"BackoffLimitExceeded","message":""}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success","workload_kind":"Job","available":"1","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success-fixed-completion-count","workload_kind":"Job","available":"2","desired":"2"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success-work-queue","workload_kind":"Job","available":"","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"cronjob-hello","workload_kind":"CronJob","available":"1","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-cannot-be-scheduled","workload_kind":"Pod","available":"0","desired":"1","reason":"Unschedulable","message":""}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-crash-loop-backoff","workload_kind":"Pod","available":"0","desired":"1","reason":"CrashLoopBackOff","message":""}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-image-cannot-be-loaded","workload_kind":"Pod","available":"0","desired":"1","reason":"ImagePullBackOff","message":""}}
+{"Name":"kubernetes.workload.status","Value":"0","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-stuck-in-terminating","workload_kind":"Pod","available":"0","desired":"1","reason":"Terminating","message":""}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-large-init-container","workload_kind":"Pod","available":"1","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-small-init-container","workload_kind":"Pod","available":"1","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"prom-example","workload_kind":"Pod","available":"1","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"running-pod","workload_kind":"Pod","available":"1","desired":"1"}}
+{"Name":"kubernetes.workload.status","Value":"1","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"pod-completed","workload_kind":"Pod","available":"0","desired":"1"}}
 {"Name":"linux.sysctl.fs.aio-max-nr","Tags":{"cluster":"","source":""}}
 {"Name":"linux.sysctl.fs.aio-nr","Tags":{"cluster":"","source":""}}
 {"Name":"linux.sysctl.fs.dentry-age-limit","Tags":{"cluster":"","source":""}}

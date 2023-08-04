@@ -22,12 +22,11 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	kube_api "k8s.io/api/core/v1"
+	v1listers "k8s.io/client-go/listers/core/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
-
-	kube_api "k8s.io/api/core/v1"
-	v1listers "k8s.io/client-go/listers/core/v1"
 )
 
 type PodBasedEnricher struct {
@@ -169,7 +168,7 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 	podMs.Labels[metrics.LabelWorkloadKind.Key] = workloadKind
 
 	// Add workload status metric for pods with no owner references
-	if len(pod.OwnerReferences) == 0 {
+	if !util.HasOwnerReference(pod.OwnerReferences) {
 		pbe.addWorkloadStatusMetric(podMs, pod, newMs)
 	}
 
@@ -214,15 +213,29 @@ func (pbe *PodBasedEnricher) addWorkloadStatusMetric(podMs *metrics.Set, pod *ku
 			metrics.LabelNamespaceName.Key: pod.Namespace,
 			metrics.LabelWorkloadName.Key:  podMs.Labels[metrics.LabelWorkloadName.Key],
 			metrics.LabelWorkloadKind.Key:  podMs.Labels[metrics.LabelWorkloadKind.Key],
+			metrics.LabelAvailable.Key:     podMs.Labels[metrics.LabelAvailable.Key],
+			metrics.LabelDesired.Key:       podMs.Labels[metrics.LabelDesired.Key],
 		},
 	}
 	workloadStatus := 1
 	for _, containerStatus := range pod.Status.ContainerStatuses {
-		if !containerStatus.Ready && containerStatus.State.Waiting != nil {
-			workloadStatus = 0
-			break
+		if !containerStatus.Ready {
+			if containerStatus.State.Waiting != nil {
+				workloadStatus = 0
+				workloadMs.Labels[metrics.LabelReason.Key] = containerStatus.State.Waiting.Reason
+				workloadMs.Labels[metrics.LabelMessage.Key] = containerStatus.State.Waiting.Message
+				break
+			} else if containerStatus.State.Terminated != nil {
+				workloadStatus = 0
+				workloadMs.Labels[metrics.LabelReason.Key] = containerStatus.State.Terminated.Reason
+				workloadMs.Labels[metrics.LabelMessage.Key] = containerStatus.State.Terminated.Message
+				break
+			}
 		}
 	}
+	workloadMs.Labels[metrics.LabelAvailable.Key] = fmt.Sprint(workloadStatus)
+	workloadMs.Labels[metrics.LabelDesired.Key] = "1"
+
 	addLabeledIntMetric(workloadMs, &metrics.MetricWorkloadStatus, nil, int64(workloadStatus))
 	newMs[metrics.WorkloadStatusPodKey(pod.Namespace, pod.Name)] = workloadMs
 }

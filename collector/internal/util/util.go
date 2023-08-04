@@ -12,8 +12,9 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-
+	batchv1 "k8s.io/api/batch/v1"
 	kube_api "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
 	v1listers "k8s.io/client-go/listers/core/v1"
@@ -394,4 +395,16 @@ func ConditionStatusFloat64(status kube_api.ConditionStatus) float64 {
 	default:
 		return -1.0
 	}
+}
+
+func HasOwnerReference(ownerReferences []metav1.OwnerReference) bool {
+	return len(ownerReferences) > 0
+}
+
+func PodConditionIsUnchedulable(condition kube_api.PodCondition) bool {
+	return condition.Type == kube_api.PodScheduled && condition.Status == kube_api.ConditionFalse
+}
+
+func JobConditionIsFailed(condition batchv1.JobCondition) bool {
+	return condition.Type == batchv1.JobFailed && condition.Status == kube_api.ConditionTrue
 }

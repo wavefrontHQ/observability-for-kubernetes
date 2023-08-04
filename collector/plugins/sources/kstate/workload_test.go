@@ -1,13 +1,14 @@
 package kstate
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
@@ -19,7 +20,9 @@ func setupBasicDeploymentWorkload() *appsv1.Deployment {
 			Name:   "basic-deployment-workload",
 			Labels: nil,
 		},
-		Spec: appsv1.DeploymentSpec{},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: genericPointer(int32(1)),
+		},
 		Status: appsv1.DeploymentStatus{
 			ReadyReplicas:     1,
 			AvailableReplicas: 1,
@@ -39,39 +42,68 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 	t.Run("test for deployment workload status ready", func(t *testing.T) {
 		testDeployment := setupBasicDeploymentWorkload()
 		expectedWorkloadName := testDeployment.Name
-		numberDesired := int32(1)
-		numberAvailable := int32(1)
+		numberDesired := *testDeployment.Spec.Replicas
+		numberAvailable := testDeployment.Status.AvailableReplicas
 
-		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", testTransform.Tags)
+		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, "", "", testTransform.Tags)
 
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
+		assert.Equal(t, fmt.Sprint(numberDesired), testTags[workloadDesiredTag])
+		assert.Equal(t, fmt.Sprint(numberAvailable), testTags[workloadAvailableTag])
+		assert.NotContains(t, testTags, workloadFailedReasonTag)
+		assert.NotContains(t, testTags, workloadFailedMessageTag)
 
 		workloadStatus := getWorkloadStatus(numberDesired, numberAvailable)
 		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, workloadStatus, timestamp, testTransform.Source, testTags)
 		point := actualWFPoint.(*wf.Point)
 
-		assert.Equal(t, workloadStatusMetricName, point.Name())
+		assert.Equal(t, workloadStatusMetricName, point.Metric)
 		assert.Equal(t, workloadReady, point.Value)
 	})
 
 	t.Run("test for deployment workload status not ready", func(t *testing.T) {
 		testDeployment := setupBasicDeploymentWorkload()
 		expectedWorkloadName := testDeployment.Name
-		numberDesired := int32(1)
-		numberAvailable := int32(0)
+		numberDesired := *testDeployment.Spec.Replicas
+		testDeployment.Status.AvailableReplicas = 0
+		numberAvailable := testDeployment.Status.AvailableReplicas
+		testDeployment.Status.Conditions = []appsv1.DeploymentCondition{{
+			Type:    appsv1.DeploymentAvailable,
+			Status:  corev1.ConditionFalse,
+			Reason:  "MinimumReplicasUnavailable",
+			Message: "Deployment does not have minimum availability.",
+		}}
+		failureReason := testDeployment.Status.Conditions[0].Reason
+		failureMessage := testDeployment.Status.Conditions[0].Message
 
-		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", testTransform.Tags)
+		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, failureReason, failureMessage, testTransform.Tags)
 
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
+		assert.Equal(t, fmt.Sprint(numberDesired), testTags[workloadDesiredTag])
+		assert.Equal(t, fmt.Sprint(numberAvailable), testTags[workloadAvailableTag])
+		assert.Equal(t, failureReason, testTags[workloadFailedReasonTag])
+		assert.Equal(t, failureMessage, testTags[workloadFailedMessageTag])
 
 		workloadStatus := getWorkloadStatus(numberDesired, numberAvailable)
 		actualWFPoint := buildWorkloadStatusMetric(testTransform.Prefix, workloadStatus, timestamp, testTransform.Source, testTags)
 		point := actualWFPoint.(*wf.Point)
 
-		assert.Equal(t, workloadStatusMetricName, point.Name())
+		assert.Equal(t, workloadStatusMetricName, point.Metric)
 		assert.Equal(t, workloadNotReady, point.Value)
+	})
+
+	t.Run("sanitizes message tags with double quotes", func(t *testing.T) {
+		failureMessage := "Back-off pulling image \"busybox123\"."
+		failureMessageRawString := `Back-off pulling image "busybox123".`
+		expectedMessage := "Back-off pulling image busybox123."
+
+		testTags := buildWorkloadTags(workloadKindDeployment, "some-name", "", 1, 0, "SomeReason", failureMessage, map[string]string{})
+		assert.Equal(t, expectedMessage, testTags[workloadFailedMessageTag])
+
+		testTagsRawString := buildWorkloadTags(workloadKindDeployment, "some-name", "", 1, 0, "SomeReason", failureMessageRawString, map[string]string{})
+		assert.Equal(t, expectedMessage, testTagsRawString[workloadFailedMessageTag])
 	})
 }
 

@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: daemonset-not-ready
+  namespace: collector-targets
+  labels:
+    app: daemonset-not-ready
+spec:
+  selector:
+    matchLabels:
+      app: daemonset-not-ready
+  template:
+    metadata:
+      labels:
+        app: daemonset-not-ready
+        exclude-me: "true"
+    spec:
+      containers:
+      - name: daemonset-not-ready
+        image: busybox123
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi

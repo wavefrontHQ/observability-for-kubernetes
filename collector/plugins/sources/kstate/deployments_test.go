@@ -1,11 +1,13 @@
 package kstate
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,12 +17,27 @@ func setupBasicDeployment() *appsv1.Deployment {
 			Name:   "basic-deployment",
 			Labels: nil,
 		},
-		Spec: appsv1.DeploymentSpec{},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: genericPointer(int32(1)),
+		},
 		Status: appsv1.DeploymentStatus{
 			ReadyReplicas:     1,
 			AvailableReplicas: 1,
 		},
 	}
+}
+
+func setupFailedDeployment() *appsv1.Deployment {
+	failedDeployment := setupBasicDeployment()
+	failedDeployment.Status.ReadyReplicas = 0
+	failedDeployment.Status.AvailableReplicas = 0
+	failedDeployment.Status.Conditions = []appsv1.DeploymentCondition{{
+		Type:    appsv1.DeploymentAvailable,
+		Status:  corev1.ConditionFalse,
+		Reason:  "MinimumReplicasUnavailable",
+		Message: "Deployment does not have minimum availability.",
+	}}
+	return failedDeployment
 }
 
 func TestPointsForDeployment(t *testing.T) {
@@ -49,23 +66,38 @@ func TestPointsForDeployment(t *testing.T) {
 
 	t.Run("test for Deployment workload with healthy status", func(t *testing.T) {
 		testDeployment := setupBasicDeployment()
+		expectedAvailable := fmt.Sprint(testDeployment.Status.AvailableReplicas)
+		expectedDesired := fmt.Sprint(*testDeployment.Spec.Replicas)
 
 		actualWFPointsMap := getWFPointsMap(pointsForDeployment(testDeployment, testTransform))
-		actualWFPoint := actualWFPointsMap[workloadMetricName]
+		actualWFPoint, found := actualWFPointsMap[workloadMetricName]
+		assert.True(t, found)
 
 		assert.Equal(t, workloadReady, actualWFPoint.Value)
 		assert.Equal(t, workloadKindDeployment, actualWFPoint.Tags()[workloadKindTag])
+
+		assert.Equal(t, expectedAvailable, actualWFPoint.Tags()[workloadAvailableTag])
+		assert.Equal(t, expectedDesired, actualWFPoint.Tags()[workloadDesiredTag])
+		assert.NotContains(t, actualWFPoint.Tags(), workloadFailedReasonTag)
+		assert.NotContains(t, actualWFPoint.Tags(), workloadFailedMessageTag)
 	})
 
 	t.Run("test for Deployment workload with non healthy status", func(t *testing.T) {
-		testDeployment := setupBasicDeployment()
-		testDeployment.Status.AvailableReplicas = 0
-		testDeployment.Status.ReadyReplicas = 0
+		testDeployment := setupFailedDeployment()
+		expectedAvailable := fmt.Sprint(testDeployment.Status.AvailableReplicas)
+		expectedReason := testDeployment.Status.Conditions[0].Reason
+		expectedMessage := testDeployment.Status.Conditions[0].Message
 
 		actualWFPointsMap := getWFPointsMap(pointsForDeployment(testDeployment, testTransform))
-		actualWFPoint := actualWFPointsMap[workloadMetricName]
+		actualWFPoint, found := actualWFPointsMap[workloadMetricName]
+		assert.True(t, found)
 
 		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
 		assert.Equal(t, workloadKindDeployment, actualWFPoint.Tags()[workloadKindTag])
+
+		assert.Equal(t, expectedAvailable, actualWFPoint.Tags()[workloadAvailableTag])
+		assert.NotEqual(t, actualWFPoint.Tags()[workloadDesiredTag], actualWFPoint.Tags()[workloadAvailableTag])
+		assert.Equal(t, expectedReason, actualWFPoint.Tags()[workloadFailedReasonTag])
+		assert.Equal(t, expectedMessage, actualWFPoint.Tags()[workloadFailedMessageTag])
 	})
 }

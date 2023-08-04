@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset-not-ready
+  namespace: collector-targets
+  labels:
+    app: statefulset-not-ready
+spec:
+  serviceName: "statefulset-not-ready"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: statefulset-not-ready
+  template:
+    metadata:
+      labels:
+        app: statefulset-not-ready
+        exclude-me: "true"
+    spec:
+      containers:
+      - name: statefulset-not-ready
+        image: busybox123
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi

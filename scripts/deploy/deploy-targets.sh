@@ -29,7 +29,10 @@ kubectl apply -f running-pod-large-init-container.yaml >/dev/null
 kubectl apply -f running-pod-small-init-container.yaml >/dev/null
 kubectl apply -f pod-stuck-in-terminating.yaml >/dev/null
 kubectl delete -f pod-stuck-in-terminating.yaml >/dev/null &
-kubectl apply -f workload-not-ready.yaml >/dev/null
+kubectl apply -f deployment-not-ready.yaml >/dev/null
+kubectl apply -f daemonset-not-ready.yaml >/dev/null
+kubectl apply -f replicaset-not-ready.yaml >/dev/null
+kubectl apply -f statefulset-not-ready.yaml >/dev/null
 kubectl apply -f replicaset-no-owner.yaml >/dev/null
 kubectl apply -f non-running-pod-completed.yaml >/dev/null
 

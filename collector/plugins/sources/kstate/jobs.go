@@ -7,13 +7,12 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
-	corev1 "k8s.io/api/core/v1"
-
 	log "github.com/sirupsen/logrus"
+	batchv1 "k8s.io/api/batch/v1"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
-	batchv1 "k8s.io/api/batch/v1"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
 func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Metric {
@@ -39,20 +38,21 @@ func pointsForJob(item interface{}, transforms configuration.Transforms) []wf.Me
 		metricPoint(transforms.Prefix, "job.parallelism", parallelism, now, transforms.Source, tags),
 	}
 
-	var workloadKind, workloadName string
-
-	if len(job.OwnerReferences) == 0 {
-		workloadKind = workloadKindJob
-		workloadName = job.Name
-	} else {
-		workloadKind = job.OwnerReferences[0].Kind
-		workloadName = job.OwnerReferences[0].Name
-	}
+	workloadName, workloadKind := getWorkloadNameAndKindForJob(job)
 	workloadStatus := getWorkloadStatusForJob(job.Status.Conditions)
-	workloadTags := buildWorkloadTags(workloadKind, workloadName, job.Namespace, transforms.Tags)
+	reason, message := getWorkloadReasonAndMessageForJob(workloadStatus, job)
+	desired := intValOrDefault(job.Spec.Completions, 1)
+	workloadTags := buildWorkloadTags(workloadKind, workloadName, job.Namespace, desired, int32(succeeded), reason, message, transforms.Tags)
 	points = append(points, buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags))
 
 	return points
+}
+
+func getWorkloadNameAndKindForJob(job *batchv1.Job) (name, kind string) {
+	if util.HasOwnerReference(job.OwnerReferences) {
+		return job.OwnerReferences[0].Name, job.OwnerReferences[0].Kind
+	}
+	return job.Name, workloadKindJob
 }
 
 func getWorkloadStatusForJob(jobConditions []batchv1.JobCondition) float64 {
@@ -61,10 +61,24 @@ func getWorkloadStatusForJob(jobConditions []batchv1.JobCondition) float64 {
 	}
 
 	for _, jobCondition := range jobConditions {
-		// When a specified number of successful completions is reached, the Job is complete.
-		if jobCondition.Type == batchv1.JobComplete && jobCondition.Status == corev1.ConditionTrue {
-			return workloadReady
+		if util.JobConditionIsFailed(jobCondition) {
+			return workloadNotReady
 		}
 	}
-	return workloadNotReady
+	return workloadReady
+}
+
+func getWorkloadReasonAndMessageForJob(status float64, job *batchv1.Job) (reason, message string) {
+	if status == workloadReady {
+		return "", ""
+	}
+
+	if job.Status.Failed > 0 {
+		for _, condition := range job.Status.Conditions {
+			if util.JobConditionIsFailed(condition) {
+				return condition.Reason, truncateMessage(condition.Message)
+			}
+		}
+	}
+	return reason, message
 }

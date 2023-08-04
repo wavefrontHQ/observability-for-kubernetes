@@ -1,6 +1,7 @@
 package kstate
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 
@@ -15,11 +16,13 @@ func setupBasicStatefulSet() *appsv1.StatefulSet {
 			Name:   "basic-statefulset",
 			Labels: nil,
 		},
-		Spec: appsv1.StatefulSetSpec{},
+		Spec: appsv1.StatefulSetSpec{
+			Replicas: genericPointer(int32(1)),
+		},
 		Status: appsv1.StatefulSetStatus{
 			ReadyReplicas:   1,
 			CurrentReplicas: 1,
-			UpdatedReplicas: 0,
+			UpdatedReplicas: 1,
 		},
 	}
 }
@@ -51,24 +54,39 @@ func TestPointsForStatefulSet(t *testing.T) {
 
 	t.Run("test for StatefulSet with healthy status", func(t *testing.T) {
 		testStatefulSet := setupBasicStatefulSet()
+		expectedAvailable := fmt.Sprint(testStatefulSet.Status.ReadyReplicas)
+		expectedDesired := fmt.Sprint(*testStatefulSet.Spec.Replicas)
 
 		actualWFPointsMap := getWFPointsMap(pointsForStatefulSet(testStatefulSet, testTransform))
-		actualWFPoint := actualWFPointsMap[workloadMetricName]
+		actualWFPoint, found := actualWFPointsMap[workloadMetricName]
+		assert.True(t, found)
 
 		assert.Equal(t, workloadReady, actualWFPoint.Value)
 		assert.Equal(t, workloadKindStatefulSet, actualWFPoint.Tags()[workloadKindTag])
+
+		assert.Equal(t, expectedAvailable, actualWFPoint.Tags()[workloadAvailableTag])
+		assert.Equal(t, expectedDesired, actualWFPoint.Tags()[workloadDesiredTag])
+		assert.NotContains(t, actualWFPoint.Tags(), workloadFailedReasonTag)
+		assert.NotContains(t, actualWFPoint.Tags(), workloadFailedMessageTag)
 	})
 
 	t.Run("test for StatefulSet with non healthy status", func(t *testing.T) {
 		testStatefulSet := setupBasicStatefulSet()
 		testStatefulSet.Status.ReadyReplicas = 0
 		testStatefulSet.Status.CurrentReplicas = 0
+		expectedAvailable := fmt.Sprint(testStatefulSet.Status.ReadyReplicas)
 
 		actualWFPointsMap := getWFPointsMap(pointsForStatefulSet(testStatefulSet, testTransform))
-		actualWFPoint := actualWFPointsMap[workloadMetricName]
+		actualWFPoint, found := actualWFPointsMap[workloadMetricName]
+		assert.True(t, found)
 
 		assert.Equal(t, workloadNotReady, actualWFPoint.Value)
 		assert.Equal(t, workloadKindStatefulSet, actualWFPoint.Tags()[workloadKindTag])
+
+		assert.Equal(t, expectedAvailable, actualWFPoint.Tags()[workloadAvailableTag])
+		assert.NotEqual(t, actualWFPoint.Tags()[workloadDesiredTag], actualWFPoint.Tags()[workloadAvailableTag])
+		assert.Contains(t, actualWFPoint.Tags(), workloadFailedReasonTag)
+		assert.Contains(t, actualWFPoint.Tags(), workloadFailedMessageTag)
 	})
 
 }

@@ -7,11 +7,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
-
 	log "github.com/sirupsen/logrus"
-
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
@@ -29,15 +27,27 @@ func pointsForDaemonSet(item interface{}, transforms configuration.Transforms) [
 	misScheduled := float64(daemonset.Status.NumberMisscheduled)
 	ready := float64(daemonset.Status.NumberReady)
 
-	workloadStatus := getWorkloadStatus(daemonset.Status.DesiredNumberScheduled, daemonset.Status.NumberAvailable)
-	workloadTags := buildWorkloadTags(workloadKindDaemonSet, daemonset.Name, daemonset.Namespace, transforms.Tags)
-	workloadPoint := buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags)
+	desired := daemonset.Status.DesiredNumberScheduled
+	available := daemonset.Status.NumberAvailable
+	workloadStatus := getWorkloadStatus(desired, available)
+	reason, message := getWorkloadReasonAndMessageForDaemonSet(workloadStatus, daemonset)
+	workloadTags := buildWorkloadTags(workloadKindDaemonSet, daemonset.Name, daemonset.Namespace, desired, available, reason, message, transforms.Tags)
 
 	return []wf.Metric{
 		metricPoint(transforms.Prefix, "daemonset.current_scheduled", currentScheduled, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "daemonset.desired_scheduled", desiredScheduled, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "daemonset.misscheduled", misScheduled, now, transforms.Source, tags),
 		metricPoint(transforms.Prefix, "daemonset.ready", ready, now, transforms.Source, tags),
-		workloadPoint,
+		buildWorkloadStatusMetric(transforms.Prefix, workloadStatus, now, transforms.Source, workloadTags),
 	}
+}
+
+func getWorkloadReasonAndMessageForDaemonSet(status float64, daemonset *appsv1.DaemonSet) (reason, message string) {
+	if status == workloadReady {
+		return "", ""
+	}
+	// TODO: return failure reason and message for DaemonSet
+	reason = "MinimumNodesUnavailable"
+	message = "DaemonSet does not have minimum number of nodes that should be running the daemon pod."
+	return reason, message
 }

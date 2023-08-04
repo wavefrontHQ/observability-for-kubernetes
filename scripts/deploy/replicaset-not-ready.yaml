@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: replicaset-not-ready
+  namespace: collector-targets
+  labels:
+    app: replicaset-not-ready
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: replicaset-not-ready
+  template:
+    metadata:
+      labels:
+        app: replicaset-not-ready
+        exclude-me: "true"
+    spec:
+      containers:
+      - name: replicaset-not-ready
+        image: busybox123
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi

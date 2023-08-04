@@ -55,6 +55,22 @@ var (
 		Key:         "workload_kind",
 		Description: "Workload Kind, derived from top level Deployment or DaemonSet",
 	}
+	LabelDesired = LabelDescriptor{
+		Key:         "desired",
+		Description: "The desired number for the Pod",
+	}
+	LabelAvailable = LabelDescriptor{
+		Key:         "available",
+		Description: "The available number for the Pod",
+	}
+	LabelReason = LabelDescriptor{
+		Key:         "reason",
+		Description: "The failure reason for the Pod",
+	}
+	LabelMessage = LabelDescriptor{
+		Key:         "message",
+		Description: "The failure message for the Pod",
+	}
 	LabelPodNamespaceUID = LabelDescriptor{
 		Key:         "namespace_id",
 		Description: "The UID of namespace of the pod",
