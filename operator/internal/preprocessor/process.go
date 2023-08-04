@@ -34,6 +34,11 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 	wfSpec.ControllerManagerUID = string(operator.UID)
 	wfSpec.ImageRegistry = filepath.Dir(operator.Spec.Template.Spec.Containers[0].Image)
 
+	err = preProcessExperimental(client, wfSpec)
+	if err != nil {
+		return err
+	}
+
 	preProcessDataCollection(wfSpec)
 
 	err = preProcessDataExport(client, wfSpec)
@@ -42,11 +47,6 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 	}
 
 	err = preProcessLogging(wfSpec)
-	if err != nil {
-		return err
-	}
-
-	err = preProcessExperimental(client, wfSpec)
 	if err != nil {
 		return err
 	}
