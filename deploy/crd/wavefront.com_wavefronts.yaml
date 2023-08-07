@@ -601,6 +601,8 @@ spec:
                         type: boolean
                     type: object
                   kubernetesEvents:
+                    description: KubernetesEvents is deprecated, please use aria-insights-secret
+                      instead
                     properties:
                       enable:
                         default: false
