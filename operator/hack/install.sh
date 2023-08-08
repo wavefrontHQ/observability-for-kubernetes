@@ -1358,6 +1358,8 @@ kind: Wavefront
 metadata:
   name: wavefront
   namespace: ${OBSERVABILITY_NAMESPACE}
+  annotations:
+    app.kubernetes.io/cr-version: "1.0.0"
 spec:
   clusterName: ${VMW_CLUSTER_NAME}
   allowLegacyInstall: ${OBSERVABILITY_ALLOW_LEGACY_INSTALL}
