@@ -1331,12 +1331,6 @@ fi
     run_command ${USABLE_KUBECTL} apply -f \
       "https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml"
 
-    local encoded_url
-    encoded_url=$(echo "${VMW_OBSERVABILITY_INGESTION_URL}" | base64)
-
-    local encoded_token
-    encoded_token=$(echo "${VMW_ACCESS_KEY}" | base64)
-
     # shellcheck disable=SC2086
     run_command ${USABLE_KUBECTL} apply -f - <<EOF
 apiVersion: v1
@@ -1345,9 +1339,9 @@ type: Opaque
 metadata:
   name: aria-insights-secret
   namespace: ${OBSERVABILITY_NAMESPACE}
-data:
-  k8s-events-endpoint-token: ${encoded_token}
-  k8s-events-endpoint-url: ${encoded_url}
+stringData:
+  k8s-events-endpoint-token: ${VMW_ACCESS_KEY}
+  k8s-events-endpoint-url: ${VMW_OBSERVABILITY_INGESTION_URL}
 EOF
 
     # shellcheck disable=SC2086
