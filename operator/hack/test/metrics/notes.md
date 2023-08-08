@@ -19,10 +19,10 @@ TODO OVERLAY Core dns  - overlay on everything except for GKE
 TODO OVERLAY Kube dns - overlay for GKE specifically
 E2E control plane etcd - currently tested with e2e - should we have an overlay?
 
-TODO Kubernetes - same
-TODO Control plane api server - same
-TODO autodiscovery - works (prom example)
-TODO runtime plugin config - basic (memcached)
+DONE Kubernetes - same
+DONE Control plane api server - same
+DONE autodiscovery - works (prom example)
+DONE runtime plugin config - basic (memcached)
 
 **Collector / non specific** on kind VMs = what all is possible?
 TODO Including k8s versions tests
