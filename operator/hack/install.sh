@@ -28,16 +28,16 @@
 
 # Usage
 #
-export VMW_CLUSTER_NAME=my-cluster
-export VMW_CLUSTER_CLOUD_ACCOUNT_ID=1234
-export VMW_CLUSTER_REGION=us-west-2
-export VMW_ACCESS_KEY=abcd
-export VMW_COLLECTOR_ID=5678
-export VMW_COLLECTOR_CLIENT_SECRET=efgh
-export VMW_ORG_ID=9012
-export VMW_CLIENT_ID=3456
-export VMW_ENVIRONMENT=prod
-export VMW_CLUSTER_CLOUD_PROVIDER=AWS
+#export VMW_CLUSTER_NAME=my-cluster
+#export VMW_CLUSTER_CLOUD_ACCOUNT_ID=1234
+#export VMW_CLUSTER_REGION=us-west-2
+#export VMW_ACCESS_KEY=abcd
+#export VMW_COLLECTOR_ID=5678
+#export VMW_COLLECTOR_CLIENT_SECRET=efgh
+#export VMW_ORG_ID=9012
+#export VMW_CLIENT_ID=3456
+#export VMW_ENVIRONMENT=prod
+#export VMW_CLUSTER_CLOUD_PROVIDER=AWS
 # /bin/bash -c "$(curl -fsSL https://mgmt.vmware.com/aria/k8s-collector/install.sh)"
 
 set -u
@@ -1325,6 +1325,8 @@ fi
         ${HELM_DEBUG_OPT} \
         --namespace "${OBSERVABILITY_NAMESPACE}" \
         --wait
+
+      run_command ${USABLE_KUBECTL} --wait=true delete namespace "${OBSERVABILITY_NAMESPACE}" > /dev/null 2>&1
     fi
 
     # shellcheck disable=SC2086
@@ -1345,7 +1347,7 @@ stringData:
 EOF
 
     # shellcheck disable=SC2086
-    if ! ${USABLE_KUBECTL} --namespace "${OBSERVABILITY_NAMESPACE}" get wavefront wavefront; then
+    if ! ${USABLE_KUBECTL} --namespace "${OBSERVABILITY_NAMESPACE}" get wavefront wavefront > /dev/null 2>&1; then
       run_command ${USABLE_KUBECTL} apply -f - <<EOF
 apiVersion: wavefront.com/v1alpha1
 kind: Wavefront
