@@ -141,7 +141,7 @@ data:
         type: prometheus
         selectors:
           images:
-          - '*kube-dns/sidecar*'
+          - '*kube-dns*sidecar*'
           labels:
             k8s-app:
             - kube-dns
