@@ -1378,7 +1378,7 @@ EOF
       if [[ "$status" == "Healthy" ]]; then
         break
       fi
-      sleep 10
+      sleep 5
     done
 
     if [[ "$status" != "Healthy" ]]; then
