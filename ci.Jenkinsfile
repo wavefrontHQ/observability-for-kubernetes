@@ -59,6 +59,8 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector"
           }
           steps {
+             sh 'cat /etc/os-release'
+             sh 'exit 1'
              sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
              sh 'cd collector'
              sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
