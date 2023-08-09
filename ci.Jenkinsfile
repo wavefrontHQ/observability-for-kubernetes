@@ -156,6 +156,7 @@ pipeline {
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k kind'
+            sh 'docker version'
             sh 'make nuke-kind'
             sh 'kubectl get nodes'
 //            sh 'cd collector && make integration-test'
