@@ -59,9 +59,13 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector"
           }
           steps {
-             sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
+             sh 'sudo yum update -y'
+             sh 'sudo service docker stop'
+             sh 'sudo yum -y upgrade docker*'
+             sh 'sudo service docker start'
+             sh 'sudo docker version'
              sh 'docker version'
-             sh 'exit 1'
+             sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
              sh 'cd collector'
              sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
              sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
