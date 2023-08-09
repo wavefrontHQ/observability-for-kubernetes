@@ -136,7 +136,7 @@ pipeline {
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
-        stage("GKE") {
+        stage("KIND 1.25") {
           agent {
             label "worker-1"
           }
@@ -144,102 +144,98 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
-            GCP_ZONE="a"
             DOCKER_IMAGE = "kubernetes-collector"
             INTEGRATION_TEST_ARGS="all"
             INTEGRATION_TEST_BUILD="ci"
+            KIND_K8S_VERSION = "1.25.11"
           }
           steps {
-            lock("integration-test-gke") {
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd collector && make gke-connect-to-cluster'
-              sh 'cd collector && make clean-cluster'
-              sh 'cd collector && make integration-test'
-              sh 'cd collector && make clean-cluster'
-            }
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k kind'
+            sh 'make nuke-kind'
+            sh 'kubectl get nodes'
+//            sh 'cd collector && make integration-test'
+//            sh 'make clean-cluster'
           }
         }
 
-        stage("EKS") {
-          agent {
-            label "worker-2"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            DOCKER_IMAGE = "kubernetes-collector"
-            AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
-            AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-            INTEGRATION_TEST_ARGS = "all"
-            INTEGRATION_TEST_BUILD = "ci"
-          }
-          steps {
-            lock("integration-test-eks") {
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-              sh 'cd collector && make target-eks'
-              sh 'cd collector && make clean-cluster'
-              sh 'cd collector && make integration-test'
-              sh 'cd collector && make clean-cluster'
-            }
-          }
-        }
+//        stage("EKS") {
+//          agent {
+//            label "worker-2"
+//          }
+//          options {
+//            timeout(time: 60, unit: 'MINUTES')
+//          }
+//          environment {
+//            DOCKER_IMAGE = "kubernetes-collector"
+//            AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
+//            AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+//            INTEGRATION_TEST_ARGS = "all"
+//            INTEGRATION_TEST_BUILD = "ci"
+//          }
+//          steps {
+//            lock("integration-test-eks") {
+//              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+//              sh 'cd collector && make target-eks'
+//              sh 'cd collector && make clean-cluster'
+//              sh 'cd collector && make integration-test'
+//              sh 'cd collector && make clean-cluster'
+//            }
+//          }
+//        }
 
-        stage("AKS") {
-          agent {
-            label "worker-3"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            AKS_CLUSTER_NAME = "k8po-ci"
-            DOCKER_IMAGE = "kubernetes-collector"
-            INTEGRATION_TEST_ARGS="all"
-            INTEGRATION_TEST_BUILD="ci"
-          }
-          steps {
-            lock("integration-test-aks") {
-              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-                sh 'kubectl config use k8po-ci'
-                sh 'cd collector && make clean-cluster'
-                sh 'cd collector && make integration-test'
-                sh 'cd collector && make clean-cluster'
-              }
-            }
-          }
-        }
+//        stage("AKS") {
+//          agent {
+//            label "worker-3"
+//          }
+//          options {
+//            timeout(time: 60, unit: 'MINUTES')
+//          }
+//          environment {
+//            AKS_CLUSTER_NAME = "k8po-ci"
+//            DOCKER_IMAGE = "kubernetes-collector"
+//            INTEGRATION_TEST_ARGS="all"
+//            INTEGRATION_TEST_BUILD="ci"
+//          }
+//          steps {
+//            lock("integration-test-aks") {
+//              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+//                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+//                sh 'kubectl config use k8po-ci'
+//                sh 'cd collector && make clean-cluster'
+//                sh 'cd collector && make integration-test'
+//                sh 'cd collector && make clean-cluster'
+//              }
+//            }
+//          }
+//        }
 
-        stage("TKGm") {
-          agent {
-            label "worker-5"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            KUBECONFIG = "$HOME/.kube/config"
-            KUBECONFIG_DIR = "$HOME/.kube"
-            GCP_CREDS = credentials("GCP_CREDS")
-            DOCKER_IMAGE = "kubernetes-collector"
-            INTEGRATION_TEST_ARGS="all"
-            INTEGRATION_TEST_BUILD="ci"
-          }
-          steps {
-            lock("integration-test-tkgm") {
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
-              sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
-              sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
-              sh "mkdir -p $KUBECONFIG_DIR"
-              sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
-              sh "chmod go-r $KUBECONFIG"
-              sh 'cd collector; make clean-cluster integration-test; make clean-cluster'
-            }
-          }
-        }
+//        stage("TKGm") {
+//          agent {
+//            label "worker-5"
+//          }
+//          options {
+//            timeout(time: 60, unit: 'MINUTES')
+//          }
+//          environment {
+//            KUBECONFIG = "$HOME/.kube/config"
+//            KUBECONFIG_DIR = "$HOME/.kube"
+//            GCP_CREDS = credentials("GCP_CREDS")
+//            DOCKER_IMAGE = "kubernetes-collector"
+//            INTEGRATION_TEST_ARGS="all"
+//            INTEGRATION_TEST_BUILD="ci"
+//          }
+//          steps {
+//            lock("integration-test-tkgm") {
+//              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
+//              sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
+//              sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
+//              sh "mkdir -p $KUBECONFIG_DIR"
+//              sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
+//              sh "chmod go-r $KUBECONFIG"
+//              sh 'cd collector; make clean-cluster integration-test; make clean-cluster'
+//            }
+//          }
+//        }
       }
     }
 

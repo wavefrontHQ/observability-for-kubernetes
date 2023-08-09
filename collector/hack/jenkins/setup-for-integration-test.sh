@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 
 function print_usage_and_exit() {
     echo "Failure: $1"
@@ -42,6 +43,12 @@ if [[ "${K8S_ENV}" == "eks" ]]; then
     unzip awscliv2.zip
     sudo ./aws/install >/dev/null;
   fi
+fi
+
+if [[ "${K8S_ENV}" == "kind" ]]; then
+date
+  "${REPO_ROOT}/bin/kind" version
+date
 fi
 
 #
