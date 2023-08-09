@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BIN_DIR=$(dirname $(realpath "$0"))
+
+VERSION=latest
+if [[ ! -f "$BIN_DIR/.cache/sheepctl" ]]; then
+    printf "downloading sheepctl %s ..." "$VERSION" 1>&2
+    OS=$(go env GOOS)
+    ARCH=$(go env GOARCH)
+    mkdir -p "$BIN_DIR/.cache"
+    rm -rf "$BIN_DIR/.cache/sheepctl"
+    DOWNLOAD_FILE=$(mktemp -t tmp.XXXXXXXXXX)
+    curl --silent -L --output "$DOWNLOAD_FILE" "https://storage.googleapis.com/sheepctl/${VERSION}/sheepctl-${OS}-${ARCH}.tar.gz"
+    printf "."
+    tar -xzf "$DOWNLOAD_FILE" -C "$BIN_DIR/.cache"
+    printf "."
+    echo " done." 1>&2
+fi
+
+# shellcheck disable=SC2086
+"$BIN_DIR/.cache/sheepctl" $*
