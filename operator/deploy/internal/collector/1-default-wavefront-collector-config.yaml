@@ -141,7 +141,8 @@ data:
         type: prometheus
         selectors:
           images:
-          - '*kube-dns*sidecar*'
+          - '*k8s-dns-sidecar*'
+          - '*kube-dns/sidecar*'
           labels:
             k8s-app:
             - kube-dns
@@ -151,12 +152,14 @@ data:
         prefix: kube.dns.
         filters:
           metricAllowList:
-          - 'kube.dns.http.request.duration.microseconds'
-          - 'kube.dns.http.request.size.bytes'
-          - 'kube.dns.http.requests.total.counter'
-          - 'kube.dns.http.response.size.bytes'
           - 'kube.dns.kubedns.dnsmasq.*'
           - 'kube.dns.process.*'
+          # These metrics don't come through at all.
+          # TODO revisit later if customers need a kube-dns dashboard.
+          # - 'kube.dns.http.request.duration.microseconds'
+          # - 'kube.dns.http.request.size.bytes'
+          # - 'kube.dns.http.requests.total.counter'
+          # - 'kube.dns.http.response.size.bytes'
 
       # auto-discover coredns
       - name: coredns-discovery
