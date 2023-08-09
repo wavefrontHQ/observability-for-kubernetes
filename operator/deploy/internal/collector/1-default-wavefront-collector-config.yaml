@@ -152,7 +152,12 @@ data:
         prefix: kube.dns.
         filters:
           metricAllowList:
-          - 'kube.dns.kubedns.dnsmasq.*'
+          - 'kube.dns.kubedns.dnsmasq.errors.counter'
+          - 'kube.dns.kubedns.dnsmasq.evictions.counter'
+          - 'kube.dns.kubedns.dnsmasq.hits.counter'
+          - 'kube.dns.kubedns.dnsmasq.insertions.counter'
+          - 'kube.dns.kubedns.dnsmasq.max.size.counter'
+          - 'kube.dns.kubedns.dnsmasq.misses.counter'
           - 'kube.dns.process.*'
           # These metrics don't come through at all.
           # TODO revisit later if customers need a kube-dns dashboard.
