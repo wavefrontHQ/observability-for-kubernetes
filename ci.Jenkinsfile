@@ -60,6 +60,8 @@ pipeline {
           }
           steps {
              sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
+             sh 'docker version'
+             sh 'exit 1'
              sh 'cd collector'
              sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
              sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
