@@ -59,11 +59,6 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector"
           }
           steps {
-             sh 'sudo service docker stop'
-             sh 'sudo yum -y upgrade docker*'
-             sh 'sudo service docker start'
-             sh 'sudo docker version'
-             sh 'docker version'
              sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
              sh 'cd collector'
              sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
@@ -156,6 +151,10 @@ pipeline {
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k kind'
+            sh 'sudo service docker stop'
+            sh 'sudo yum -y upgrade docker*'
+            sh 'sudo service docker start'
+            sh 'sudo docker version'
             sh 'docker version'
             sh 'make nuke-kind'
             sh 'kubectl get nodes'
