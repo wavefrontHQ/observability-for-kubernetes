@@ -17,7 +17,6 @@ GIT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
 GIT_HUB_REPO=wavefrontHQ/wavefront-collector-for-kubernetes
 
 K8S_ENV=$(shell $(REPO_ROOT)/scripts/get-k8s-cluster-env.sh)
-KIND_LOCATION=$(shell $(REPO_ROOT)/scripts/kind-location.sh)
 
 ifndef TEMP_DIR
 TEMP_DIR:=$(shell mktemp -d /tmp/wavefront.XXXXXX)

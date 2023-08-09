@@ -32,21 +32,20 @@ KIND_K8S_VERSION?=v1.25.9
 .PHONY: nuke-kind
 nuke-kind:
 	kind delete cluster
-	kind create cluster --image kindest/node:$(KIND_K8S_VERSION)
+	kind create cluster --image harbor-repo.vmware.com/dockerhub-proxy-cache/kindest/node:$(KIND_K8S_VERSION)
 
 nuke-kind-ha:
 	kind delete cluster
-	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha.yml" --image kindest/node:v1.25.9 # setting to v1.25.9 to avoid floating to 1.26 which we currently don't support
+	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha.yml" --image harbor-repo.vmware.com/dockerhub-proxy-cache/kindest/node:$(KIND_K8S_VERSION) # setting to v1.25.9 to avoid floating to 1.26 which we currently don't support
 
 nuke-kind-ha-workers:
 	kind delete cluster
-	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha-workers.yml" --image kindest/node:v1.25.9 # setting to v1.25.9 to avoid floating to 1.26 which we currently don't support
+	kind create cluster --config "$(MONOREPO_DIR)/make/kind-ha-workers.yml" --image harbor-repo.vmware.com/dockerhub-proxy-cache/kindest/node:$(KIND_K8S_VERSION) # setting to v1.25.9 to avoid floating to 1.26 which we currently don't support
 
 kind-connect-to-cluster:
 	kubectl config use kind-kind
 
-target-kind:
-	kubectl config use kind-kind
+target-kind: kind-connect-to-cluster
 
 #----- GKE -----#
 GCP_PROJECT?=wavefront-gcp-dev
