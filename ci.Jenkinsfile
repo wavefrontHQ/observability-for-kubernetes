@@ -59,7 +59,6 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector"
           }
           steps {
-             sh 'sudo yum update -y'
              sh 'sudo service docker stop'
              sh 'sudo yum -y upgrade docker*'
              sh 'sudo service docker start'
