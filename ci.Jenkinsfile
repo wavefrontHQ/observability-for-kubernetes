@@ -147,7 +147,7 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector"
             INTEGRATION_TEST_ARGS="all"
             INTEGRATION_TEST_BUILD="ci"
-            KIND_K8S_VERSION = "1.25.11"
+            KIND_K8S_VERSION = "v1.25.9"
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k kind'

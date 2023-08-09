@@ -46,9 +46,7 @@ if [[ "${K8S_ENV}" == "eks" ]]; then
 fi
 
 if [[ "${K8S_ENV}" == "kind" ]]; then
-date
   "${REPO_ROOT}/bin/kind" version
-date
 fi
 
 #
