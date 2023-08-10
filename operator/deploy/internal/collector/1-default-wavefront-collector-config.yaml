@@ -95,6 +95,7 @@ data:
            metricAllowList:
            - 'kubernetes.controlplane.etcd.request.duration.seconds'
            - 'kubernetes.controlplane.etcd.db.total.size.in.bytes.gauge'
+           - 'kubernetes.controlplane.apiserver.storage.db.total.size.in.bytes.gauge'
            - 'kubernetes.controlplane.workqueue.adds.total.counter'
            - 'kubernetes.controlplane.workqueue.queue.duration.seconds'
 
@@ -140,6 +141,7 @@ data:
         type: prometheus
         selectors:
           images:
+          - '*k8s-dns-sidecar*'
           - '*kube-dns/sidecar*'
           labels:
             k8s-app:
@@ -150,12 +152,19 @@ data:
         prefix: kube.dns.
         filters:
           metricAllowList:
-          - 'kube.dns.http.request.duration.microseconds'
-          - 'kube.dns.http.request.size.bytes'
-          - 'kube.dns.http.requests.total.counter'
-          - 'kube.dns.http.response.size.bytes'
-          - 'kube.dns.kubedns.dnsmasq.*'
+          - 'kube.dns.kubedns.dnsmasq.errors.counter'
+          - 'kube.dns.kubedns.dnsmasq.evictions.counter'
+          - 'kube.dns.kubedns.dnsmasq.hits.counter'
+          - 'kube.dns.kubedns.dnsmasq.insertions.counter'
+          - 'kube.dns.kubedns.dnsmasq.max.size.counter'
+          - 'kube.dns.kubedns.dnsmasq.misses.counter'
           - 'kube.dns.process.*'
+          # These metrics don't come through at all.
+          # TODO revisit later if customers need a kube-dns dashboard.
+          # - 'kube.dns.http.request.duration.microseconds'
+          # - 'kube.dns.http.request.size.bytes'
+          # - 'kube.dns.http.requests.total.counter'
+          # - 'kube.dns.http.response.size.bytes'
 
       # auto-discover coredns
       - name: coredns-discovery

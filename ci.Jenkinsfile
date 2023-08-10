@@ -269,9 +269,9 @@ pipeline {
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             lock("integration-test-gke") {
               sh 'cd operator && make gke-connect-to-cluster'
-              sh 'cd operator && make clean-cluster'
-              sh 'cd operator && make integration-test'
-              sh 'cd operator && make clean-cluster'
+              sh 'make clean-cluster'
+              sh 'make -C operator integration-test'
+              sh 'make clean-cluster'
             }
           }
         }
@@ -287,16 +287,16 @@ pipeline {
             GCP_CREDS = credentials("GCP_CREDS")
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-            INTEGRATION_TEST_ARGS="-r advanced"
+            INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"
           }
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             lock("integration-test-eks") {
               sh 'cd operator && make target-eks'
-              sh 'cd operator && make clean-cluster'
-              sh 'cd operator && make integration-test'
-              sh 'cd operator && make clean-cluster'
+              sh 'make clean-cluster'
+              sh 'make -C operator integration-test'
+              sh 'make clean-cluster'
             }
           }
         }
@@ -307,7 +307,7 @@ pipeline {
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
             AKS_CLUSTER_NAME = "k8po-ci"
-            INTEGRATION_TEST_ARGS = '-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install'
+            INTEGRATION_TEST_ARGS = '-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics'
           }
           steps {
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -315,9 +315,9 @@ pipeline {
             lock("integration-test-aks") {
               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
                 sh 'kubectl config use k8po-ci'
-                sh 'cd operator && make clean-cluster'
-                sh 'cd operator && make integration-test'
-                sh 'cd operator && make clean-cluster'
+                sh 'make clean-cluster'
+                sh 'make -C operator integration-test'
+                sh 'make clean-cluster'
               }
             }
           }
@@ -343,7 +343,9 @@ pipeline {
               sh "mkdir -p $KUBECONFIG_DIR"
               sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
               sh "chmod go-r $KUBECONFIG"
-              sh 'cd operator; make clean-cluster integration-test; make clean-cluster'
+              sh 'make clean-cluster'
+              sh 'make -C operator integration-test'
+              sh 'make clean-cluster'
             }
           }
         }

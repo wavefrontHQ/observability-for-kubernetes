@@ -20,7 +20,7 @@ combined-deploy:
 .PHONY: combined-integration-tests
 combined-integration-tests:
 	$(MAKE) -C operator clean-cluster
-	cd $(MONOREPO_DIR) && ./scripts/combined-deploy.sh
+	cd $(MONOREPO_DIR) && ./scripts/combined-deploy.sh $(COMBINED_DEPLOY_ARGS)
 	$(MAKE) -C operator integration-test -o undeploy -o deploy
 
 .PHONY: clean-cluster
@@ -28,10 +28,11 @@ clean-cluster:
 	@$(MONOREPO_DIR)/scripts/clean-cluster.sh
 
 #----- KIND ----#
+KIND_K8S_VERSION?=v1.25.9
 .PHONY: nuke-kind
 nuke-kind:
 	kind delete cluster
-	kind create cluster --image kindest/node:v1.25.9 # setting to v1.25.9 to avoid floating to 1.26 which we currently don't support
+	kind create cluster --image kindest/node:$(KIND_K8S_VERSION)
 
 nuke-kind-ha:
 	kind delete cluster
@@ -73,9 +74,11 @@ delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 create-gke-cluster: gke-cluster-name-check
 	echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=e2-standard-2 \
-		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 --num-nodes=$(NUMBER_OF_NODES) --logging=NONE \
-		--cluster-version ${GCP_CLUSTER_VERSION}
-	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
+		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 \
+		--num-nodes=$(NUMBER_OF_NODES) --logging=NONE \
+		--cluster-version $(GCP_CLUSTER_VERSION)
+	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) \
+		--zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
 	kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding

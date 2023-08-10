@@ -113,10 +113,13 @@ func HandleIncomingMetrics(proxylines *broadcaster.Broadcaster[string], conn net
 	defer conn.Close()
 	lines := bufio.NewScanner(conn)
 
+	log.Debugf("handling incoming metrics")
+
 	for lines.Scan() {
 		if len(lines.Text()) == 0 {
 			continue
 		}
+		log.Debugf("incoming metrics line: %s", lines.Text())
 		proxylines.Publish(1*time.Second, lines.Text())
 	}
 

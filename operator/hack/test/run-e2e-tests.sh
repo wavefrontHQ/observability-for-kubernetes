@@ -197,10 +197,19 @@ function run_k8s_events_checks() {
   "$REPO_ROOT/scripts/deploy/uninstall-targets.sh"
   stop_forward_test_proxy /dev/null
 
-  SLEEP_TIME=10
   PROXY_NAME="test-proxy"
   METRICS_FILE_DIR="$SCRIPT_DIR/metrics"
   METRICS_FILE_NAME="k8s-events-only"
+  source "$REPO_ROOT/scripts/compare-test-proxy-metrics.sh"
+}
+
+function run_common_metrics_checks() {
+  OPERATOR_TEST=true "$REPO_ROOT/scripts/deploy/deploy-targets.sh"
+  wait_for_cluster_ready
+
+  PROXY_NAME="test-proxy"
+  METRICS_FILE_DIR="$SCRIPT_DIR/metrics"
+  METRICS_FILE_NAME="common-metrics"
   source "$REPO_ROOT/scripts/compare-test-proxy-metrics.sh"
 }
 
@@ -534,6 +543,10 @@ function run_test() {
     run_k8s_events_checks
   fi
 
+  if [[ " ${checks[*]} " =~ " common-metrics-check " ]]; then
+    run_common_metrics_checks
+  fi
+
 	if ! $NO_CLEANUP; then
 		clean_up_test $type
 	fi
@@ -611,6 +624,7 @@ function main() {
       "with-http-proxy"
       "k8s-events-only"
       "control-plane"
+      "common-metrics"
     )
   fi
 
@@ -644,6 +658,9 @@ function main() {
   fi
   if [[ " ${tests_to_run[*]} " =~ " basic " ]]; then
     run_test "basic" "health" "static_analysis"
+  fi
+  if [[ " ${tests_to_run[*]} " =~ " common-metrics " ]]; then
+    run_test "common-metrics" "common-metrics-check"
   fi
   if [[ " ${tests_to_run[*]} " =~ " advanced " ]]; then
     run_test "advanced" "health" "test_wavefront_metrics" "logging" "proxy"
