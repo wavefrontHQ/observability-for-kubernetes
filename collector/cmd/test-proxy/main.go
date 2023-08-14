@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/soheilhy/cmux"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/broadcaster"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testproxy/eventline"
@@ -136,25 +134,8 @@ func serveMetrics(proxylines *broadcaster.Broadcaster[string]) {
 		log.Fatal(err.Error())
 	}
 
-	cm := cmux.New(listener)
-
-	httpL := cm.Match(cmux.HTTP1())
-	tcpL := cm.Match(cmux.Any())
-
-	go func() {
-		defer cm.Close()
-		log.Info("starting cmux server")
-		err := cm.Serve()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	httpS := &http.Server{}
-	go httpS.Serve(httpL)
-
 	for {
-		conn, err := tcpL.Accept()
+		conn, err := listener.Accept()
 		if err != nil {
 			log.Error(err.Error())
 			continue
