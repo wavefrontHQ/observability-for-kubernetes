@@ -130,6 +130,9 @@ function main() {
     tests_to_run=( "default" )
   fi
 
+  if [[ " ${tests_to_run[*]} " =~ " smoke-test " ]]; then
+    "${REPO_ROOT}/scripts/smoke-test-connectivity-check.sh"
+  fi
   if [[ "${tests_to_run[*]}" =~ "cluster-metrics-only" ]]; then
     green "\n==================== Running fake_proxy cluster-metrics-only test ===================="
     run_fake_proxy_test "cluster-metrics-only" "base/deploy/collector-deployments/5-collector-cluster-metrics-only.yaml"
