@@ -236,7 +236,9 @@ pipeline {
               sh "mkdir -p $KUBECONFIG_DIR"
               sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
               sh "chmod go-r $KUBECONFIG"
-              sh 'cd collector; make clean-cluster integration-test; make clean-cluster'
+              sh 'make clean-cluster'
+              sh 'make -C collector integration-test'
+              sh 'make clean-cluster'
             }
           }
         }
