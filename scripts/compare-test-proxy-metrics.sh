@@ -10,8 +10,8 @@ else
   cat "${METRICS_FILE_DIR}/${METRICS_FILE_NAME}.jsonl" >${METRICS_FILE_DIR}/combined-metrics.jsonl
 fi
 
-FLUSH_INTERVAL=15
-RETRIES=14 # TODO make configurable
+FLUSH_INTERVAL=5
+RETRIES=28 # TODO make configurable
 printf "Diffing metrics .."
 for (( i=1; i<="$RETRIES"; i++ )) do
   printf "."
