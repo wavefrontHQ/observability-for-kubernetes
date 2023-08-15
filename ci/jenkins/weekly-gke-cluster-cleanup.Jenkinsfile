@@ -5,17 +5,17 @@ pipeline {
 44 18 * * 5'''
   }
   stages {
-    stage ('Weekly cleanup clusters without keep-me tags') {
+    stage ('Weekly cleanup clusters without keep-me:true label') {
       environment {
-            GCP_CREDS = credentials("GCP_CREDS")
-          }
+        GCP_CREDS = credentials("GCP_CREDS")
+      }
       steps {
         script {
-            steps {
-              lock("integration-test-gke") {
-                 sh "scripts/cleanup-gke-clusters.sh
-              }
+          steps {
+            lock("integration-test-gke") {
+              sh "scripts/cleanup-gke-clusters.sh
             }
+          }
         }
       }
     }
