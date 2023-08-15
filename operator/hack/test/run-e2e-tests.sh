@@ -383,7 +383,13 @@ function run_logging_checks() {
   printf "Running logging checks ..."
   local max_logs_received=0
   for _ in {1..12}; do
-    max_logs_received=$(kubectl -n $NS logs -l app.kubernetes.io/name=wavefront -l app.kubernetes.io/component=proxy --tail=-1 | grep "Logs received" | awk 'match($0, /[0-9]+ logs\/s/) { print substr( $0, RSTART, RLENGTH )}' | awk '{print $1}' | sort -n | tail -n1 2>/dev/null)
+    max_logs_received=$(kubectl -n $NS logs \
+      -l app.kubernetes.io/name=wavefront \
+      -l app.kubernetes.io/component=proxy --tail=-1 \
+      | grep "Logs received" \
+      | awk 'match($0, /[0-9]+ logs\/s/) { print substr( $0, RSTART, RLENGTH )}' \
+      | awk '{print $1}' | sort -n | tail -n1 2>/dev/null\
+    )
     if [[ $max_logs_received -gt 0 ]]; then
       break
     fi
@@ -614,6 +620,8 @@ function main() {
 
   if [[ ${#tests_to_run[@]} -eq 0 ]]; then
     tests_to_run=(
+      "smoke-test"
+      "k8s-events-only"
       "validation-errors"
       "validation-legacy"
       "validation-errors-preprocessor-rules"
@@ -622,7 +630,6 @@ function main() {
       "advanced"
       "logging-integration"
       "with-http-proxy"
-      "k8s-events-only"
       "control-plane"
       "common-metrics"
     )
@@ -638,6 +645,9 @@ function main() {
 
   cd "$OPERATOR_REPO_ROOT"
 
+  if [[ " ${tests_to_run[*]} " =~ " smoke-test " ]]; then
+    "${REPO_ROOT}/scripts/smoke-test-connectivity-check.sh"
+  fi
   if [[ " ${tests_to_run[*]} " =~ " k8s-events-only " ]]; then
     run_test "k8s-events-only" "k8s_events"
   fi
