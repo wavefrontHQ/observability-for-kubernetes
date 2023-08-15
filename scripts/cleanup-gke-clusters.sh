@@ -4,9 +4,9 @@ set -eou pipefail
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 function main() {
-#  TODO: to make this right
-  CLUSTERS_TO_REMOVE=$(gcloud compute instances list  --filter="labels.test" --project=wavefront-gcp-dev)
-
+  # uncomment this by the end of the week
+#  CLUSTERS_TO_REMOVE=$(gcloud container clusters list --filter="-resourceLabels.keep-me=true")
+  CLUSTERS_TO_REMOVE=$(gcloud container clusters list --filter="resourceLabels.test=true")
   cd ${REPO_ROOT}
 
   for cluster_name in "${CLUSTERS_TO_REMOVE[@]}" ; do
