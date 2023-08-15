@@ -13,7 +13,7 @@ pipeline {
         script {
           steps {
             lock("integration-test-gke") {
-              sh "scripts/cleanup-gke-clusters.sh
+              sh "scripts/cleanup-gke-clusters.sh"
             }
           }
         }
