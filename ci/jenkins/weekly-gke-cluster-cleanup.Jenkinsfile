@@ -12,7 +12,8 @@ pipeline {
       steps {
         script {
           lock("integration-test-gke") {
-            sh "scripts/cleanup-gke-clusters.sh"
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'scripts/cleanup-gke-clusters.sh'
           }
         }
       }
