@@ -15,7 +15,7 @@ function main() {
   cd ${REPO_ROOT}
   for cluster_name in "${CLUSTERS_TO_REMOVE[@]}"
   do
-    GKE_CLUSTER_NAME=${cluster_name} make delete-gke-cluster
+    GKE_CLUSTER_NAME=${cluster_name} make delete-gke-cluster || true
   done
 }
 

@@ -11,10 +11,8 @@ pipeline {
       }
       steps {
         script {
-          steps {
-            lock("integration-test-gke") {
-              sh "scripts/cleanup-gke-clusters.sh"
-            }
+          lock("integration-test-gke") {
+            sh "scripts/cleanup-gke-clusters.sh"
           }
         }
       }
