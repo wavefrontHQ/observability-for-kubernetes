@@ -8,11 +8,11 @@ pipeline {
     stage ('Weekly cleanup clusters without keep-me:true label') {
       environment {
         GCP_CREDS = credentials("GCP_CREDS")
+        PATH = "${env.WORKSPACE}/bin:${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
       }
       steps {
         script {
           lock("integration-test-gke") {
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
             sh 'scripts/cleanup-gke-clusters.sh'
           }
         }

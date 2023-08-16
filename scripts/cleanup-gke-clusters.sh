@@ -4,7 +4,6 @@
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
 function main() {
-
   gcloud auth activate-service-account --key-file "$GCP_CREDS"
   gcloud config set project wavefront-gcp-dev
 
