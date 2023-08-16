@@ -85,6 +85,16 @@ create-gke-cluster: gke-cluster-name-check
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
 
+create-gke-cluster-no-cleanup: gke-cluster-name-check
+	echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
+	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=e2-standard-2 \
+		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 --num-nodes=$(NUMBER_OF_NODES) --logging=NONE \
+		--cluster-version ${GCP_CLUSTER_VERSION} --labels=keep-me=true
+	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
+	kubectl create clusterrolebinding --clusterrole cluster-admin \
+		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
+		clusterrolebinding
+
 #----- AKS -----#
 AKS_CLUSTER_NAME?=k8po-ci
 AKS_RESOURCE_GROUP?=K8sSaaS
