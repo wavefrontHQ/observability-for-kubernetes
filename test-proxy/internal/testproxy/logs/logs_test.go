@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/wavefronthq/observability-for-kubernetes/testproxy/internal/testproxy/logs"
+	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/testproxy/logs"
 )
 
 func TestVerifyJsonArrayFormat(t *testing.T) {

@@ -11,11 +11,11 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/observability-for-kubernetes/testproxy/internal/broadcaster"
-	"github.com/wavefronthq/observability-for-kubernetes/testproxy/internal/testproxy/eventline"
-	"github.com/wavefronthq/observability-for-kubernetes/testproxy/internal/testproxy/externalevent"
-	"github.com/wavefronthq/observability-for-kubernetes/testproxy/internal/testproxy/logs"
-	"github.com/wavefronthq/observability-for-kubernetes/testproxy/internal/testproxy/metricline"
+	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/broadcaster"
+	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/testproxy/eventline"
+	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/testproxy/externalevent"
+	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/testproxy/logs"
+	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/testproxy/metricline"
 )
 
 func LogJsonArrayHandler(logVerifier *logs.LogVerifier) http.HandlerFunc {

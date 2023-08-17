@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/observability-for-kubernetes/testproxy/internal/broadcaster"
+	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/broadcaster"
 )
 
 type Store struct {

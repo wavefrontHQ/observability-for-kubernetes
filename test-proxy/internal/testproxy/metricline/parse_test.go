@@ -3,7 +3,7 @@ package metricline_test
 import (
 	"testing"
 
-	"github.com/wavefronthq/observability-for-kubernetes/testproxy/internal/testproxy/metricline"
+	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/testproxy/metricline"
 
 	"github.com/stretchr/testify/assert"
 )

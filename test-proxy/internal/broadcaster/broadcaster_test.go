@@ -7,7 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	"github.com/wavefronthq/observability-for-kubernetes/testproxy/internal/broadcaster"
+	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/broadcaster"
 )
 
 const DefaultPublishTimeout = 5 * time.Second

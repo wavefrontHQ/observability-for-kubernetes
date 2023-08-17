@@ -1,4 +1,4 @@
-module github.com/wavefronthq/observability-for-kubernetes/testproxy
+module github.com/wavefronthq/observability-for-kubernetes/test-proxy
 
 go 1.20
 

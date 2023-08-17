@@ -6,7 +6,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wavefronthq/observability-for-kubernetes/testproxy/internal/broadcaster"
+	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/broadcaster"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 	v1 "k8s.io/api/core/v1"
 )
