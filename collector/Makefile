@@ -161,25 +161,6 @@ docker-xplatform-build:
 	--pull -t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) -f Dockerfile $(OUT_DIR)
 	@echo "Built collector version: $(VERSION)"
 
-# latest version test-proxy:2.9.2
-TEST_PROXY_VERSION?=
-
-.PHONY: test-proxy-container
-test-proxy-container:
-	@if [ -z "$(TEST_PROXY_VERSION)" ]; then echo "Need to set TEST_PROXY_VERSION" && exit 1; fi
-	docker build \
-	--build-arg BINARY_NAME=test-proxy --build-arg LDFLAGS="$(LDFLAGS)" \
-	--pull -f $(COLLECTOR_REPO_ROOT)/Dockerfile.test-proxy \
-	-t $(PREFIX)/test-proxy:$(TEST_PROXY_VERSION) .
-
-.PHONY: publish-test-proxy
-publish-test-proxy:  test-proxy-container
-	docker push $(PREFIX)/test-proxy:$(TEST_PROXY_VERSION)
-
-.PHONY: test-proxy
-test-proxy: peg $(COLLECTOR_REPO_ROOT)/internal/testproxy/metricline/metric_grammar.peg.go $(COLLECTOR_REPO_ROOT)/internal/testproxy/eventline/event_grammar.peg.go clean fmt vet
-	GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o $(OUT_DIR)/$(GOARCH)/test-proxy ./cmd/test-proxy/...
-
 .PHONY: peg
 peg:
 	@which peg > /dev/null || \
