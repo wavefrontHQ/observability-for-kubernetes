@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   annotations:
     
@@ -7,7 +7,7 @@ metadata:
     
     app: pl-monitoring
     component: vizier
-  name: vizier-query-broker
+  name: vizier-metadata
   namespace: observability-system
 spec:
   replicas: 1
@@ -15,18 +15,19 @@ spec:
     matchLabels:
       app: pl-monitoring
       component: vizier
-      name: vizier-query-broker
+      name: vizier-metadata
+  serviceName: vizier-metadata
   template:
     metadata:
       annotations:
         
-        px.dev/metrics_port: "50300"
+        px.dev/metrics_port: "50400"
         px.dev/metrics_scrape: "true"
       labels:
         
         app: pl-monitoring
         component: vizier
-        name: vizier-query-broker
+        name: vizier-metadata
         plane: control
     spec:
       affinity:
@@ -49,53 +50,41 @@ spec:
                 - linux
       containers:
       - env:
-        - name: PL_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: PL_CLUSTER_ID
-          valueFrom:
-            secretKeyRef:
-              key: cluster-id
-              name: pl-cluster-secrets
-        - name: PL_SENTRY_DSN
-          valueFrom:
-            secretKeyRef:
-              key: sentry-dsn
-              name: pl-cluster-secrets
-              optional: true
         - name: PL_JWT_SIGNING_KEY
           valueFrom:
             secretKeyRef:
               key: jwt-signing-key
               name: pl-cluster-secrets
-        - name: PL_POD_IP_ADDRESS
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
         - name: PL_POD_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        - name: PL_CLOUD_ADDR
-          valueFrom:
-            configMapKeyRef:
-              key: PL_CLOUD_ADDR
-              name: pl-cloud-config
-        - name: PL_DATA_ACCESS
-          value: "Full"
+        - name: PL_MAX_EXPECTED_CLOCK_SKEW
+          value: "2000"
+        - name: PL_RENEW_PERIOD
+          value: "7500"
+        - name: PL_ETCD_OPERATOR_ENABLED
+          value: "false"
         envFrom:
         - configMapRef:
             name: pl-tls-config
-        image: 'gcr.io/pixie-oss/pixie-prod/vizier/query_broker_server_image:0.13.2'
+        image: 'gcr.io/pixie-oss/pixie-prod/vizier/metadata_server_image:0.14.5'
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 50300
+            port: 50400
             scheme: HTTPS
+          initialDelaySeconds: 120
+          periodSeconds: 10
         name: app
-        ports:
-        - containerPort: 50300
+        readinessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /healthz
+            port: 50400
+            scheme: HTTPS
+          initialDelaySeconds: 30
+          periodSeconds: 10
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -106,20 +95,26 @@ spec:
         volumeMounts:
         - mountPath: /certs
           name: certs
+        - mountPath: /metadata
+          name: metadata-volume
       initContainers:
       - command:
         - sh
         - -c
-        - 'set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [
-          $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
-          echo "waiting for ${URL}" sleep 2; done; '
+        - set -xe; URL="${PROTOCOL}://${SERVICE_NAME}:${SERVICE_PORT}${HEALTH_PATH}";
+          until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200
+          ]; do echo "waiting for ${URL}"; sleep 2; done;
         env:
         - name: SERVICE_NAME
-          value: vizier-metadata-svc
+          value: pl-nats-mgmt
         - name: SERVICE_PORT
-          value: "50400"
+          value: "8222"
+        - name: HEALTH_PATH
+          value: ""
+        - name: PROTOCOL
+          value: http
         image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0@sha256:f7f265d5c64eb4463a43a99b6bf773f9e61a50aaa7cefaf564f43e42549a01dd'
-        name: mds-wait
+        name: nats-wait
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -134,6 +129,7 @@ spec:
         runAsUser: 10100
         seccompProfile:
           type: RuntimeDefault
+      serviceAccountName: metadata-service-account
       tolerations:
       - effect: NoSchedule
         key: kubernetes.io/arch
@@ -155,6 +151,8 @@ spec:
       - name: certs
         secret:
           secretName: service-tls-certs
-      - configMap:
-          name: proxy-envoy-config
-        name: envoy-yaml
+      - name: metadata-volume
+        persistentVolumeClaim:
+          claimName: metadata-pv-claim
+  updateStrategy:
+    type: RollingUpdate

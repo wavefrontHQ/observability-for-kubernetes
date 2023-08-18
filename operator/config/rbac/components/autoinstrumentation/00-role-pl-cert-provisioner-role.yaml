@@ -7,27 +7,19 @@ metadata:
     
     app: pl-monitoring
     component: vizier
-  name: pl-vizier-metadata-role
+    vizier-bootstrap: "true"
+  name: pl-cert-provisioner-role
   namespace: observability-system
 rules:
 - apiGroups:
   - ""
   resources:
-  - endpoints
-  verbs:
-  - '*'
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
+  - secrets
   verbs:
   - create
-- apiGroups:
-  - coordination.k8s.io
-  resourceNames:
-  - metadata-election
-  resources:
-  - leases
-  verbs:
+  - delete
   - get
+  - list
+  - patch
   - update
+  - watch

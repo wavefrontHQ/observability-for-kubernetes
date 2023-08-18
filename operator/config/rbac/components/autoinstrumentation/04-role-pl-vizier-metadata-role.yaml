@@ -7,35 +7,17 @@ metadata:
     
     app: pl-monitoring
     component: vizier
-    vizier-bootstrap: "true"
-  name: pl-cloud-connector-ns-role
+  name: pl-vizier-metadata-role
   namespace: observability-system
 rules:
 - apiGroups:
   - ""
   resources:
-  - services
-  - events
-  - pods/log
+  - endpoints
   verbs:
   - get
-  - watch
   - list
-- apiGroups:
-  - batch
-  resources:
-  - jobs
-  verbs:
-  - '*'
-- apiGroups:
-  - ""
-  - px.dev
-  resources:
-  - secrets
-  - pods
-  - viziers
-  verbs:
-  - '*'
+  - watch
 - apiGroups:
   - coordination.k8s.io
   resources:
@@ -45,7 +27,7 @@ rules:
 - apiGroups:
   - coordination.k8s.io
   resourceNames:
-  - cloud-conn-election
+  - metadata-election
   resources:
   - leases
   verbs:

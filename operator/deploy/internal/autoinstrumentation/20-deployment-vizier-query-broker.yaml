@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   annotations:
     
@@ -7,24 +7,27 @@ metadata:
     
     app: pl-monitoring
     component: vizier
-  name: vizier-pem
+  name: vizier-query-broker
   namespace: observability-system
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: pl-monitoring
       component: vizier
-      name: vizier-pem
+      name: vizier-query-broker
   template:
     metadata:
       annotations:
         
+        px.dev/metrics_port: "50300"
+        px.dev/metrics_scrape: "true"
       labels:
         
         app: pl-monitoring
         component: vizier
-        name: vizier-pem
-        plane: data
+        name: vizier-query-broker
+        plane: control
     spec:
       affinity:
         nodeAffinity:
@@ -45,90 +48,78 @@ spec:
                 values:
                 - linux
       containers:
-      - args: []
-        env:
-        - name: PL_PEM_ENV_VAR_PLACEHOLDER
-          value: "true" # This is un-used, and is just a placeholder used to templatize our YAMLs for Helm.
-        - name: TCMALLOC_SAMPLE_PARAMETER
-          value: "1048576"
-        - name: PL_CLIENT_TLS_CERT
-          value: /certs/client.crt
-        - name: PL_CLIENT_TLS_KEY
-          value: /certs/client.key
-        - name: PL_TLS_CA_CERT
-          value: /certs/ca.crt
-        - name: PL_DISABLE_SSL
-          value: "false"
-        - name: PL_HOST_PATH
-          value: /host
+      - env:
         - name: PL_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: PL_HOST_IP
+        - name: PL_CLUSTER_ID
           valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
+            secretKeyRef:
+              key: cluster-id
+              name: pl-cluster-secrets
+        - name: PL_SENTRY_DSN
+          valueFrom:
+            secretKeyRef:
+              key: sentry-dsn
+              name: pl-cluster-secrets
+              optional: true
         - name: PL_JWT_SIGNING_KEY
           valueFrom:
             secretKeyRef:
               key: jwt-signing-key
               name: pl-cluster-secrets
-        - name: PL_VIZIER_ID
+        - name: PL_POD_IP_ADDRESS
           valueFrom:
-            secretKeyRef:
-              key: cluster-id
-              name: pl-cluster-secrets
-              optional: true
-        - name: PL_VIZIER_NAME
+            fieldRef:
+              fieldPath: status.podIP
+        - name: PL_POD_NAMESPACE
           valueFrom:
-            secretKeyRef:
-              key: cluster-name
-              name: pl-cluster-secrets
-              optional: true
-        - name: PL_CLOCK_CONVERTER
-          value: "default"
-        image: 'gcr.io/pixie-oss/pixie-prod/vizier/pem_image:0.13.2'
-        name: pem
-        resources:
-          limits:
-            memory: "2Gi"
-          requests:
-            memory: "2Gi"
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: PL_CLOUD_ADDR
+          valueFrom:
+            configMapKeyRef:
+              key: PL_CLOUD_ADDR
+              name: pl-cloud-config
+        - name: PL_DATA_ACCESS
+          value: "Full"
+        envFrom:
+        - configMapRef:
+            name: pl-tls-config
+        image: 'gcr.io/pixie-oss/pixie-prod/vizier/query_broker_server_image:0.14.5'
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 50300
+            scheme: HTTPS
+        name: app
+        ports:
+        - containerPort: 50300
         securityContext:
+          allowPrivilegeEscalation: false
           capabilities:
-            add:
-            - SYS_PTRACE
-            - SYS_ADMIN
-          privileged: true
+            drop:
+            - ALL
           seccompProfile:
             type: RuntimeDefault
         volumeMounts:
-        - mountPath: /host
-          name: host-root
-          readOnly: true
-        - mountPath: /sys
-          name: sys
-          readOnly: true
         - mountPath: /certs
           name: certs
-      dnsPolicy: ClusterFirstWithHostNet
-      hostNetwork: true
-      hostPID: true
       initContainers:
       - command:
         - sh
         - -c
-        - ' set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [
+        - 'set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [
           $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
-          echo "waiting for ${URL}" sleep 2; done; '
+          echo "waiting for ${URL}"; sleep 2; done; '
         env:
         - name: SERVICE_NAME
-          value: vizier-query-broker-svc
+          value: vizier-metadata-svc
         - name: SERVICE_PORT
-          value: "50300"
+          value: "50400"
         image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0@sha256:f7f265d5c64eb4463a43a99b6bf773f9e61a50aaa7cefaf564f43e42549a01dd'
-        name: qb-wait
+        name: mds-wait
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -137,29 +128,34 @@ spec:
           seccompProfile:
             type: RuntimeDefault
       securityContext:
+        fsGroup: 10100
+        runAsGroup: 10100
+        runAsNonRoot: true
+        runAsUser: 10100
         seccompProfile:
           type: RuntimeDefault
-      terminationGracePeriodSeconds: 10
+      serviceAccountName: query-broker-service-account
       tolerations:
       - effect: NoSchedule
-        key: node-role.kubernetes.io/master
+        key: kubernetes.io/arch
+        operator: Equal
+        value: amd64
       - effect: NoExecute
-        operator: Exists
+        key: kubernetes.io/arch
+        operator: Equal
+        value: amd64
       - effect: NoSchedule
-        operator: Exists
+        key: kubernetes.io/arch
+        operator: Equal
+        value: arm64
+      - effect: NoExecute
+        key: kubernetes.io/arch
+        operator: Equal
+        value: arm64
       volumes:
-      - hostPath:
-          path: /
-          type: Directory
-        name: host-root
-      - hostPath:
-          path: /sys
-          type: Directory
-        name: sys
       - name: certs
         secret:
           secretName: service-tls-certs
-  updateStrategy:
-    rollingUpdate:
-      maxUnavailable: 20
-    type: RollingUpdate
+      - configMap:
+          name: proxy-envoy-config
+        name: envoy-yaml

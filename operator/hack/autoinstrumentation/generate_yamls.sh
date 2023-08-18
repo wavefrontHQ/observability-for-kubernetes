@@ -56,6 +56,9 @@ cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 
 sed -i '' 's/  PL_CLUSTER_NAME: "replace_me"/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-configmap-pl-cloud-config.yaml"
 sed -i '' 's/  deploy-key: "replace_me"/  deploy-key: {{ .Experimental.AutoInstrumentation.DeployKey }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/01-secret-pl-deploy-secrets.yaml"
+echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
+echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
+
 git add "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 
 popd
