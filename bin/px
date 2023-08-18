@@ -7,11 +7,10 @@ PX_VERSION=0.5.3
 PX_OS=$(go env GOOS)
 PX_ARCH=$(go env GOARCH)
 
-if [[ ! -f "$BIN_DIR"/.cache/px ]] || ! "$BIN_DIR"/.cache/px version | grep "$PX_VERSION" &> /dev/null; then
+if [[ ! -f "$BIN_DIR"/.cache/px ]] || ! "$BIN_DIR"/.cache/px version 2> /dev/null | grep "$PX_VERSION" &> /dev/null; then
     printf "downloading px CLI %s ..." "$PX_VERSION" 1>&2
     mkdir -p "$BIN_DIR"/.cache
-
-    curl --silent -o "$BIN_DIR/.cache/px https://storage.googleapis.com/pixie-dev-public/cli/latest/cli_$PX_OS_$PX_ARCH"
+    curl --silent -o "$BIN_DIR"/.cache/px "https://storage.googleapis.com/pixie-dev-public/cli/${PX_VERSION}/cli_${PX_OS}_${PX_ARCH}"
     chmod +x "$BIN_DIR"/.cache/px
     echo " done." 1>&2
 fi
