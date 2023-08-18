@@ -18,13 +18,10 @@ pipeline {
   }
 
   stages {
-    stage ('Weekly cleanup clusters without keep-me:true label') {
+    stage ('Cleanup GKE clusters') {
       steps {
-        script {
-          lock("integration-test-gke") {
-            sh 'scripts/cleanup-gke-clusters.sh'
-          }
-        }
+        sh 'gcloud auth activate-service-account --key-file $GCP_CREDS'
+        sh 'scripts/cleanup-gke-clusters.sh'
       }
     }
   }

@@ -55,6 +55,8 @@ GCP_ZONE?=b
 NUMBER_OF_NODES?=3
 GCP_CLUSTER_VERSION?=1.25
 
+.PHONY: target-gke connect-to-gke gke-connect-to-cluster gke-cluster-name-check delete-gke-cluster create-gke-cluster
+
 target-gke: connect-to-gke gke-connect-to-cluster
 
 connect-to-gke:
@@ -68,7 +70,7 @@ gke-cluster-name-check:
 	@if [ -z ${GKE_CLUSTER_NAME} ]; then echo "Need to set GKE_CLUSTER_NAME" && exit 1; fi
 
 delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
-	echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
+	@echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters delete $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --quiet
 
 GKE_MACHINE_TYPE?=e2-standard-2
