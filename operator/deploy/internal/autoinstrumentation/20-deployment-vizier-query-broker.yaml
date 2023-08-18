@@ -80,6 +80,8 @@ spec:
                   name: pl-cloud-config
             - name: PL_DATA_ACCESS
               value: "Full"
+            - name: PL_CRON_SCRIPT_SOURCES
+              value: configmaps
           envFrom:
             - configMapRef:
                 name: pl-tls-config

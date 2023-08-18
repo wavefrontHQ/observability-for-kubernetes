@@ -45,7 +45,7 @@ for index in "${!original_file_names[@]}"; do
 done
 
 rm splits/*cloud-conn*
-rm splits/secrets/01-secret-pl-deploy-secrets.yaml
+#rm splits/secrets/01-secret-pl-deploy-secrets.yaml
 rm splits/roles/*cloud-conn*
 
 yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/18-deployment-kelvin.yaml
