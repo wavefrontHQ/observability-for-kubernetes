@@ -44,6 +44,13 @@ for index in "${!original_file_names[@]}"; do
   rm "$original_file_name"
 done
 
+rm splits/*cloud-conn*
+rm splits/secrets/01-secret-pl-deploy-secrets.yaml
+rm splits/roles/*cloud-conn*
+
+yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/18-deployment-kelvin.yaml
+yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/20-deployment-vizier-query-broker.yaml
+
 git rm -rf "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation/*.yaml"
 mkdir -p "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation"
 cp splits/roles/*.yaml "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation"
@@ -55,7 +62,6 @@ cp splits/secrets/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentat
 cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 
 sed -i '' 's/  PL_CLUSTER_NAME: "replace_me"/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-configmap-pl-cloud-config.yaml"
-sed -i '' 's/  deploy-key: "replace_me"/  deploy-key: {{ .Experimental.AutoInstrumentation.DeployKey }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/01-secret-pl-deploy-secrets.yaml"
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
 
