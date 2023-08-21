@@ -29,7 +29,7 @@ pipeline {
   stages {
     stage("Set RUN_CI") {
       environment {
-        FILES_TO_CHECK = 'operator scripts collector ci.Jenkinsfile Makefile'
+        FILES_TO_CHECK = 'operator scripts collector ci.Jenkinsfile Makefile ci/jenkins/tkgm-integration-tests.Jenkinsfile'
       }
       steps {
         script {
@@ -131,6 +131,12 @@ pipeline {
       }
     }
 
+    stage('Run TKGm Integration Tests') {
+      retry(3) {
+        build(job: "TKGm Integration Tests", wait: false)
+      }
+    }
+
     stage('Run Collector Integration Tests') {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
@@ -212,38 +218,6 @@ pipeline {
             }
           }
         }
-
-        stage("TKGm") {
-          agent {
-            label "worker-5"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            KUBECONFIG = "$HOME/.kube/config"
-            KUBECONFIG_DIR = "$HOME/.kube"
-            GCP_CREDS = credentials("GCP_CREDS")
-            DOCKER_IMAGE = "kubernetes-collector"
-            INTEGRATION_TEST_ARGS="all"
-            INTEGRATION_TEST_BUILD="ci"
-          }
-          steps {
-            lock("integration-test-tkgm") {
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
-              sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
-              sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
-              sh "mkdir -p $KUBECONFIG_DIR"
-              retry(3) {
-                sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
-                sh "chmod go-r $KUBECONFIG"
-                sh 'make clean-cluster'
-                sh 'make -C collector integration-test'
-                sh 'make clean-cluster'
-              }
-            }
-          }
-        }
       }
     }
 
@@ -319,35 +293,6 @@ pipeline {
             lock("integration-test-aks") {
               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
                 sh 'kubectl config use k8po-ci'
-                sh 'make clean-cluster'
-                sh 'make -C operator integration-test'
-                sh 'make clean-cluster'
-              }
-            }
-          }
-        }
-
-        stage("TKGm") {
-          agent {
-            label "worker-5"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            KUBECONFIG = "$HOME/.kube/config"
-            KUBECONFIG_DIR = "$HOME/.kube"
-            GCP_CREDS = credentials("GCP_CREDS")
-          }
-          steps {
-            lock("integration-test-tkgm") {
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
-              sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
-              sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
-              sh "mkdir -p $KUBECONFIG_DIR"
-              retry(3) {
-                sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
-                sh "chmod go-r $KUBECONFIG"
                 sh 'make clean-cluster'
                 sh 'make -C operator integration-test'
                 sh 'make clean-cluster'
