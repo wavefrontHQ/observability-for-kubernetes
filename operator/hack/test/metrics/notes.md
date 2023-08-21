@@ -24,7 +24,7 @@ Fix CI
   - Worker leasing pipeline
 - Trigger ^ right after test and publish stage and run in parallel to
   Collector + operator integration tests
-
+- Nesting it all in one pipeline appears to be worse than trying to figure out a whole separate pipeline; reverting
 
 
 
