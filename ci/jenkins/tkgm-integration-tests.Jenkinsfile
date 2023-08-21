@@ -14,14 +14,14 @@ pipeline {
   }
 
   stages {
-    stage ('Find a public pool environment') {
-      steps {
-        script {
+//     stage ('Find a public pool environment') {
+//       steps {
+//         script {
           // TODO need more robust logic on whether or not to lock environments as they may fill up quickly
           // sh "scripts/get-tkgm-env-lock.sh 1h"
-        }
-      }
-    }
+//         }
+//       }
+//     }
 
     stage("Run Collector Integration Tests") {
       agent {
