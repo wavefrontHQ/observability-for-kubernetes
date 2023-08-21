@@ -132,8 +132,10 @@ pipeline {
     }
 
     stage('Run TKGm Integration Tests') {
-      retry(3) {
-        build(job: "TKGm Integration Tests", wait: false)
+      steps {
+        retry(3) {
+          build(job: "TKGm Integration Tests", wait: false)
+        }
       }
     }
 
