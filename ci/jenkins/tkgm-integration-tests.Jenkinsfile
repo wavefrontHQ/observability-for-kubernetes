@@ -3,7 +3,12 @@ pipeline {
     label 'nimbus-cloud'
   }
 
+  tools {
+    go 'Go 1.20'
+  }
+
   environment {
+    PATH = "${env.WORKSPACE}/bin:${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
     VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
   }
@@ -12,7 +17,8 @@ pipeline {
     stage ('Find a public pool environment') {
       steps {
         script {
-          sh "scripts/get-tkgm-env-lock.sh 1h"
+          // TODO need more robust logic on whether or not to lock environments as they may fill up quickly
+          // sh "scripts/get-tkgm-env-lock.sh 1h"
         }
       }
     }
