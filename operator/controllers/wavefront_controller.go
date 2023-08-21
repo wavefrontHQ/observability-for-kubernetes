@@ -92,7 +92,7 @@ type WavefrontReconciler struct {
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=pods,verbs=get;list;watch;
 // +kubebuilder:rbac:groups="",namespace=observability-system,resources=persistentvolumeclaims,verbs=get;create;update;patch;delete;
 // +kubebuilder:rbac:groups="",namespace="",resources=namespaces,verbs=get;list;watch;
-// +kubebuilder:rbac:groups=batch,namespace=observability-system,resources=jobs,verbs=get;list;watch;create;update;patch;
+// +kubebuilder:rbac:groups=batch,namespace=observability-system,resources=jobs,verbs=get;list;watch;create;update;patch;delete;
 // +kubebuilder:rbac:groups=policy,namespace=observability-system,resources=poddisruptionbudgets,verbs=get;list;watch;create;update;patch;delete;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to

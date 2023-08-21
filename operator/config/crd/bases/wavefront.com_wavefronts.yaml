@@ -595,8 +595,6 @@ spec:
                 properties:
                   autoInstrumentation:
                     properties:
-                      deployKey:
-                        type: string
                       enable:
                         type: boolean
                     type: object
