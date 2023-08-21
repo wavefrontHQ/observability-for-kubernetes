@@ -1,10 +1,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  annotations:
-    
   labels:
-    
     app: pl-monitoring
     component: vizier
   name: vizier-pem
@@ -17,10 +14,7 @@ spec:
       name: vizier-pem
   template:
     metadata:
-      annotations:
-        
       labels:
-        
         app: pl-monitoring
         component: vizier
         name: vizier-pem
@@ -47,8 +41,6 @@ spec:
       containers:
       - args: []
         env:
-        - name: PL_PEM_ENV_VAR_PLACEHOLDER
-          value: "true" # This is un-used, and is just a placeholder used to templatize our YAMLs for Helm.
         - name: TCMALLOC_SAMPLE_PARAMETER
           value: "1048576"
         - name: PL_CLIENT_TLS_CERT
@@ -91,14 +83,10 @@ spec:
               name: pl-cluster-secrets
               optional: true
         - name: PL_CLOCK_CONVERTER
-          value: "default"
-        image: 'gcr.io/pixie-oss/pixie-prod/vizier/pem_image:0.14.5'
+          value: default
+        image: projects.registry.vmware.com/asap/pixie-oss/pixie-prod/vizier/pem_image:0.14.4
         name: pem
-        resources:
-          limits:
-            memory: "2Gi"
-          requests:
-            memory: "2Gi"
+        resources: {}
         securityContext:
           capabilities:
             add:
@@ -131,7 +119,7 @@ spec:
           value: vizier-query-broker-svc
         - name: SERVICE_PORT
           value: "50300"
-        image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0@sha256:f7f265d5c64eb4463a43a99b6bf773f9e61a50aaa7cefaf564f43e42549a01dd'
+        image: projects.registry.vmware.com/asap/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0
         name: qb-wait
         securityContext:
           allowPrivilegeEscalation: false

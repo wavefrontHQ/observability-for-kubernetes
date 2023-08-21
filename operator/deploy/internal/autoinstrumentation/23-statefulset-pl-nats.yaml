@@ -1,10 +1,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  annotations:
-    
   labels:
-    
     app: pl-monitoring
     name: pl-nats
   name: pl-nats
@@ -18,10 +15,7 @@ spec:
   serviceName: pl-nats
   template:
     metadata:
-      annotations:
-        
       labels:
-        
         app: pl-monitoring
         name: pl-nats
         plane: control
@@ -42,7 +36,7 @@ spec:
               fieldPath: metadata.namespace
         - name: CLUSTER_ADVERTISE
           value: $(POD_NAME).pl-nats.$(POD_NAMESPACE).svc
-        image: 'gcr.io/pixie-oss/pixie-prod/vizier-deps/nats:2.9.19-scratch@sha256:5de59286eb54ead4d4a9279846098d4097b9c17a3c0588182398a7250cde1af9'
+        image: projects.registry.vmware.com/asap/pixie-oss/pixie-prod/vizier-deps/nats:2.9.19-scratch
         lifecycle:
           preStop:
             exec:
@@ -123,4 +117,3 @@ spec:
         name: config-volume
       - emptyDir: {}
         name: pid
-

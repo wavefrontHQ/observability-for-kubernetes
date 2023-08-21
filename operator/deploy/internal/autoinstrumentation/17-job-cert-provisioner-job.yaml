@@ -1,10 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  annotations:
-    
   labels:
-    
     app: pl-monitoring
     component: vizier
     vizier-bootstrap: "true"
@@ -34,7 +31,7 @@ spec:
         - configMapRef:
             name: pl-cluster-config
             optional: true
-        image: 'gcr.io/pixie-oss/pixie-prod/vizier/cert_provisioner_image:0.14.5'
+        image: projects.registry.vmware.com/asap/pixie-oss/pixie-prod/vizier/cert_provisioner_image:0.14.4
         name: provisioner
         securityContext:
           allowPrivilegeEscalation: false

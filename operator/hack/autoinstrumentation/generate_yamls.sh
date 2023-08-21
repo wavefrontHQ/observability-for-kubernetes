@@ -2,25 +2,29 @@
 set -euo pipefail
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
-rm -rf pixie_yamls
+rm -rf yamls
 
-px deploy --extract_yaml . --deploy_key replace_me --use_etcd_operator=false --cluster_name=replace_me
+curl -L "https://github.com/pixie-io/pixie/releases/download/release%2Fvizier%2Fv0.14.4/vizier_yamls.tar" --output yamls.tar
 
 tar -xvf yamls.tar
 
-pushd pixie_yamls
+pushd yamls
 
 mkdir splits
 
 # Split resources into their own yaml files
-files_to_apply=(00_secrets.yaml 01_nats.yaml 04_vizier_persistent.yaml)
+chmod +w vizier/vizier_metadata_persist_prod.yaml
+chmod +w vizier_deps/nats_prod.yaml
+echo -e "---\n$(cat vizier/vizier_metadata_persist_prod.yaml)" > vizier/vizier_metadata_persist_prod.yaml
+echo -e "---\n$(cat vizier_deps/nats_prod.yaml)" > vizier_deps/nats_prod.yaml
+files_to_apply=(vizier/vizier_metadata_persist_prod.yaml vizier/secrets.yaml vizier_deps/nats_prod.yaml)
 cat "${files_to_apply[@]}" | csplit -n 3 -f 'splits/autoinstrumentation-' - '/^---$/' "{$(($(cat "${files_to_apply[@]}" | grep -c '^\-\-\-$') - 2))}"
 
 # Remove duplicate resources
-duplicates=$(fdupes -f splits)
-if [[ $duplicates != "" ]]; then
-  echo "$duplicates" | grep -v '^$' | xargs rm -fv
-fi
+#duplicates=$(fdupes -f splits)
+#if [[ $duplicates != "" ]]; then
+#  echo "$duplicates" | grep -v '^$' | xargs rm -fv
+#fi
 
 # rename everything to a yaml file
 original_file_names=($(echo splits/autoinstrumentation-*))
@@ -45,11 +49,12 @@ for index in "${!original_file_names[@]}"; do
 done
 
 rm splits/*cloud-conn*
-#rm splits/secrets/01-secret-pl-deploy-secrets.yaml
+rm splits/secrets/01-secret-pl-deploy-secrets.yaml
 rm splits/roles/*cloud-conn*
 
-yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/18-deployment-kelvin.yaml
-yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/20-deployment-vizier-query-broker.yaml
+yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/12-deployment-kelvin.yaml
+yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/14-deployment-vizier-query-broker.yaml
+yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .env) += {"name": "PL_CRON_SCRIPT_SOURCES", "value": "configmaps"}' splits/14-deployment-vizier-query-broker.yaml
 
 git rm -rf "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation/*.yaml"
 mkdir -p "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation"
@@ -61,7 +66,11 @@ mkdir -p "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 cp splits/secrets/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 
-sed -i '' 's/  PL_CLUSTER_NAME: "replace_me"/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-configmap-pl-cloud-config.yaml"
+#find "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/ -type f -name '*.yaml' -exec sed -i '' 's/          image: gcr.io/          image: projects.registry.vmware.com\/asap/' {}
+sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/asap/' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
+sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
+sed -i '' 's/nats:2.9.19//' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
+sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/18-configmap-pl-cloud-config.yaml"
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
 
@@ -69,4 +78,4 @@ git add "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 
 popd
 
-rm -rf yamls.tar pixie_yamls
+rm -rf yamls.tar yamls

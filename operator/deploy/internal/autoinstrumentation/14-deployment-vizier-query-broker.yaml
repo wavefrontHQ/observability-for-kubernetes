@@ -1,26 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
   labels:
     app: pl-monitoring
     component: vizier
-  name: kelvin
+  name: vizier-query-broker
   namespace: observability-system
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: pl-monitoring
       component: vizier
-      name: kelvin
+      name: vizier-query-broker
   template:
     metadata:
       annotations:
+        px.dev/metrics_port: "50300"
+        px.dev/metrics_scrape: "true"
       labels:
         app: pl-monitoring
         component: vizier
-        name: kelvin
-        plane: data
+        name: vizier-query-broker
+        plane: control
     spec:
       affinity:
         nodeAffinity:
@@ -57,47 +59,40 @@ spec:
                   key: sentry-dsn
                   name: pl-cluster-secrets
                   optional: true
-            - name: PL_HOST_PATH
-              value: /host
-            - name: PL_POD_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-            - name: PL_HOST_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
             - name: PL_JWT_SIGNING_KEY
               valueFrom:
                 secretKeyRef:
                   key: jwt-signing-key
                   name: pl-cluster-secrets
-            - name: PL_VIZIER_ID
+            - name: PL_POD_IP_ADDRESS
               valueFrom:
-                secretKeyRef:
-                  key: cluster-id
-                  name: pl-cluster-secrets
-                  optional: true
-            - name: PL_VIZIER_NAME
-              valueFrom:
-                secretKeyRef:
-                  key: cluster-name
-                  name: pl-cluster-secrets
-                  optional: true
+                fieldRef:
+                  fieldPath: status.podIP
             - name: PL_POD_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: TCMALLOC_SAMPLE_PARAMETER
-              value: "1048576"
+            - name: PL_CLOUD_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  key: PL_CLOUD_ADDR
+                  name: pl-cloud-config
+            - name: PL_DATA_ACCESS
+              value: Full
+            - name: PL_CRON_SCRIPT_SOURCES
+              value: configmaps
           envFrom:
             - configMapRef:
                 name: pl-tls-config
-          image: 'gcr.io/pixie-oss/pixie-prod/vizier/kelvin_image:0.14.5'
+          image: projects.registry.vmware.com/asap/pixie-oss/pixie-prod/vizier/query_broker_server_image:0.14.4
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 50300
+              scheme: HTTPS
           name: app
           ports:
-            - containerPort: 59300
-          resources: {}
+            - containerPort: 50300
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -108,9 +103,6 @@ spec:
           volumeMounts:
             - mountPath: /certs
               name: certs
-            - mountPath: /sys
-              name: sys
-              readOnly: true
       initContainers:
         - command:
             - sh
@@ -118,11 +110,11 @@ spec:
             - 'set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do echo "waiting for ${URL}"; sleep 2; done; '
           env:
             - name: SERVICE_NAME
-              value: vizier-query-broker-svc
+              value: vizier-metadata-svc
             - name: SERVICE_PORT
-              value: "50300"
-          image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0@sha256:f7f265d5c64eb4463a43a99b6bf773f9e61a50aaa7cefaf564f43e42549a01dd'
-          name: qb-wait
+              value: "50400"
+          image: projects.registry.vmware.com/asap/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0
+          name: mds-wait
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -137,7 +129,7 @@ spec:
         runAsUser: 10100
         seccompProfile:
           type: RuntimeDefault
-      terminationGracePeriodSeconds: 30
+      serviceAccountName: query-broker-service-account
       tolerations:
         - effect: NoSchedule
           key: kubernetes.io/arch
@@ -159,7 +151,6 @@ spec:
         - name: certs
           secret:
             secretName: service-tls-certs
-        - hostPath:
-            path: /sys
-            type: Directory
-          name: sys
+        - configMap:
+            name: proxy-envoy-config
+          name: envoy-yaml

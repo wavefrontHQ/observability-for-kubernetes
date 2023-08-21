@@ -1,11 +1,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  annotations:
-    
   creationTimestamp: null
   labels:
-    
     app: pl-monitoring
     component: vizier
   name: pl-vizier-query-broker-role

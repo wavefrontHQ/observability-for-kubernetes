@@ -6,13 +6,8 @@ data:
   PL_ETCD_OPERATOR_ENABLED: "false"
   PL_MD_ETCD_SERVER: https://pl-etcd-client.pl.svc:2379
   PX_MEMORY_LIMIT: ""
-  PX_MEMORY_REQUEST: "<no value>"
+  PX_MEMORY_REQUEST: ""
 kind: ConfigMap
 metadata:
-  annotations:
-    
-  creationTimestamp: null
-  labels:
-    
   name: pl-cluster-config
   namespace: observability-system

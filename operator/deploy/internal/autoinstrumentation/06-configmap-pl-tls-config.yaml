@@ -7,10 +7,7 @@ data:
   PL_TLS_CA_CERT: /certs/ca.crt
 kind: ConfigMap
 metadata:
-  annotations:
-    
   labels:
-    
     app: pl-monitoring
     component: vizier
   name: pl-tls-config

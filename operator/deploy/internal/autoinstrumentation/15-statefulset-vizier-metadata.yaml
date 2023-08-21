@@ -1,10 +1,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  annotations:
-    
   labels:
-    
     app: pl-monitoring
     component: vizier
   name: vizier-metadata
@@ -20,11 +17,9 @@ spec:
   template:
     metadata:
       annotations:
-        
         px.dev/metrics_port: "50400"
         px.dev/metrics_scrape: "true"
       labels:
-        
         app: pl-monitoring
         component: vizier
         name: vizier-metadata
@@ -68,7 +63,7 @@ spec:
         envFrom:
         - configMapRef:
             name: pl-tls-config
-        image: 'gcr.io/pixie-oss/pixie-prod/vizier/metadata_server_image:0.14.5'
+        image: projects.registry.vmware.com/asap/pixie-oss/pixie-prod/vizier/metadata_server_image:0.14.4
         livenessProbe:
           httpGet:
             path: /healthz
@@ -113,7 +108,7 @@ spec:
           value: ""
         - name: PROTOCOL
           value: http
-        image: 'gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0@sha256:f7f265d5c64eb4463a43a99b6bf773f9e61a50aaa7cefaf564f43e42549a01dd'
+        image: projects.registry.vmware.com/asap/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0
         name: nats-wait
         securityContext:
           allowPrivilegeEscalation: false

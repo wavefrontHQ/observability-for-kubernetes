@@ -1,10 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  annotations:
-    
   labels:
-    
     app: pl-monitoring
     component: vizier
     vizier-bootstrap: "true"
