@@ -69,7 +69,6 @@ cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 #find "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/ -type f -name '*.yaml' -exec sed -i '' 's/          image: gcr.io/          image: projects.registry.vmware.com\/asap/' {}
 sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/asap/' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
 sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
-sed -i '' 's/nats:2.9.19//' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
 sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/18-configmap-pl-cloud-config.yaml"
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
