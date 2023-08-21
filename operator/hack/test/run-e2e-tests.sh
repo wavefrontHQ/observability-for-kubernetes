@@ -672,6 +672,9 @@ function main() {
   if [[ " ${tests_to_run[*]} " =~ " common-metrics " ]]; then
     run_test "common-metrics" "common-metrics-check"
   fi
+  if [[ " ${tests_to_run[*]} " =~ " basic-e2e " ]]; then
+    run_test "basic" "test_wavefront_metrics" "logging" "proxy"
+  fi
   if [[ " ${tests_to_run[*]} " =~ " advanced " ]]; then
     run_test "advanced" "health" "test_wavefront_metrics" "logging" "proxy"
   fi
