@@ -1,5 +1,4 @@
-#!/bin/bash
-#set -eou pipefail
+#!/usr/bin/env bash
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 
