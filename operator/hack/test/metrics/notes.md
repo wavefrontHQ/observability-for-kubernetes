@@ -1,3 +1,33 @@
+# 8/21/23 fix CI notes from conversation with Mark the other day
+Fix CI
+- TODO Limit what’s run on TKGm
+~~- Fail fast: try to connect and read something from the server and fail on that instead of test timeout
+    - Try 3 retries as-is
+    - If that doesn't work consistently, then incorporate getting new environment~~
+
+- Set up a separate pipeline for TKGm testing that triggers on collector and operator publish in separate pipeline
+    - Get new lease
+    - Run light tests
+    - Fail fast
+    - Try 3 times
+- Light test for TKGm: smoke-test
+    - Metrics test (common-metrics)
+    - Logging test
+    - Some e2e test
+    - Nothing else
+- Last resort: intermittent / release / manual testing if we can’t rely on this for CI per-commit
+
+
+## Today's hope / ambition:
+- Merge
+  - TKGM tests + setup for integration test
+  - Worker leasing pipeline
+- Trigger ^ right after test and publish stage and run in parallel to
+  Collector + operator integration tests
+
+
+
+
 # TODO
 - add operator overlay metrics test for core dns + kube dns
 - add anything that's different on different IaaSs to operator test
