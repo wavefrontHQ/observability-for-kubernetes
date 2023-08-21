@@ -20,12 +20,6 @@ echo -e "---\n$(cat vizier_deps/nats_prod.yaml)" > vizier_deps/nats_prod.yaml
 files_to_apply=(vizier/vizier_metadata_persist_prod.yaml vizier/secrets.yaml vizier_deps/nats_prod.yaml)
 cat "${files_to_apply[@]}" | csplit -n 3 -f 'splits/autoinstrumentation-' - '/^---$/' "{$(($(cat "${files_to_apply[@]}" | grep -c '^\-\-\-$') - 2))}"
 
-# Remove duplicate resources
-#duplicates=$(fdupes -f splits)
-#if [[ $duplicates != "" ]]; then
-#  echo "$duplicates" | grep -v '^$' | xargs rm -fv
-#fi
-
 # rename everything to a yaml file
 original_file_names=($(echo splits/autoinstrumentation-*))
 mkdir -p splits/roles
@@ -66,7 +60,6 @@ mkdir -p "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 cp splits/secrets/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 
-#find "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/ -type f -name '*.yaml' -exec sed -i '' 's/          image: gcr.io/          image: projects.registry.vmware.com\/asap/' {}
 sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/asap/' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
 sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
 sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/18-configmap-pl-cloud-config.yaml"
