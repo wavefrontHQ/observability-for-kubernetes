@@ -35,6 +35,7 @@ pipeline {
         KUBECONFIG = "$HOME/.kube/config"
         KUBECONFIG_DIR = "$HOME/.kube"
         DOCKER_IMAGE = "kubernetes-operator"
+        INTEGRATION_TEST_ARGS = "-r common-metrics -r basic-e2e"
       }
       steps {
         lock("integration-test-tkgm") {
