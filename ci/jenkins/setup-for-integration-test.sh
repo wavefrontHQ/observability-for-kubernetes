@@ -50,7 +50,7 @@ if [[ "${K8S_ENV}" == "tkgm" ]]; then
     chmod go-r "$KUBECONFIG_FILE"
   fi
   sheepctl -n k8po-team lock list -j \
-    | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' \
+    | jq -r '. | map(select(.status == "locked" and .pool_name != null and (.pool_name | contains("tkg")))) | .[0].access' \
     | jq -r '.tkg[0].kubeconfig' \
     > "$KUBECONFIG_FILE"
 fi

@@ -216,7 +216,7 @@ pipeline {
         }
 
         stage("AKS") {
-          agent { label 'worker-4' }
+          agent { label 'worker-3' }
           options { timeout(time: 60, unit: 'MINUTES') }
           environment {
             GCP_CREDS = credentials("GCP_CREDS")
@@ -237,45 +237,45 @@ pipeline {
       }
     }
 
-    stage('Run TKGm Integration Tests') {
+    stage('Run TKGm Collector Integration Test') {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
-      agent { label 'worker-5' }
+      agent { label 'worker-1' }
       options { timeout(time: 60, unit: 'MINUTES') }
       environment {
         KUBECONFIG_DIR = "$HOME/.kube"
         KUBECONFIG_FILE = "$HOME/.kube/kubeconfig-tkgm"
         KUBECONFIG = "$KUBECONFIG_FILE:$HOME/.kube/config"
         TKGM_CONTEXT_NAME = 'tkg-mgmt-vc-admin@tkg-mgmt-vc'
+        DOCKER_IMAGE = 'kubernetes-collector'
+        INTEGRATION_TEST_ARGS = 'all'
+        INTEGRATION_TEST_BUILD = 'ci'
       }
-
-      stages {
-        stage('Collector') {
-          environment {
-            DOCKER_IMAGE = 'kubernetes-collector'
-            INTEGRATION_TEST_ARGS = 'all'
-            INTEGRATION_TEST_BUILD = 'ci'
-          }
-          steps {
-            lock("integration-test-tkgm") {
-              sh './ci/jenkins/setup-for-integration-test.sh -k tkgm'
-              sh 'kubectl config use-context $TKGM_CONTEXT_NAME ; kubectl get nodes'
-              sh 'make -C collector clean-cluster integration-test; make clean-cluster'
-            }
-          }
+      steps {
+        lock("integration-test-tkgm") {
+          sh './ci/jenkins/setup-for-integration-test.sh -k tkgm'
+          sh 'kubectl config use-context $TKGM_CONTEXT_NAME ; kubectl get nodes'
+          sh 'make -C collector clean-cluster integration-test; make clean-cluster'
         }
+      }
+    }
 
-        stage('Operator') {
-          environment {
-            OPERATOR_YAML_TYPE = 'rc'
-            TOKEN = credentials('GITHUB_TOKEN')
-          }
-          steps {
-            lock("integration-test-tkgm") {
-              sh './ci/jenkins/setup-for-integration-test.sh -k tkgm'
-              sh 'kubectl config use-context $TKGM_CONTEXT_NAME ; kubectl get nodes'
-              sh 'make -C operator clean-cluster integration-test; make clean-cluster'
-            }
-          }
+    stage('Run TKGm Operator Integration Test') {
+      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
+      agent { label 'worker-2' }
+      options { timeout(time: 60, unit: 'MINUTES') }
+      environment {
+        KUBECONFIG_DIR = "$HOME/.kube"
+        KUBECONFIG_FILE = "$HOME/.kube/kubeconfig-tkgm"
+        KUBECONFIG = "$KUBECONFIG_FILE:$HOME/.kube/config"
+        TKGM_CONTEXT_NAME = 'tkg-mgmt-vc-admin@tkg-mgmt-vc'
+        OPERATOR_YAML_TYPE = 'rc'
+        TOKEN = credentials('GITHUB_TOKEN')
+      }
+      steps {
+        lock("integration-test-tkgm") {
+          sh './ci/jenkins/setup-for-integration-test.sh -k tkgm'
+          sh 'kubectl config use-context $TKGM_CONTEXT_NAME ; kubectl get nodes'
+          sh 'make -C operator clean-cluster integration-test; make clean-cluster'
         }
       }
     }
