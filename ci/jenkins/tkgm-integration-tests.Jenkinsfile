@@ -54,7 +54,7 @@ pipeline {
         DOCKER_IMAGE = "kubernetes-collector"
         INTEGRATION_TEST_ARGS="all"
         INTEGRATION_TEST_BUILD="ci"
-        GIT_BRANCH = GIT_BRANCH_PASSED_IN
+        GIT_BRANCH = "${params.GIT_BRANCH_PASSED_IN}"
       }
       steps {
         lock("integration-test-tkgm") {
