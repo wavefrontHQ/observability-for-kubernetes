@@ -8,7 +8,7 @@ function main() {
 
   gcloud config set project wavefront-gcp-dev
 
-  CLUSTERS_TO_REMOVE=$(gcloud container clusters list --filter="resourceLabels.delete-me=true" --format json | jq -c '.[] | {name,zone}')
+  CLUSTERS_TO_REMOVE=$(gcloud container clusters list --filter="resourceLabels.delete-me=true" --format json | jq '.[]' | jq -c '{name,zone}')
 
   local name zone
   for cluster in ${CLUSTERS_TO_REMOVE[@]}; do
