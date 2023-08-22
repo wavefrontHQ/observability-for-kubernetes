@@ -16,6 +16,10 @@ pipeline {
     OPERATOR_YAML_TYPE="rc"
   }
 
+  parameters {
+    string(defaultValue: "", description: "Git branch of CI pipeline", NAME: 'GIT_BRANCH_PASSED_IN')
+  }
+
   stages {
 //     stage ('Find a public pool environment') {
 //       steps {
