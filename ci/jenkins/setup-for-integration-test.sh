@@ -41,6 +41,16 @@ if [[ "${K8S_ENV}" == "gke" ]]; then
     || (echo "docker credentials not configured properly"; exit 1)
 fi
 
+JQ_VERSION='1.6'
+
+if ! [ -x "$(command -v jq)" ]; then
+  echo "Installing jq ..."
+  curl -H "Authorization: token ${GITHUB_TOKEN}" \
+    -sSL "https://github.com/stedolan/jq/releases/download/jq-${JQ_VERSION}/jq-linux64" > ./jq
+  chmod +x ./jq
+  sudo mv ./jq /usr/local/bin
+fi
+
 if [[ "${K8S_ENV}" == "tkgm" ]]; then
   if [[ ! -d "$KUBECONFIG_DIR" ]]; then
     mkdir -p "$KUBECONFIG_DIR"
@@ -53,16 +63,6 @@ if [[ "${K8S_ENV}" == "tkgm" ]]; then
     | jq -r '. | map(select(.status == "locked" and .pool_name != null and (.pool_name | contains("tkg")))) | .[0].access' \
     | jq -r '.tkg[0].kubeconfig' \
     > "$KUBECONFIG_FILE"
-fi
-
-JQ_VERSION='1.6'
-
-if ! [ -x "$(command -v jq)" ]; then
-  echo "Installing jq ..."
-  curl -H "Authorization: token ${GITHUB_TOKEN}" \
-    -sSL "https://github.com/stedolan/jq/releases/download/jq-${JQ_VERSION}/jq-linux64" > ./jq
-  chmod +x ./jq
-  sudo mv ./jq /usr/local/bin
 fi
 
 YQ_VERSION='4.26.1'
