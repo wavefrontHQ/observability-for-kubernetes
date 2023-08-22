@@ -598,6 +598,16 @@ spec:
                       enable:
                         type: boolean
                     type: object
+                  hub:
+                    properties:
+                      autoInstrumentation:
+                        properties:
+                          enable:
+                            type: boolean
+                        type: object
+                      enable:
+                        type: boolean
+                    type: object
                   kubernetesEvents:
                     description: KubernetesEvents is deprecated, please use aria-insights-secret
                       instead

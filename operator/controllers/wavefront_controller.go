@@ -237,7 +237,7 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		spec.DataExport.WavefrontProxy.Enable,
 		(spec.CanExportData && spec.DataCollection.Metrics.Enable) || spec.Experimental.KubernetesEvents.Enable,
 		spec.CanExportData && spec.DataCollection.Logging.Enable,
-		spec.CanExportData && spec.Experimental.AutoInstrumentation.Enable,
+		(spec.CanExportData && spec.Experimental.AutoInstrumentation.Enable) || spec.Experimental.Hub.AutoInstrumentation.Enable,
 	)
 }
 

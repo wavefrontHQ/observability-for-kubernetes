@@ -1440,6 +1440,93 @@ func TestReconcileAutoInstrumentation(t *testing.T) {
 		doesNotContainPortInServicePort(t, 4317, *mockKM)
 	})
 }
+func TestReconcileHubAutoInstrumentation(t *testing.T) {
+
+	t.Run("creates AutoInstrumentation components when Hub AutoInstrumentation is enabled", func(t *testing.T) {
+		wfCR := &wf.Wavefront{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "wavefront",
+				Namespace: wftest.DefaultNamespace,
+			},
+			Spec: wf.WavefrontSpec{
+				ClusterName: "test-clusterName",
+				Experimental: wf.Experimental{
+					Hub: wf.Hub{
+						Enable: true,
+						AutoInstrumentation: wf.AutoInstrumentation{
+							Enable: true,
+						},
+					},
+				},
+			},
+		}
+		r, mockKM := emptyScenario(wfCR, nil)
+
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+		r.ClusterUUID = "12345"
+
+		results, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		r.MetricConnection.Flush()
+
+		require.Equal(t, ctrl.Result{Requeue: true}, results)
+
+		require.True(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "StatefulSet", "pl-nats"))
+		require.True(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
+		require.True(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "Deployment", "kelvin"))
+		require.True(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "Deployment", "vizier-query-broker"))
+		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "Secret", "pl-cluster-secrets"))
+		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "ConfigMap", "pl-cloud-config"))
+		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "ServiceAccount", "metadata-service-account"))
+
+		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "ConfigMap", "pl-cloud-config", "PL_CLUSTER_NAME: test-clusterName"))
+		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-name: test-clusterName"))
+		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
+
+		require.False(t, mockKM.ProxyDeploymentContains(""))
+	})
+
+	t.Run("does not create auto instrumentation components when auto instrumentation is not enabled", func(t *testing.T) {
+		wfCR := &wf.Wavefront{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "wavefront",
+				Namespace: wftest.DefaultNamespace,
+			},
+			Spec: wf.WavefrontSpec{
+				ClusterName: "test-clusterName",
+				Experimental: wf.Experimental{
+					Hub: wf.Hub{
+						Enable: true,
+						AutoInstrumentation: wf.AutoInstrumentation{
+							Enable: false,
+						},
+					},
+				},
+			},
+		}
+		r, mockKM := emptyScenario(wfCR, nil)
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		results, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		r.MetricConnection.Flush()
+
+		require.Equal(t, ctrl.Result{Requeue: true}, results)
+
+		require.False(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "StatefulSet", "pl-nats"))
+		require.False(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
+		require.False(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "Deployment", "kelvin"))
+		require.False(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "Deployment", "vizier-query-broker"))
+		require.False(t, mockKM.AutoInstrumentationComponentContains("v1", "Secret", "pl-cluster-secrets"))
+		require.False(t, mockKM.AutoInstrumentationComponentContains("v1", "Secret", "pl-deploy-secrets"))
+		require.False(t, mockKM.AutoInstrumentationComponentContains("v1", "ConfigMap", "pl-cloud-config"))
+		require.False(t, mockKM.AutoInstrumentationComponentContains("v1", "ServiceAccount", "metadata-service-account"))
+	})
+}
 
 func TestReconcileKubernetesEventsByRuntimeSecret(t *testing.T) {
 	t.Run("can enable external K8s events and WF metrics", func(t *testing.T) {

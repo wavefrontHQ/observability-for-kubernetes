@@ -83,10 +83,17 @@ type Experimental struct {
 
 	// KubernetesEvents is deprecated, please use aria-insights-secret instead
 	KubernetesEvents KubernetesEvents `json:"kubernetesEvents,omitempty"`
+
+	Hub Hub `json:"hub,omitempty"`
 }
 
 type AutoInstrumentation struct {
 	Enable bool `json:"enable,omitempty"`
+}
+
+type Hub struct {
+	Enable              bool                `json:"enable,omitempty"`
+	AutoInstrumentation AutoInstrumentation `json:"autoInstrumentation,omitempty"`
 }
 
 type Metrics struct {
