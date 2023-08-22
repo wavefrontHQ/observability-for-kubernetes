@@ -31,7 +31,7 @@ spec:
         - configMapRef:
             name: pl-cluster-config
             optional: true
-        image: projects.registry.vmware.com/asap/pixie-oss/pixie-prod/vizier/cert_provisioner_image:0.14.4
+        image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/cert_provisioner_image:0.14.2
         name: provisioner
         securityContext:
           allowPrivilegeEscalation: false

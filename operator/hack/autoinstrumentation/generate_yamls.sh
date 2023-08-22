@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_ROOT=$(git rev-parse --show-toplevel)
 rm -rf yamls
 
-curl -L "https://github.com/pixie-io/pixie/releases/download/release%2Fvizier%2Fv0.14.4/vizier_yamls.tar" --output yamls.tar
+curl -L "https://github.com/pixie-io/pixie/releases/download/release%2Fvizier%2Fv0.14.2/vizier_yamls.tar" --output yamls.tar
 
 tar -xvf yamls.tar
 
@@ -60,7 +60,8 @@ mkdir -p "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 cp splits/secrets/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
 
-sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/asap/' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
+sed -i '' 's/image: gcr.io\/pixie-oss\/pixie-dev-public\/curl:multiarch-7.87.0/image: projects.registry.vmware.com\/tanzu_observability\/bitnami\/os-shell:curl-11/' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
+sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/tanzu_observability/' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
 sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
 sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/18-configmap-pl-cloud-config.yaml"
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
