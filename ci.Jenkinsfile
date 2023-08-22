@@ -135,7 +135,8 @@ pipeline {
       steps {
         retry(3) {
           build(job: "tkgm-integration-tests", wait: true, parameters: [
-            string(name: 'GIT_BRANCH_PASSED_IN', value: "${env.GIT_BRANCH}")
+            string(name: 'GIT_BRANCH_PARAM', value: "${env.GIT_BRANCH}"),
+            string(name: 'OPERATOR_YAML_RC_SHA_PARAM', value: "${env.OPERATOR_YAML_RC_SHA}")
           ])
         }
       }
