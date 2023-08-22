@@ -38,7 +38,7 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-ALLOW_AUTO_INSTRUMENTATION?=false
+ALLOW_AUTO_INSTRUMENTATION?=true
 
 .PHONY: all
 all: build

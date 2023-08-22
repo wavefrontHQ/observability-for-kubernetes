@@ -1,0 +1,68 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: cert-provisioner-job
+  namespace: observability-system
+spec:
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: pl-monitoring
+        component: vizier
+        vizier-bootstrap: "true"
+      name: cert-provisioner-job
+    spec:
+      containers:
+      - env:
+        - name: PL_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        envFrom:
+        - configMapRef:
+            name: pl-cloud-config
+        - configMapRef:
+            name: pl-cluster-config
+            optional: true
+        image: projects.registry.vmware.com/asap/pixie-oss/pixie-prod/vizier/cert_provisioner_image:0.14.4
+        name: provisioner
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      restartPolicy: Never
+      securityContext:
+        fsGroup: 10100
+        runAsGroup: 10100
+        runAsNonRoot: true
+        runAsUser: 10100
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: pl-cert-provisioner-service-account
+      tolerations:
+      - effect: NoSchedule
+        key: kubernetes.io/arch
+        operator: Equal
+        value: amd64
+      - effect: NoExecute
+        key: kubernetes.io/arch
+        operator: Equal
+        value: amd64
+      - effect: NoSchedule
+        key: kubernetes.io/arch
+        operator: Equal
+        value: arm64
+      - effect: NoExecute
+        key: kubernetes.io/arch
+        operator: Equal
+        value: arm64

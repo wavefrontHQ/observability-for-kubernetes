@@ -86,8 +86,7 @@ type Experimental struct {
 }
 
 type AutoInstrumentation struct {
-	Enable    bool   `json:"enable,omitempty"`
-	DeployKey string `json:"deployKey,omitempty"`
+	Enable bool `json:"enable,omitempty"`
 }
 
 type Metrics struct {

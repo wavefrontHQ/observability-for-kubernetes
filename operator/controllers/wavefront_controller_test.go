@@ -39,7 +39,6 @@ func TestReconcileAll(t *testing.T) {
 	t.Run("does not create other services until the proxy is running", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.AutoInstrumentation.Enable = true
-			wavefront.Spec.Experimental.AutoInstrumentation.DeployKey = "foobar"
 		}), nil, wftest.Proxy(wftest.WithReplicas(0, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -67,7 +66,6 @@ func TestReconcileAll(t *testing.T) {
 	t.Run("creates other components after the proxy is running", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.AutoInstrumentation.Enable = true
-			wavefront.Spec.Experimental.AutoInstrumentation.DeployKey = "foobar"
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -1383,10 +1381,11 @@ func TestReconcileAutoInstrumentation(t *testing.T) {
 	t.Run("creates AutoInstrumentation components when AutoInstrumentation is enabled", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.AutoInstrumentation.Enable = true
-			wavefront.Spec.Experimental.AutoInstrumentation.DeployKey = "foobar"
+			wavefront.Spec.ClusterName = "test-clusterName"
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+		r.ClusterUUID = "12345"
 
 		results, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1400,9 +1399,12 @@ func TestReconcileAutoInstrumentation(t *testing.T) {
 		require.True(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "Deployment", "kelvin"))
 		require.True(t, mockKM.AutoInstrumentationComponentContains("apps/v1", "Deployment", "vizier-query-broker"))
 		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "Secret", "pl-cluster-secrets"))
-		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "Secret", "pl-deploy-secrets"))
 		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "ConfigMap", "pl-cloud-config"))
 		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "ServiceAccount", "metadata-service-account"))
+
+		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "ConfigMap", "pl-cloud-config", "PL_CLUSTER_NAME: test-clusterName"))
+		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-name: test-clusterName"))
+		require.True(t, mockKM.AutoInstrumentationComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
 
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("4317"))
 		containsPortInContainers(t, "otlpGrpcListenerPorts", *mockKM, 4317)
