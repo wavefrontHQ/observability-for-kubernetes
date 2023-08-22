@@ -19,6 +19,7 @@ pipeline {
 
   parameters {
     string(name: 'OPERATOR_YAML_RC_SHA', defaultValue: '')
+    string(name: 'METRICS_RETRY_COUNT', defaultValue: '24')
     booleanParam(
       name: 'FORCE_RUN_CI',
       defaultValue: false,
@@ -133,6 +134,9 @@ pipeline {
 
     stage('Run Collector Integration Tests') {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
+      environment {
+        METRICS_RETRY_COUNT = "${params.METRICS_RETRY_COUNT}"
+      }
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
@@ -248,6 +252,7 @@ pipeline {
       environment {
         OPERATOR_YAML_TYPE="rc"
         TOKEN = credentials('GITHUB_TOKEN')
+        METRICS_RETRY_COUNT = "${params.METRICS_RETRY_COUNT}"
       }
 
       parallel {

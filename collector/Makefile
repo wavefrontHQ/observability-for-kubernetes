@@ -192,6 +192,8 @@ clean:
 token-check:
 	@if [ -z ${WAVEFRONT_TOKEN} ]; then echo "Need to set WAVEFRONT_TOKEN" && exit 1; fi
 
+METRICS_RETRY_COUNT?=18
+
 .PHONY: proxy-test
 proxy-test: token-check
 ifeq ($(INTEGRATION_TEST_ARGS),all)

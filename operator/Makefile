@@ -239,6 +239,7 @@ undeploy: operator-yaml
 	kubectl delete --ignore-not-found=$(ignore-not-found) -n $(NS) secret wavefront-secret || true
 	kubectl delete --ignore-not-found=$(ignore-not-found) -k $(OPERATOR_BUILD_DIR) || true
 
+METRICS_RETRY_COUNT?=18
 
 .PHONY: integration-test
 integration-test: undeploy deploy
