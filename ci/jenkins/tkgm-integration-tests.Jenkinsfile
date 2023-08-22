@@ -17,7 +17,7 @@ pipeline {
   }
 
   parameters {
-    string(defaultValue: "", description: "Git branch of CI pipeline", NAME: 'GIT_BRANCH_PASSED_IN')
+    string(defaultValue: "", description: "Git branch of CI pipeline", name: 'GIT_BRANCH_PASSED_IN')
   }
 
   stages {
