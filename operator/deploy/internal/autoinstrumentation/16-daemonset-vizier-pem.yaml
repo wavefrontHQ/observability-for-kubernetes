@@ -84,7 +84,7 @@ spec:
               optional: true
         - name: PL_CLOCK_CONVERTER
           value: default
-        image: projects.registry.vmware.com/asap/pixie-oss/pixie-prod/vizier/pem_image:0.14.4
+        image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/pem_image:0.14.2
         name: pem
         resources: {}
         securityContext:
@@ -111,15 +111,15 @@ spec:
       - command:
         - sh
         - -c
-        - 'set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [
+        - ' set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [
           $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
-          echo "waiting for ${URL}"; sleep 2; done; '
+          echo "waiting for ${URL}" sleep 2; done; '
         env:
         - name: SERVICE_NAME
           value: vizier-query-broker-svc
         - name: SERVICE_PORT
           value: "50300"
-        image: projects.registry.vmware.com/asap/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0
+        image: projects.registry.vmware.com/tanzu_observability/bitnami/os-shell:curl-11
         name: qb-wait
         securityContext:
           allowPrivilegeEscalation: false
