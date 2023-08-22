@@ -20,6 +20,7 @@ pipeline {
 //         script {
           // TODO need more robust logic on whether or not to lock environments as they may fill up quickly
           // sh "scripts/get-tkgm-env-lock.sh 1h"
+//           TODO try with 30m lease. Is there a force release? If so, get for an hour and release at the end in a finally block
 //         }
 //       }
 //     }
@@ -32,6 +33,7 @@ pipeline {
         timeout(time: 18, unit: 'MINUTES')
       }
       environment {
+        GCP_CREDS = credentials("GCP_CREDS")
         KUBECONFIG = "$HOME/.kube/config"
         KUBECONFIG_DIR = "$HOME/.kube"
         DOCKER_IMAGE = "kubernetes-operator"
@@ -39,7 +41,7 @@ pipeline {
       }
       steps {
         lock("integration-test-tkgm") {
-//           sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
+          sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
           sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
           sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
           sh "mkdir -p $KUBECONFIG_DIR"
