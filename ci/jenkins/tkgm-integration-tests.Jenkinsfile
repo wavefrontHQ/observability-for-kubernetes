@@ -12,6 +12,7 @@ pipeline {
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
     VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
     WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+    GITHUB_TOKEN = credentials("GITHUB_TOKEN")
   }
 
   stages {
