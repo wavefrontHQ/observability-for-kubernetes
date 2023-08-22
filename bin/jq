@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BIN_DIR=$(dirname $(realpath "$0"))
+
+VERSION=1.6
+
+if [[ ! -f "$BIN_DIR/.cache/jq" ]] || ! "$BIN_DIR"/.cache/jq --version 2> /dev/null | grep "$VERSION" &> /dev/null; then
+    printf "downloading jq %s ..." "$VERSION" 1>&2
+    mkdir -p "$BIN_DIR/.cache"
+    OS="$(go env GOOS)"
+    ARCH="$(go env GOARCH)"
+    case $OS in
+        linux)
+            ARCH="64"
+            ;;
+        darwin)
+            OS="osx"
+            ARCH="-amd64"
+            ;;
+    esac
+    curl --silent -L "https://github.com/stedolan/jq/releases/download/jq-${VERSION}/jq-${OS}${ARCH}" > "$BIN_DIR/.cache/jq"
+    chmod +x "$BIN_DIR/.cache/jq"
+    echo " done." 1>&2
+fi
+
+# shellcheck disable=SC2086
+"$BIN_DIR"/.cache/jq $*
