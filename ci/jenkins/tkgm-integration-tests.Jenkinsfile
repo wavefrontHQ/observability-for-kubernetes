@@ -13,6 +13,7 @@ pipeline {
     VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
     WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
     GITHUB_TOKEN = credentials("GITHUB_TOKEN")
+    OPERATOR_YAML_TYPE="rc"
   }
 
   stages {
@@ -25,6 +26,16 @@ pipeline {
 //         }
 //       }
 //     }
+
+    stage("Get Operator RC SHA") {
+      steps {
+        script {
+          env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+          sh "echo GIT_BRANCH: ${GIT_BRANCH}"
+          sh "echo GIT_BRANCH_PASSED_IN: ${GIT_BRANCH_PASSED_IN}"
+        }
+      }
+    }
 
     stage("Run Collector Integration Tests") {
       agent {
