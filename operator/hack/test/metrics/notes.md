@@ -17,6 +17,10 @@ Fix CI
     - Nothing else
 - Last resort: intermittent / release / manual testing if we can’t rely on this for CI per-commit
 
+- If we stop running collector integration tests on TKGm,
+  is there any coverage we're losing that we're concerned about?
+- What happened to the bin shim on CI for jq?
+
 
 ## Today's hope / ambition:
 - Merge
