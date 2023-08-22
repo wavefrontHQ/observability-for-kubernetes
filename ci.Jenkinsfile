@@ -134,7 +134,9 @@ pipeline {
     stage('Run TKGm Integration Tests') {
       steps {
         retry(3) {
-          build(job: "tkgm-integration-tests", wait: true)
+          build(job: "tkgm-integration-tests", wait: true, parameters: {
+            GIT_BRANCH_PASSED_IN: env.GIT_BRANCH,
+          })
         }
       }
     }
