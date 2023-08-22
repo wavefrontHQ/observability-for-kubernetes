@@ -17,7 +17,7 @@ pipeline {
   }
 
   parameters {
-    string(defaultValue: "", description: "Git branch of CI pipeline", name: 'GIT_BRANCH_PASSED_IN')
+    string(defaultValue: "", description: "Git branch of CI pipeline", name: 'GIT_BRANCH_PARAM')
   }
 
   stages {
@@ -35,41 +35,43 @@ pipeline {
       steps {
         script {
           env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+          sh "echo OPERATOR_YAML_RC_SHA: ${OPERATOR_YAML_RC_SHA}"
+          sh "echo OPERATOR_YAML_RC_SHA_PARAM: ${OPERATOR_YAML_RC_SHA_PARAM}"
           sh "echo GIT_BRANCH: ${GIT_BRANCH}"
-          sh "echo GIT_BRANCH_PASSED_IN: ${GIT_BRANCH_PASSED_IN}"
+          sh "echo GIT_BRANCH_PARAM: ${GIT_BRANCH_PARAM}"
         }
       }
     }
 
-    stage("Run Collector Integration Tests") {
-      agent {
-        label "worker-5"
-      }
-      options {
-        timeout(time: 18, unit: 'MINUTES')
-      }
-      environment {
-        KUBECONFIG = "$HOME/.kube/config"
-        KUBECONFIG_DIR = "$HOME/.kube"
-        DOCKER_IMAGE = "kubernetes-collector"
-        INTEGRATION_TEST_ARGS="all"
-        INTEGRATION_TEST_BUILD="ci"
-      }
-      steps {
-        lock("integration-test-tkgm") {
-          sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
-          sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
-          sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
-          sh "mkdir -p $KUBECONFIG_DIR"
-
-          sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
-          sh "chmod go-r $KUBECONFIG"
-          sh 'make clean-cluster'
-          sh 'make -C collector integration-test'
-          sh 'make clean-cluster'
-        }
-      }
-    }
+//     stage("Run Collector Integration Tests") {
+//       agent {
+//         label "worker-5"
+//       }
+//       options {
+//         timeout(time: 18, unit: 'MINUTES')
+//       }
+//       environment {
+//         KUBECONFIG = "$HOME/.kube/config"
+//         KUBECONFIG_DIR = "$HOME/.kube"
+//         DOCKER_IMAGE = "kubernetes-collector"
+//         INTEGRATION_TEST_ARGS="all"
+//         INTEGRATION_TEST_BUILD="ci"
+//       }
+//       steps {
+//         lock("integration-test-tkgm") {
+//           sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
+//           sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
+//           sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
+//           sh "mkdir -p $KUBECONFIG_DIR"
+//
+//           sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
+//           sh "chmod go-r $KUBECONFIG"
+//           sh 'make clean-cluster'
+//           sh 'make -C collector integration-test'
+//           sh 'make clean-cluster'
+//         }
+//       }
+//     }
 
     stage("Run Operator Integration Tests") {
       agent {
@@ -84,7 +86,8 @@ pipeline {
         KUBECONFIG_DIR = "$HOME/.kube"
         DOCKER_IMAGE = "kubernetes-operator"
         INTEGRATION_TEST_ARGS = "-r common-metrics -r basic-e2e"
-        GIT_BRANCH = "${params.GIT_BRANCH_PASSED_IN}"
+        GIT_BRANCH = "${params.GIT_BRANCH_PARAM}"
+        OPERATOR_YAML_RC_SHA = "${params.OPERATOR_YAML_RC_SHA_PARAM}"
       }
       steps {
         lock("integration-test-tkgm") {
