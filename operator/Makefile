@@ -105,7 +105,7 @@ build: generate fmt vet ## Build manager binary.
 	rm -rf build/$(GOOS)/$(GOARCH)/deploy
 	cp -r deploy build/$(GOOS)/$(GOARCH)
 	@if [ ${ALLOW_AUTO_INSTRUMENTATION} != true ]; then \
-    	rm -rf build/$(GOOS)/$(GOARCH)/deploy/internal/autoinstrumentation; \
+    	rm -rf build/$(GOOS)/$(GOARCH)/deploy/internal/pixie; \
 	fi
 	cp open_source_licenses.txt build/
 

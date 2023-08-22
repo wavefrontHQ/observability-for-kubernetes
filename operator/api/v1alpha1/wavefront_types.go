@@ -79,7 +79,7 @@ type WavefrontSpec struct {
 }
 
 type Experimental struct {
-	AutoInstrumentation AutoInstrumentation `json:"autoInstrumentation,omitempty"`
+	AutoTracing Pixie `json:"autoTracing,omitempty"`
 
 	// KubernetesEvents is deprecated, please use aria-insights-secret instead
 	KubernetesEvents KubernetesEvents `json:"kubernetesEvents,omitempty"`
@@ -87,13 +87,13 @@ type Experimental struct {
 	Hub Hub `json:"hub,omitempty"`
 }
 
-type AutoInstrumentation struct {
+type Pixie struct {
 	Enable bool `json:"enable,omitempty"`
 }
 
 type Hub struct {
-	Enable              bool                `json:"enable,omitempty"`
-	AutoInstrumentation AutoInstrumentation `json:"autoInstrumentation,omitempty"`
+	Enable bool  `json:"enable,omitempty"`
+	Pixie  Pixie `json:"pixie,omitempty"`
 }
 
 type Metrics struct {

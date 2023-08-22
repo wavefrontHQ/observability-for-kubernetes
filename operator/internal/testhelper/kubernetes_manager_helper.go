@@ -250,7 +250,7 @@ func (skm MockKubernetesManager) GetAppliedService(appKubernetesIOComponent, met
 	return service, nil
 }
 
-func (skm MockKubernetesManager) AutoInstrumentationComponentContains(apiVersion, kind, metadataName string, checks ...string) bool {
+func (skm MockKubernetesManager) PixieComponentContains(apiVersion, kind, metadataName string, checks ...string) bool {
 	return contains(
 		skm.appliedYAMLs,
 		apiVersion,

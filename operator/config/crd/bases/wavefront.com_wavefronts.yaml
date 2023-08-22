@@ -593,20 +593,20 @@ spec:
               experimental:
                 description: Experimental features
                 properties:
-                  autoInstrumentation:
+                  autoTracing:
                     properties:
                       enable:
                         type: boolean
                     type: object
                   hub:
                     properties:
-                      autoInstrumentation:
+                      enable:
+                        type: boolean
+                      pixie:
                         properties:
                           enable:
                             type: boolean
                         type: object
-                      enable:
-                        type: boolean
                     type: object
                   kubernetesEvents:
                     description: KubernetesEvents is deprecated, please use aria-insights-secret

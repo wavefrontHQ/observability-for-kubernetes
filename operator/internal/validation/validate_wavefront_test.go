@@ -123,8 +123,8 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
 		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
-		wfCR.Spec.Experimental.AutoInstrumentation.Enable = true
-		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoInstrumentation.enable' is enabled.", validateWavefrontSpec(wfCR).Error())
+		wfCR.Spec.Experimental.AutoTracing.Enable = true
+		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled.", validateWavefrontSpec(wfCR).Error())
 	})
 
 	t.Run("Validation error when CPU request is greater than CPU limit", func(t *testing.T) {

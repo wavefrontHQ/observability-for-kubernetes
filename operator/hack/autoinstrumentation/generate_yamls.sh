@@ -18,10 +18,10 @@ chmod +w vizier_deps/nats_prod.yaml
 echo -e "---\n$(cat vizier/vizier_metadata_persist_prod.yaml)" > vizier/vizier_metadata_persist_prod.yaml
 echo -e "---\n$(cat vizier_deps/nats_prod.yaml)" > vizier_deps/nats_prod.yaml
 files_to_apply=(vizier/vizier_metadata_persist_prod.yaml vizier/secrets.yaml vizier_deps/nats_prod.yaml)
-cat "${files_to_apply[@]}" | csplit -n 3 -f 'splits/autoinstrumentation-' - '/^---$/' "{$(($(cat "${files_to_apply[@]}" | grep -c '^\-\-\-$') - 2))}"
+cat "${files_to_apply[@]}" | csplit -n 3 -f 'splits/pixie-' - '/^---$/' "{$(($(cat "${files_to_apply[@]}" | grep -c '^\-\-\-$') - 2))}"
 
 # rename everything to a yaml file
-original_file_names=($(echo splits/autoinstrumentation-*))
+original_file_names=($(echo splits/pixie-*))
 mkdir -p splits/roles
 mkdir -p splits/secrets
 for index in "${!original_file_names[@]}"; do
@@ -50,24 +50,24 @@ yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )'
 yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/14-deployment-vizier-query-broker.yaml
 yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .env) += {"name": "PL_CRON_SCRIPT_SOURCES", "value": "configmaps"}' splits/14-deployment-vizier-query-broker.yaml
 
-git rm -rf "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation/*.yaml"
-mkdir -p "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation"
-cp splits/roles/*.yaml "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation"
-git add "${REPO_ROOT}/operator/config/rbac/components/autoinstrumentation"
+git rm -rf "${REPO_ROOT}/operator/config/rbac/components/pixie/*.yaml"
+mkdir -p "${REPO_ROOT}/operator/config/rbac/components/pixie"
+cp splits/roles/*.yaml "${REPO_ROOT}/operator/config/rbac/components/pixie"
+git add "${REPO_ROOT}/operator/config/rbac/components/pixie"
 
-git rm -rf "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/*.yaml"
-mkdir -p "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
-cp splits/secrets/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
-cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
+git rm -rf "${REPO_ROOT}/operator/deploy/internal/pixie/*.yaml"
+mkdir -p "${REPO_ROOT}/operator/deploy/internal/pixie"
+cp splits/secrets/*.yaml "${REPO_ROOT}/operator/deploy/internal/pixie"
+cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/pixie"
 
 sed -i '' 's/image: gcr.io\/pixie-oss\/pixie-dev-public\/curl:multiarch-7.87.0/image: projects.registry.vmware.com\/tanzu_observability\/bitnami\/os-shell:curl-11/' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
-sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/tanzu_observability/' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
-sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
-sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/18-configmap-pl-cloud-config.yaml"
-echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
-echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation/00-secret-pl-cluster-secrets.yaml"
+sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/tanzu_observability/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
+sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
+sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/pixie/18-configmap-pl-cloud-config.yaml"
+echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
+echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
 
-git add "${REPO_ROOT}/operator/deploy/internal/autoinstrumentation"
+git add "${REPO_ROOT}/operator/deploy/internal/pixie"
 
 popd
 
