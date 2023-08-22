@@ -54,9 +54,11 @@ pipeline {
         DOCKER_IMAGE = "kubernetes-collector"
         INTEGRATION_TEST_ARGS="all"
         INTEGRATION_TEST_BUILD="ci"
+        GIT_BRANCH = GIT_BRANCH_PASSED_IN
       }
       steps {
         lock("integration-test-tkgm") {
+          sh "echo GIT_BRANCH: ${GIT_BRANCH}"
           sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
           sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
           sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
