@@ -3,8 +3,10 @@
 TKGM_CONTEXT_NAME=tkg-mgmt-vc-admin@tkg-mgmt-vc
 
 function main() {
+  OS=$(uname -s | tr A-Z a-z)
+
   if [[ ! -x "$(command -v sheepctl)" ]]; then
-    if [[ ! "$(uname -a)" =~ "Darwin" ]]; then
+    if [[ "${OS}" == "linux" ]]; then
       curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64
       chmod +x sheepctl-linux-amd64
       sudo mv sheepctl-linux-amd64 /usr/local/bin/sheepctl
@@ -27,7 +29,7 @@ function main() {
   set -e
 
   echo "TKGm lock acquired."
-  if [[ "$(uname -a)" =~ "Darwin" ]]; then
+  if [[ "${OS}" == "darwin" ]]; then
     echo "Use scripts/connect-to-tkgm.sh to connect."
   fi
 }
