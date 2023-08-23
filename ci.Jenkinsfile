@@ -135,6 +135,7 @@ pipeline {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
+      failFast true
       parallel {
         stage("GKE") {
           agent {
@@ -217,7 +218,7 @@ pipeline {
           steps {
             retry(3) {
               build(job: "tkgm-collector-integration-tests", wait: true, parameters: [
-                string(name: 'BRANCH_NAME', value: "${env.OPERATOR_YAML_RC_SHA}"),
+                string(name: 'BRANCH', value: "${env.OPERATOR_YAML_RC_SHA}"),
 //                 string(name: 'BRANCH_NAME', value: "${env.GIT_BRANCH}"),
               ])
             }
@@ -235,6 +236,7 @@ pipeline {
         TOKEN = credentials('GITHUB_TOKEN')
       }
 
+      failFast true
       parallel {
         stage("GKE") {
           agent {
@@ -312,7 +314,7 @@ pipeline {
           steps {
             retry(3) {
               build(job: "tkgm-operator-integration-tests", wait: true, parameters: [
-                string(name: 'BRANCH_NAME', value: "${env.OPERATOR_YAML_RC_SHA}"),
+                string(name: 'BRANCH', value: "${env.OPERATOR_YAML_RC_SHA}"),
 //                 string(name: 'BRANCH_NAME', value: "${env.GIT_BRANCH}"),
                 string(name: 'GIT_BRANCH_PARAM', value: "${env.GIT_BRANCH}"),
                 string(name: 'OPERATOR_YAML_RC_SHA_PARAM', value: "${env.OPERATOR_YAML_RC_SHA}")
