@@ -31,7 +31,7 @@ pipeline {
         label "worker-5"
       }
       options {
-        timeout(time: 18, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES')
       }
       environment {
         KUBECONFIG = "$HOME/.kube/config"
