@@ -108,6 +108,6 @@ data:
   configs.yaml: |
     otelEndpointConfig:
       insecure: true
-      url: aria-telegraf-collector.observability-system.svc.cluster.local:4317
+      url: aria-telegraf-collector.aria-k8s.svc.cluster.local:4317
   cron.yaml: |
     frequency_s: 59
