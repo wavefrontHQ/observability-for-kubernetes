@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: egress-example
-  namespace: default
   labels:
     name: egress-example
 spec:

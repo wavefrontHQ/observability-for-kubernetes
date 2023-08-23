@@ -71,9 +71,11 @@ delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 	echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters delete $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --quiet
 
+GKE_MACHINE_TYPE?=e2-standard-2
+
 create-gke-cluster: gke-cluster-name-check
 	echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
-	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=e2-standard-2 \
+	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=$(GKE_MACHINE_TYPE) \
 		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 \
 		--num-nodes=$(NUMBER_OF_NODES) --logging=NONE \
 		--cluster-version $(GCP_CLUSTER_VERSION)

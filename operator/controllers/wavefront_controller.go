@@ -233,29 +233,29 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 }
 
 func enabledDirs(spec wf.WavefrontSpec) []string {
-	return dirList(
-		spec.DataExport.WavefrontProxy.Enable,
-		(spec.CanExportData && spec.DataCollection.Metrics.Enable) || spec.Experimental.KubernetesEvents.Enable,
-		spec.CanExportData && spec.DataCollection.Logging.Enable,
-		(spec.CanExportData && spec.Experimental.AutoTracing.Enable) || spec.Experimental.Hub.Pixie.Enable,
-	)
-}
-
-func dirList(proxy, collector, logging bool, pixie bool) []string {
 	dirsToInclude := []string{"internal"}
-	if proxy {
+	if spec.DataExport.WavefrontProxy.Enable {
 		dirsToInclude = append(dirsToInclude, "proxy")
 	}
 
-	if collector {
+	if (spec.CanExportData && spec.DataCollection.Metrics.Enable) || spec.Experimental.KubernetesEvents.Enable {
 		dirsToInclude = append(dirsToInclude, "collector")
 	}
 
-	if logging {
+	if spec.CanExportData && spec.DataCollection.Logging.Enable {
 		dirsToInclude = append(dirsToInclude, "logging")
 	}
-	if pixie {
+
+	if (spec.CanExportData && spec.Experimental.AutoTracing.Enable) || spec.Experimental.Hub.Pixie.Enable {
 		dirsToInclude = append(dirsToInclude, "pixie")
+	}
+
+	if spec.Experimental.Hub.Pixie.Enable {
+		dirsToInclude = append(dirsToInclude, "hub")
+	}
+
+	if spec.Experimental.AutoTracing.Enable {
+		dirsToInclude = append(dirsToInclude, "autoTracing")
 	}
 	return dirsToInclude
 }

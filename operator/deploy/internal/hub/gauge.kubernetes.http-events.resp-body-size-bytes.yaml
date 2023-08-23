@@ -1,0 +1,312 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gauge.kubernetes.http-events.resp-body-size-bytes
+  namespace: observability-system
+  labels:
+    purpose: cron-script
+data:
+  script.pxl: |
+    import px
+
+    def _http_events(start_time, end_time, include_health_checks, include_ready_checks, include_unresolved_inbound):
+      '''Return DataFrame with selectively filtered data
+
+      Returns a dataframe of http events with health/ready requests filtered out and a failure field added.
+
+      Note this script is prefixed with an underscore and therefore at risk of changing in the future.
+      Rely on this function at your own risk.
+
+      Args:
+        @start_time: The timestamp of data to start at.
+      '''
+      df = px.DataFrame(table='http_events', start_time=start_time, end_time=end_time)
+      df.failure = df.resp_status >= 400
+
+      df = df[df.remote_addr != '-' or include_unresolved_inbound]
+      df = df[df.req_path != '/readyz' or include_ready_checks]
+      df = df[df.req_path != '/healthz' or include_health_checks]
+
+      return df
+
+    def inbound_http_summary(df):
+      '''Gets a summary of requests inbound to `pod`.
+
+      Equivalent to a single window of `pxviews.inbound_http_latency_timeseries`
+      if you aggregate the results of this function by pod.
+
+      Args:
+        @df: The DataFrame
+      '''
+
+      # Filter only to inbound pod traffic (server-side).
+      # Don't include traffic initiated by this pod to an external location.
+      df = df[df.trace_role == 2]
+
+      df = df.groupby([
+        'aria_provider',
+        'aria_service',
+        'cluster_id',
+        'cluster_name',
+        'container',
+        'deployment',
+        'namespace',
+        'pod_id',
+        'pod_name',
+        'pod',
+        'remote_addr',
+        'req_method',
+        'requestor_pod',
+        'requestor_resolved_hostname',
+        'requestor_service',
+        'responder_resolved_hostname',
+        'service',
+        'upid',
+      ]).agg(
+        num_requests=('time_', px.count),
+        stop_time=('time_', px.max),
+        num_errors=('failure', px.sum),
+
+        resp_bytes_max=('resp_body_size', px.max),
+        resp_bytes_mean=('resp_body_size', px.mean),
+        resp_bytes_min=('resp_body_size', px.min),
+      )
+      df.time_ = df.stop_time
+      df.node = df.ctx['node']
+      df.requestor_ip = df.remote_addr
+
+      return df[[
+        'aria_provider',
+        'aria_service',
+        'cluster_id',
+        'cluster_name',
+        'container',
+        'deployment',
+        'namespace',
+        'node',
+        'num_errors',
+        'num_requests',
+        'pod_id',
+        'pod_name',
+        'pod',
+        'remote_addr',
+        'requestor_ip',
+        'requestor_pod',
+        'requestor_resolved_hostname',
+        'requestor_service',
+        'resp_bytes_max',
+        'resp_bytes_mean',
+        'resp_bytes_min',
+        'responder_resolved_hostname',
+        'service',
+        'time_',
+        'upid',
+      ]]
+
+    def exclude_known_namespaces(df):
+      '''Exclude namespaces which are known to be noise.
+
+      Args:
+        @df: The DataFrames to filter.
+      '''
+
+      # Exclude DataFrames from kube-system
+      #
+      # It is not useful to see metrics related to the functioning of Kubernetes' system-components (such as the CNI,
+      # core-dns, aws-node, etc)
+      df = df[df.ctx['namespace'] != 'kube-system']
+
+      # Exclude DataFrames from pixie client-side resources
+      #
+      # We do not need to know service-to-service communication happening between and amongst the pixie components
+      # themselves, so we exclude them.
+      df = df[df.ctx['namespace'] != 'pl']
+      df = df[df.ctx['namespace'] != 'px-operator']
+      df = df[df.ctx['namespace'] != 'olm']
+
+      # Exclude DataFrames from aria-k8s
+      #
+      # This namespace is where the k8s-collector and telegraf-collector live. Excluding this namespace ensures that
+      # data sent to Lemans from telegraf will not be re-reported by Pixie (since sending to Lemans happens over HTTP(s)
+      df = df[df.ctx['namespace'] != 'aria-k8s']
+
+      # Exclude DataFrames from observability-system
+      #
+      # This namespace is where the k8s-collector and telegraf-collector (as deployed by the Wavefront operator) live.
+      # Excluding this namespace ensures that data sent to Lemans from telegraf will not be re-reported by Pixie (since
+      # sending to Lemans happens over HTTP(s)
+      df = df[df.ctx['namespace'] != 'observability-system']
+
+      return df
+
+    def exclude_known_remote_addrs(df):
+      '''Exclude namespaces which are known to be noise.
+
+      Args:
+        @sdf: The DataFrames to filter.
+      '''
+      # Exclude DataFrames from the kubelet
+      #
+      # The kubelet will chat with a cloud providers Instance Metadata Service (IMDS) frequently during normal operation.
+      # This is just noise from our perspective, so remove it.
+      df = df[df.remote_addr != '169.254.169.254']
+
+      return df
+
+
+    df = _http_events(
+      start_time=px.plugin.start_time,
+      end_time=px.plugin.end_time,
+      include_health_checks=False,
+      include_ready_checks=False,
+      include_unresolved_inbound=False,
+    )
+
+    # Filter out entities
+    df = exclude_known_namespaces(df)
+    df = exclude_known_remote_addrs(df)
+
+    # Add context
+    df.node = df.ctx['node']
+    df.container = df.ctx['container_name']
+    df.pod = df.ctx['pod']
+    df.pod_id = df.ctx['pod_id']
+    df.requestor_pod_id = px.ip_to_pod_id(df.remote_addr)
+    df.requestor_pod = px.pod_id_to_pod_name(df.requestor_pod_id)
+    df.namespace = px.pod_name_to_namespace(df.pod)
+    df.requestor_service = px.pod_id_to_service_name(df.requestor_pod_id)
+
+    # The Pod Name, as assigned by Pixie, includes the Pod's namespace in the name. ex. namespace/pod-name.
+    # This replace ensures that we only have the pod name
+    df.pod_name = px.replace('.*\/', df.ctx['pod'], '')
+
+    df.service = df.ctx['service']
+    df.deployment = df.ctx['deployment']
+    df.namespace = df.ctx['namespace']
+    df.cluster_name = px.vizier_name()
+    df.cluster_id = px.vizier_id()
+    df.aria_provider = 'Kubernetes'
+    df.aria_service = 'Workload'
+    df.is_server_side_tracing = True
+
+    # Get the traced and remote pod/service/IP information.
+    df.traced_pod = df.pod
+    df.traced_service = df.service
+    df.traced_ip = px.pod_name_to_pod_ip(df.pod)
+
+    localhost_ip_regexp = r'127\.0\.0\.[0-9]+'
+    df.is_remote_addr_localhost = px.regex_match(localhost_ip_regexp, df.remote_addr)
+    df.remote_pod = px.select(
+      df.is_remote_addr_localhost,
+      df.pod,
+      px.pod_id_to_pod_name(px.ip_to_pod_id(df.remote_addr))
+    )
+    df.remote_service = px.select(
+      df.is_remote_addr_localhost,
+      df.traced_service,
+      px.service_id_to_service_name(px.ip_to_service_id(df.remote_addr))
+    )
+
+    df.requestor_ip = px.select(df.is_server_side_tracing, df.remote_addr, df.traced_ip)
+    df.responder_ip = px.select(df.is_server_side_tracing, df.traced_ip, df.remote_addr)
+    df.requestor_resolved_hostname = px.nslookup(df.requestor_ip)
+    df.responder_resolved_hostname = px.nslookup(df.responder_ip)
+
+    # Decorate responder context
+    df.responder_pod = px.select(df.is_server_side_tracing, df.traced_pod, df.remote_pod)
+    df.responder_pod_id = px.pod_name_to_pod_id(df.responder_pod)
+    df.responder_service = px.select(df.is_server_side_tracing, df.traced_service, df.remote_service)
+    df.responder_deployment_name = px.pod_id_to_deployment_name(df.responder_pod_id)
+    df.responder_node_name = px.pod_id_to_node_name(df.responder_pod_id)
+    df.responder_namespace = px.pod_id_to_namespace(df.responder_pod_id)
+
+    # Decorate requestor context
+    df.requestor_pod = px.select(df.is_server_side_tracing, df.remote_pod, df.traced_pod)
+    df.requestor_pod_id = px.pod_name_to_pod_id(df.requestor_pod)
+    df.requestor_service = px.select(df.is_server_side_tracing, df.remote_service, df.traced_service)
+    df.requestor_deployment_name = px.pod_id_to_deployment_name(df.requestor_pod_id)
+    df.requestor_node_name = px.pod_id_to_node_name(df.requestor_pod_id)
+    df.requestor_namespace = px.pod_id_to_namespace(df.requestor_pod_id)
+
+    df = inbound_http_summary(df)
+
+    df = df[df.requestor_pod != ""]
+
+    # http_stats_df = http_stats_df[http_stats_df.service != ""]
+    df = df.groupby([
+      'aria_provider',
+      'aria_service',
+      'cluster_id',
+      'cluster_name',
+      'container',
+      'deployment',
+      'namespace',
+      'pod_name',
+      'pod',
+      'remote_addr',
+      'requestor_pod',
+      'requestor_resolved_hostname',
+      'resp_bytes_max',
+      'resp_bytes_mean',
+      'resp_bytes_min',
+      'responder_resolved_hostname',
+      'service',
+    ]).agg(
+      http_req_count_in=('num_requests', px.sum),
+      http_error_count_in=('num_errors', px.sum),
+      stop_time=('time_', px.max)
+    )
+
+    df.service = px.replace('\["', df.ctx['service'], '')
+    df.service = px.replace('",".*$', df.service, '')
+    df.time_ = df.stop_time
+
+    px.export(
+      df, px.otel.Data(
+        resource={
+          # User must specify service_name
+          'service.name': "vmware",
+          'aria.provider': df.aria_provider,
+          'aria.service': df.aria_service,
+          'kubernetes.cluster.name': df.cluster_name,
+          'kubernetes.container.name': df.container,
+          'kubernetes.deployment.name': df.deployment,
+          'kubernetes.namespace.name': df.namespace,
+          'kubernetes.pod.fullname': df.pod,
+          'kubernetes.pod.name': df.pod_name,
+          'kubernetes.service.name': df.service,
+          'px.cluster.id': df.cluster_id,
+          'remote_addr': df.remote_addr,
+          'service.instance.id': df.pod,
+          'http.source_hostname': df.requestor_resolved_hostname,
+          'http.dest_hostname': df.responder_resolved_hostname,
+        },
+        data=[
+          px.otel.metric.Gauge(
+            name='kubernetes.http_events.resp_body_size_bytes_max',
+            description='Mean value of Response body size in bytes (before any truncation)',
+            value=df.resp_bytes_max,
+            attributes={},
+          ),
+          px.otel.metric.Gauge(
+            name='kubernetes.http_events.resp_body_size_bytes_mean',
+            description='Mean value of Request body size in bytes (before any truncation)',
+            value=df.resp_bytes_mean,
+            attributes={},
+          ),
+          px.otel.metric.Gauge(
+            name='kubernetes.http_events.resp_body_size_bytes_min',
+            description='Min value of Response body size in bytes (before any truncation)',
+            value=df.resp_bytes_min,
+            attributes={},
+          ),
+        ],
+      ),
+    )
+  configs.yaml: |
+    otelEndpointConfig:
+      insecure: true
+      url: aria-telegraf-collector.aria-k8s.svc.cluster.local:4317
+  cron.yaml: |
+    frequency_s: 60
