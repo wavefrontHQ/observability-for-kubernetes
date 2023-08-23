@@ -83,6 +83,9 @@ pipeline {
 
           sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
           sh "chmod go-r $KUBECONFIG"
+
+          sh 'make -C operator clean-build'
+          sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
           sh 'make clean-cluster'
           sh 'make -C operator integration-test'
           sh 'make clean-cluster'
