@@ -65,6 +65,7 @@ pipeline {
       }
       environment {
         GCP_CREDS = credentials("GCP_CREDS")
+        HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
         KUBECONFIG = "$HOME/.kube/config"
         KUBECONFIG_DIR = "$HOME/.kube"
         DOCKER_IMAGE = "kubernetes-operator"
