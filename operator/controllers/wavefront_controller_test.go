@@ -1406,6 +1406,8 @@ func TestReconcileAutoTracing(t *testing.T) {
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-name: test-clusterName"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
 
+		require.True(t, mockKM.PixieComponentContains("v1", "ConfigMap", "wavefront-cluster-spans-script"))
+
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("4317"))
 		containsPortInContainers(t, "otlpGrpcListenerPorts", *mockKM, 4317)
 		containsPortInServicePort(t, 4317, *mockKM)
@@ -1435,6 +1437,8 @@ func TestReconcileAutoTracing(t *testing.T) {
 		require.False(t, mockKM.PixieComponentContains("v1", "Secret", "pl-deploy-secrets"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ServiceAccount", "metadata-service-account"))
+
+		require.False(t, mockKM.PixieComponentContains("v1", "ConfigMap", "wavefront-cluster-spans-script"))
 
 		doesNotContainPortInContainers(t, "otlpGrpcListenerPorts", *mockKM, 4317)
 		doesNotContainPortInServicePort(t, 4317, *mockKM)
