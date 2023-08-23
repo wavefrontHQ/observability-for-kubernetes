@@ -116,6 +116,17 @@ func TestValidate(t *testing.T) {
 
 	t.Run("allow legacy install if metrics and proxy are not enabled", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
+		wfCR := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.Experimental.KubernetesEvents.Enable = true
+			w.Spec.Experimental.KubernetesEvents.ExternalEndpointURL = "my.endpoint.com"
+		})
+		result := Validate(appsV1, wfCR)
+		require.True(t, result.IsValid())
+		require.False(t, result.IsError())
+	})
+
+	t.Run("allow legacy install if only k8s events are enabled", func(t *testing.T) {
+		appsV1 := legacyEnvironmentSetup("wavefront")
 		wfCR := wftest.NothingEnabledCR()
 		result := Validate(appsV1, wfCR)
 		require.True(t, result.IsValid())
