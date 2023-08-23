@@ -64,7 +64,8 @@ func Validate(objClient client.Client, wavefront *wf.Wavefront) Result {
 }
 
 func validateEnvironment(objClient client.Client, wavefront *wf.Wavefront) error {
-	if wavefront.Spec.AllowLegacyInstall {
+	if wavefront.Spec.AllowLegacyInstall ||
+		!(wavefront.Spec.DataExport.WavefrontProxy.Enable || wavefront.Spec.DataCollection.Metrics.Enable) {
 		return nil
 	}
 	for namespace, resourceMap := range legacyComponentsToCheck {
