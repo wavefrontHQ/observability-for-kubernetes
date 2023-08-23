@@ -61,7 +61,7 @@ pipeline {
         label "worker-5"
       }
       options {
-        timeout(time: 18, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES')
       }
       environment {
         GCP_CREDS = credentials("GCP_CREDS")
