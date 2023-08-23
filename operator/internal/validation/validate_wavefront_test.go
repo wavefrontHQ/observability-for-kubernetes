@@ -3,6 +3,7 @@ package validation
 import (
 	"testing"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -79,10 +80,54 @@ func TestValidate(t *testing.T) {
 		require.NotEmpty(t, result.Message())
 	})
 
+	t.Run("legacy install if only proxy is enabled", func(t *testing.T) {
+		appsV1 := legacyEnvironmentSetup("wavefront")
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Enable = false
+			w.Spec.DataCollection.Logging.Enable = false
+		})
+		result := Validate(appsV1, wfCR)
+		require.False(t, result.IsValid())
+		require.True(t, result.IsError())
+		require.NotEmpty(t, result.Message())
+	})
+
+	t.Run("legacy install if only metrics is enabled", func(t *testing.T) {
+		appsV1 := legacyEnvironmentSetup("wavefront")
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataExport.ExternalWavefrontProxy.Url = "myproxy.com"
+			w.Spec.DataExport.WavefrontProxy.Enable = false
+			w.Spec.DataCollection.Logging.Enable = false
+		})
+		result := Validate(appsV1, wfCR)
+		require.False(t, result.IsValid())
+		require.True(t, result.IsError())
+		require.NotEmpty(t, result.Message())
+	})
+
 	t.Run("allow legacy install", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
 		wfCR := defaultWFCR()
 		wfCR.Spec.AllowLegacyInstall = true
+		result := Validate(appsV1, wfCR)
+		require.True(t, result.IsValid())
+		require.False(t, result.IsError())
+	})
+
+	t.Run("allow legacy install if metrics and proxy are not enabled", func(t *testing.T) {
+		appsV1 := legacyEnvironmentSetup("wavefront")
+		wfCR := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.Experimental.KubernetesEvents.Enable = true
+			w.Spec.Experimental.KubernetesEvents.ExternalEndpointURL = "my.endpoint.com"
+		})
+		result := Validate(appsV1, wfCR)
+		require.True(t, result.IsValid())
+		require.False(t, result.IsError())
+	})
+
+	t.Run("allow legacy install if only k8s events are enabled", func(t *testing.T) {
+		appsV1 := legacyEnvironmentSetup("wavefront")
+		wfCR := wftest.NothingEnabledCR()
 		result := Validate(appsV1, wfCR)
 		require.True(t, result.IsValid())
 		require.False(t, result.IsError())
@@ -123,8 +168,8 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
 		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
-		wfCR.Spec.Experimental.AutoInstrumentation.Enable = true
-		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoInstrumentation.enable' is enabled.", validateWavefrontSpec(wfCR).Error())
+		wfCR.Spec.Experimental.AutoTracing.Enable = true
+		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled.", validateWavefrontSpec(wfCR).Error())
 	})
 
 	t.Run("Validation error when CPU request is greater than CPU limit", func(t *testing.T) {

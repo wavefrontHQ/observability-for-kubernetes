@@ -39,3 +39,19 @@ func CR(options ...func(*wf.Wavefront)) *wf.Wavefront {
 	}
 	return cr
 }
+
+func NothingEnabledCR(options ...func(*wf.Wavefront)) *wf.Wavefront {
+	cr := &wf.Wavefront{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "wavefront",
+			Namespace: DefaultNamespace,
+		},
+		Spec: wf.WavefrontSpec{
+			ClusterName: "testClusterName",
+		},
+	}
+	for _, option := range options {
+		option(cr)
+	}
+	return cr
+}

@@ -120,7 +120,7 @@ func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) err
 		return err
 	}
 
-	if wfSpec.Experimental.AutoInstrumentation.Enable {
+	if wfSpec.Experimental.AutoTracing.Enable {
 		wfSpec.DataExport.WavefrontProxy.OTLP.GrpcPort = 4317
 		wfSpec.DataExport.WavefrontProxy.OTLP.ResourceAttrsOnMetricsIncluded = true
 	}
