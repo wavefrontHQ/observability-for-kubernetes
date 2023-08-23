@@ -88,12 +88,16 @@ type Experimental struct {
 }
 
 type Pixie struct {
+	// +kubebuilder:default:=true
 	Enable bool `json:"enable,omitempty"`
+	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "1Gi"}, limits: {cpu: "500m", memory: "2Gi"}}}
+	Pem Pem `json:"pem,omitempty"`
 }
 
 type Hub struct {
-	Enable bool  `json:"enable,omitempty"`
-	Pixie  Pixie `json:"pixie,omitempty"`
+	Enable bool `json:"enable,omitempty"`
+	// +kubebuilder:default:={enable: true}
+	Pixie Pixie `json:"pixie,omitempty"`
 }
 
 type Metrics struct {
@@ -406,6 +410,11 @@ type LogFilters struct {
 
 type Collector struct {
 	// Resources Compute resources required by the Collector containers.
+	Resources Resources `json:"resources,omitempty"`
+}
+
+type Pem struct {
+	// Resources Compute resources required by the Pem containers.
 	Resources Resources `json:"resources,omitempty"`
 }
 

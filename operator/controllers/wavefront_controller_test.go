@@ -1444,23 +1444,11 @@ func TestReconcileAutoTracing(t *testing.T) {
 func TestReconcileHubPixie(t *testing.T) {
 
 	t.Run("creates Pixie components when Hub Pixie is enabled", func(t *testing.T) {
-		wfCR := &wf.Wavefront{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "wavefront",
-				Namespace: wftest.DefaultNamespace,
-			},
-			Spec: wf.WavefrontSpec{
-				ClusterName: "test-clusterName",
-				Experimental: wf.Experimental{
-					Hub: wf.Hub{
-						Enable: true,
-						Pixie: wf.Pixie{
-							Enable: true,
-						},
-					},
-				},
-			},
-		}
+		wfCR := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.ClusterName = "test-clusterName"
+			w.Spec.Experimental.Hub.Enable = true
+			w.Spec.Experimental.Hub.Pixie.Enable = true
+		})
 		r, mockKM := emptyScenario(wfCR, nil)
 
 		mockSender := &testhelper.MockSender{}
@@ -1487,6 +1475,29 @@ func TestReconcileHubPixie(t *testing.T) {
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
 
 		require.False(t, mockKM.ProxyDeploymentContains(""))
+	})
+
+	t.Run("creates Pixie Pem pods with specified K8s resources", func(t *testing.T) {
+		wfCR := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.ClusterName = "test-clusterName"
+			w.Spec.Experimental.Hub.Enable = true
+			w.Spec.Experimental.Hub.Pixie.Enable = true
+			w.Spec.Experimental.Hub.Pixie.Pem.Resources.Requests.CPU = "500m"
+			w.Spec.Experimental.Hub.Pixie.Pem.Resources.Requests.Memory = "50Mi"
+			w.Spec.Experimental.Hub.Pixie.Pem.Resources.Limits.CPU = "1000m"
+			w.Spec.Experimental.Hub.Pixie.Pem.Resources.Limits.Memory = "1.5Gi"
+
+		})
+		r, mockKM := emptyScenario(wfCR, nil)
+
+		r.ClusterUUID = "12345"
+
+		results, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		require.Equal(t, ctrl.Result{Requeue: true}, results)
+
+		require.True(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem", "        resources:\n          requests:\n            cpu: 500m\n            memory: 50Mi\n          limits:\n            cpu: 1000m\n            memory: 1.5Gi"))
 	})
 
 	t.Run("does not create auto instrumentation components when auto instrumentation is not enabled", func(t *testing.T) {
