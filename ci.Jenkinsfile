@@ -217,7 +217,8 @@ pipeline {
           steps {
             retry(3) {
               build(job: "tkgm-collector-integration-tests", wait: true, parameters: [
-                string(name: 'BRANCH_NAME', value: "${env.GIT_BRANCH}"),
+                string(name: 'BRANCH_NAME', value: "${env.OPERATOR_YAML_RC_SHA}"),
+//                 string(name: 'BRANCH_NAME', value: "${env.GIT_BRANCH}"),
               ])
             }
             // on failure: release lock and get new env
@@ -311,7 +312,8 @@ pipeline {
           steps {
             retry(3) {
               build(job: "tkgm-operator-integration-tests", wait: true, parameters: [
-                string(name: 'BRANCH_NAME', value: "${env.GIT_BRANCH}"),
+                string(name: 'BRANCH_NAME', value: "${env.OPERATOR_YAML_RC_SHA}"),
+//                 string(name: 'BRANCH_NAME', value: "${env.GIT_BRANCH}"),
                 string(name: 'GIT_BRANCH_PARAM', value: "${env.GIT_BRANCH}"),
                 string(name: 'OPERATOR_YAML_RC_SHA_PARAM', value: "${env.OPERATOR_YAML_RC_SHA}")
               ])
