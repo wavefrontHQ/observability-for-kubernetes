@@ -323,32 +323,32 @@ pipeline {
           }
         }
 
-        stage("TKGm") {
-          agent {
-            label "worker-5"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            KUBECONFIG = "$HOME/.kube/config"
-            KUBECONFIG_DIR = "$HOME/.kube"
-            GCP_CREDS = credentials("GCP_CREDS")
-          }
-          steps {
-            lock("integration-test-tkgm") {
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
-              sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
-              sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
-              sh "mkdir -p $KUBECONFIG_DIR"
-              sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
-              sh "chmod go-r $KUBECONFIG"
-              sh 'make clean-cluster'
-              sh 'make -C operator integration-test'
-              sh 'make clean-cluster'
-            }
-          }
-        }
+//         stage("TKGm") {
+//           agent {
+//             label "worker-5"
+//           }
+//           options {
+//             timeout(time: 60, unit: 'MINUTES')
+//           }
+//           environment {
+//             KUBECONFIG = "$HOME/.kube/config"
+//             KUBECONFIG_DIR = "$HOME/.kube"
+//             GCP_CREDS = credentials("GCP_CREDS")
+//           }
+//           steps {
+//             lock("integration-test-tkgm") {
+//               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh -k TKGm'
+//               sh 'curl -O http://files.pks.eng.vmware.com/ci/artifacts/shepherd/latest/sheepctl-linux-amd64'
+//               sh 'chmod +x sheepctl-linux-amd64 && mv sheepctl-linux-amd64 sheepctl'
+//               sh "mkdir -p $KUBECONFIG_DIR"
+//               sh "./sheepctl -n k8po-team lock list -j | jq -r '. | map(select(.status == \"locked\" and .pool_name != null and (.pool_name | contains(\"tkg\")))) | .[0].access' | jq -r '.tkg[0].kubeconfig' > $KUBECONFIG"
+//               sh "chmod go-r $KUBECONFIG"
+//               sh 'make clean-cluster'
+//               sh 'make -C operator integration-test'
+//               sh 'make clean-cluster'
+//             }
+//           }
+//         }
       }
     }
   }

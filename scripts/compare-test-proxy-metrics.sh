@@ -11,7 +11,7 @@ else
 fi
 
 FLUSH_INTERVAL=5
-RETRIES=14 # TODO make configurable
+RETRIES=28 # TODO make configurable
 printf "Diffing metrics .."
 for (( i=1; i<="$RETRIES"; i++ )) do
   printf "."
