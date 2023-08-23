@@ -238,10 +238,11 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		(spec.CanExportData && spec.DataCollection.Metrics.Enable) || spec.Experimental.KubernetesEvents.Enable,
 		spec.CanExportData && spec.DataCollection.Logging.Enable,
 		(spec.CanExportData && spec.Experimental.AutoTracing.Enable) || spec.Experimental.Hub.Pixie.Enable,
+		spec.Experimental.Hub.Pixie.Enable,
 	)
 }
 
-func dirList(proxy, collector, logging bool, pixie bool) []string {
+func dirList(proxy, collector, logging bool, pixie bool, hub bool) []string {
 	dirsToInclude := []string{"internal"}
 	if proxy {
 		dirsToInclude = append(dirsToInclude, "proxy")
@@ -254,8 +255,13 @@ func dirList(proxy, collector, logging bool, pixie bool) []string {
 	if logging {
 		dirsToInclude = append(dirsToInclude, "logging")
 	}
+
 	if pixie {
 		dirsToInclude = append(dirsToInclude, "pixie")
+	}
+
+	if hub {
+		dirsToInclude = append(dirsToInclude, "hub")
 	}
 	return dirsToInclude
 }

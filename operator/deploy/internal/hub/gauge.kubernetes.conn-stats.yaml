@@ -1,0 +1,129 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gauge.kubernetes.conn-stats
+  namespace: observability-system
+  labels:
+    purpose: cron-script
+data:
+  script.pxl: |
+    import px
+
+    def exclude_known_namespaces(df):
+      '''Exclude namespaces which are known to be noise.
+
+      Args:
+        @df: The DataFrames to filter.
+      '''
+
+      # Exclude DataFrames from kube-system
+      #
+      # It is not useful to see metrics related to the functioning of Kubernetes' system-components (such as the CNI,
+      # core-dns, aws-node, etc)
+      df = df[df.ctx['namespace'] != 'kube-system']
+
+      # Exclude DataFrames from pixie client-side resources
+      #
+      # We do not need to know service-to-service communication happening between and amongst the pixie components
+      # themselves, so we exclude them.
+      df = df[df.ctx['namespace'] != 'pl']
+      df = df[df.ctx['namespace'] != 'px-operator']
+      df = df[df.ctx['namespace'] != 'olm']
+
+      # Exclude DataFrames from aria-k8s
+      #
+      # This namespace is where the k8s-collector and telegraf-collector live. Excluding this namespace ensures that
+      # data sent to Lemans from telegraf will not be re-reported by Pixie (since sending to Lemans happens over HTTP(s)
+      df = df[df.ctx['namespace'] != 'aria-k8s']
+
+      # Exclude DataFrames from observability-system
+      #
+      # This namespace is where the k8s-collector and telegraf-collector (as deployed by the Wavefront operator) live.
+      # Excluding this namespace ensures that data sent to Lemans from telegraf will not be re-reported by Pixie (since
+      # sending to Lemans happens over HTTP(s)
+      df = df[df.ctx['namespace'] != 'observability-system']
+
+      return df
+
+    def exclude_known_remote_addrs(df):
+      '''Exclude namespaces which are known to be noise.
+
+      Args:
+        @sdf: The DataFrames to filter.
+      '''
+      # Exclude DataFrames from the kubelet
+      #
+      # The kubelet will chat with a cloud providers Instance Metadata Service (IMDS) frequently during normal operation.
+      # This is just noise from our perspective, so remove it.
+      df = df[df.remote_addr != '169.254.169.254']
+
+      return df
+
+    df = px.DataFrame(table='conn_stats', start_time=px.plugin.start_time, end_time=px.plugin.end_time)
+
+    # Filter out entities
+    df = exclude_known_namespaces(df)
+    df = exclude_known_remote_addrs(df)
+
+    # Add context
+    df.container = df.ctx['container_name']
+    df.pod = df.ctx['pod']
+
+    # The Pod Name, as assigned by Pixie, includes the Pod's namespace in the name. ex. namespace/pod-name.
+    # This replace ensures that we only have the pod name
+    df.pod_name = px.replace('.*\/', df.ctx['pod'], '')
+
+    df.service = df.ctx['service']
+    df.deployment = df.ctx['deployment']
+    df.namespace = df.ctx['namespace']
+    df.cluster_name = px.vizier_name()
+    df.cluster_id = px.vizier_id()
+    df.aria_provider = 'Kubernetes'
+    df.aria_service = 'Workload'
+
+    px.export(
+      df, px.otel.Data(
+        resource={
+          # User must specify service_name
+          'service.name': "vmware",
+          'aria.provider': df.aria_provider,
+          'aria.service': df.aria_service,
+          'kubernetes.cluster.name': df.cluster_name,
+          'kubernetes.container.name': df.container,
+          'kubernetes.deployment.name': df.deployment,
+          'kubernetes.namespace.name': df.namespace,
+          'kubernetes.pod.fullname': df.pod,
+          'kubernetes.pod.name': df.pod_name,
+          'kubernetes.service.name': df.service,
+          'px.addr_family': df.addr_family,
+          'px.cluster.id': df.cluster_id,
+          'px.protocol': df.protocol,
+          'px.ssl': df.ssl,
+          'px.trace_role': df.trace_role,
+          'remote_addr': df.remote_addr,
+          'remote_port': df.remote_port,
+          'service.instance.id': df.pod,
+        },
+        data=[
+          px.otel.metric.Gauge(
+            name='conn_stats.bytes_sent',
+            description='How many bytes were sent in communications between client-server pairs',
+            value=df.bytes_sent,
+            attributes={},
+          ),
+          px.otel.metric.Gauge(
+            name='conn_stats.bytes_revc',
+            description='How many bytes were received in communications between client-server pairs',
+            value=df.bytes_recv,
+            attributes={},
+          )
+        ],
+      ),
+    )
+  configs.yaml: |
+    otelEndpointConfig:
+      insecure: true
+      url: aria-telegraf-collector.observability-system.svc.cluster.local:4317
+  cron.yaml: |
+    frequency_s: 60
