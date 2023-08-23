@@ -32,15 +32,9 @@ pipeline {
 //       }
 //     }
 
-    stage("Get Operator RC SHA") {
+    stage('Force a failure to test what happens when not waiting') {
       steps {
-        script {
-          env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-          sh "echo OPERATOR_YAML_RC_SHA: ${OPERATOR_YAML_RC_SHA}"
-          sh "echo OPERATOR_YAML_RC_SHA_PARAM: ${OPERATOR_YAML_RC_SHA_PARAM}"
-          sh "echo GIT_BRANCH: ${GIT_BRANCH}"
-          sh "echo GIT_BRANCH_PARAM: ${GIT_BRANCH_PARAM}"
-        }
+        sh 'exit 1'
       }
     }
 
