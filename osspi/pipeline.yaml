@@ -219,15 +219,52 @@ jobs:
           repo2: wavefront-sdk-java
         params:
           REPO: repo2
-          API_KEY: ((osspi.osm-beta-api-key))
-          USERNAME: ((osspi.osm-beta-username))
-          OSM_ENVIRONMENT: beta
+          API_KEY: ((osspi.osm-prod-api-key))
+          USERNAME: ((osspi.osm-prod-username))
+          OSM_ENVIRONMENT: production
           PRODUCT: wavefront-sdk-java
           VERSION: Latest
           PREPARE: |
             curl --output /tmp/maven.tar.gz https://dlcdn.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz
             tar -xf /tmp/maven.tar.gz -C /tmp
-            export PATH=/tmp/apache-maven-3.9.4/bin:$PATH
+            ln -s /tmp/apache-maven-3.9.4/bin/mvn /usr/local/sbin/mvn
+            mvn clean install -DskipTests -Denforcer.skip
+          OSSPI_SCANNING_PARAMS: |
+            enable: true
+            include_bomtools: "maven"
+            search_depth: 5
+            include_dev_deps: false
+            # exclude for signature scans
+            exclude_patterns:
+            - test
+
+  - name: osspi-scan-wavefront-spring-boot
+    serial: true
+    plan:
+    - in_parallel:
+      - get: observability-for-kubernetes
+        params: { submodules: all }
+      - get: osspi-tool
+      - get: wavefront-spring-boot
+        trigger: true
+        params: { submodules: all }
+    - in_parallel:
+      - task: osspi-scan-packages
+        file: osspi-tool/tasks/osspi/run-osspi-source.yaml
+        input_mapping:
+          repo1: osspi-tool
+          repo2: wavefront-spring-boot
+        params:
+          REPO: repo2
+          API_KEY: ((osspi.osm-beta-api-key))
+          USERNAME: ((osspi.osm-beta-username))
+          OSM_ENVIRONMENT: beta
+          PRODUCT: WavefrontSprintBootAutoconfigure
+          VERSION: Latest
+          PREPARE: |
+            curl --output /tmp/maven.tar.gz https://dlcdn.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz
+            tar -xf /tmp/maven.tar.gz -C /tmp
+            ln -s /tmp/apache-maven-3.9.4/bin/mvn /usr/local/sbin/mvn
             mvn clean install -DskipTests -Denforcer.skip
           OSSPI_SCANNING_PARAMS: |
             enable: true
