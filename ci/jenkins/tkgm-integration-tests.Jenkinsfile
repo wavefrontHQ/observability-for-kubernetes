@@ -18,6 +18,7 @@ pipeline {
 
   parameters {
     string(defaultValue: "", description: "Git branch of CI pipeline", name: 'GIT_BRANCH_PARAM')
+    string(defaultValue: "", description: "Operator YAML SHA of CI pipeline", name: 'OPERATOR_YAML_RC_SHA_PARAM')
   }
 
   stages {
