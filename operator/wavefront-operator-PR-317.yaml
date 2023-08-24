@@ -600,12 +600,124 @@ spec:
               experimental:
                 description: Experimental features
                 properties:
-                  autoInstrumentation:
+                  autoTracing:
                     properties:
-                      deployKey:
-                        type: string
+                      enable:
+                        default: true
+                        type: boolean
+                      pem:
+                        default:
+                          resources:
+                            limits:
+                              cpu: 500m
+                              memory: 2Gi
+                            requests:
+                              cpu: 100m
+                              memory: 1Gi
+                        properties:
+                          resources:
+                            description: Resources Compute resources required by the
+                              Pem containers.
+                            properties:
+                              limits:
+                                description: Limits CPU and Memory requirements
+                                properties:
+                                  cpu:
+                                    description: CPU is for specifying CPU requirements
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    type: string
+                                  ephemeral-storage:
+                                    description: Memory is for specifying Memory requirements
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    type: string
+                                  memory:
+                                    description: Memory is for specifying Memory requirements
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    type: string
+                                type: object
+                              requests:
+                                description: Requests CPU and Memory requirements
+                                properties:
+                                  cpu:
+                                    description: CPU is for specifying CPU requirements
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    type: string
+                                  ephemeral-storage:
+                                    description: Memory is for specifying Memory requirements
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    type: string
+                                  memory:
+                                    description: Memory is for specifying Memory requirements
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    type: string
+                                type: object
+                            type: object
+                        type: object
+                    type: object
+                  hub:
+                    properties:
                       enable:
                         type: boolean
+                      pixie:
+                        default:
+                          enable: true
+                        properties:
+                          enable:
+                            default: true
+                            type: boolean
+                          pem:
+                            default:
+                              resources:
+                                limits:
+                                  cpu: 500m
+                                  memory: 2Gi
+                                requests:
+                                  cpu: 100m
+                                  memory: 1Gi
+                            properties:
+                              resources:
+                                description: Resources Compute resources required
+                                  by the Pem containers.
+                                properties:
+                                  limits:
+                                    description: Limits CPU and Memory requirements
+                                    properties:
+                                      cpu:
+                                        description: CPU is for specifying CPU requirements
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        type: string
+                                      ephemeral-storage:
+                                        description: Memory is for specifying Memory
+                                          requirements
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        type: string
+                                      memory:
+                                        description: Memory is for specifying Memory
+                                          requirements
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        type: string
+                                    type: object
+                                  requests:
+                                    description: Requests CPU and Memory requirements
+                                    properties:
+                                      cpu:
+                                        description: CPU is for specifying CPU requirements
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        type: string
+                                      ephemeral-storage:
+                                        description: Memory is for specifying Memory
+                                          requirements
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        type: string
+                                      memory:
+                                        description: Memory is for specifying Memory
+                                          requirements
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        type: string
+                                    type: object
+                                type: object
+                            type: object
+                        type: object
                     type: object
                   kubernetesEvents:
                     description: KubernetesEvents is deprecated, please use aria-insights-secret
@@ -788,6 +900,7 @@ rules:
   - jobs
   verbs:
   - create
+  - delete
   - get
   - list
   - patch
@@ -831,6 +944,215 @@ rules:
   - get
   - patch
   - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: wavefront-pl-cert-provisioner-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: wavefront-pl-updater-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  - pods
+  - services
+  - persistentvolumes
+  - persistentvolumeclaims
+  - serviceaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  - pods/log
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resourceNames:
+  - cloud-conn-election
+  - metadata-election
+  resources:
+  - leases
+  verbs:
+  - get
+  - update
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - px.dev
+  resources:
+  - viziers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - px.dev
+  resources:
+  - viziers/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: wavefront-pl-vizier-crd-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - px.dev
+  resources:
+  - viziers
+  - viziers/status
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-vizier-metadata-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - coordination.k8s.io
+  resourceNames:
+  - metadata-election
+  resources:
+  - leases
+  verbs:
+  - get
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-vizier-query-broker-role
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -898,6 +1220,104 @@ rules:
   - get
   - patch
   - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-node-view
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - watch
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: wavefront-pl-updater-cluster-role
+rules:
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resourceNames:
+  - kube-system
+  resources:
+  - namespaces
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - pods
+  - services
+  - endpoints
+  - namespaces
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  - deployments
+  verbs:
+  - get
+  - watch
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-vizier-metadata
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - namespaces
+  verbs:
+  - watch
+  - get
+  - list
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  - deployments
+  verbs:
+  - watch
+  - get
+  - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -1014,6 +1434,127 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: wavefront-pl-cert-provisioner-binding
+  namespace: observability-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: wavefront-pl-cert-provisioner-role
+subjects:
+- kind: ServiceAccount
+  name: pl-cert-provisioner-service-account
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: wavefront-pl-updater-binding
+  namespace: observability-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: wavefront-pl-updater-role
+subjects:
+- kind: ServiceAccount
+  name: pl-updater-service-account
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-vizier-crd-binding
+  namespace: observability-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: wavefront-pl-vizier-crd-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-vizier-crd-metadata-binding
+  namespace: observability-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: wavefront-pl-vizier-crd-role
+subjects:
+- kind: ServiceAccount
+  name: metadata-service-account
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-vizier-metadata-binding
+  namespace: observability-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: wavefront-pl-vizier-metadata-role
+subjects:
+- kind: ServiceAccount
+  name: metadata-service-account
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-vizier-query-broker-binding
+  namespace: observability-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: wavefront-pl-vizier-query-broker-role
+subjects:
+- kind: ServiceAccount
+  name: query-broker-service-account
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-vizier-query-broker-crd-binding
+  namespace: observability-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: wavefront-pl-vizier-crd-role
+subjects:
+- kind: ServiceAccount
+  name: query-broker-service-account
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
   name: wavefront-wavefront-collector
   namespace: observability-system
 roleRef:
@@ -1037,6 +1578,71 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: wavefront-controller-manager
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-node-view-cluster-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: wavefront-pl-node-view
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: wavefront-pl-updater-cluster-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: wavefront-pl-updater-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: pl-updater-service-account
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-vizier-metadata-cluster-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: wavefront-pl-vizier-metadata
+subjects:
+- kind: ServiceAccount
+  name: metadata-service-account
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: wavefront-pl-vizier-metadata-node-view-cluster-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: wavefront-pl-node-view
+subjects:
+- kind: ServiceAccount
+  name: metadata-service-account
   namespace: observability-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1080,7 +1686,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.24.0-alpha-05c7b810
+  collector: 1.24.0-alpha-003eb0da
   logging: 2.1.6
   proxy: 13.0.1
 kind: ConfigMap
@@ -1152,7 +1758,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-05c7b810
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-003eb0da
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
