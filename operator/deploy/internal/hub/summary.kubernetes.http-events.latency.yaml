@@ -261,7 +261,7 @@ data:
     )
 
     # Compute throughput values.
-    window = px.DurationNanos(px.now() - px.parse_time(start_time))
+    window = px.DurationNanos(px.now() - px.parse_time(px.plugin.start_time))
     df.http_req_throughput_in = df.http_req_count_in / window
     df.http_error_throughput_in = df.http_error_count_in / window
     df.http_error_rate_in = px.Percent(

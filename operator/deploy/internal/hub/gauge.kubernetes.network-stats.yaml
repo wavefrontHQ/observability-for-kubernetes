@@ -52,7 +52,7 @@ data:
 
       return df
 
-    df = px.DataFrame(table='network_stats', start_time=start_time, end_time=end_time,)
+    df = px.DataFrame(table='network_stats', start_time=px.plugin.start_time, end_time=px.plugin.end_time)
 
     # Filter out entities
     df = exclude_known_namespaces(df)
