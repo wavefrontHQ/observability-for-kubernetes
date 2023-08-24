@@ -29,7 +29,7 @@ pipeline {
   stages {
     stage("Set RUN_CI") {
       environment {
-        FILES_TO_CHECK = 'operator scripts collector ci.Jenkinsfile Makefile ci/jenkins/tkgm-integration-tests.Jenkinsfile'
+        FILES_TO_CHECK = 'operator scripts collector ci.Jenkinsfile Makefile'
       }
       steps {
         script {
