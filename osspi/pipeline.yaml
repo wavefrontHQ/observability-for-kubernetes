@@ -240,7 +240,7 @@ jobs:
     - in_parallel:
       - get: osspi-tool
       - get: wavefront-spring-boot
-        trigger: false
+        trigger: true
         params: { submodules: all }
     - in_parallel:
       - task: osspi-scan-packages
