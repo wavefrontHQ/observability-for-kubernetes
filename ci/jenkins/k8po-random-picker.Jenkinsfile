@@ -16,6 +16,9 @@ pipeline {
         script {
           team_name = '*Team Helios* :awesome_sun:'
           team_members = ['Devon', 'Ginwoo', 'Glenn', 'Kyle', 'Mark', 'Matt']
+          if (Calendar.THURSDAY == Calendar.getInstance().get(Calendar.DAY_OF_WEEK)) {
+            team_members -= 'Devon'
+          }
 
           // Prevent the same person from being selected twice in a row.
           previous_build_description = currentBuild.getPreviousBuild().description
