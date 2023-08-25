@@ -10,8 +10,9 @@ else
   cat "${METRICS_FILE_DIR}/${METRICS_FILE_NAME}.jsonl" >${METRICS_FILE_DIR}/combined-metrics.jsonl
 fi
 
+RETRIES=${METRICS_RETRY_COUNT:-14}
+echo "Max number of retries: $RETRIES"
 FLUSH_INTERVAL=5
-RETRIES=28 # TODO make configurable
 printf "Diffing metrics .."
 for (( i=1; i<="$RETRIES"; i++ )) do
   printf "."
@@ -43,8 +44,9 @@ jq -c '.Missing[]' "$RES" | sort >"${SCRIPT_DIR}/missing.jsonl"
 jq -c '.Extra[]' "$RES" | sort >"${SCRIPT_DIR}/extra.jsonl"
 jq -c '.Unwanted[]' "$RES" | sort >"${SCRIPT_DIR}/unwanted.jsonl"
 
-echo "Metrics diff: $RES"
+echo "Metrics diff file: $RES"
 if [[ $DIFF_COUNT -gt 0 ]]; then
+  red "FAILED: METRICS OUTPUT DID NOT MATCH"
   red "Missing: $(jq "(.Missing | length)" "$RES")"
   if [[ $(jq "(.Missing | length)" "$RES") -le 10 ]]; then
     cat "${SCRIPT_DIR}/missing.jsonl"
@@ -54,10 +56,6 @@ if [[ $DIFF_COUNT -gt 0 ]]; then
     cat "${SCRIPT_DIR}/unwanted.jsonl"
   fi
   red "Extra: $(jq "(.Extra | length)" "$RES")"
-  red "FAILED: METRICS OUTPUT DID NOT MATCH"
-  if which pbcopy &>/dev/null; then
-    echo "$RES" | pbcopy
-  fi
   exit 1
 fi
 
