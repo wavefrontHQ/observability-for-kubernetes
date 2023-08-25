@@ -18,8 +18,14 @@ pipeline {
           team_members = ['Devon', 'Ginwoo', 'Glenn', 'Matt']
 
           // Prevent the same person from being selected twice in a row.
-          rotating_off_list = currentBuild.getPreviousBuild().description.split(',')
-          rotating_off = rotating_off_list[0]
+          previous_build_description = currentBuild.getPreviousBuild().description
+          if (currentBuild.getPreviousBuild().description) {
+            rotating_off_list = previous_build_description.split(',')
+            rotating_off = rotating_off_list[0]
+          } else {
+            rotating_off = ''
+          }
+
           team_members -= rotating_off
           Collections.shuffle team_members
           team_members += rotating_off
@@ -43,8 +49,14 @@ ${team_members.join('\n')}
           team_members = ['Anil', 'Jerry', 'John', 'Yuqi'] // 'Jeremy' is on paternity leave
 
           // Prevent the same person from being selected twice in a row.
-          rotating_off_list = currentBuild.getPreviousBuild().description.split(',')
-          rotating_off = rotating_off_list[1]
+          previous_build_description = currentBuild.getPreviousBuild().description
+          if (currentBuild.getPreviousBuild().description) {
+            rotating_off_list = previous_build_description.split(',')
+            rotating_off = rotating_off_list[1]
+          } else {
+            rotating_off = ''
+          }
+
           team_members -= rotating_off
           Collections.shuffle team_members
           team_members += rotating_off
