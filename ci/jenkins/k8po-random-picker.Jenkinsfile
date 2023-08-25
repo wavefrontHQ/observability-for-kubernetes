@@ -15,7 +15,7 @@ pipeline {
       steps {
         script {
           team_name = '*Team Helios* :awesome_sun:'
-          team_members = ['Devon', 'Ginwoo', 'Glenn', 'Matt']
+          team_members = ['Devon', 'Ginwoo', 'Glenn', 'Kyle', 'Mark', 'Matt']
 
           // Prevent the same person from being selected twice in a row.
           previous_build_description = currentBuild.getPreviousBuild().description
