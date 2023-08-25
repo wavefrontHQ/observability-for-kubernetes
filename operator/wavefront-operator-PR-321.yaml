@@ -791,6 +791,7 @@ automountServiceAccountToken: false
 kind: ServiceAccount
 metadata:
   labels:
+    app.kubernetes.io/component: controller-manager
     app.kubernetes.io/name: wavefront
   name: wavefront-controller-manager
   namespace: observability-system
@@ -1445,6 +1446,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
+    app.kubernetes.io/component: controller-manager
     app.kubernetes.io/name: wavefront
   name: wavefront-manager-rolebinding
   namespace: observability-system
@@ -1612,6 +1614,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
+    app.kubernetes.io/component: controller-manager
     app.kubernetes.io/name: wavefront
   name: wavefront-manager-rolebinding
   namespace: observability-system
@@ -1744,7 +1747,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.24.0-alpha-ab0a6cf7
+  collector: 1.24.0-alpha-2fe91d7b
   logging: 2.1.6
   proxy: 13.0.1
 kind: ConfigMap
@@ -1816,7 +1819,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-ab0a6cf7
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-2fe91d7b
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
