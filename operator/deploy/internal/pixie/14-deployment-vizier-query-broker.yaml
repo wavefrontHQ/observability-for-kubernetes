@@ -110,6 +110,13 @@ spec:
           volumeMounts:
             - mountPath: /certs
               name: certs
+          resources:
+            requests:
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
       initContainers:
         - command:
             - sh

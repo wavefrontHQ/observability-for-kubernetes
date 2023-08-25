@@ -89,6 +89,13 @@ spec:
               name: nats-server-tls-volume
             - mountPath: /var/run/nats
               name: pid
+          resources:
+            requests:
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
       securityContext:
         fsGroup: 10100
         runAsGroup: 10100

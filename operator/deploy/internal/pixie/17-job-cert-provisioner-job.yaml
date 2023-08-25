@@ -47,6 +47,13 @@ spec:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 50m
+              memory: 10Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
       restartPolicy: Never
       securityContext:
         fsGroup: 10100

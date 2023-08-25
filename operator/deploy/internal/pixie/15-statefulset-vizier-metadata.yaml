@@ -99,6 +99,13 @@ spec:
               name: certs
             - mountPath: /metadata
               name: metadata-volume
+          resources:
+            requests:
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
       initContainers:
         - command:
             - sh
