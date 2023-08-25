@@ -4,11 +4,18 @@ metadata:
   labels:
     app: pl-monitoring
     component: vizier
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
   name: metadata-pv-claim
   namespace: observability-system
+  ownerReferences:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: wavefront-controller-manager
+      uid: '{{ .ControllerManagerUID }}'
 spec:
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   resources:
     requests:
       storage: 16Gi

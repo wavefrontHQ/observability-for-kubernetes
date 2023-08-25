@@ -4,15 +4,22 @@ metadata:
   labels:
     app: pl-monitoring
     component: vizier
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
   name: kelvin-service
   namespace: observability-system
+  ownerReferences:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: wavefront-controller-manager
+      uid: '{{ .ControllerManagerUID }}'
 spec:
   clusterIP: None
   ports:
-  - name: tcp-http2
-    port: 59300
-    protocol: TCP
-    targetPort: 59300
+    - name: tcp-http2
+      port: 59300
+      protocol: TCP
+      targetPort: 59300
   selector:
     app: pl-monitoring
     component: vizier

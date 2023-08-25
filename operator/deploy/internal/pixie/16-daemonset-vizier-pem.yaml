@@ -4,8 +4,15 @@ metadata:
   labels:
     app: pl-monitoring
     component: vizier
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
   name: vizier-pem
   namespace: observability-system
+  ownerReferences:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: wavefront-controller-manager
+      uid: '{{ .ControllerManagerUID }}'
 spec:
   selector:
     matchLabels:
@@ -24,134 +31,131 @@ spec:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/os
-                operator: Exists
-              - key: kubernetes.io/os
-                operator: In
-                values:
-                - linux
-            - matchExpressions:
-              - key: beta.kubernetes.io/os
-                operator: Exists
-              - key: beta.kubernetes.io/os
-                operator: In
-                values:
-                - linux
+              - matchExpressions:
+                  - key: kubernetes.io/os
+                    operator: Exists
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+              - matchExpressions:
+                  - key: beta.kubernetes.io/os
+                    operator: Exists
+                  - key: beta.kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
       containers:
-      - args: []
-        env:
-        - name: TCMALLOC_SAMPLE_PARAMETER
-          value: "1048576"
-        - name: PL_CLIENT_TLS_CERT
-          value: /certs/client.crt
-        - name: PL_CLIENT_TLS_KEY
-          value: /certs/client.key
-        - name: PL_TLS_CA_CERT
-          value: /certs/ca.crt
-        - name: PL_DISABLE_SSL
-          value: "false"
-        - name: PL_HOST_PATH
-          value: /host
-        - name: PL_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: PL_POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: PL_HOST_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
-        - name: PL_JWT_SIGNING_KEY
-          valueFrom:
-            secretKeyRef:
-              key: jwt-signing-key
-              name: pl-cluster-secrets
-        - name: PL_VIZIER_ID
-          valueFrom:
-            secretKeyRef:
-              key: cluster-id
-              name: pl-cluster-secrets
-              optional: true
-        - name: PL_VIZIER_NAME
-          valueFrom:
-            secretKeyRef:
-              key: cluster-name
-              name: pl-cluster-secrets
-              optional: true
-        - name: PL_CLOCK_CONVERTER
-          value: default
-        image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/pem_image:0.14.2
-        name: pem
-        resources:
-{{ .Experimental.Hub.Pixie.Pem.Resources | toYaml | indent 10 }}
-        securityContext:
-          capabilities:
-            add:
-            - SYS_PTRACE
-            - SYS_ADMIN
-          privileged: true
-          seccompProfile:
-            type: RuntimeDefault
-        volumeMounts:
-        - mountPath: /host
-          name: host-root
-          readOnly: true
-        - mountPath: /sys
-          name: sys
-          readOnly: true
-        - mountPath: /certs
-          name: certs
+        - args: []
+          env:
+            - name: TCMALLOC_SAMPLE_PARAMETER
+              value: "1048576"
+            - name: PL_CLIENT_TLS_CERT
+              value: /certs/client.crt
+            - name: PL_CLIENT_TLS_KEY
+              value: /certs/client.key
+            - name: PL_TLS_CA_CERT
+              value: /certs/ca.crt
+            - name: PL_DISABLE_SSL
+              value: "false"
+            - name: PL_HOST_PATH
+              value: /host
+            - name: PL_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: PL_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PL_HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: PL_JWT_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: jwt-signing-key
+                  name: pl-cluster-secrets
+            - name: PL_VIZIER_ID
+              valueFrom:
+                secretKeyRef:
+                  key: cluster-id
+                  name: pl-cluster-secrets
+                  optional: true
+            - name: PL_VIZIER_NAME
+              valueFrom:
+                secretKeyRef:
+                  key: cluster-name
+                  name: pl-cluster-secrets
+                  optional: true
+            - name: PL_CLOCK_CONVERTER
+              value: default
+          image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/pem_image:0.14.2
+          name: pem
+          resources: {}
+          securityContext:
+            capabilities:
+              add:
+                - SYS_PTRACE
+                - SYS_ADMIN
+            privileged: true
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - mountPath: /host
+              name: host-root
+              readOnly: true
+            - mountPath: /sys
+              name: sys
+              readOnly: true
+            - mountPath: /certs
+              name: certs
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
       initContainers:
-      - command:
-        - sh
-        - -c
-        - ' set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [
-          $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
-          echo "waiting for ${URL}" sleep 2; done; '
-        env:
-        - name: SERVICE_NAME
-          value: vizier-query-broker-svc
-        - name: SERVICE_PORT
-          value: "50300"
-        image: projects.registry.vmware.com/tanzu_observability/bitnami/os-shell:curl-11
-        name: qb-wait
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          seccompProfile:
-            type: RuntimeDefault
+        - command:
+            - sh
+            - -c
+            - ' set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do echo "waiting for ${URL}" sleep 2; done; '
+          env:
+            - name: SERVICE_NAME
+              value: vizier-query-broker-svc
+            - name: SERVICE_PORT
+              value: "50300"
+          image: projects.registry.vmware.com/tanzu_observability/bitnami/os-shell:curl-11
+          name: qb-wait
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
       securityContext:
         seccompProfile:
           type: RuntimeDefault
       terminationGracePeriodSeconds: 10
       tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
-      - effect: NoExecute
-        operator: Exists
-      - effect: NoSchedule
-        operator: Exists
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+        - effect: NoExecute
+          operator: Exists
+        - effect: NoSchedule
+          operator: Exists
       volumes:
-      - hostPath:
-          path: /
-          type: Directory
-        name: host-root
-      - hostPath:
-          path: /sys
-          type: Directory
-        name: sys
-      - name: certs
-        secret:
-          secretName: service-tls-certs
+        - hostPath:
+            path: /
+            type: Directory
+          name: host-root
+        - hostPath:
+            path: /sys
+            type: Directory
+          name: sys
+        - name: certs
+          secret:
+            secretName: service-tls-certs
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 20

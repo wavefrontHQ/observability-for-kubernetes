@@ -53,20 +53,33 @@ yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .env) += {"n
 git rm -rf "${REPO_ROOT}/operator/config/rbac/components/pixie/*.yaml"
 mkdir -p "${REPO_ROOT}/operator/config/rbac/components/pixie"
 cp splits/roles/*.yaml "${REPO_ROOT}/operator/config/rbac/components/pixie"
-git add "${REPO_ROOT}/operator/config/rbac/components/pixie"
 
 git rm -rf "${REPO_ROOT}/operator/deploy/internal/pixie/*.yaml"
 mkdir -p "${REPO_ROOT}/operator/deploy/internal/pixie"
 cp splits/secrets/*.yaml "${REPO_ROOT}/operator/deploy/internal/pixie"
 cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/pixie"
 
-sed -i '' 's/image: gcr.io\/pixie-oss\/pixie-dev-public\/curl:multiarch-7.87.0/image: projects.registry.vmware.com\/tanzu_observability\/bitnami\/os-shell:curl-11/' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
+for f in "${REPO_ROOT}"/operator/config/rbac/components/pixie/*.yaml
+do
+  yq -i '.metadata.labels["app.kubernetes.io/name"] |= "wavefront"' "$f"
+  yq -i '.metadata.labels["app.kubernetes.io/component"] |= "pixie"' "$f"
+done
+
+for f in "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
+do
+  yq -i '.metadata.labels["app.kubernetes.io/name"] |= "wavefront"' "$f"
+  yq -i '.metadata.labels["app.kubernetes.io/component"] |= "pixie"' "$f"
+  yq -i '.metadata.ownerReferences[0] |= {"apiVersion": "apps/v1", "kind": "Deployment", "name": "wavefront-controller-manager", "uid": "{{ .ControllerManagerUID }}"}' "$f"
+done
+
+sed -i '' 's/image: gcr.io\/pixie-oss\/pixie-dev-public\/curl:multiarch-7.87.0/image: projects.registry.vmware.com\/tanzu_observability\/bitnami\/os-shell:curl-11/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/tanzu_observability/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/pixie/18-configmap-pl-cloud-config.yaml"
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
 
+git add "${REPO_ROOT}/operator/config/rbac/components/pixie"
 git add "${REPO_ROOT}/operator/deploy/internal/pixie"
 
 popd

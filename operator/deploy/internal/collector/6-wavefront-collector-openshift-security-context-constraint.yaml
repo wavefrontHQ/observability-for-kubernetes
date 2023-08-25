@@ -8,6 +8,11 @@ metadata:
     app.kubernetes.io/component: collector
   annotations:
     wavefront.com/conditionally-provision: '{{ .Openshift }}'
+  ownerReferences:
+  - apiVersion: apps/v1
+    kind: Deployment
+    name: wavefront-controller-manager
+    uid: {{ .ControllerManagerUID }}
 allowHostDirVolumePlugin: true
 allowHostIPC: false
 allowHostNetwork: false
