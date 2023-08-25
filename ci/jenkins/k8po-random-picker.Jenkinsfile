@@ -16,7 +16,7 @@ pipeline {
         script {
           team_name = '*Team Helios* :awesome_sun:'
           team_members = ['Devon', 'Ginwoo', 'Glenn', 'Kyle', 'Mark', 'Matt']
-          if (Calendar.THURSDAY == Calendar.getInstance().get(Calendar.DAY_OF_WEEK)) {
+          if (Calendar.THURSDAY == Calendar.getInstance(TimeZone.getTimeZone("America/Denver")).get(Calendar.DAY_OF_WEEK)) {
             team_members -= 'Devon'
           }
 
