@@ -93,7 +93,8 @@ spec:
               value: default
           image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/pem_image:0.14.2
           name: pem
-          resources: {}
+          resources:
+{{ .Experimental.Hub.Pixie.Pem.Resources | toYaml | indent 12 }}
           securityContext:
             capabilities:
               add:

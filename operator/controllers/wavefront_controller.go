@@ -29,6 +29,8 @@ import (
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	"k8s.io/client-go/discovery"
 
 	"k8s.io/client-go/util/workqueue"
@@ -58,8 +60,8 @@ import (
 const DeployDir = "../deploy/internal"
 
 type KubernetesManager interface {
-	ApplyResources(resourceYAMLs []string) error
-	DeleteResources(resourceYAMLs []string) error
+	ApplyResources(resourceYAMLs []client.Object) error
+	DeleteResources(resourceYAMLs []client.Object) error
 }
 
 // WavefrontReconciler reconciles a Wavefront object
@@ -203,13 +205,14 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 	return nil
 }
 
-func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]string, []string, error) {
+func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]client.Object, []client.Object, error) {
 	files, err := resourceFiles("yaml", spec)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var resourcesToApply, resourcesToDelete []string
+	var resourcesToApply, resourcesToDelete []client.Object
+	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
 	for resourceFile, shouldApply := range files {
 		templateName := filepath.Base(resourceFile)
 		resourceTemplate, err := newTemplate(templateName).ParseFS(r.FS, resourceFile)
@@ -222,11 +225,17 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 			return nil, nil, err
 		}
 
-		resourceData := buffer.String()
-		if shouldApply && !shouldNotProvision.MatchString(resourceData) {
-			resourcesToApply = append(resourcesToApply, resourceData)
+		resourceYAML := buffer.String()
+		resource := &unstructured.Unstructured{}
+		_, _, err = resourceDecoder.Decode([]byte(resourceYAML), nil, resource)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if shouldApply && resource.GetAnnotations()["wavefront.com/conditionally-provision"] != "false" {
+			resourcesToApply = append(resourcesToApply, resource)
 		} else {
-			resourcesToDelete = append(resourcesToDelete, resourceData)
+			resourcesToDelete = append(resourcesToDelete, resource)
 		}
 	}
 	return resourcesToApply, resourcesToDelete, nil

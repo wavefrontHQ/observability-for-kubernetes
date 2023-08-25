@@ -81,9 +81,10 @@ yq -i '(.spec.template.spec.containers[] | select(.name == "pl-nats") | .resourc
 sed -i '' 's/image: gcr.io\/pixie-oss\/pixie-dev-public\/curl:multiarch-7.87.0/image: projects.registry.vmware.com\/tanzu_observability\/bitnami\/os-shell:curl-11/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/tanzu_observability/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
-sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/pixie/18-configmap-pl-cloud-config.yaml"
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
+sed -i '' "s/resources: {}/resources:\n{{ .Experimental.Hub.Pixie.Pem.Resources | toYaml | indent 12 }}/" "${REPO_ROOT}/operator/deploy/internal/pixie/16-daemonset-vizier-pem.yaml"
+sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/pixie/18-configmap-pl-cloud-config.yaml"
 
 git add "${REPO_ROOT}/operator/config/rbac/components/pixie"
 git add "${REPO_ROOT}/operator/deploy/internal/pixie"

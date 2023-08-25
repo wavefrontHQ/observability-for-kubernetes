@@ -11,6 +11,8 @@ metadata:
       kind: Deployment
       name: wavefront-controller-manager
       uid: {{ .ControllerManagerUID }}
+  annotations:
+    wavefront.com/conditionally-provision: '{{ .DataCollection.Metrics.Enable }}'
 spec:
   selector:
     matchLabels:
@@ -24,7 +26,6 @@ spec:
       annotations:
         installation-method: operator
         proxy-available-replicas: "{{ .DataExport.WavefrontProxy.AvailableReplicas }}"
-        wavefront.com/conditionally-provision: '{{ .DataCollection.Metrics.Enable }}'
     spec:
       securityContext:
         runAsNonRoot: true

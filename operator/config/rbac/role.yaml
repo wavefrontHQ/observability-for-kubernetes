@@ -4,6 +4,7 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: controller-manager
   creationTimestamp: null
   name: manager-role
 rules:
@@ -21,6 +22,7 @@ kind: Role
 metadata:
   labels:
     app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: controller-manager
   creationTimestamp: null
   name: manager-role
   namespace: observability-system
