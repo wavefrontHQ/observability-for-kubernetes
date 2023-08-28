@@ -23,12 +23,15 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 
 	"k8s.io/client-go/util/workqueue"
@@ -58,8 +61,8 @@ import (
 const DeployDir = "../deploy/internal"
 
 type KubernetesManager interface {
-	ApplyResources(resourceYAMLs []string) error
-	DeleteResources(resourceYAMLs []string) error
+	ApplyResources(resourceYAMLs []client.Object) error
+	DeleteResources(resourceYAMLs []client.Object) error
 }
 
 // WavefrontReconciler reconciles a Wavefront object
@@ -102,8 +105,6 @@ type WavefrontReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 
 const maxReconcileInterval = 60 * time.Second
-
-var shouldNotProvision = regexp.MustCompile("wavefront\\.com/conditionally-provision: [\"']false[\"']")
 
 func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.namespace = req.Namespace
@@ -203,13 +204,14 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 	return nil
 }
 
-func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]string, []string, error) {
+func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]client.Object, []client.Object, error) {
 	files, err := resourceFiles("yaml", spec)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var resourcesToApply, resourcesToDelete []string
+	var resourcesToApply, resourcesToDelete []client.Object
+	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
 	for resourceFile, shouldApply := range files {
 		templateName := filepath.Base(resourceFile)
 		resourceTemplate, err := newTemplate(templateName).ParseFS(r.FS, resourceFile)
@@ -222,11 +224,34 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 			return nil, nil, err
 		}
 
-		resourceData := buffer.String()
-		if shouldApply && !shouldNotProvision.MatchString(resourceData) {
-			resourcesToApply = append(resourcesToApply, resourceData)
+		resourceYAML := buffer.String()
+		resource := &unstructured.Unstructured{}
+		_, _, err = resourceDecoder.Decode([]byte(resourceYAML), nil, resource)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		labels := resource.GetLabels()
+		if labels == nil {
+			labels = map[string]string{}
+		}
+		labels["app.kubernetes.io/name"] = "wavefront"
+		if labels["app.kubernetes.io/component"] == "" {
+			labels["app.kubernetes.io/component"] = filepath.Base(filepath.Dir(resourceFile))
+		}
+		resource.SetLabels(labels)
+
+		resource.SetOwnerReferences([]v1.OwnerReference{{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+			Name:       "wavefront-controller-manager",
+			UID:        types.UID(spec.ControllerManagerUID),
+		}})
+
+		if shouldApply && resource.GetAnnotations()["wavefront.com/conditionally-provision"] != "false" {
+			resourcesToApply = append(resourcesToApply, resource)
 		} else {
-			resourcesToDelete = append(resourcesToDelete, resourceData)
+			resourcesToDelete = append(resourcesToDelete, resource)
 		}
 	}
 	return resourcesToApply, resourcesToDelete, nil
@@ -246,7 +271,7 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		dirsToInclude = append(dirsToInclude, "logging")
 	}
 
-	if (spec.CanExportData && spec.Experimental.AutoTracing.Enable) || spec.Experimental.Hub.Pixie.Enable {
+	if (spec.CanExportData && spec.Experimental.Autotracing.Enable) || spec.Experimental.Hub.Pixie.Enable {
 		dirsToInclude = append(dirsToInclude, "pixie")
 	}
 
@@ -254,8 +279,8 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		dirsToInclude = append(dirsToInclude, "hub")
 	}
 
-	if spec.Experimental.AutoTracing.Enable {
-		dirsToInclude = append(dirsToInclude, "autoTracing")
+	if spec.Experimental.Autotracing.Enable {
+		dirsToInclude = append(dirsToInclude, "autotracing")
 	}
 	return dirsToInclude
 }

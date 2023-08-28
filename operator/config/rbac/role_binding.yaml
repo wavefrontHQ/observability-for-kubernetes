@@ -1,6 +1,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: controller-manager
   name: manager-rolebinding
   namespace: observability-system
 roleRef:
@@ -15,6 +18,9 @@ subjects:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: controller-manager
   name: manager-rolebinding
   namespace: observability-system
 roleRef:

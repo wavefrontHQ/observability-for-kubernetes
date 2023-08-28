@@ -5,14 +5,16 @@ metadata:
   labels:
     app: pl-monitoring
     component: vizier
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
   name: pl-vizier-query-broker-role
   namespace: observability-system
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch

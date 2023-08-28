@@ -4,14 +4,6 @@ kind: ConfigMap
 metadata:
   name: operator-proxy-preprocessor-rules-config
   namespace: {{ .Namespace }}
-  labels:
-    app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: proxy
-  ownerReferences:
-  - apiVersion: apps/v1
-    kind: Deployment
-    name: wavefront-controller-manager
-    uid: {{ .ControllerManagerUID }}
 data:
   rules.yaml: |
     {{ .DataExport.WavefrontProxy.PreprocessorRules.EnabledPorts }},49151:

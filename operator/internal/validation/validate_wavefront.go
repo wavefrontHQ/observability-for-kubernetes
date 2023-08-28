@@ -93,7 +93,7 @@ func validateWavefrontSpec(wavefront *wf.Wavefront) error {
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) == 0 && (wavefront.Spec.DataCollection.Metrics.Enable || wavefront.Spec.DataCollection.Logging.Enable) {
 		errs = append(errs, fmt.Errorf("invalid proxy configuration: either set dataExport.proxy.enable to true or configure dataExport.externalWavefrontProxy.url"))
 	}
-	if wavefront.Spec.Experimental.AutoTracing.Enable && !wavefront.Spec.DataExport.WavefrontProxy.Enable {
+	if wavefront.Spec.Experimental.Autotracing.Enable && !wavefront.Spec.DataExport.WavefrontProxy.Enable {
 		errs = append(errs, fmt.Errorf("'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled."))
 	}
 	if wavefront.Spec.DataCollection.Metrics.Enable {

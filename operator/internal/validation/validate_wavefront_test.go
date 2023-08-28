@@ -168,7 +168,7 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
 		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
-		wfCR.Spec.Experimental.AutoTracing.Enable = true
+		wfCR.Spec.Experimental.Autotracing.Enable = true
 		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled.", validateWavefrontSpec(wfCR).Error())
 	})
 

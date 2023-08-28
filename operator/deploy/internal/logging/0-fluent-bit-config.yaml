@@ -3,14 +3,6 @@ kind: ConfigMap
 metadata:
   name: wavefront-logging-config
   namespace: {{ .Namespace }}
-  ownerReferences:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: wavefront-controller-manager
-      uid: {{ .ControllerManagerUID }}
-  labels:
-    app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: logging
 data:
   fluent-bit.conf: |
     [SERVICE]

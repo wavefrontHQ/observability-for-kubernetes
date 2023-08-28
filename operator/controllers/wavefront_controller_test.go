@@ -7,12 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
-
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
@@ -36,9 +34,37 @@ import (
 )
 
 func TestReconcileAll(t *testing.T) {
+	t.Run("produces well formed YAML", func(t *testing.T) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.Autotracing.Enable = true
+		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.NoError(t, err)
+
+		mockKM.ForAllAppliedYAMLs(func(appliedYAML client.Object) {
+			kind := appliedYAML.GetObjectKind().GroupVersionKind().Kind
+			namespace := appliedYAML.GetNamespace()
+			name := appliedYAML.GetName()
+			expectResource := fmt.Sprintf("expect %s %s/%s to", kind, namespace, name)
+			require.Equalf(t, "wavefront", appliedYAML.GetLabels()["app.kubernetes.io/name"], "%s have an app.kubernetes.io/name label", expectResource)
+			require.NotEmptyf(t, appliedYAML.GetLabels()["app.kubernetes.io/component"], "%s have an app.kubernetes.io/component label", expectResource)
+
+			require.NotEmptyf(t, appliedYAML.GetOwnerReferences(), "%s have an owner reference to the controller-manager", expectResource)
+			ownerRef := appliedYAML.GetOwnerReferences()[0]
+			require.Equalf(t, "apps/v1", ownerRef.APIVersion, "%s have the proper owner reference api version", expectResource)
+			require.Equalf(t, "Deployment", ownerRef.Kind, "%s have the proper owner reference kind", expectResource)
+			require.Equalf(t, "wavefront-controller-manager", ownerRef.Name, "%s have the proper owner reference name", expectResource)
+			require.NotEmptyf(t, ownerRef.UID, "%s have the proper owner reference UID", expectResource)
+		})
+	})
+
 	t.Run("does not create other services until the proxy is running", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.AutoTracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Enable = true
 		}), nil, wftest.Proxy(wftest.WithReplicas(0, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -65,7 +91,7 @@ func TestReconcileAll(t *testing.T) {
 
 	t.Run("creates other components after the proxy is running", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.AutoTracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Enable = true
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -202,10 +228,10 @@ func TestReconcileAll(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), request)
 		require.NoError(t, err)
 
-		require.True(t, mockKM.NodeCollectorDaemonSetContains("imagePullSecrets:\n        - name: private-reg-cred"))
-		require.True(t, mockKM.ClusterCollectorDeploymentContains("imagePullSecrets:\n        - name: private-reg-cred"))
-		require.True(t, mockKM.LoggingDaemonSetContains("imagePullSecrets:\n        - name: private-reg-cred"))
-		require.True(t, mockKM.ProxyDeploymentContains("imagePullSecrets:\n        - name: private-reg-cred"))
+		require.True(t, mockKM.NodeCollectorDaemonSetContains("imagePullSecrets:\n      - name: private-reg-cred"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("imagePullSecrets:\n      - name: private-reg-cred"))
+		require.True(t, mockKM.LoggingDaemonSetContains("imagePullSecrets:\n      - name: private-reg-cred"))
+		require.True(t, mockKM.ProxyDeploymentContains("imagePullSecrets:\n      - name: private-reg-cred"))
 	})
 
 	t.Run("Child components inherits controller's namespace", func(t *testing.T) {
@@ -243,10 +269,10 @@ func TestReconcileAll(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
-		require.True(t, mockKM.NodeCollectorDaemonSetContains("- key: my-toleration\n          value: my-value\n          effect: NoSchedule"))
-		require.True(t, mockKM.LoggingDaemonSetContains("- key: my-toleration\n          value: my-value\n          effect: NoSchedule"))
-		require.False(t, mockKM.ClusterCollectorDeploymentContains("- key: my-toleration\n          value: my-value\n          effect: NoSchedule"))
-		require.False(t, mockKM.ProxyDeploymentContains("- key: my-toleration\n          value: my-value\n          effect: NoSchedule"))
+		require.True(t, mockKM.NodeCollectorDaemonSetContains("- effect: NoSchedule\n        key: my-toleration\n        value: my-value"))
+		require.True(t, mockKM.LoggingDaemonSetContains("- effect: NoSchedule\n        key: my-toleration\n        value: my-value"))
+		require.False(t, mockKM.ClusterCollectorDeploymentContains("- effect: NoSchedule\n        key: my-toleration\n        value: my-value"))
+		require.False(t, mockKM.ProxyDeploymentContains("- effect: NoSchedule\n        key: my-toleration\n        value: my-value"))
 	})
 
 	t.Run("deploys openshift resources if on an openshift environment", func(t *testing.T) {
@@ -420,8 +446,8 @@ func TestReconcileCollector(t *testing.T) {
 
 		require.NoError(t, err)
 
-		require.True(t, mockKM.CollectorConfigMapContains("metricAllowList:\n        - allowSomeTag\n        - allowOtherTag"))
-		require.True(t, mockKM.CollectorConfigMapContains("metricDenyList:\n        - denyAnotherTag\n        - denyThisTag"))
+		require.True(t, mockKM.CollectorConfigMapContains("metricAllowList:\\n    - allowSomeTag\\n\n    \\   - allowOtherTag"))
+		require.True(t, mockKM.CollectorConfigMapContains("metricDenyList:\\n\n    \\   - denyAnotherTag\\n    - denyThisTag"))
 	})
 
 	t.Run("can add custom filter with tag guarantee list", func(t *testing.T) {
@@ -433,7 +459,7 @@ func TestReconcileCollector(t *testing.T) {
 
 		require.NoError(t, err)
 
-		require.True(t, mockKM.CollectorConfigMapContains("tagGuaranteeList:\n        - someTagToAlwaysProtect\n        - someOtherTagToAlwaysProtect"))
+		require.True(t, mockKM.CollectorConfigMapContains("tagGuaranteeList:\\n\n    \\   - someTagToAlwaysProtect\\n    - someOtherTagToAlwaysProtect"))
 	})
 
 	t.Run("can add custom tags", func(t *testing.T) {
@@ -445,7 +471,7 @@ func TestReconcileCollector(t *testing.T) {
 
 		require.NoError(t, err)
 
-		require.True(t, mockKM.CollectorConfigMapContains("tags:\n        env: non-production"))
+		require.True(t, mockKM.CollectorConfigMapContains("tags:\\n    env: non-production"))
 	})
 
 	t.Run("resources set for cluster collector", func(t *testing.T) {
@@ -662,7 +688,6 @@ func TestReconcileCollector(t *testing.T) {
 
 func TestReconcileProxy(t *testing.T) {
 	t.Run("creates proxy and proxy service", func(t *testing.T) {
-
 		r, mockKM := emptyScenario(wftest.CR(), nil)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
@@ -1377,10 +1402,9 @@ func TestReconcileLogging(t *testing.T) {
 }
 
 func TestReconcileAutoTracing(t *testing.T) {
-
 	t.Run("creates Pixie components when Pixie is enabled", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.AutoTracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Enable = true
 			wavefront.Spec.ClusterName = "test-clusterName"
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
@@ -1417,7 +1441,7 @@ func TestReconcileAutoTracing(t *testing.T) {
 
 	t.Run("does not create auto instrumentation components when auto instrumentation is not enabled", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.AutoTracing.Enable = false
+			wavefront.Spec.Experimental.Autotracing.Enable = false
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -1446,7 +1470,6 @@ func TestReconcileAutoTracing(t *testing.T) {
 }
 
 func TestReconcileHubPixie(t *testing.T) {
-
 	t.Run("creates Pixie components when Hub Pixie is enabled", func(t *testing.T) {
 		wfCR := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
 			w.Spec.ClusterName = "test-clusterName"
@@ -1502,7 +1525,7 @@ func TestReconcileHubPixie(t *testing.T) {
 
 		require.Equal(t, ctrl.Result{Requeue: true}, results)
 
-		require.True(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem", "        resources:\n          requests:\n            cpu: 500m\n            memory: 50Mi\n          limits:\n            cpu: 1000m\n            memory: 1.5Gi"))
+		require.True(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem", "resources:\n          limits:\n            cpu: 1000m\n            memory: 1.5Gi\n          requests:\n            cpu: 500m\n            memory: 50Mi"))
 	})
 
 	t.Run("does not create auto instrumentation components when auto instrumentation is not enabled", func(t *testing.T) {
@@ -1544,7 +1567,6 @@ func TestReconcileHubPixie(t *testing.T) {
 		require.False(t, mockKM.PixieComponentContains("v1", "ServiceAccount", "metadata-service-account"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ConfigMap", "gauge.kubernetes.conn-stats"))
 	})
-
 }
 
 func TestReconcileKubernetesEventsByRuntimeSecret(t *testing.T) {
@@ -1565,10 +1587,10 @@ func TestReconcileKubernetesEventsByRuntimeSecret(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
-		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \"https://example.com\""))
-		require.True(t, mockKM.CollectorConfigMapContains("enableEvents: false"))
-		require.True(t, mockKM.CollectorConfigMapContains("type: \"external\"\n      enableEvents: true"))
-		require.True(t, mockKM.CollectorConfigMapContains("events:\n      filters:\n        tagAllowListSets:\n        - type:\n          - \"Warning\"\n        - type:\n          - \"Normal\"\n          kind:\n          - \"Pod\"\n          reason:\n          - \"Backoff\""))
+		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \\\"https://example.com\\\""))
+		require.True(t, mockKM.CollectorConfigMapContains("enableEvents:\n    false"))
+		require.True(t, mockKM.CollectorConfigMapContains("type: \\\"external\\\"\\n  enableEvents: true"))
+		require.True(t, mockKM.CollectorConfigMapContains("events:\\n\n    \\ filters:\\n    tagAllowListSets:\\n    - type:\\n      - \\\"Warning\\\"\\n    - type:\\n\n    \\     - \\\"Normal\\\"\\n      kind:\\n      - \\\"Pod\\\"\\n      reason:\\n      - \\\"Backoff\\\""))
 		require.True(t, mockKM.CollectorConfigMapContains("proxyAddress: wavefront-proxy:2878"))
 
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: K8S_EVENTS_ENDPOINT_TOKEN"))
@@ -1665,8 +1687,8 @@ func TestReconcileKubernetesEventsByRuntimeSecret(t *testing.T) {
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: "+secret.Name))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("key: k8s-events-endpoint-token"))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: k8s-events-only-wavefront-collector-config"))
-		require.True(t, mockKM.ClusterCollectorDeploymentContains("limits:\n              cpu: 250Mi\n              memory: 200Mi"))
-		require.True(t, mockKM.ClusterCollectorDeploymentContains("requests:\n              cpu: 100m\n              memory: 10Mi"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("limits:\n            cpu: 250Mi\n            memory: 200Mi"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("requests:\n            cpu: 100m\n            memory: 10Mi"))
 		require.False(t, mockKM.NodeCollectorDaemonSetContains())
 		require.False(t, mockKM.ProxyDeploymentContains())
 	})
@@ -1769,10 +1791,10 @@ func TestReconcileKubernetesEventsDeprecatedCR(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
-		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \"https://example.com\""))
-		require.True(t, mockKM.CollectorConfigMapContains("enableEvents: false"))
-		require.True(t, mockKM.CollectorConfigMapContains("type: \"external\"\n      enableEvents: true"))
-		require.True(t, mockKM.CollectorConfigMapContains("events:\n      filters:\n        tagAllowListSets:\n        - type:\n          - \"Warning\"\n        - type:\n          - \"Normal\"\n          kind:\n          - \"Pod\"\n          reason:\n          - \"Backoff\""))
+		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \\\"https://example.com\\\""))
+		require.True(t, mockKM.CollectorConfigMapContains("enableEvents:\n    false"))
+		require.True(t, mockKM.CollectorConfigMapContains("type: \\\"external\\\"\\n  enableEvents: true"))
+		require.True(t, mockKM.CollectorConfigMapContains("events:\\n\n    \\ filters:\\n    tagAllowListSets:\\n    - type:\\n      - \\\"Warning\\\"\\n    - type:\\n\n    \\     - \\\"Normal\\\"\\n      kind:\\n      - \\\"Pod\\\"\\n      reason:\\n      - \\\"Backoff\\\""))
 		require.True(t, mockKM.CollectorConfigMapContains("proxyAddress: wavefront-proxy:2878"))
 
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: K8S_EVENTS_ENDPOINT_TOKEN"))

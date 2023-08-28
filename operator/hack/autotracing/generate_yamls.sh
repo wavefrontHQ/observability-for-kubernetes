@@ -53,20 +53,33 @@ yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .env) += {"n
 git rm -rf "${REPO_ROOT}/operator/config/rbac/components/pixie/*.yaml"
 mkdir -p "${REPO_ROOT}/operator/config/rbac/components/pixie"
 cp splits/roles/*.yaml "${REPO_ROOT}/operator/config/rbac/components/pixie"
-git add "${REPO_ROOT}/operator/config/rbac/components/pixie"
 
 git rm -rf "${REPO_ROOT}/operator/deploy/internal/pixie/*.yaml"
 mkdir -p "${REPO_ROOT}/operator/deploy/internal/pixie"
 cp splits/secrets/*.yaml "${REPO_ROOT}/operator/deploy/internal/pixie"
 cp splits/*.yaml "${REPO_ROOT}/operator/deploy/internal/pixie"
 
-sed -i '' 's/image: gcr.io\/pixie-oss\/pixie-dev-public\/curl:multiarch-7.87.0/image: projects.registry.vmware.com\/tanzu_observability\/bitnami\/os-shell:curl-11/' "${REPO_ROOT}"/operator/deploy/internal/autoinstrumentation/*.yaml
+for f in "${REPO_ROOT}"/operator/config/rbac/components/pixie/*.yaml
+do
+  yq -i '.metadata.labels["app.kubernetes.io/name"] |= "wavefront"' "$f"
+  yq -i '.metadata.labels["app.kubernetes.io/component"] |= "pixie"' "$f"
+done
+
+yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "2000m", "memory": "100Gi"}}' "${REPO_ROOT}"/operator/deploy/internal/pixie/12-deployment-kelvin.yaml
+yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "500m", "memory": "512Mi"}}' "${REPO_ROOT}"/operator/deploy/internal/pixie/14-deployment-vizier-query-broker.yaml
+yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "1000m", "memory": "2Gi"}}' "${REPO_ROOT}"/operator/deploy/internal/pixie/15-statefulset-vizier-metadata.yaml
+yq -i '(.spec.template.spec.containers[] | select(.name == "provisioner") | .resources) = {"requests": {"cpu": "50m", "memory": "10Mi"}, "limits": {"cpu": "100m", "memory": "100Mi"}}' "${REPO_ROOT}"/operator/deploy/internal/pixie/17-job-cert-provisioner-job.yaml
+yq -i '(.spec.template.spec.containers[] | select(.name == "pl-nats") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "1000m", "memory": "2Gi"}}' "${REPO_ROOT}"/operator/deploy/internal/pixie/23-statefulset-pl-nats.yaml
+
+sed -i '' 's/image: gcr.io\/pixie-oss\/pixie-dev-public\/curl:multiarch-7.87.0/image: projects.registry.vmware.com\/tanzu_observability\/bitnami\/os-shell:curl-11/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/tanzu_observability/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
-sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/pixie/18-configmap-pl-cloud-config.yaml"
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
+sed -i '' "s/resources: {}/resources:\n{{ .Experimental.Hub.Pixie.Pem.Resources | toYaml | indent 12 }}/" "${REPO_ROOT}/operator/deploy/internal/pixie/16-daemonset-vizier-pem.yaml"
+sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/pixie/18-configmap-pl-cloud-config.yaml"
 
+git add "${REPO_ROOT}/operator/config/rbac/components/pixie"
 git add "${REPO_ROOT}/operator/deploy/internal/pixie"
 
 popd

@@ -48,7 +48,7 @@ A Kubernetes cluster:
        wavefrontProxy:
          enable: true
      experimental:
-       autoTracing:
+       autotracing:
          enable: true
    ```
 

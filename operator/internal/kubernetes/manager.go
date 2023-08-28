@@ -8,7 +8,6 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -30,24 +29,18 @@ func NewKubernetesManager(objClient Client) *KubernetesManager {
 	return &KubernetesManager{objClient: objClient}
 }
 
-func (km *KubernetesManager) ApplyResources(resourceYAMLs []string) error {
-	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-	for _, resourceYAML := range resourceYAMLs {
-		object := &unstructured.Unstructured{}
-		_, gvk, err := resourceDecoder.Decode([]byte(resourceYAML), nil, object)
-		if err != nil {
-			return err
-		}
-
+func (km *KubernetesManager) ApplyResources(resources []client.Object) error {
+	for _, resource := range resources {
+		gvk := resource.GetObjectKind().GroupVersionKind()
 		var getObj unstructured.Unstructured
-		getObj.SetGroupVersionKind(*gvk)
-		err = km.objClient.Get(context.Background(), util.ObjKey(object.GetNamespace(), object.GetName()), &getObj)
+		getObj.SetGroupVersionKind(gvk)
+		err := km.objClient.Get(context.Background(), util.ObjKey(resource.GetNamespace(), resource.GetName()), &getObj)
 		if errors.IsNotFound(err) {
-			err = km.objClient.Create(context.Background(), object)
+			err = km.objClient.Create(context.Background(), resource)
 		} else if err == nil {
 			var diffObj unstructured.Unstructured
-			diffObj.SetGroupVersionKind(*gvk)
-			err = km.objClient.Patch(context.Background(), object, client.MergeFrom(&diffObj))
+			diffObj.SetGroupVersionKind(gvk)
+			err = km.objClient.Patch(context.Background(), resource, client.MergeFrom(&diffObj))
 		}
 		if err != nil {
 			return err
@@ -56,16 +49,9 @@ func (km *KubernetesManager) ApplyResources(resourceYAMLs []string) error {
 	return nil
 }
 
-func (km *KubernetesManager) DeleteResources(resourceYAMLs []string) error {
-	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-	for _, resourceYAML := range resourceYAMLs {
-		object := &unstructured.Unstructured{}
-		_, _, err := resourceDecoder.Decode([]byte(resourceYAML), nil, object)
-		if err != nil {
-			return err
-		}
-
-		err = km.objClient.Delete(context.Background(), object)
+func (km *KubernetesManager) DeleteResources(resources []client.Object) error {
+	for _, resource := range resources {
+		err := km.objClient.Delete(context.Background(), resource)
 		if err != nil && !errors.IsNotFound(err) && !meta.IsNoMatchError(err) {
 			return err
 		}
