@@ -23,7 +23,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -106,8 +105,6 @@ type WavefrontReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 
 const maxReconcileInterval = 60 * time.Second
-
-var shouldNotProvision = regexp.MustCompile("wavefront\\.com/conditionally-provision: [\"']false[\"']")
 
 func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.namespace = req.Namespace
