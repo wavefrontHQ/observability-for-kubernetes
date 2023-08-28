@@ -2022,7 +2022,6 @@ func containsProxyArg(t *testing.T, proxyArg string, mockKM testhelper.MockKuber
 
 func emptyScenario(wfCR *wf.Wavefront, apiGroups []string, initObjs ...runtime.Object) (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
 	s := scheme.Scheme
-	scheme.AddToScheme(s)
 	s.AddKnownTypes(wf.GroupVersion, &wf.Wavefront{})
 
 	namespace := wftest.DefaultNamespace
@@ -2043,7 +2042,7 @@ func emptyScenario(wfCR *wf.Wavefront, apiGroups []string, initObjs ...runtime.O
 	clientBuilder = clientBuilder.WithRuntimeObjects(initObjs...)
 	objClient := clientBuilder.Build()
 
-	mockKM := testhelper.NewMockKubernetesManager(objClient.Scheme())
+	mockKM := testhelper.NewMockKubernetesManager()
 	mockDiscoveryClient := testhelper.NewMockKubernetesDiscoveryClient(apiGroups)
 
 	r := &controllers.WavefrontReconciler{

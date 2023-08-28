@@ -16,13 +16,12 @@ import (
 )
 
 type MockKubernetesManager struct {
-	scheme       *runtime.Scheme
 	deletedYAMLs []string
 	appliedYAMLs []string
 }
 
-func NewMockKubernetesManager(scheme *runtime.Scheme) *MockKubernetesManager {
-	return &MockKubernetesManager{scheme: scheme}
+func NewMockKubernetesManager() *MockKubernetesManager {
+	return &MockKubernetesManager{}
 }
 
 func (skm *MockKubernetesManager) ForAllAppliedYAMLs(do func(appliedYAML client.Object)) {

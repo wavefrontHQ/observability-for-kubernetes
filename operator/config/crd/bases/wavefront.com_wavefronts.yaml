@@ -593,7 +593,7 @@ spec:
               experimental:
                 description: Experimental features
                 properties:
-                  autoTracing:
+                  autotracing:
                     properties:
                       enable:
                         default: true
