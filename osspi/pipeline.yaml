@@ -20,6 +20,22 @@ resources:
     source:
       uri: git@github.com:wavefrontHQ/prometheus-storage-adapter.git
       private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+  - name: wavefront-sdk-java
+    type: git
+    source:
+      uri: https://github.com/wavefrontHQ/wavefront-sdk-java.git
+  - name: wavefront-spring-boot
+    type: git
+    source:
+      uri: https://github.com/wavefrontHQ/wavefront-spring-boot.git
+      branch: springboot3
+  - name: osspi-tool
+    type: git
+    icon: gitlab
+    source:
+      uri: git@gitlab.eng.vmware.com:source-insight-tooling/norsk-to-osspi.git
+      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+      branch: main
 jobs:
   - name: update-self
     plan:
@@ -184,3 +200,71 @@ jobs:
               version_regex: .*
             - name_regex: gomega
               version_regex: .*
+
+  - name: osspi-scan-wavefront-sdk-java
+    serial: true
+    plan:
+    - in_parallel:
+      - get: osspi-tool
+      - get: wavefront-sdk-java
+        trigger: true
+        params: { submodules: all }
+    - in_parallel:
+      - task: osspi-scan-packages
+        file: osspi-tool/tasks/osspi/run-osspi-source.yaml
+        input_mapping:
+          repo1: osspi-tool
+          repo2: wavefront-sdk-java
+        params:
+          REPO: repo2
+          API_KEY: ((osspi.osm-prod-api-key))
+          USERNAME: ((osspi.osm-prod-username))
+          OSM_ENVIRONMENT: production
+          PRODUCT: wavefront-sdk-java
+          VERSION: Latest
+          PREPARE: |
+            curl --output /tmp/maven.tar.gz https://dlcdn.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz
+            tar -xf /tmp/maven.tar.gz -C /tmp
+          OSSPI_SCANNING_PARAMS: |
+            enable: true
+            include_bomtools: "maven"
+            maven.path: /tmp/apache-maven-3.9.4/bin/mvn
+            maven.exclude_scopes: "test"
+            search_depth: 5
+            # exclude for signature scans
+            exclude_patterns:
+            - test
+
+  - name: osspi-scan-wavefront-spring-boot
+    serial: true
+    plan:
+    - in_parallel:
+      - get: osspi-tool
+      - get: wavefront-spring-boot
+        trigger: true
+        params: { submodules: all }
+    - in_parallel:
+      - task: osspi-scan-packages
+        file: osspi-tool/tasks/osspi/run-osspi-source.yaml
+        input_mapping:
+          repo1: osspi-tool
+          repo2: wavefront-spring-boot
+        params:
+          REPO: repo2
+          API_KEY: ((osspi.osm-prod-api-key))
+          USERNAME: ((osspi.osm-prod-username))
+          OSM_ENVIRONMENT: production
+          PRODUCT: WavefrontSprintBootAutoconfigure
+          VERSION: Latest
+          PREPARE: |
+            curl --output /tmp/maven.tar.gz https://dlcdn.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz
+            tar -xf /tmp/maven.tar.gz -C /tmp
+          OSSPI_SCANNING_PARAMS: |
+            enable: true
+            include_bomtools: "maven"
+            maven.path: /tmp/apache-maven-3.9.4/bin/mvn
+            maven.exclude_scopes: "test"
+            search_depth: 5
+            # exclude for signature scans
+            exclude_patterns:
+            - test
