@@ -1500,7 +1500,6 @@ func TestReconcileHubPixie(t *testing.T) {
 		require.True(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config", "PL_CLUSTER_NAME: test-clusterName"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-name: test-clusterName"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
-		require.True(t, mockKM.PixieComponentContains("v1", "ConfigMap", "gauge.kubernetes.conn-stats"))
 
 		require.False(t, mockKM.ProxyDeploymentContains(""))
 	})
@@ -1565,7 +1564,6 @@ func TestReconcileHubPixie(t *testing.T) {
 		require.False(t, mockKM.PixieComponentContains("v1", "Secret", "pl-deploy-secrets"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ServiceAccount", "metadata-service-account"))
-		require.False(t, mockKM.PixieComponentContains("v1", "ConfigMap", "gauge.kubernetes.conn-stats"))
 	})
 }
 

@@ -275,10 +275,6 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		dirsToInclude = append(dirsToInclude, "pixie")
 	}
 
-	if spec.Experimental.Hub.Pixie.Enable {
-		dirsToInclude = append(dirsToInclude, "hub")
-	}
-
 	if spec.Experimental.Autotracing.Enable {
 		dirsToInclude = append(dirsToInclude, "autotracing")
 	}
