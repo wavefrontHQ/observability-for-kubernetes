@@ -34,13 +34,32 @@ import (
 )
 
 func TestReconcileAll(t *testing.T) {
-	ProducesWellFormedYAML(t, func() (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
+	t.Run("produces well formed YAML", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
-		return r, mockKM
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.NoError(t, err)
+
+		mockKM.ForAllAppliedYAMLs(func(appliedYAML client.Object) {
+			kind := appliedYAML.GetObjectKind().GroupVersionKind().Kind
+			namespace := appliedYAML.GetNamespace()
+			name := appliedYAML.GetName()
+			expectResource := fmt.Sprintf("expect %s %s/%s to", kind, namespace, name)
+			require.Equalf(t, "wavefront", appliedYAML.GetLabels()["app.kubernetes.io/name"], "%s have an app.kubernetes.io/name label", expectResource)
+			require.NotEmptyf(t, appliedYAML.GetLabels()["app.kubernetes.io/component"], "%s have an app.kubernetes.io/component label", expectResource)
+
+			require.NotEmptyf(t, appliedYAML.GetOwnerReferences(), "%s have an owner reference to the controller-manager", expectResource)
+			ownerRef := appliedYAML.GetOwnerReferences()[0]
+			require.Equalf(t, "apps/v1", ownerRef.APIVersion, "%s have the proper owner reference api version", expectResource)
+			require.Equalf(t, "Deployment", ownerRef.Kind, "%s have the proper owner reference kind", expectResource)
+			require.Equalf(t, "wavefront-controller-manager", ownerRef.Name, "%s have the proper owner reference name", expectResource)
+			require.NotEmptyf(t, ownerRef.UID, "%s have the proper owner reference UID", expectResource)
+		})
 	})
 
 	t.Run("does not create other services until the proxy is running", func(t *testing.T) {
@@ -284,10 +303,6 @@ func TestReconcileAll(t *testing.T) {
 }
 
 func TestReconcileCollector(t *testing.T) {
-	ProducesWellFormedYAML(t, func() (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
-		return componentScenario(wftest.CR(), nil)
-	})
-
 	t.Run("does not create configmap if user specified one", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.CustomConfig = "myconfig"
@@ -672,10 +687,6 @@ func TestReconcileCollector(t *testing.T) {
 }
 
 func TestReconcileProxy(t *testing.T) {
-	ProducesWellFormedYAML(t, func() (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
-		return componentScenario(wftest.CR(), nil)
-	})
-
 	t.Run("creates proxy and proxy service", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(), nil)
 
@@ -1267,10 +1278,6 @@ func TestReconcileProxy(t *testing.T) {
 }
 
 func TestReconcileLogging(t *testing.T) {
-	ProducesWellFormedYAML(t, func() (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
-		return componentScenario(wftest.CR(), nil)
-	})
-
 	t.Run("Create logging if DataCollection.Logging.Enable is set to true", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(), nil)
 
@@ -1395,13 +1402,6 @@ func TestReconcileLogging(t *testing.T) {
 }
 
 func TestReconcileAutoTracing(t *testing.T) {
-	ProducesWellFormedYAML(t, func() (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
-		return emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.Autotracing.Enable = true
-			wavefront.Spec.ClusterName = "test-clusterName"
-		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
-	})
-
 	t.Run("creates Pixie components when Pixie is enabled", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
@@ -1470,14 +1470,6 @@ func TestReconcileAutoTracing(t *testing.T) {
 }
 
 func TestReconcileHubPixie(t *testing.T) {
-	ProducesWellFormedYAML(t, func() (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
-		return emptyScenario(wftest.NothingEnabledCR(func(w *wf.Wavefront) {
-			w.Spec.ClusterName = "test-clusterName"
-			w.Spec.Experimental.Hub.Enable = true
-			w.Spec.Experimental.Hub.Pixie.Enable = true
-		}), nil)
-	})
-
 	t.Run("creates Pixie components when Hub Pixie is enabled", func(t *testing.T) {
 		wfCR := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
 			w.Spec.ClusterName = "test-clusterName"
@@ -1810,32 +1802,6 @@ func TestReconcileKubernetesEventsDeprecatedCR(t *testing.T) {
 		require.False(t, mockKM.NodeCollectorDaemonSetContains("name: K8S_EVENTS_ENDPOINT_TOKEN"))
 		require.False(t, mockKM.NodeCollectorDaemonSetContains("key: k8s-events-endpoint-token"))
 		require.True(t, mockKM.ProxyDeploymentContains("name: WAVEFRONT_TOKEN", "key: token"))
-	})
-}
-
-func ProducesWellFormedYAML(t *testing.T, setupScenario func() (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager)) {
-	t.Run("produces well formed YAML", func(t *testing.T) {
-		r, mockKM := setupScenario()
-
-		_, err := r.Reconcile(context.Background(), defaultRequest())
-
-		require.NoError(t, err)
-
-		mockKM.ForAllAppliedYAMLs(func(appliedYAML client.Object) {
-			kind := appliedYAML.GetObjectKind().GroupVersionKind().Kind
-			namespace := appliedYAML.GetNamespace()
-			name := appliedYAML.GetName()
-			expectResource := fmt.Sprintf("expect %s %s/%s to", kind, namespace, name)
-			require.Equalf(t, "wavefront", appliedYAML.GetLabels()["app.kubernetes.io/name"], "%s have an app.kubernetes.io/name label", expectResource)
-			require.NotEmptyf(t, appliedYAML.GetLabels()["app.kubernetes.io/component"], "%s have an app.kubernetes.io/component label", expectResource)
-
-			require.NotEmptyf(t, appliedYAML.GetOwnerReferences(), "%s have an owner reference to the controller-manager", expectResource)
-			ownerRef := appliedYAML.GetOwnerReferences()[0]
-			require.Equalf(t, "apps/v1", ownerRef.APIVersion, "%s have the proper owner reference api version", expectResource)
-			require.Equalf(t, "Deployment", ownerRef.Kind, "%s have the proper owner reference kind", expectResource)
-			require.Equalf(t, "wavefront-controller-manager", ownerRef.Name, "%s have the proper owner reference name", expectResource)
-			require.NotEmptyf(t, ownerRef.UID, "%s have the proper owner reference UID", expectResource)
-		})
 	})
 }
 
