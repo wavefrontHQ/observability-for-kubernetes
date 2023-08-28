@@ -600,7 +600,7 @@ spec:
               experimental:
                 description: Experimental features
                 properties:
-                  autoTracing:
+                  autotracing:
                     properties:
                       enable:
                         default: true
@@ -1747,7 +1747,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.24.0-alpha-4b8660e4
+  collector: 1.24.0-alpha-700cd351
   logging: 2.1.6
   proxy: 13.0.1
 kind: ConfigMap
@@ -1819,7 +1819,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-4b8660e4
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-700cd351
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
