@@ -119,6 +119,14 @@ func HandleIncomingMetrics(proxylines *broadcaster.Broadcaster[string], conn net
 		if len(lines.Text()) == 0 {
 			continue
 		}
+		if lines.Text() == "POST /report?f=wavefront HTTP/1.1" {
+			log.Debugf("HTTP header detected. Skipping line.")
+			// Clear scanner
+			for lines.Scan() {
+			}
+			conn.Close() // Close connection
+			return
+		}
 		log.Debugf("incoming metrics line: %s", lines.Text())
 		proxylines.Publish(1*time.Second, lines.Text())
 	}
