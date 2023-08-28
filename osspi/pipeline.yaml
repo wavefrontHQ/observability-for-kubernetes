@@ -10,6 +10,13 @@ resources:
     source:
       uri: git@github.com:wavefrontHQ/observability-for-kubernetes.git
       private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+  - name: osspi-tool
+    type: git
+    icon: gitlab
+    source:
+      uri: git@gitlab.eng.vmware.com:source-insight-tooling/norsk-to-osspi.git
+      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+      branch: main
   - name: wavefront-kubernetes-adapter
     type: git
     source:
@@ -21,21 +28,18 @@ resources:
       uri: git@github.com:wavefrontHQ/prometheus-storage-adapter.git
       private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
   - name: wavefront-sdk-java
-    type: git
     source:
       uri: https://github.com/wavefrontHQ/wavefront-sdk-java.git
+    type: git
+  - name: wavefront-sdk-python
+    source:
+      uri: https://github.com/wavefrontHQ/wavefront-sdk-python.git
+    type: git
   - name: wavefront-spring-boot
-    type: git
     source:
-      uri: https://github.com/wavefrontHQ/wavefront-spring-boot.git
       branch: springboot3
-  - name: osspi-tool
+      uri: https://github.com/wavefrontHQ/wavefront-spring-boot.git
     type: git
-    icon: gitlab
-    source:
-      uri: git@gitlab.eng.vmware.com:source-insight-tooling/norsk-to-osspi.git
-      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
-      branch: main
 jobs:
   - name: update-self
     plan:
@@ -234,6 +238,42 @@ jobs:
             # exclude for signature scans
             exclude_patterns:
             - test
+
+  - name: osspi-scan-wavefront-sdk-python
+    serial: true
+    plan:
+    - in_parallel:
+      - get: osspi-tool
+      - get: wavefront-sdk-python
+        trigger: true
+        params:
+          submodules: all
+    - in_parallel:
+        steps:
+        - task: osspi-scan-packages
+          file: osspi-tool/tasks/osspi/run-osspi-source.yaml
+          input_mapping:
+            repo1: osspi-tool
+            repo2: wavefront-sdk-python
+          params:
+            REPO: repo2
+            API_KEY: ((osspi.osm-prod-api-key))
+            USERNAME: ((osspi.osm-prod-username))
+            OSM_ENVIRONMENT: production
+            PRODUCT: wavefront-sdk-python
+            VERSION: Latest
+            PREPARE: |
+              curl --output /tmp/python.tar.gz https://www.python.org/ftp/python/3.11.5/Python-3.11.5.tgz
+              tar -xf /tmp/python.tar.gz -C /tmp
+            OSSPI_SCANNING_PARAMS: |
+              enable: true
+              include_bomtools: "pip"
+              pip.path: /tmp/Python-3.11.5/bin/pip
+              pip.python_path: /tmp/Python-3.11.5/bin/python
+              search_depth: 5
+              # exclude for signature scans
+              exclude_patterns:
+              - test
 
   - name: osspi-scan-wavefront-spring-boot
     serial: true
