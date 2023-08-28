@@ -36,7 +36,7 @@ import (
 func TestReconcileAll(t *testing.T) {
 	ProducesWellFormedYAML(t, func() (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.AutoTracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Enable = true
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -45,7 +45,7 @@ func TestReconcileAll(t *testing.T) {
 
 	t.Run("does not create other services until the proxy is running", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.AutoTracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Enable = true
 		}), nil, wftest.Proxy(wftest.WithReplicas(0, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -72,7 +72,7 @@ func TestReconcileAll(t *testing.T) {
 
 	t.Run("creates other components after the proxy is running", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.AutoTracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Enable = true
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -1397,14 +1397,14 @@ func TestReconcileLogging(t *testing.T) {
 func TestReconcileAutoTracing(t *testing.T) {
 	ProducesWellFormedYAML(t, func() (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
 		return emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.AutoTracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Enable = true
 			wavefront.Spec.ClusterName = "test-clusterName"
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 	})
 
 	t.Run("creates Pixie components when Pixie is enabled", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.AutoTracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Enable = true
 			wavefront.Spec.ClusterName = "test-clusterName"
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
@@ -1441,7 +1441,7 @@ func TestReconcileAutoTracing(t *testing.T) {
 
 	t.Run("does not create auto instrumentation components when auto instrumentation is not enabled", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.AutoTracing.Enable = false
+			wavefront.Spec.Experimental.Autotracing.Enable = false
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
