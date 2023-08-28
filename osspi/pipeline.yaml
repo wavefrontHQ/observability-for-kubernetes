@@ -28,6 +28,7 @@ resources:
     type: git
     source:
       uri: https://github.com/wavefrontHQ/wavefront-spring-boot.git
+      branch: springboot3
   - name: osspi-tool
     type: git
     icon: gitlab
@@ -250,9 +251,9 @@ jobs:
           repo2: wavefront-spring-boot
         params:
           REPO: repo2
-          API_KEY: ((osspi.osm-beta-api-key))
-          USERNAME: ((osspi.osm-beta-username))
-          OSM_ENVIRONMENT: beta
+          API_KEY: ((osspi.osm-prod-api-key))
+          USERNAME: ((osspi.osm-prod-username))
+          OSM_ENVIRONMENT: production
           PRODUCT: WavefrontSprintBootAutoconfigure
           VERSION: Latest
           PREPARE: |
