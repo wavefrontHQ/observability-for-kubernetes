@@ -3,9 +3,6 @@ kind: SecurityContextConstraints
 metadata:
   name: wavefront-proxy-scc
   namespace: system
-  labels:
-    app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: proxy
   annotations:
     wavefront.com/conditionally-provision: '{{ .Openshift }}'
 allowHostDirVolumePlugin: false

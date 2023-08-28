@@ -4,12 +4,14 @@ metadata:
   labels:
     app: pl-monitoring
     component: vizier
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
   name: pl-node-view-cluster-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: pl-node-view
 subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: observability-system
+  - kind: ServiceAccount
+    name: default
+    namespace: observability-system

@@ -1,14 +1,18 @@
 package testhelper
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 
+	yaml2 "gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	yaml "k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type MockKubernetesManager struct {
@@ -20,12 +24,49 @@ func NewMockKubernetesManager() *MockKubernetesManager {
 	return &MockKubernetesManager{}
 }
 
-func (skm *MockKubernetesManager) ApplyResources(resourceYAMLs []string) error {
+func (skm *MockKubernetesManager) ForAllAppliedYAMLs(do func(appliedYAML client.Object)) {
+	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
+	for _, appliedYAML := range skm.appliedYAMLs {
+		appliedObject := &unstructured.Unstructured{}
+		_, _, err := resourceDecoder.Decode([]byte(appliedYAML), nil, appliedObject)
+		if err != nil {
+			panic(err)
+		}
+		do(appliedObject)
+	}
+}
+
+func (skm *MockKubernetesManager) ApplyResources(resources []client.Object) error {
+	resourceYAMLs, err := skm.toResourceYAMLs(resources)
+	if err != nil {
+		return err
+	}
 	skm.appliedYAMLs = resourceYAMLs
 	return nil
 }
 
-func (skm *MockKubernetesManager) DeleteResources(resourceYAMLs []string) error {
+func (skm *MockKubernetesManager) toResourceYAMLs(resources []client.Object) ([]string, error) {
+	var resourceYAMLs []string
+	buf := bytes.NewBuffer(nil)
+	for _, resource := range resources {
+		buf.Reset()
+		err := yaml2.NewEncoder(buf).Encode(resource.(*unstructured.Unstructured).Object)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"error encoding %s %s/%s: %s",
+				resource.GetObjectKind().GroupVersionKind().Kind, resource.GetNamespace(), resource.GetName(), err,
+			)
+		}
+		resourceYAMLs = append(resourceYAMLs, buf.String())
+	}
+	return resourceYAMLs, nil
+}
+
+func (skm *MockKubernetesManager) DeleteResources(resources []client.Object) error {
+	resourceYAMLs, err := skm.toResourceYAMLs(resources)
+	if err != nil {
+		return err
+	}
 	skm.deletedYAMLs = resourceYAMLs
 	return nil
 }

@@ -4,25 +4,27 @@ metadata:
   labels:
     app: pl-monitoring
     component: vizier
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
   name: pl-vizier-metadata
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  - services
-  - endpoints
-  - namespaces
-  verbs:
-  - watch
-  - get
-  - list
-- apiGroups:
-  - apps
-  resources:
-  - replicasets
-  - deployments
-  verbs:
-  - watch
-  - get
-  - list
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - endpoints
+      - namespaces
+    verbs:
+      - watch
+      - get
+      - list
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+      - deployments
+    verbs:
+      - watch
+      - get
+      - list

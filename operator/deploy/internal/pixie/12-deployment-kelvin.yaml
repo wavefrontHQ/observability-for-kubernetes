@@ -95,7 +95,13 @@ spec:
           name: app
           ports:
             - containerPort: 59300
-          resources: {}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              cpu: 2000m
+              memory: 100Gi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

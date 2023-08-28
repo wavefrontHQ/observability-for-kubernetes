@@ -5,15 +5,17 @@ metadata:
     app: pl-monitoring
     component: vizier
     vizier-bootstrap: "true"
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
   name: pl-vizier-crd-role
   namespace: observability-system
 rules:
-- apiGroups:
-  - px.dev
-  resources:
-  - viziers
-  - viziers/status
-  verbs:
-  - get
-  - list
-  - watch
+  - apiGroups:
+      - px.dev
+    resources:
+      - viziers
+      - viziers/status
+    verbs:
+      - get
+      - list
+      - watch

@@ -5,18 +5,20 @@ metadata:
     app: pl-monitoring
     component: vizier
     vizier-bootstrap: "true"
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
   name: pl-cert-provisioner-role
   namespace: observability-system
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch

@@ -4,13 +4,7 @@ metadata:
   name: wavefront-cluster-collector
   namespace: {{ .Namespace }}
   labels:
-    app.kubernetes.io/name: wavefront
     app.kubernetes.io/component: cluster-collector
-  ownerReferences:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: wavefront-controller-manager
-      uid: {{ .ControllerManagerUID }}
 spec:
   replicas: 1
   selector:

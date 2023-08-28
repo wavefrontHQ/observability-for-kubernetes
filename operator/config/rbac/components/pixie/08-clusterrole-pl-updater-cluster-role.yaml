@@ -5,47 +5,49 @@ metadata:
     app: pl-monitoring
     component: vizier
     vizier-bootstrap: "true"
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
   name: pl-updater-cluster-role
 rules:
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterroles
-  - clusterrolebindings
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resourceNames:
-  - kube-system
-  resources:
-  - namespaces
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  - pods
-  - services
-  - endpoints
-  - namespaces
-  verbs:
-  - get
-  - watch
-  - list
-- apiGroups:
-  - apps
-  resources:
-  - replicasets
-  - deployments
-  verbs:
-  - get
-  - watch
-  - list
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - clusterroles
+      - clusterrolebindings
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - ""
+    resourceNames:
+      - kube-system
+    resources:
+      - namespaces
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - pods
+      - services
+      - endpoints
+      - namespaces
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+      - deployments
+    verbs:
+      - get
+      - watch
+      - list

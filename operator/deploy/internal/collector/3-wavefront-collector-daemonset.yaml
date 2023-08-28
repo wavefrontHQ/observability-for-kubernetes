@@ -2,15 +2,11 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   labels:
-    app.kubernetes.io/name: wavefront
     app.kubernetes.io/component: node-collector
   name: wavefront-node-collector
   namespace: {{ .Namespace }}
-  ownerReferences:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: wavefront-controller-manager
-      uid: {{ .ControllerManagerUID }}
+  annotations:
+    wavefront.com/conditionally-provision: '{{ .DataCollection.Metrics.Enable }}'
 spec:
   selector:
     matchLabels:
@@ -24,7 +20,6 @@ spec:
       annotations:
         installation-method: operator
         proxy-available-replicas: "{{ .DataExport.WavefrontProxy.AvailableReplicas }}"
-        wavefront.com/conditionally-provision: '{{ .DataCollection.Metrics.Enable }}'
     spec:
       securityContext:
         runAsNonRoot: true
