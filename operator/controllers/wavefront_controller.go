@@ -29,8 +29,10 @@ import (
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 
 	"k8s.io/client-go/util/workqueue"
@@ -231,6 +233,23 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 		if err != nil {
 			return nil, nil, err
 		}
+
+		labels := resource.GetLabels()
+		if labels == nil {
+			labels = map[string]string{}
+		}
+		labels["app.kubernetes.io/name"] = "wavefront"
+		if labels["app.kubernetes.io/component"] == "" {
+			labels["app.kubernetes.io/component"] = filepath.Base(filepath.Dir(resourceFile))
+		}
+		resource.SetLabels(labels)
+
+		resource.SetOwnerReferences([]v1.OwnerReference{{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+			Name:       "wavefront-controller-manager",
+			UID:        types.UID(spec.ControllerManagerUID),
+		}})
 
 		if shouldApply && resource.GetAnnotations()["wavefront.com/conditionally-provision"] != "false" {
 			resourcesToApply = append(resourcesToApply, resource)

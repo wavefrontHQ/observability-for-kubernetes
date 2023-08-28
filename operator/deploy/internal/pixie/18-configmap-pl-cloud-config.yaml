@@ -10,11 +10,3 @@ kind: ConfigMap
 metadata:
   name: pl-cloud-config
   namespace: observability-system
-  labels:
-    app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: pixie
-  ownerReferences:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: wavefront-controller-manager
-      uid: '{{ .ControllerManagerUID }}'

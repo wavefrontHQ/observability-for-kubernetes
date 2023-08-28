@@ -65,13 +65,6 @@ do
   yq -i '.metadata.labels["app.kubernetes.io/component"] |= "pixie"' "$f"
 done
 
-for f in "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
-do
-  yq -i '.metadata.labels["app.kubernetes.io/name"] |= "wavefront"' "$f"
-  yq -i '.metadata.labels["app.kubernetes.io/component"] |= "pixie"' "$f"
-  yq -i '.metadata.ownerReferences[0] |= {"apiVersion": "apps/v1", "kind": "Deployment", "name": "wavefront-controller-manager", "uid": "{{ .ControllerManagerUID }}"}' "$f"
-done
-
 yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "2000m", "memory": "100Gi"}}' "${REPO_ROOT}"/operator/deploy/internal/pixie/12-deployment-kelvin.yaml
 yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "500m", "memory": "512Mi"}}' "${REPO_ROOT}"/operator/deploy/internal/pixie/14-deployment-vizier-query-broker.yaml
 yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "1000m", "memory": "2Gi"}}' "${REPO_ROOT}"/operator/deploy/internal/pixie/15-statefulset-vizier-metadata.yaml

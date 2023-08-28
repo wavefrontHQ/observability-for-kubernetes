@@ -4,28 +4,21 @@ metadata:
   labels:
     app: pl-monitoring
     name: pl-nats
-    app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: pixie
   name: pl-nats-mgmt
   namespace: observability-system
-  ownerReferences:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: wavefront-controller-manager
-      uid: '{{ .ControllerManagerUID }}'
 spec:
   clusterIP: None
   ports:
-    - name: cluster
-      port: 6222
-    - name: monitor
-      port: 8222
-    - name: metrics
-      port: 7777
-    - name: leafnodes
-      port: 7422
-    - name: gateways
-      port: 7522
+  - name: cluster
+    port: 6222
+  - name: monitor
+    port: 8222
+  - name: metrics
+    port: 7777
+  - name: leafnodes
+    port: 7422
+  - name: gateways
+    port: 7522
   selector:
     app: pl-monitoring
     name: pl-nats

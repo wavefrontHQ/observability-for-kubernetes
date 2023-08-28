@@ -15,12 +15,5 @@ kind: ConfigMap
 metadata:
   labels:
     app: pl-monitoring
-    app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: pixie
   name: nats-config
   namespace: observability-system
-  ownerReferences:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: wavefront-controller-manager
-      uid: '{{ .ControllerManagerUID }}'

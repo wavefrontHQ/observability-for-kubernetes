@@ -4,15 +4,8 @@ kind: ConfigMap
 metadata:
   name: gauge.kubernetes.http-events.req-body-size-bytes
   namespace: observability-system
-  ownerReferences:
-  - apiVersion: apps/v1
-    kind: Deployment
-    name: wavefront-controller-manager
-    uid: '{{ .ControllerManagerUID }}'
   labels:
     purpose: cron-script
-    app.kubernetes.io/name: wavefront
-    app.kubernetes.io/component: hub
 data:
   script.pxl: |
     import px
