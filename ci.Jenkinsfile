@@ -19,7 +19,7 @@ pipeline {
 
   parameters {
     string(name: 'OPERATOR_YAML_RC_SHA', defaultValue: '')
-    string(name: 'METRICS_RETRY_COUNT', defaultValue: '24')
+    string(name: 'METRICS_RETRY_COUNT', defaultValue: '50')
     booleanParam(
       name: 'FORCE_RUN_CI',
       defaultValue: false,
