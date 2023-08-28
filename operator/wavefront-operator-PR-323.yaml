@@ -600,7 +600,7 @@ spec:
               experimental:
                 description: Experimental features
                 properties:
-                  autoTracing:
+                  autotracing:
                     properties:
                       enable:
                         default: true
@@ -790,6 +790,9 @@ apiVersion: v1
 automountServiceAccountToken: false
 kind: ServiceAccount
 metadata:
+  labels:
+    app.kubernetes.io/component: controller-manager
+    app.kubernetes.io/name: wavefront
   name: wavefront-controller-manager
   namespace: observability-system
 ---
@@ -950,6 +953,8 @@ kind: Role
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
     vizier-bootstrap: "true"
   name: wavefront-pl-cert-provisioner-role
@@ -973,6 +978,8 @@ kind: Role
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
     vizier-bootstrap: "true"
   name: wavefront-pl-updater-role
@@ -1087,6 +1094,8 @@ kind: Role
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
     vizier-bootstrap: "true"
   name: wavefront-pl-vizier-crd-role
@@ -1107,6 +1116,8 @@ kind: Role
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-vizier-metadata-role
   namespace: observability-system
@@ -1141,6 +1152,8 @@ metadata:
   creationTimestamp: null
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-vizier-query-broker-role
   namespace: observability-system
@@ -1208,6 +1221,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
   name: wavefront-manager-role-scc
 rules:
 - apiGroups:
@@ -1226,6 +1241,8 @@ kind: ClusterRole
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-node-view
 rules:
@@ -1243,6 +1260,8 @@ kind: ClusterRole
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
     vizier-bootstrap: "true"
   name: wavefront-pl-updater-cluster-role
@@ -1295,6 +1314,8 @@ kind: ClusterRole
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-vizier-metadata
 rules:
@@ -1326,6 +1347,7 @@ metadata:
     rbac.authorization.kubernetes.io/autoupdate: "true"
   creationTimestamp: null
   labels:
+    app.kubernetes.io/name: wavefront
     kubernetes.io/bootstrapping: rbac-defaults
   name: wavefront-wavefront-collector
 rules:
@@ -1388,6 +1410,7 @@ metadata:
     rbac.authorization.kubernetes.io/autoupdate: "true"
   creationTimestamp: null
   labels:
+    app.kubernetes.io/name: wavefront
     kubernetes.io/bootstrapping: rbac-defaults
   name: wavefront-wavefront-legacy-install-detection
 rules:
@@ -1403,6 +1426,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
   name: wavefront-wavefront-logging
 rules:
 - apiGroups:
@@ -1420,6 +1445,9 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  labels:
+    app.kubernetes.io/component: controller-manager
+    app.kubernetes.io/name: wavefront
   name: wavefront-manager-rolebinding
   namespace: observability-system
 roleRef:
@@ -1436,6 +1464,8 @@ kind: RoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
     vizier-bootstrap: "true"
   name: wavefront-pl-cert-provisioner-binding
@@ -1454,6 +1484,8 @@ kind: RoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
     vizier-bootstrap: "true"
   name: wavefront-pl-updater-binding
@@ -1472,6 +1504,8 @@ kind: RoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-vizier-crd-binding
   namespace: observability-system
@@ -1489,6 +1523,8 @@ kind: RoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-vizier-crd-metadata-binding
   namespace: observability-system
@@ -1506,6 +1542,8 @@ kind: RoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-vizier-metadata-binding
   namespace: observability-system
@@ -1523,6 +1561,8 @@ kind: RoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-vizier-query-broker-binding
   namespace: observability-system
@@ -1540,6 +1580,8 @@ kind: RoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-vizier-query-broker-crd-binding
   namespace: observability-system
@@ -1555,6 +1597,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
   name: wavefront-wavefront-collector
   namespace: observability-system
 roleRef:
@@ -1569,6 +1613,9 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  labels:
+    app.kubernetes.io/component: controller-manager
+    app.kubernetes.io/name: wavefront
   name: wavefront-manager-rolebinding
   namespace: observability-system
 roleRef:
@@ -1585,6 +1632,8 @@ kind: ClusterRoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-node-view-cluster-binding
 roleRef:
@@ -1601,6 +1650,8 @@ kind: ClusterRoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
     vizier-bootstrap: "true"
   name: wavefront-pl-updater-cluster-binding
@@ -1618,6 +1669,8 @@ kind: ClusterRoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-vizier-metadata-cluster-binding
 roleRef:
@@ -1634,6 +1687,8 @@ kind: ClusterRoleBinding
 metadata:
   labels:
     app: pl-monitoring
+    app.kubernetes.io/component: pixie
+    app.kubernetes.io/name: wavefront
     component: vizier
   name: wavefront-pl-vizier-metadata-node-view-cluster-binding
 roleRef:
@@ -1648,6 +1703,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
   name: wavefront-wavefront-collector
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -1661,6 +1718,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
   name: wavefront-wavefront-legacy-install-detection
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -1674,6 +1733,8 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
   name: wavefront-wavefront-logging
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -1686,7 +1747,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.24.0-alpha-8aae16d9
+  collector: 1.24.0-alpha-aa82a7b0
   logging: 2.1.6
   proxy: 13.0.1
 kind: ConfigMap
@@ -1758,7 +1819,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-8aae16d9
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-aa82a7b0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
