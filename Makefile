@@ -57,6 +57,7 @@ GKE_MONITORING?=NONE
 GKE_LOGGING?=NONE
 GKE_MACHINE_TYPE?=e2-standard-2
 NUMBER_OF_NODES?=3
+NUMBER_OF_ARM_NODES?=1
 GKE_CLUSTER_VERSION?=1.26
 
 .PHONY: target-gke connect-to-gke gke-connect-to-cluster gke-cluster-name-check delete-gke-cluster create-gke-cluster
@@ -94,13 +95,15 @@ create-gke-cluster: gke-cluster-name-check
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
 
+create-gke-cluster-with-arm-nodes: create-gke-cluster add-arm-node-pool-gke-cluster
+
 resize-node-pool-gke-cluster: gke-cluster-name-check
 	gcloud container clusters resize $(GKE_CLUSTER_NAME) --zone=$(GCP_REGION)-$(GCP_ZONE) \
         --node-pool $(GKE_NODE_POOL) --num-nodes $(NUMBER_OF_NODES) -q
 
 add-arm-node-pool-gke-cluster: gke-cluster-name-check
 	gcloud container  node-pools create arm-pool --cluster=$(GKE_CLUSTER_NAME) --zone=$(GCP_REGION)-$(GCP_ZONE) \
-        --machine-type=t2a-standard-1 --num-nodes=$(NUMBER_OF_NODES)
+        --machine-type=t2a-standard-1 --num-nodes=$(NUMBER_OF_ARM_NODES)
 
 #----- AKS -----#
 AKS_CLUSTER_NAME?=k8po-ci
