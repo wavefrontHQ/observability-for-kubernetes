@@ -231,8 +231,3 @@ coverage-test: token-check k8s-env clean-deployment deploy-targets delete-images
 .PHONY: integration-test-rhel
 integration-test-rhel: token-check k8s-env clean-deployment deploy-targets
 	VERSION=$(VERSION)-rhel make container_rhel test-proxy-container delete-images push-images proxy-test
-
-# list the available makefile targets
-.PHONY: no_targets__ list
-list:
-	@sh -c "$(MAKE) -p no_targets__ | awk -F':' '/^[a-zA-Z0-9][^\$$#\/\\t=]*:([^=]|$$)/ {split(\$$1,A,/ /);for(i in A)print A[i]}' | grep -v '__\$$' | sort"
