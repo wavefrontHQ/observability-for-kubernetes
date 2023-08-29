@@ -84,10 +84,22 @@ spec:
               optional: true
         - name: PL_CLOCK_CONVERTER
           value: default
+{{- if (not .Experimental.Hub.Pixie.Enable) }}
+        - name: PL_TABLE_STORE_DATA_LIMIT_MB
+          value: 150
+        - name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT
+          value: 90
+        - name: PL_STIRLING_SOURCES
+          value: "kTracers"
+{{- end }}
         image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/pem_image:0.14.2
         name: pem
         resources:
+{{- if .Experimental.Hub.Pixie.Enable }}
 {{ .Experimental.Hub.Pixie.Pem.Resources | toYaml | indent 12 }}
+{{- else }}
+{{ .Experimental.Autotracing.Pem.Resources | toYaml | indent 12 }}
+{{- end }}
         securityContext:
           capabilities:
             add:

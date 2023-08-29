@@ -296,8 +296,8 @@ func (skm MockKubernetesManager) PixieComponentContains(apiVersion, kind, metada
 		skm.appliedYAMLs,
 		apiVersion,
 		kind,
-		"",
-		"",
+		"wavefront",
+		"pixie",
 		metadataName,
 		checks...,
 	)
@@ -321,7 +321,7 @@ func (skm MockKubernetesManager) ConfigMapContains(configMapName string, checks 
 		"v1",
 		"ConfigMap",
 		"wavefront",
-		"collector",
+		"",
 		configMapName,
 		checks...,
 	)

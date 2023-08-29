@@ -1403,9 +1403,19 @@ func TestReconcileLogging(t *testing.T) {
 
 func TestReconcileAutoTracing(t *testing.T) {
 	t.Run("creates Pixie components when Pixie is enabled", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.Autotracing.Enable = true
-			wavefront.Spec.ClusterName = "test-clusterName"
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.Experimental.Autotracing.Enable = true
+			w.Spec.ClusterName = "test-clusterName"
+			w.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
+				Requests: wf.Resource{
+					CPU:    "100m",
+					Memory: "600Mi",
+				},
+				Limits: wf.Resource{
+					CPU:    "1000m",
+					Memory: "600Mi",
+				},
+			}
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -1419,7 +1429,19 @@ func TestReconcileAutoTracing(t *testing.T) {
 		require.Equal(t, ctrl.Result{Requeue: true}, results)
 
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "StatefulSet", "pl-nats"))
-		require.True(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
+		require.True(t, mockKM.PixieComponentContains(
+			"apps/v1", "DaemonSet", "vizier-pem",
+			"name: PL_TABLE_STORE_DATA_LIMIT_MB",
+			"name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT",
+			"name: PL_STIRLING_SOURCES",
+		))
+		require.True(t, mockKM.PixieComponentContains(
+			"apps/v1", "DaemonSet", "vizier-pem",
+			"cpu: 100m",
+			"cpu: 1000m",
+			"memory: 600Mi",
+			"memory: 600Mi",
+		))
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "kelvin"))
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "vizier-query-broker"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets"))
@@ -1430,7 +1452,7 @@ func TestReconcileAutoTracing(t *testing.T) {
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-name: test-clusterName"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
 
-		require.True(t, mockKM.PixieComponentContains("v1", "ConfigMap", "wavefront-cluster-spans-script"))
+		require.True(t, mockKM.ConfigMapContains("wavefront-cluster-spans-script"))
 
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("4317"))
 		containsPortInContainers(t, "otlpGrpcListenerPorts", *mockKM, 4317)
@@ -1491,6 +1513,12 @@ func TestReconcileHubPixie(t *testing.T) {
 
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "StatefulSet", "pl-nats"))
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
+		require.False(t, mockKM.PixieComponentContains(
+			"apps/v1", "DaemonSet", "vizier-pem",
+			"name: PL_TABLE_STORE_DATA_LIMIT_MB",
+			"name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT",
+			"name: PL_STIRLING_SOURCES",
+		))
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "kelvin"))
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "vizier-query-broker"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets"))
@@ -1502,6 +1530,58 @@ func TestReconcileHubPixie(t *testing.T) {
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
 
 		require.False(t, mockKM.ProxyDeploymentContains(""))
+	})
+
+	t.Run("uses Hub memory settings when Hub and Autotracing are enabled", func(t *testing.T) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.Experimental.Autotracing.Enable = true
+			w.Spec.Experimental.Hub.Enable = true
+			w.Spec.Experimental.Hub.Pixie.Enable = true
+			w.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
+				Requests: wf.Resource{
+					CPU:    "100m",
+					Memory: "600Mi",
+				},
+				Limits: wf.Resource{
+					CPU:    "1000m",
+					Memory: "600Mi",
+				},
+			}
+			w.Spec.Experimental.Hub.Pixie.Pem.Resources = wf.Resources{
+				Requests: wf.Resource{
+					CPU:    "100m",
+					Memory: "1Gi",
+				},
+				Limits: wf.Resource{
+					CPU:    "500m",
+					Memory: "2Gi",
+				},
+			}
+		})
+		r, mockKM := emptyScenario(wfCR, nil)
+
+		results, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		r.MetricConnection.Flush()
+
+		require.Equal(t, ctrl.Result{Requeue: true}, results)
+
+		require.True(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
+		require.False(t, mockKM.PixieComponentContains(
+			"apps/v1", "DaemonSet", "vizier-pem",
+			"name: PL_TABLE_STORE_DATA_LIMIT_MB",
+			"name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT",
+			"name: PL_STIRLING_SOURCES",
+		))
+
+		require.True(t, mockKM.PixieComponentContains(
+			"apps/v1", "DaemonSet", "vizier-pem",
+			"cpu: 100m",
+			"cpu: 500m",
+			"memory: 1Gi",
+			"memory: 2Gi",
+		))
 	})
 
 	t.Run("creates Pixie Pem pods with specified K8s resources", func(t *testing.T) {
@@ -1528,23 +1608,10 @@ func TestReconcileHubPixie(t *testing.T) {
 	})
 
 	t.Run("does not create auto instrumentation components when auto instrumentation is not enabled", func(t *testing.T) {
-		wfCR := &wf.Wavefront{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "wavefront",
-				Namespace: wftest.DefaultNamespace,
-			},
-			Spec: wf.WavefrontSpec{
-				ClusterName: "test-clusterName",
-				Experimental: wf.Experimental{
-					Hub: wf.Hub{
-						Enable: true,
-						Pixie: wf.Pixie{
-							Enable: false,
-						},
-					},
-				},
-			},
-		}
+		wfCR := wftest.NothingEnabledCR(func(wfCR *wf.Wavefront) {
+			wfCR.Spec.Experimental.Hub.Enable = true
+			wfCR.Spec.Experimental.Hub.Pixie.Enable = false
+		})
 		r, mockKM := emptyScenario(wfCR, nil)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))

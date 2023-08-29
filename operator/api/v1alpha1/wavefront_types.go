@@ -79,7 +79,7 @@ type WavefrontSpec struct {
 }
 
 type Experimental struct {
-	Autotracing Pixie `json:"autotracing,omitempty"`
+	Autotracing AutoTracingPixie `json:"autotracing,omitempty"`
 
 	// KubernetesEvents is deprecated, please use aria-insights-secret instead
 	KubernetesEvents KubernetesEvents `json:"kubernetesEvents,omitempty"`
@@ -87,17 +87,24 @@ type Experimental struct {
 	Hub Hub `json:"hub,omitempty"`
 }
 
-type Pixie struct {
+type AutoTracingPixie struct {
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "1Gi"}, limits: {cpu: "500m", memory: "2Gi"}}}
+	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "600Mi"}, limits: {cpu: "1000m", memory: "600Mi"}}}
 	Pem Pem `json:"pem,omitempty"`
 }
 
 type Hub struct {
 	Enable bool `json:"enable,omitempty"`
 	// +kubebuilder:default:={enable: true}
-	Pixie Pixie `json:"pixie,omitempty"`
+	Pixie HubPixie `json:"pixie,omitempty"`
+}
+
+type HubPixie struct {
+	// +kubebuilder:default:=true
+	Enable bool `json:"enable,omitempty"`
+	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "1Gi"}, limits: {cpu: "1000m", memory: "2Gi"}}}
+	Pem Pem `json:"pem,omitempty"`
 }
 
 type Metrics struct {
