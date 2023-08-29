@@ -602,11 +602,11 @@ spec:
                         default:
                           resources:
                             limits:
-                              cpu: 500m
-                              memory: 2Gi
+                              cpu: 1000m
+                              memory: 600Mi
                             requests:
                               cpu: 100m
-                              memory: 1Gi
+                              memory: 600Mi
                         properties:
                           resources:
                             description: Resources Compute resources required by the
@@ -662,7 +662,7 @@ spec:
                             default:
                               resources:
                                 limits:
-                                  cpu: 500m
+                                  cpu: 1000m
                                   memory: 2Gi
                                 requests:
                                   cpu: 100m
