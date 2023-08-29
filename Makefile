@@ -55,8 +55,9 @@ GCP_ZONE?=b
 GKE_NODE_POOL?=default-pool
 GKE_MONITORING?=NONE
 GKE_LOGGING?=NONE
+GKE_MACHINE_TYPE?=e2-standard-2
 NUMBER_OF_NODES?=3
-GCP_CLUSTER_VERSION?=1.25
+GKE_CLUSTER_VERSION?=1.26
 
 .PHONY: target-gke connect-to-gke gke-connect-to-cluster gke-cluster-name-check delete-gke-cluster create-gke-cluster
 
@@ -76,7 +77,6 @@ delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 	@echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters delete $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --quiet
 
-GKE_MACHINE_TYPE?=e2-standard-2
 
 # create a GKE cluster without weekly cleanup
 # usage: make create-gke-cluster GKE_CLUSTER_NAME=XXXX NOCLEANUP=true
@@ -86,7 +86,7 @@ create-gke-cluster: gke-cluster-name-check
 	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=$(GKE_MACHINE_TYPE) \
 		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 \
 		--num-nodes=$(NUMBER_OF_NODES)  \
-		--cluster-version $(GCP_CLUSTER_VERSION) $(GKE_LABELS) \
+		--cluster-version $(GKE_CLUSTER_VERSION) $(GKE_LABELS) \
 		--monitoring $(GKE_MONITORING) --logging $(GKE_LOGGING)
 	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) \
 		--zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
