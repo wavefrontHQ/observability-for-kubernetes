@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"testing"
 
+	"github.com/stretchr/testify/require"
 	yaml2 "gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -18,21 +20,16 @@ import (
 type MockKubernetesManager struct {
 	deletedYAMLs []string
 	appliedYAMLs []string
+	applied      []client.Object
 }
 
 func NewMockKubernetesManager() *MockKubernetesManager {
 	return &MockKubernetesManager{}
 }
 
-func (skm *MockKubernetesManager) ForAllAppliedYAMLs(do func(appliedYAML client.Object)) {
-	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-	for _, appliedYAML := range skm.appliedYAMLs {
-		appliedObject := &unstructured.Unstructured{}
-		_, _, err := resourceDecoder.Decode([]byte(appliedYAML), nil, appliedObject)
-		if err != nil {
-			panic(err)
-		}
-		do(appliedObject)
+func (skm *MockKubernetesManager) ForAllApplied(do func(appliedYAML client.Object)) {
+	for _, applied := range skm.applied {
+		do(applied)
 	}
 }
 
@@ -42,6 +39,7 @@ func (skm *MockKubernetesManager) ApplyResources(resources []client.Object) erro
 		return err
 	}
 	skm.appliedYAMLs = resourceYAMLs
+	skm.applied = resources
 	return nil
 }
 
@@ -315,20 +313,77 @@ func (skm MockKubernetesManager) CollectorServiceAccountContains(checks ...strin
 	)
 }
 
-func (skm MockKubernetesManager) ConfigMapContains(configMapName string, checks ...string) bool {
-	return contains(
-		skm.appliedYAMLs,
-		"v1",
-		"ConfigMap",
-		"wavefront",
-		"collector",
-		configMapName,
-		checks...,
-	)
+func (skm *MockKubernetesManager) RequireApplied(t *testing.T, expectApplied int, apiVersion, kind, name string) []client.Object {
+	t.Helper()
+	var actualApplied []client.Object
+	skm.ForAllApplied(func(applied client.Object) {
+		gvk := applied.GetObjectKind().GroupVersionKind()
+		appliedKind := gvk.Kind
+		appliedApiVersion := gvk.GroupVersion().String()
+		if apiVersion != appliedApiVersion || kind != appliedKind {
+			return
+		}
+		if applied.GetName() != name {
+			return
+		}
+		actualApplied = append(actualApplied, applied)
+	})
+	require.Equal(t, expectApplied, len(actualApplied), "expected %s[name=%s] to be applied %d times but was applied %d", kind, name, expectApplied, len(actualApplied))
+	return actualApplied
 }
 
-func (skm MockKubernetesManager) CollectorConfigMapContains(checks ...string) bool {
-	return skm.ConfigMapContains("default-wavefront-collector-config", checks...)
+func (skm *MockKubernetesManager) RequireConfigMapContains(t *testing.T, name, key string, checks ...string) {
+	t.Helper()
+	applied := skm.RequireApplied(t, 1, "v1", "ConfigMap", name)[0]
+	var configMap corev1.ConfigMap
+	switch obj := applied.(type) {
+	case *unstructured.Unstructured:
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &configMap), "expected unstructured to be configmap")
+	case *corev1.ConfigMap:
+		configMap = *obj
+	default:
+		t.Fatalf("%s is not a ConfigMap", name)
+	}
+	for _, check := range checks {
+		require.Containsf(t, configMap.Data[key], check, "ConfigMap[name=%s].data.%s does not contain expected value", name, key)
+	}
+}
+
+func (skm *MockKubernetesManager) RequireConfigMapNotContains(t *testing.T, name, key string, checks ...string) {
+	t.Helper()
+	applied := skm.RequireApplied(t, 1, "v1", "ConfigMap", name)[0]
+	var configMap corev1.ConfigMap
+	switch obj := applied.(type) {
+	case *unstructured.Unstructured:
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &configMap), "expected unstructured to be configmap")
+	case *corev1.ConfigMap:
+		configMap = *obj
+	default:
+		t.Fatalf("%s is not a ConfigMap", name)
+	}
+	for _, check := range checks {
+		require.NotContainsf(t, configMap.Data[key], check, "ConfigMap[name=%s].data.%s does contains unexpected value", name, key)
+	}
+}
+
+func (skm *MockKubernetesManager) RequireCollectorConfigMapContains(t *testing.T, checks ...string) {
+	t.Helper()
+	skm.RequireConfigMapContains(t, "default-wavefront-collector-config", "config.yaml", checks...)
+}
+
+func (skm *MockKubernetesManager) RequireCollectorConfigMapNotContains(t *testing.T, checks ...string) {
+	t.Helper()
+	skm.RequireConfigMapNotContains(t, "default-wavefront-collector-config", "config.yaml", checks...)
+}
+
+func (skm *MockKubernetesManager) RequireConfigMapNotApplied(t *testing.T, name string) {
+	t.Helper()
+	skm.RequireApplied(t, 0, "v1", "ConfigMap", name)
+}
+
+func (skm *MockKubernetesManager) RequireCollectorConfigMapNotApplied(t *testing.T) {
+	t.Helper()
+	skm.RequireConfigMapNotApplied(t, "default-wavefront-collector-config")
 }
 
 func (skm MockKubernetesManager) ProxyPreprocessorRulesConfigMapContains(checks ...string) bool {
