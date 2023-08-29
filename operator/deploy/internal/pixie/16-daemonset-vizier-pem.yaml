@@ -86,9 +86,9 @@ spec:
           value: default
 {{- if (not .Experimental.Hub.Pixie.Enable) }}
         - name: PL_TABLE_STORE_DATA_LIMIT_MB
-          value: 150
+          value: "150"
         - name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT
-          value: 90
+          value: "90"
         - name: PL_STIRLING_SOURCES
           value: "kTracers"
 {{- end }}
