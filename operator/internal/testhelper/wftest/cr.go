@@ -5,7 +5,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CR(options ...func(*wf.Wavefront)) *wf.Wavefront {
+type CROption func(w *wf.Wavefront)
+
+func CR(options ...CROption) *wf.Wavefront {
 	cr := &wf.Wavefront{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "wavefront",
@@ -40,7 +42,7 @@ func CR(options ...func(*wf.Wavefront)) *wf.Wavefront {
 	return cr
 }
 
-func NothingEnabledCR(options ...func(*wf.Wavefront)) *wf.Wavefront {
+func NothingEnabledCR(options ...CROption) *wf.Wavefront {
 	cr := &wf.Wavefront{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "wavefront",

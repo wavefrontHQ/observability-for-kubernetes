@@ -22,6 +22,7 @@ const (
 	Unhealthy      = "Unhealthy"
 	Installing     = "Installing"
 	NotEnabled     = "Not Enabled"
+	NotRunning     = "Not Running"
 	MaxInstallTime = time.Minute * 5
 	OOMTimeout     = time.Minute * 5
 )
@@ -48,6 +49,28 @@ func GenerateWavefrontStatus(objClient client.Client, wavefront *wf.Wavefront) w
 		componentStatuses = append(componentStatuses, daemonSetStatus(
 			objClient,
 			util.ObjKey(wavefront.Namespace, util.LoggingName),
+		))
+	}
+	if wavefront.Spec.Experimental.Hub.Pixie.Enable || wavefront.Spec.Experimental.Autotracing.Enable {
+		componentStatuses = append(componentStatuses, deploymentStatus(
+			objClient,
+			util.ObjKey(wavefront.Namespace, util.PixieKelvinName),
+		))
+		componentStatuses = append(componentStatuses, statefulSetStatus(
+			objClient,
+			util.ObjKey(wavefront.Namespace, util.PixieNatsName),
+		))
+		componentStatuses = append(componentStatuses, statefulSetStatus(
+			objClient,
+			util.ObjKey(wavefront.Namespace, util.PixieVizierMetadataName),
+		))
+		componentStatuses = append(componentStatuses, daemonSetStatus(
+			objClient,
+			util.ObjKey(wavefront.Namespace, util.PixieVizierPEMName),
+		))
+		componentStatuses = append(componentStatuses, deploymentStatus(
+			objClient,
+			util.ObjKey(wavefront.Namespace, util.PixieVizierQueryBrokerName),
 		))
 	}
 	componentStatuses = append(componentStatuses, deploymentStatus(
@@ -120,8 +143,31 @@ func daemonSetStatus(objClient client.Client, key client.ObjectKey) wf.ResourceS
 	}
 	componentStatus = reportStatusFromApp(
 		componentStatus,
-		daemonset.Status.NumberReady,
+		daemonset.Status.NumberAvailable,
 		daemonset.Status.DesiredNumberScheduled,
+	)
+	componentStatus = reportStatusFromPod(
+		componentStatus,
+		objClient,
+		key.Namespace,
+		daemonset.Labels["app.kubernetes.io/component"],
+	)
+	return componentStatus
+}
+
+func statefulSetStatus(objClient client.Client, key client.ObjectKey) wf.ResourceStatus {
+	componentStatus := wf.ResourceStatus{
+		Name: key.Name,
+	}
+	var daemonset appsv1.StatefulSet
+	err := objClient.Get(context.Background(), key, &daemonset)
+	if err != nil {
+		return reportNotRunning(componentStatus)
+	}
+	componentStatus = reportStatusFromApp(
+		componentStatus,
+		daemonset.Status.AvailableReplicas,
+		*daemonset.Spec.Replicas,
 	)
 	componentStatus = reportStatusFromPod(
 		componentStatus,
@@ -134,7 +180,7 @@ func daemonSetStatus(objClient client.Client, key client.ObjectKey) wf.ResourceS
 
 func reportNotRunning(componentStatus wf.ResourceStatus) wf.ResourceStatus {
 	componentStatus.Healthy = false
-	componentStatus.Status = "Not running"
+	componentStatus.Status = NotRunning
 	return componentStatus
 }
 

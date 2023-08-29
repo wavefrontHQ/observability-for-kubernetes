@@ -1,9 +1,11 @@
 package health
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -15,196 +17,41 @@ import (
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
-const testNamespace = "testNamespace"
-
 func TestReconcileReportHealthStatus(t *testing.T) {
-	t.Run("report health status when all components are healthy", func(t *testing.T) {
-		wavefront := defaultWF()
-
-		replicas := int32(1)
-		proxyDeployment := &appsv1.Deployment{
-			Spec: appsv1.DeploymentSpec{
-				Replicas: &replicas,
-			},
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      util.ProxyName,
-				Namespace: wavefront.Namespace,
-			},
-			Status: appsv1.DeploymentStatus{
-				AvailableReplicas: 1,
-			},
-		}
-		collectorDeployment := &appsv1.Deployment{
-			Spec: appsv1.DeploymentSpec{
-				Replicas: &replicas,
-			},
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      util.ClusterCollectorName,
-				Namespace: wavefront.Namespace,
-			},
-			Status: appsv1.DeploymentStatus{
-				AvailableReplicas: 1,
-			},
-		}
-		collectorDaemonSet := &appsv1.DaemonSet{
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      util.NodeCollectorName,
-				Namespace: wavefront.Namespace,
-			},
-			Status: appsv1.DaemonSetStatus{
-				DesiredNumberScheduled: 3,
-				NumberReady:            3,
-			},
-		}
-
-		client := setup(proxyDeployment, collectorDeployment, collectorDaemonSet)
-		wavefront.Spec.DataExport.WavefrontProxy.Enable = true
-		wavefront.Spec.DataCollection.Metrics.Enable = true
-
-		status := GenerateWavefrontStatus(client, wavefront)
-		assert.Equal(t, Healthy, status.Status)
-		assert.Equal(t, "All components are healthy", status.Message)
-
-		proxyStatus := getComponentStatusWithName(util.ProxyName, status.ResourceStatuses)
-		assert.True(t, proxyStatus.Healthy)
-		assert.Equal(t, "Running (1/1)", proxyStatus.Status)
-
-		clusterCollectorStatus := getComponentStatusWithName(util.ClusterCollectorName, status.ResourceStatuses)
-		assert.True(t, clusterCollectorStatus.Healthy)
-		assert.Equal(t, "Running (1/1)", clusterCollectorStatus.Status)
-
-		nodeCollectorStatus := getComponentStatusWithName(util.NodeCollectorName, status.ResourceStatuses)
-		assert.True(t, nodeCollectorStatus.Healthy)
-		assert.Equal(t, "Running (3/3)", nodeCollectorStatus.Status)
-	})
-
-	t.Run("report health status when one component is unhealthy", func(t *testing.T) {
-		wavefront := defaultWF()
-
-		replicas := int32(1)
-		proxyDeployment := &appsv1.Deployment{
-			Spec: appsv1.DeploymentSpec{
-				Replicas: &replicas,
-			},
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      util.ProxyName,
-				Namespace: wavefront.Namespace,
-			},
-			Status: appsv1.DeploymentStatus{
-				AvailableReplicas: 0,
-			},
-		}
-		collectorDeployment := &appsv1.Deployment{
-			Spec: appsv1.DeploymentSpec{
-				Replicas: &replicas,
-			},
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      util.ClusterCollectorName,
-				Namespace: wavefront.Namespace,
-			},
-			Status: appsv1.DeploymentStatus{
-				AvailableReplicas: 1,
-			},
-		}
-		collectorDaemonSet := &appsv1.DaemonSet{
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      util.NodeCollectorName,
-				Namespace: wavefront.Namespace,
-			},
-			Status: appsv1.DaemonSetStatus{
-				DesiredNumberScheduled: 3,
-				NumberReady:            3,
-			},
-		}
-
-		client := setup(proxyDeployment, collectorDeployment, collectorDaemonSet)
-		wavefront.Spec.DataExport.WavefrontProxy.Enable = true
-		wavefront.Spec.DataCollection.Metrics.Enable = true
-
-		status := GenerateWavefrontStatus(client, wavefront)
-
-		assert.Equal(t, Unhealthy, status.Status)
-		assert.Equal(t, "not enough instances of wavefront-proxy are running (0/1)", status.Message)
-	})
-
-	t.Run("report health status with less components", func(t *testing.T) {
-		wavefront := defaultWF()
-
-		replicas := int32(1)
-		collectorDeployment := &appsv1.Deployment{
-			Spec: appsv1.DeploymentSpec{
-				Replicas: &replicas,
-			},
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      util.ClusterCollectorName,
-				Namespace: wavefront.Namespace,
-			},
-			Status: appsv1.DeploymentStatus{
-				AvailableReplicas: 1,
-			},
-		}
-		collectorDaemonSet := &appsv1.DaemonSet{
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      util.NodeCollectorName,
-				Namespace: wavefront.Namespace,
-			},
-			Status: appsv1.DaemonSetStatus{
-				DesiredNumberScheduled: 3,
-				NumberReady:            3,
-			},
-		}
-
-		client := setup(collectorDeployment, collectorDaemonSet)
-		wavefront.Spec.DataCollection.Metrics.Enable = true
-
-		status := GenerateWavefrontStatus(client, wavefront)
-
-		assert.Equal(t, Healthy, status.Status)
-		assert.Equal(t, "All components are healthy", status.Message)
-	})
-
 	t.Run("report health status when no components are running", func(t *testing.T) {
-		client := setup()
+		cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.DataExport.WavefrontProxy.Enable = true
+			w.Spec.DataCollection.Metrics.Enable = true
+		})
+		fakeClient := setup()
 
-		wfCR := defaultWF()
-		wfCR.Spec.DataExport.WavefrontProxy.Enable = true
-		wfCR.Spec.DataCollection.Metrics.Enable = true
-		status := GenerateWavefrontStatus(client, wfCR)
+		status := GenerateWavefrontStatus(fakeClient, cr)
 
 		assert.Equal(t, Unhealthy, status.Status)
 		assert.Equal(t, "", status.Message)
 		proxyStatus := getComponentStatusWithName(util.ProxyName, status.ResourceStatuses)
 		assert.False(t, proxyStatus.Healthy)
-		assert.Equal(t, "Not running", proxyStatus.Status)
+		assert.Equal(t, NotRunning, proxyStatus.Status)
 
 		clusterCollectorStatus := getComponentStatusWithName(util.ClusterCollectorName, status.ResourceStatuses)
 		assert.False(t, clusterCollectorStatus.Healthy)
-		assert.Equal(t, "Not running", clusterCollectorStatus.Status)
+		assert.Equal(t, NotRunning, clusterCollectorStatus.Status)
 
 		nodeCollectorStatus := getComponentStatusWithName(util.NodeCollectorName, status.ResourceStatuses)
 		assert.False(t, nodeCollectorStatus.Healthy)
-		assert.Equal(t, "Not running", nodeCollectorStatus.Status)
+		assert.Equal(t, NotRunning, nodeCollectorStatus.Status)
 	})
 
 	t.Run("report health status as installing until MaxInstallTime has elapsed", func(t *testing.T) {
-		wavefront := defaultWF()
-		client := setup()
+		cr := wftest.NothingEnabledCR()
+		fakeClient := setup()
 
-		wavefront.CreationTimestamp.Time = time.Now().Add(-MaxInstallTime).Add(time.Second * 10)
-		wavefront.Spec.DataCollection.Metrics.Enable = true
-		wavefront.Spec.DataExport.WavefrontProxy.Enable = true
-		status := GenerateWavefrontStatus(client, wavefront)
+		cr.CreationTimestamp.Time = time.Now().Add(-MaxInstallTime).Add(time.Second * 10)
+		cr.Spec.DataCollection.Metrics.Enable = true
+		cr.Spec.DataExport.WavefrontProxy.Enable = true
+		status := GenerateWavefrontStatus(fakeClient, cr)
 
 		assert.Equal(t, Installing, status.Status)
 		assert.Equal(t, "Installing components", status.Message)
@@ -214,13 +61,13 @@ func TestReconcileReportHealthStatus(t *testing.T) {
 	})
 
 	t.Run("report health status as unhealthy after MaxInstallTime has elapsed", func(t *testing.T) {
-		wavefront := defaultWF()
-		client := setup()
+		cr := wftest.NothingEnabledCR()
+		fakeClient := setup()
 
-		wavefront.CreationTimestamp.Time = pastMaxInstallTime().Add(time.Second * 10)
-		wavefront.Spec.DataCollection.Metrics.Enable = true
-		wavefront.Spec.DataExport.WavefrontProxy.Enable = true
-		status := GenerateWavefrontStatus(client, wavefront)
+		cr.CreationTimestamp.Time = pastMaxInstallTime().Add(time.Second * 10)
+		cr.Spec.DataCollection.Metrics.Enable = true
+		cr.Spec.DataExport.WavefrontProxy.Enable = true
+		status := GenerateWavefrontStatus(fakeClient, cr)
 
 		assert.Equal(t, Unhealthy, status.Status)
 	})
@@ -230,118 +77,25 @@ func TestReconcileReportHealthStatus(t *testing.T) {
 			"app.kubernetes.io/name":      "wavefront",
 			"app.kubernetes.io/component": "logging",
 		}
-		wavefront := defaultWF()
-		wavefront.Spec.DataCollection.Logging.Enable = true
-		RespondsToOOMKilled(t, wavefront,
-			&corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
-					Labels:    labels,
-					OwnerReferences: []metav1.OwnerReference{{
-						Kind: "DaemonSet",
-						Name: util.LoggingName,
-					}},
-				},
-				Spec: corev1.PodSpec{},
-			},
-			&appsv1.DaemonSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
-					Name:      util.LoggingName,
-					Labels:    labels,
-				},
-				Status: appsv1.DaemonSetStatus{
-					DesiredNumberScheduled: 1,
-					NumberReady:            1,
-				},
-			},
+		RespondsToAppStatuses(t,
+			wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+				w.Spec.DataCollection.Logging.Enable = true
+			}),
+			daemonSet(labels, util.LoggingName),
 		)
 	})
 
-	t.Run("node collector", func(t *testing.T) {
+	t.Run("metrics", func(t *testing.T) {
 		labels := map[string]string{
 			"app.kubernetes.io/name":      "wavefront",
-			"app.kubernetes.io/component": "node-collector",
+			"app.kubernetes.io/component": "collector",
 		}
-		wavefront := defaultWF()
-		wavefront.Spec.DataCollection.Metrics.Enable = true
-		replicas := int32(1)
-		RespondsToOOMKilled(t, wavefront,
-			&corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					OwnerReferences: []metav1.OwnerReference{{
-						Kind: "DaemonSet",
-						Name: util.NodeCollectorName,
-					}},
-					Namespace: testNamespace,
-					Labels:    labels,
-				},
-			},
-			&appsv1.DaemonSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
-					Name:      util.NodeCollectorName,
-					Labels:    labels,
-				},
-				Status: appsv1.DaemonSetStatus{
-					DesiredNumberScheduled: 1,
-					NumberReady:            1,
-				},
-			},
-			&appsv1.Deployment{
-				Spec: appsv1.DeploymentSpec{
-					Replicas: &replicas,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
-					Name:      util.ClusterCollectorName,
-				},
-				Status: appsv1.DeploymentStatus{
-					AvailableReplicas: 1,
-				},
-			},
-		)
-	})
-
-	t.Run("cluster collector", func(t *testing.T) {
-		labels := map[string]string{
-			"app.kubernetes.io/name":      "wavefront",
-			"app.kubernetes.io/component": "cluster-collector",
-		}
-		wavefront := defaultWF()
-		wavefront.Spec.DataCollection.Metrics.Enable = true
-		replicas := int32(1)
-		RespondsToOOMKilled(t, wavefront,
-			&corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
-					Labels:    labels,
-				},
-				Spec: corev1.PodSpec{},
-			},
-			&appsv1.DaemonSet{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
-					Name:      util.NodeCollectorName,
-				},
-				Status: appsv1.DaemonSetStatus{
-					DesiredNumberScheduled: 1,
-					NumberReady:            1,
-				},
-			},
-			&appsv1.Deployment{
-				Spec: appsv1.DeploymentSpec{
-					Replicas: &replicas,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
-					Name:      util.ClusterCollectorName,
-					Labels:    labels,
-				},
-				Status: appsv1.DeploymentStatus{
-					AvailableReplicas: 1,
-				},
-			},
+		RespondsToAppStatuses(t,
+			wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+				w.Spec.DataCollection.Metrics.Enable = true
+			}),
+			daemonSet(labels, util.NodeCollectorName),
+			deployment(labels, util.ClusterCollectorName),
 		)
 	})
 
@@ -350,43 +104,20 @@ func TestReconcileReportHealthStatus(t *testing.T) {
 			"app.kubernetes.io/name":      "wavefront",
 			"app.kubernetes.io/component": "proxy",
 		}
-		wavefront := defaultWF()
-		wavefront.Spec.DataExport.WavefrontProxy.Enable = true
-		replicas := int32(1)
-		RespondsToOOMKilled(t, wavefront,
-			&corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
-					Labels:    labels,
-					OwnerReferences: []metav1.OwnerReference{{
-						Kind: "Deployment",
-						Name: util.ProxyName,
-					}},
-				},
-				Spec: corev1.PodSpec{},
-			},
-			&appsv1.Deployment{
-				Spec: appsv1.DeploymentSpec{
-					Replicas: &replicas,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
-					Name:      util.ProxyName,
-					Labels:    labels,
-				},
-				Status: appsv1.DeploymentStatus{
-					AvailableReplicas: 1,
-				},
-			},
+		RespondsToAppStatuses(t,
+			wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+				w.Spec.DataExport.WavefrontProxy.Enable = true
+			}),
+			deployment(labels, util.ProxyName),
 		)
 	})
 
 	t.Run("controller-manager", func(t *testing.T) {
-		wavefront := defaultWF()
+		wavefront := wftest.NothingEnabledCR()
 		RespondsToOOMKilled(t, wavefront,
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
+					Namespace: wftest.DefaultNamespace,
 					Labels: map[string]string{
 						"app.kubernetes.io/name":      "wavefront",
 						"app.kubernetes.io/component": "controller-manager",
@@ -400,9 +131,176 @@ func TestReconcileReportHealthStatus(t *testing.T) {
 			},
 		)
 	})
+
+	t.Run("pixie", func(t *testing.T) {
+		labels := map[string]string{
+			"app.kubernetes.io/name":      "wavefront",
+			"app.kubernetes.io/component": "pixie",
+		}
+		apps := []client.Object{
+			deployment(labels, util.PixieKelvinName),
+			statefulSet(labels, util.PixieNatsName),
+			statefulSet(labels, util.PixieVizierMetadataName),
+			daemonSet(labels, util.PixieVizierPEMName),
+			deployment(labels, util.PixieVizierQueryBrokerName),
+		}
+
+		t.Run("hub", func(t *testing.T) {
+			RespondsToAppStatuses(t,
+				wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+					w.Spec.Experimental.Hub.Pixie.Enable = true
+				}),
+				apps...,
+			)
+		})
+
+		t.Run("autotracing", func(t *testing.T) {
+			RespondsToAppStatuses(t,
+				wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+					w.Spec.Experimental.Autotracing.Enable = true
+				}),
+				apps...,
+			)
+		})
+	})
 }
 
-func RespondsToOOMKilled(t *testing.T, wavefront *wf.Wavefront, pod *corev1.Pod, apps ...runtime.Object) {
+func requireResourceStatusEqual(t *testing.T, status wf.WavefrontStatus, resourceName string, expectedStatus string) {
+	t.Helper()
+	for _, resourceStatus := range status.ResourceStatuses {
+		if resourceStatus.Name == resourceName {
+			require.Equal(t, expectedStatus, resourceStatus.Status)
+		}
+	}
+}
+
+func daemonSet(labels map[string]string, name string) *appsv1.DaemonSet {
+	return &appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: wftest.DefaultNamespace,
+			Name:      name,
+			Labels:    labels,
+		},
+		Status: appsv1.DaemonSetStatus{
+			NumberAvailable:        1,
+			DesiredNumberScheduled: 1,
+		},
+	}
+}
+
+func deployment(labels map[string]string, name string) *appsv1.Deployment {
+	desired := int32(1)
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: wftest.DefaultNamespace,
+			Name:      name,
+			Labels:    labels,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &desired,
+		},
+		Status: appsv1.DeploymentStatus{
+			AvailableReplicas: 1,
+		},
+	}
+}
+
+func statefulSet(labels map[string]string, name string) *appsv1.StatefulSet {
+	desired := int32(1)
+	return &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: wftest.DefaultNamespace,
+			Name:      name,
+			Labels:    labels,
+		},
+		Spec: appsv1.StatefulSetSpec{
+			Replicas: &desired,
+		},
+		Status: appsv1.StatefulSetStatus{
+			AvailableReplicas: 1,
+		},
+	}
+}
+
+func RespondsToAppStatuses(t *testing.T, cr *wf.Wavefront, apps ...client.Object) {
+	t.Run("reports healthy when all components are running", func(t *testing.T) {
+		fakeClient := setup(apps...)
+
+		status := GenerateWavefrontStatus(fakeClient, cr)
+
+		require.Equal(t, Healthy, status.Status)
+		assert.Equal(t, "All components are healthy", status.Message)
+		for _, app := range apps {
+			requireResourceStatusEqual(t, status, app.GetName(), "Running (1/1)")
+		}
+	})
+
+	for i, subject := range apps {
+		initApps := make([]client.Object, len(apps)-1)
+		copy(initApps[0:i], apps[0:i])
+		if i+1 < len(apps) {
+			copy(initApps[i:], apps[i+1:])
+		}
+		t.Run(subject.GetName(), func(t *testing.T) {
+			RespondsToAppStatus(t, cr, subject, initApps)
+		})
+	}
+
+	RespondsToOOMKilled(t,
+		cr,
+		&corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: wftest.DefaultNamespace,
+				Labels:    apps[0].GetLabels(),
+			},
+		},
+		apps...,
+	)
+}
+
+func setReplicas(app client.Object, available, desired int32) client.Object {
+	switch newApp := app.DeepCopyObject().(type) {
+	case *appsv1.DaemonSet:
+		newApp.Status.NumberAvailable = available
+		newApp.Status.DesiredNumberScheduled = desired
+		return newApp
+	case *appsv1.Deployment:
+		newApp.Status.AvailableReplicas = available
+		newApp.Spec.Replicas = &desired
+		return newApp
+	case *appsv1.StatefulSet:
+		newApp.Status.AvailableReplicas = available
+		newApp.Spec.Replicas = &desired
+		return newApp
+	default:
+		panic(fmt.Sprintf("unhandled app kind %s", app.GetObjectKind().GroupVersionKind().Kind))
+	}
+}
+
+func RespondsToAppStatus(t *testing.T, cr *wf.Wavefront, subject client.Object, initApps []client.Object) {
+	t.Run("reports not running", func(t *testing.T) {
+		fakeClient := setup(initApps...)
+
+		status := GenerateWavefrontStatus(fakeClient, cr)
+
+		require.Equal(t, Unhealthy, status.Status)
+		require.Contains(t, status.Message, "")
+		requireResourceStatusEqual(t, status, subject.GetName(), NotRunning)
+	})
+
+	t.Run("reports not enough running", func(t *testing.T) {
+		fakeClient := setup(append([]client.Object{setReplicas(subject, 0, 1)}, initApps...)...)
+
+		status := GenerateWavefrontStatus(fakeClient, cr)
+
+		require.Equal(t, Unhealthy, status.Status)
+		name := subject.GetName()
+		require.Contains(t, status.Message, fmt.Sprintf("not enough instances of %s are running (0/1)", name))
+		requireResourceStatusEqual(t, status, subject.GetName(), "Running (0/1)")
+	})
+}
+
+func RespondsToOOMKilled(t *testing.T, wavefront *wf.Wavefront, pod *corev1.Pod, apps ...client.Object) {
 	t.Run("unhealthy when it has been OOM killed in the last five minutes", func(t *testing.T) {
 		ourPod := *pod
 		ourPod.Status.ContainerStatuses = []corev1.ContainerStatus{{
@@ -413,7 +311,7 @@ func RespondsToOOMKilled(t *testing.T, wavefront *wf.Wavefront, pod *corev1.Pod,
 				},
 			},
 		}}
-		client := setup(append([]runtime.Object{&ourPod}, apps...)...)
+		client := setup(append([]client.Object{&ourPod}, apps...)...)
 
 		status := GenerateWavefrontStatus(client, wavefront)
 
@@ -436,7 +334,7 @@ func RespondsToOOMKilled(t *testing.T, wavefront *wf.Wavefront, pod *corev1.Pod,
 				},
 			},
 		}}
-		client := setup(append([]runtime.Object{&ourPod}, apps...)...)
+		client := setup(append([]client.Object{&ourPod}, apps...)...)
 
 		status := GenerateWavefrontStatus(client, wavefront)
 
@@ -451,7 +349,7 @@ func RespondsToOOMKilled(t *testing.T, wavefront *wf.Wavefront, pod *corev1.Pod,
 	t.Run("handles when it has not been terminated", func(t *testing.T) {
 		ourPod := *pod
 		ourPod.Status.ContainerStatuses = []corev1.ContainerStatus{{}}
-		client := setup(append([]runtime.Object{&ourPod}, apps...)...)
+		client := setup(append([]client.Object{&ourPod}, apps...)...)
 
 		wavefront.Spec.DataCollection.Logging.Enable = true
 
@@ -465,27 +363,30 @@ func pastMaxInstallTime() time.Time {
 	return time.Now().Add(-MaxInstallTime).Add(-time.Second * 10)
 }
 
-func setup(initObjs ...runtime.Object) client.Client {
-	replicas := int32(1)
-	return fake.NewClientBuilder().WithRuntimeObjects(append(
+func setup(initObjs ...client.Object) client.Client {
+	return fake.NewClientBuilder().WithObjects(append(
 		initObjs,
-		&appsv1.Deployment{
-			Spec: appsv1.DeploymentSpec{
-				Replicas: &replicas,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: testNamespace,
-				Name:      util.OperatorName,
-				Labels: map[string]string{
-					"app.kubernetes.io/name":      "wavefront",
-					"app.kubernetes.io/component": "controller-manager",
-				},
-			},
-			Status: appsv1.DeploymentStatus{
-				AvailableReplicas: 1,
+		operatorDeployment(1, 1),
+	)...).Build()
+}
+
+func operatorDeployment(ready, desired int32) *appsv1.Deployment {
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: wftest.DefaultNamespace,
+			Name:      util.OperatorName,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":      "wavefront",
+				"app.kubernetes.io/component": "controller-manager",
 			},
 		},
-	)...).Build()
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &desired,
+		},
+		Status: appsv1.DeploymentStatus{
+			AvailableReplicas: ready,
+		},
+	}
 }
 
 func getComponentStatusWithName(name string, componentStatuses []wf.ResourceStatus) wf.ResourceStatus {
@@ -495,12 +396,4 @@ func getComponentStatusWithName(name string, componentStatuses []wf.ResourceStat
 		}
 	}
 	return wf.ResourceStatus{}
-}
-
-func defaultWF() *wf.Wavefront {
-	return &wf.Wavefront{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: testNamespace,
-		},
-	}
 }
