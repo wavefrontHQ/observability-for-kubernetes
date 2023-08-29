@@ -20,7 +20,6 @@ pipeline {
   stages {
     stage ('Cleanup GKE clusters') {
       steps {
-        sh 'gcloud auth activate-service-account --key-file $GCP_CREDS'
         sh 'scripts/cleanup-gke-clusters.sh'
       }
     }
