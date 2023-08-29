@@ -52,6 +52,9 @@ target-kind:
 GCP_PROJECT?=wavefront-gcp-dev
 GCP_REGION=us-central1
 GCP_ZONE?=b
+GKE_NODE_POOL?=default-pool
+GKE_MONITORING?=NONE
+GKE_LOGGING?=NONE
 NUMBER_OF_NODES?=3
 GCP_CLUSTER_VERSION?=1.25
 
@@ -82,13 +85,22 @@ create-gke-cluster: gke-cluster-name-check
 	@echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=$(GKE_MACHINE_TYPE) \
 		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 \
-		--num-nodes=$(NUMBER_OF_NODES) --logging=NONE \
-		--cluster-version $(GCP_CLUSTER_VERSION) $(GKE_LABELS)
+		--num-nodes=$(NUMBER_OF_NODES)  \
+		--cluster-version $(GCP_CLUSTER_VERSION) $(GKE_LABELS) \
+		--monitoring $(GKE_MONITORING) --logging $(GKE_LOGGING)
 	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) \
 		--zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
 	kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
+
+resize-node-pool-gke-cluster: gke-cluster-name-check
+	gcloud container clusters resize $(GKE_CLUSTER_NAME) --zone=$(GCP_REGION)-$(GCP_ZONE) \
+        --node-pool $(GKE_NODE_POOL) --num-nodes $(NUMBER_OF_NODES) -q
+
+add-arm-node-pool-gke-cluster: gke-cluster-name-check
+	gcloud container  node-pools create arm-pool --cluster=$(GKE_CLUSTER_NAME) --zone=$(GCP_REGION)-$(GCP_ZONE) \
+        --machine-type=t2a-standard-1 --num-nodes=$(NUMBER_OF_NODES)
 
 #----- AKS -----#
 AKS_CLUSTER_NAME?=k8po-ci
