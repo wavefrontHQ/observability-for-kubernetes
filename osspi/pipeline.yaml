@@ -262,11 +262,15 @@ jobs:
             OSM_ENVIRONMENT: production
             PRODUCT: wavefront-sdk-python
             VERSION: Latest
+            PREPARE: |
+              pip install pipreqs
+              pipreqs .
             OSSPI_SCANNING_PARAMS: |
               enable: true
               include_bomtools: "pip"
               pip.path: /usr/bin/pip3
               pip.python_path: /usr/bin/python3
+              pip.requirements_path: requirements.txt
               search_depth: 5
               # exclude for signature scans
               exclude_patterns:
