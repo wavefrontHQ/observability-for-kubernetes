@@ -262,14 +262,11 @@ jobs:
             OSM_ENVIRONMENT: production
             PRODUCT: wavefront-sdk-python
             VERSION: Latest
-            PREPARE: |
-              curl --output /tmp/python.tar.gz https://www.python.org/ftp/python/3.11.5/Python-3.11.5.tgz
-              tar -xf /tmp/python.tar.gz -C /tmp
             OSSPI_SCANNING_PARAMS: |
               enable: true
               include_bomtools: "pip"
-              pip.path: /tmp/Python-3.11.5/bin/pip
-              pip.python_path: /tmp/Python-3.11.5/bin/python
+              pip.path: /usr/bin/pip3
+              pip.python_path: /usr/bin/python3
               search_depth: 5
               # exclude for signature scans
               exclude_patterns:
