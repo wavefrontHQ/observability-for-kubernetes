@@ -609,11 +609,11 @@ spec:
                         default:
                           resources:
                             limits:
-                              cpu: 500m
-                              memory: 2Gi
+                              cpu: 1000m
+                              memory: 600Mi
                             requests:
                               cpu: 100m
-                              memory: 1Gi
+                              memory: 600Mi
                         properties:
                           resources:
                             description: Resources Compute resources required by the
@@ -669,7 +669,7 @@ spec:
                             default:
                               resources:
                                 limits:
-                                  cpu: 500m
+                                  cpu: 1000m
                                   memory: 2Gi
                                 requests:
                                   cpu: 100m
@@ -1747,7 +1747,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.24.0-alpha-1171fd09
+  collector: 1.24.0-alpha-a4c1683f
   logging: 2.1.6
   proxy: 13.0.1
 kind: ConfigMap
@@ -1819,7 +1819,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-1171fd09
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-a4c1683f
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
