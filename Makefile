@@ -52,8 +52,13 @@ target-kind:
 GCP_PROJECT?=wavefront-gcp-dev
 GCP_REGION=us-central1
 GCP_ZONE?=b
+GKE_NODE_POOL?=default-pool
+GKE_MONITORING?=NONE
+GKE_LOGGING?=NONE
+GKE_MACHINE_TYPE?=e2-standard-2
 NUMBER_OF_NODES?=3
-GCP_CLUSTER_VERSION?=1.25
+NUMBER_OF_ARM_NODES?=1
+GKE_CLUSTER_VERSION?=1.26
 
 .PHONY: target-gke connect-to-gke gke-connect-to-cluster gke-cluster-name-check delete-gke-cluster create-gke-cluster
 
@@ -73,7 +78,6 @@ delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 	@echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters delete $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --quiet
 
-GKE_MACHINE_TYPE?=e2-standard-2
 
 # create a GKE cluster without weekly cleanup
 # usage: make create-gke-cluster GKE_CLUSTER_NAME=XXXX NOCLEANUP=true
@@ -82,13 +86,24 @@ create-gke-cluster: gke-cluster-name-check
 	@echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=$(GKE_MACHINE_TYPE) \
 		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 \
-		--num-nodes=$(NUMBER_OF_NODES) --logging=NONE \
-		--cluster-version $(GCP_CLUSTER_VERSION) $(GKE_LABELS)
+		--num-nodes=$(NUMBER_OF_NODES)  \
+		--cluster-version $(GKE_CLUSTER_VERSION) $(GKE_LABELS) \
+		--monitoring $(GKE_MONITORING) --logging $(GKE_LOGGING)
 	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) \
 		--zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
 	kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
+
+create-gke-cluster-with-arm-nodes: create-gke-cluster add-arm-node-pool-gke-cluster
+
+resize-node-pool-gke-cluster: gke-cluster-name-check
+	gcloud container clusters resize $(GKE_CLUSTER_NAME) --zone=$(GCP_REGION)-$(GCP_ZONE) \
+        --node-pool $(GKE_NODE_POOL) --num-nodes $(NUMBER_OF_NODES) -q
+
+add-arm-node-pool-gke-cluster: gke-cluster-name-check
+	gcloud container  node-pools create arm-pool --cluster=$(GKE_CLUSTER_NAME) --zone=$(GCP_REGION)-$(GCP_ZONE) \
+        --machine-type=t2a-standard-1 --num-nodes=$(NUMBER_OF_ARM_NODES)
 
 #----- AKS -----#
 AKS_CLUSTER_NAME?=k8po-ci
@@ -148,3 +163,8 @@ git-rebase:
 	git fetch origin
 	git rebase origin/main
 	git log --oneline -n 10
+
+# list the available makefile targets
+.PHONY: no_targets__ list
+list:
+	@sh -c "$(MAKE) -p no_targets__ | awk -F':' '/^[a-zA-Z0-9][^\$$#\/\\t=]*:([^=]|$$)/ {split(\$$1,A,/ /);for(i in A)print A[i]}' | grep -v '__\$$' | sort"
