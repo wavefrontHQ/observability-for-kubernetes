@@ -22,7 +22,7 @@ pipeline {
   stages {
     stage("Promote release images and test") {
       options {
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 40, unit: 'MINUTES')
       }
       steps {
         sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -30,10 +30,14 @@ pipeline {
         sh './scripts/promote-release-images.sh'
         lock("integration-test-gke-2") {
           sh 'cd operator && make gke-connect-to-cluster'
+          sh 'cd operator && make NUMBER_OF_NODES=2 GKE_NODE_POOL=default-pool make resize-node-pool-gke-cluster'
+          sh 'cd operator && make NUMBER_OF_NODES=1 GKE_NODE_POOL=arm-pool make resize-node-pool-gke-cluster'
           sh 'cd operator && make clean-cluster'
           sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
           sh 'cd operator && ./hack/test/run-e2e-tests.sh -t $WAVEFRONT_TOKEN -r advanced -v $(cat release/OPERATOR_VERSION)'
           sh 'cd operator && make clean-cluster'
+          sh 'cd operator && make NUMBER_OF_NODES=0 GKE_NODE_POOL=default-pool make resize-node-pool-gke-cluster'
+          sh 'cd operator && make NUMBER_OF_NODES=0 GKE_NODE_POOL=arm-pool make resize-node-pool-gke-cluster'
         }
         sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
         sh 'git config --global user.name "svc.wf-jenkins"'
