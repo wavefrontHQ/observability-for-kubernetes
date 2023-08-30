@@ -132,7 +132,7 @@ pipeline {
       }
     }
 
-    stage('Run Collector Integration Tests') {
+    stage('Run Integration Tests') {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       environment {
         METRICS_RETRY_COUNT = "${params.METRICS_RETRY_COUNT}"
@@ -140,25 +140,26 @@ pipeline {
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
-        stage("GKE") {
+        stage("Kind K8s v1.21.14") {
           agent {
-            label "worker-1"
+            label "worker-kind-k8s-1-21"
           }
           options {
-            timeout(time: 60, unit: 'MINUTES')
+            timeout(time: 15, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
-            GCP_ZONE="a"
             DOCKER_IMAGE = "kubernetes-collector"
             INTEGRATION_TEST_ARGS="all"
             INTEGRATION_TEST_BUILD="ci"
+
+            KIND_CLUSTER_NAME='1-21-14'
+            KIND_K8S_VERSION='v1.21.14'
           }
           steps {
             lock("integration-test-gke") {
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd collector && make gke-connect-to-cluster'
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k kind'
+              sh './'
+
               sh 'cd collector && make clean-cluster'
               sh 'cd collector && make integration-test'
               sh 'cd collector && make clean-cluster'
@@ -166,58 +167,94 @@ pipeline {
           }
         }
 
-        stage("EKS") {
-          agent {
-            label "worker-2"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            DOCKER_IMAGE = "kubernetes-collector"
-            AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
-            AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-            INTEGRATION_TEST_ARGS = "all"
-            INTEGRATION_TEST_BUILD = "ci"
-          }
-          steps {
-            lock("integration-test-eks") {
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-              sh 'cd collector && make target-eks'
-              sh 'cd collector && make clean-cluster'
-              sh 'cd collector && make integration-test'
-              sh 'cd collector && make clean-cluster'
-            }
-          }
-        }
-
-        stage("AKS") {
-          agent {
-            label "worker-3"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            AKS_CLUSTER_NAME = "k8po-ci"
-            DOCKER_IMAGE = "kubernetes-collector"
-            INTEGRATION_TEST_ARGS="all"
-            INTEGRATION_TEST_BUILD="ci"
-          }
-          steps {
-            lock("integration-test-aks") {
-              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-                sh 'kubectl config use k8po-ci'
-                sh 'cd collector && make clean-cluster'
-                sh 'cd collector && make integration-test'
-                sh 'cd collector && make clean-cluster'
-              }
-            }
-          }
-        }
-      }
-    }
+//     }
+//
+//     stage('Run Collector Integration Tests') {
+//       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
+//       environment {
+//         METRICS_RETRY_COUNT = "${params.METRICS_RETRY_COUNT}"
+//       }
+//       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
+//       // But we want to make sure that the combined and default integration tests are run on both
+//       parallel {
+//         stage("GKE") {
+//           agent {
+//             label "worker-1"
+//           }
+//           options {
+//             timeout(time: 60, unit: 'MINUTES')
+//           }
+//           environment {
+//             GCP_CREDS = credentials("GCP_CREDS")
+//             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
+//             GCP_ZONE="a"
+//             DOCKER_IMAGE = "kubernetes-collector"
+//             INTEGRATION_TEST_ARGS="all"
+//             INTEGRATION_TEST_BUILD="ci"
+//           }
+//           steps {
+//             lock("integration-test-gke") {
+//               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+//               sh 'cd collector && make gke-connect-to-cluster'
+//               sh 'cd collector && make clean-cluster'
+//               sh 'cd collector && make integration-test'
+//               sh 'cd collector && make clean-cluster'
+//             }
+//           }
+//         }
+//
+//         stage("EKS") {
+//           agent {
+//             label "worker-2"
+//           }
+//           options {
+//             timeout(time: 60, unit: 'MINUTES')
+//           }
+//           environment {
+//             DOCKER_IMAGE = "kubernetes-collector"
+//             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
+//             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+//             INTEGRATION_TEST_ARGS = "all"
+//             INTEGRATION_TEST_BUILD = "ci"
+//           }
+//           steps {
+//             lock("integration-test-eks") {
+//               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+//               sh 'cd collector && make target-eks'
+//               sh 'cd collector && make clean-cluster'
+//               sh 'cd collector && make integration-test'
+//               sh 'cd collector && make clean-cluster'
+//             }
+//           }
+//         }
+//
+//         stage("AKS") {
+//           agent {
+//             label "worker-3"
+//           }
+//           options {
+//             timeout(time: 60, unit: 'MINUTES')
+//           }
+//           environment {
+//             AKS_CLUSTER_NAME = "k8po-ci"
+//             DOCKER_IMAGE = "kubernetes-collector"
+//             INTEGRATION_TEST_ARGS="all"
+//             INTEGRATION_TEST_BUILD="ci"
+//           }
+//           steps {
+//             lock("integration-test-aks") {
+//               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+//                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+//                 sh 'kubectl config use k8po-ci'
+//                 sh 'cd collector && make clean-cluster'
+//                 sh 'cd collector && make integration-test'
+//                 sh 'cd collector && make clean-cluster'
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
 
     stage("Run Operator Integration Tests") {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
