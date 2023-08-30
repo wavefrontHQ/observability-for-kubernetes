@@ -17,6 +17,7 @@ func CR(options ...CROption) *wf.Wavefront {
 			ClusterName:          "testClusterName",
 			WavefrontUrl:         "testWavefrontUrl",
 			WavefrontTokenSecret: "testToken",
+			Namespace:            DefaultNamespace,
 			DataCollection: wf.DataCollection{
 				Metrics: wf.Metrics{
 					Enable: true,

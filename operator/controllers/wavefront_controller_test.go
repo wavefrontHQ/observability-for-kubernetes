@@ -79,9 +79,9 @@ func TestReconcileAll(t *testing.T) {
 		require.False(t, mockKM.NodeCollectorDaemonSetContains())
 		require.False(t, mockKM.ClusterCollectorDeploymentContains())
 		require.False(t, mockKM.LoggingDaemonSetContains())
-		require.False(t, mockKM.PixieComponentContains("apps/v1", "StatefulSet", "pl-nats"))
-		require.False(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
-		require.False(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "kelvin"))
+		require.False(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-cluster-spans-script"))
+		require.False(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-egress-spans-script"))
+		require.False(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-ingress-spans-script"))
 
 		require.True(t, mockKM.ProxyServiceContains("port: 2878"))
 		require.True(t, mockKM.ProxyDeploymentContains("value: testWavefrontUrl/api/", "name: testToken", "containerPort: 2878"))
@@ -1452,8 +1452,6 @@ func TestReconcileAutoTracing(t *testing.T) {
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-name: test-clusterName"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
 
-		require.True(t, mockKM.ConfigMapContains("wavefront-cluster-spans-script"))
-
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("4317"))
 		containsPortInContainers(t, "otlpGrpcListenerPorts", *mockKM, 4317)
 		containsPortInServicePort(t, 4317, *mockKM)
@@ -1480,7 +1478,6 @@ func TestReconcileAutoTracing(t *testing.T) {
 		require.False(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "kelvin"))
 		require.False(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "vizier-query-broker"))
 		require.False(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets"))
-		require.False(t, mockKM.PixieComponentContains("v1", "Secret", "pl-deploy-secrets"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ServiceAccount", "metadata-service-account"))
 
@@ -1488,6 +1485,54 @@ func TestReconcileAutoTracing(t *testing.T) {
 
 		doesNotContainPortInContainers(t, "otlpGrpcListenerPorts", *mockKM, 4317)
 		doesNotContainPortInServicePort(t, 4317, *mockKM)
+	})
+
+	t.Run("does not deploy OpApps pxl scripts when canExportAutotracingScripts is false", func(t *testing.T) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.Autotracing.Enable = true
+		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		results, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		r.MetricConnection.Flush()
+
+		require.Equal(t, ctrl.Result{Requeue: true}, results)
+
+		require.False(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-cluster-spans-script"))
+		require.False(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-egress-spans-script"))
+		require.False(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-ingress-spans-script"))
+	})
+
+	t.Run("does deploy OpApps pxl scripts when canExportAutotracingScripts is true", func(t *testing.T) {
+		daemonset := &appsv1.DaemonSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "vizier-pem",
+				Namespace: wftest.DefaultNamespace,
+			},
+			Status: appsv1.DaemonSetStatus{
+				DesiredNumberScheduled: 3,
+				NumberReady:            3,
+			},
+		}
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.Autotracing.Enable = true
+		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)), daemonset)
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		results, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		r.MetricConnection.Flush()
+
+		require.Equal(t, ctrl.Result{Requeue: true}, results)
+
+		require.True(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-cluster-spans-script"))
+		require.True(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-egress-spans-script"))
+		require.True(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-ingress-spans-script"))
 	})
 }
 

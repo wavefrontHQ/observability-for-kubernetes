@@ -165,6 +165,12 @@ func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		wfSpec.Experimental.KubernetesEvents.Enable = true
 		wfSpec.Experimental.KubernetesEvents.SecretName = secret.Name
 	}
+	if wfSpec.Experimental.Autotracing.Enable {
+		daemonset, err := daemonset(client, util.PixieVizierPEMName, wfSpec.Namespace)
+		if err == nil && daemonset.Status.NumberReady > 0 {
+			wfSpec.Experimental.Autotracing.CanExportAutotracingScripts = true
+		}
+	}
 	return nil
 }
 
@@ -317,6 +323,16 @@ func deployment(client crClient.Client, name, ns string) (*appsv1.Deployment, er
 	}
 
 	return &deployment, err
+}
+
+func daemonset(client crClient.Client, name, ns string) (*appsv1.DaemonSet, error) {
+	var daemonset appsv1.DaemonSet
+	err := client.Get(context.Background(), util.ObjKey(ns, name), &daemonset)
+	if err != nil {
+		return nil, err
+	}
+
+	return &daemonset, err
 }
 
 func parseHttpProxyConfigs(client crClient.Client, wavefront *wf.WavefrontSpec) error {

@@ -92,6 +92,9 @@ type AutoTracingPixie struct {
 	Enable bool `json:"enable,omitempty"`
 	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "600Mi"}, limits: {cpu: "1000m", memory: "600Mi"}}}
 	Pem Pem `json:"pem,omitempty"`
+
+	// CanExportAutotracingScripts is for internal use only
+	CanExportAutotracingScripts bool `json:"-"`
 }
 
 type Hub struct {

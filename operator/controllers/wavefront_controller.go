@@ -271,11 +271,11 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		dirsToInclude = append(dirsToInclude, "logging")
 	}
 
-	if (spec.CanExportData && spec.Experimental.Autotracing.Enable) || spec.Experimental.Hub.Pixie.Enable {
+	if spec.Experimental.Autotracing.Enable || spec.Experimental.Hub.Pixie.Enable {
 		dirsToInclude = append(dirsToInclude, "pixie")
 	}
 
-	if spec.Experimental.Autotracing.Enable {
+	if spec.CanExportData && spec.Experimental.Autotracing.Enable && spec.Experimental.Autotracing.CanExportAutotracingScripts {
 		dirsToInclude = append(dirsToInclude, "autotracing")
 	}
 	return dirsToInclude
