@@ -145,7 +145,7 @@ pipeline {
             label "worker-kind-k8s-1-21"
           }
           options {
-            timeout(time: 15, unit: 'MINUTES')
+            timeout(time: 60, unit: 'MINUTES')
           }
           environment {
             DOCKER_IMAGE = "kubernetes-collector"
