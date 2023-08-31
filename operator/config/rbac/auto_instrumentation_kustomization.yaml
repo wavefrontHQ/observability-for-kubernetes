@@ -13,7 +13,6 @@ resources:
 - components/pixie/10-rolebinding-pl-cert-provisioner-binding_pl-cert-provisioner-role_pl-cert-provisioner-service-account.yaml
 - components/pixie/15-rolebinding-pl-vizier-metadata-binding_pl-vizier-metadata-role_metadata-service-account.yaml
 - components/pixie/16-rolebinding-pl-vizier-query-broker-binding_pl-vizier-query-broker-role_query-broker-service-account.yaml
-- components/pixie/19-clusterrolebinding-pl-node-view-cluster-binding_pl-node-view_default.yaml
 - components/pixie/21-clusterrolebinding-pl-vizier-metadata-cluster-binding_pl-vizier-metadata_metadata-service-account.yaml
 - components/pixie/22-clusterrolebinding-pl-vizier-metadata-node-view-cluster-binding_pl-node-view_metadata-service-account.yaml
 - components/logging/1-logging-roles.yaml
