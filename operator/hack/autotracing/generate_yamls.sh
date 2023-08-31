@@ -42,9 +42,20 @@ for index in "${!original_file_names[@]}"; do
   rm "$original_file_name"
 done
 
-rm splits/*cloud-conn*
 rm splits/secrets/01-secret-pl-deploy-secrets.yaml
+
+rm splits/*cloud-conn*
 rm splits/roles/*cloud-conn*
+
+rm splits/03-serviceaccount-pl-updater-service-account.yaml
+rm splits/roles/02-role-pl-updater-role.yaml
+rm splits/roles/12-rolebinding-pl-updater-binding_pl-updater-role_pl-updater-service-account.yaml
+rm splits/roles/20-clusterrolebinding-pl-updater-cluster-binding_pl-updater-cluster-role_pl-updater-service-account.yaml
+
+rm splits/roles/03-role-pl-vizier-crd-role.yaml
+rm splits/roles/13-rolebinding-pl-vizier-crd-binding_pl-vizier-crd-role_default.yaml
+rm splits/roles/14-rolebinding-pl-vizier-crd-metadata-binding_pl-vizier-crd-role_metadata-service-account.yaml
+rm splits/roles/17-rolebinding-pl-vizier-query-broker-crd-binding_pl-vizier-crd-role_query-broker-service-account.yaml
 
 yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/12-deployment-kelvin.yaml
 yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/14-deployment-vizier-query-broker.yaml
