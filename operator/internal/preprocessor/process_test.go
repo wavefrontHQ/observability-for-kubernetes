@@ -7,6 +7,7 @@ import (
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-const testNamespace = "testNamespace"
+const testNamespace = wftest.DefaultNamespace
 
 func TestProcess(t *testing.T) {
 	t.Run("computes default proxy ports", func(t *testing.T) {
@@ -435,6 +436,40 @@ func TestProcessExperimental(t *testing.T) {
 
 		require.ErrorContains(t, err, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'aria-insights-secret' is missing Data 'k8s-events-endpoint-token'")
 	})
+
+	t.Run("properly sets canExportAutotracingScripts when pixie components are not running", func(t *testing.T) {
+		fakeClient := setup()
+		wfcr := wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.Autotracing.Enable = true
+		})
+
+		_ = PreProcess(fakeClient, wfcr)
+
+		require.False(t, wfcr.Spec.Experimental.Autotracing.CanExportAutotracingScripts)
+	})
+
+	t.Run("properly sets canExportAutotracingScripts when pixie components are running", func(t *testing.T) {
+		daemonset := &appsv1.DaemonSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "vizier-pem",
+				Namespace: testNamespace,
+			},
+			Status: appsv1.DaemonSetStatus{
+				DesiredNumberScheduled: 3,
+				NumberReady:            3,
+			},
+		}
+
+		fakeClient := setup(daemonset)
+		wfcr := wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.Autotracing.Enable = true
+		})
+
+		_ = PreProcess(fakeClient, wfcr)
+
+		require.True(t, wfcr.Spec.Experimental.Autotracing.CanExportAutotracingScripts)
+	})
+
 }
 
 func setup(initObjs ...runtime.Object) client.Client {

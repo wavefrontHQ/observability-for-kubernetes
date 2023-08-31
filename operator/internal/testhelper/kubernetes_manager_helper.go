@@ -303,6 +303,18 @@ func (skm MockKubernetesManager) PixieComponentContains(apiVersion, kind, metada
 	)
 }
 
+func (skm MockKubernetesManager) AutotracingComponentContains(apiVersion, kind, metadataName string, checks ...string) bool {
+	return contains(
+		skm.appliedYAMLs,
+		apiVersion,
+		kind,
+		"wavefront",
+		"autotracing",
+		metadataName,
+		checks...,
+	)
+}
+
 func (skm MockKubernetesManager) CollectorServiceAccountContains(checks ...string) bool {
 	return contains(
 		skm.appliedYAMLs,
