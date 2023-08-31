@@ -34,7 +34,6 @@ resources:
   - name: wavefront-sdk-python
     source:
       uri: https://github.com/wavefrontHQ/wavefront-sdk-python.git
-      branch: bjerry/csp-test
     type: git
   - name: wavefront-spring-boot
     source:
