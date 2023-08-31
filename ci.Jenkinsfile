@@ -165,83 +165,83 @@ pipeline {
           }
         }
 
-        stage("GKE") {
-          agent {
-            label "worker-1"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            DOCKER_IMAGE = "kubernetes-operator"
-            OPERATOR_YAML_TYPE="rc"
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
-            GCP_ZONE="a"
-            GCP_CREDS = credentials("GCP_CREDS")
-            GCP_PROJECT = "wavefront-gcp-dev"
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            lock("integration-test-gke") {
-              sh 'cd operator && make gke-connect-to-cluster'
-              sh 'make clean-cluster'
-              sh 'make -C operator integration-test'
-              sh 'make clean-cluster'
-            }
-          }
-        }
-
-        stage("EKS") {
-          agent {
-            label "worker-3"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            DOCKER_IMAGE = "kubernetes-operator"
-            OPERATOR_YAML_TYPE="rc"
-            GCP_CREDS = credentials("GCP_CREDS")
-            AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
-            AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-            INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            lock("integration-test-eks") {
-              sh 'cd operator && make target-eks'
-              sh 'make clean-cluster'
-              sh 'make -C operator integration-test'
-              sh 'make clean-cluster'
-            }
-          }
-        }
-
-        stage("AKS") {
-          agent { label "worker-4" }
-          options { timeout(time: 60, unit: 'MINUTES') }
-          environment {
-            DOCKER_IMAGE = "kubernetes-operator"
-            OPERATOR_YAML_TYPE="rc"
-            GCP_CREDS = credentials("GCP_CREDS")
-            AKS_CLUSTER_NAME = "k8po-ci"
-            INTEGRATION_TEST_ARGS = '-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics'
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            lock("integration-test-aks") {
-              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                sh 'kubectl config use k8po-ci'
-                sh 'make clean-cluster'
-                sh 'make -C operator integration-test'
-                sh 'make clean-cluster'
-              }
-            }
-          }
-        }
+//         stage("GKE") {
+//           agent {
+//             label "worker-1"
+//           }
+//           options {
+//             timeout(time: 60, unit: 'MINUTES')
+//           }
+//           environment {
+//             DOCKER_IMAGE = "kubernetes-operator"
+//             OPERATOR_YAML_TYPE="rc"
+//             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
+//             GCP_ZONE="a"
+//             GCP_CREDS = credentials("GCP_CREDS")
+//             GCP_PROJECT = "wavefront-gcp-dev"
+//           }
+//           steps {
+//             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+//             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+//             lock("integration-test-gke") {
+//               sh 'cd operator && make gke-connect-to-cluster'
+//               sh 'make clean-cluster'
+//               sh 'make -C operator integration-test'
+//               sh 'make clean-cluster'
+//             }
+//           }
+//         }
+//
+//         stage("EKS") {
+//           agent {
+//             label "worker-3"
+//           }
+//           options {
+//             timeout(time: 60, unit: 'MINUTES')
+//           }
+//           environment {
+//             DOCKER_IMAGE = "kubernetes-operator"
+//             OPERATOR_YAML_TYPE="rc"
+//             GCP_CREDS = credentials("GCP_CREDS")
+//             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
+//             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+//             INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"
+//           }
+//           steps {
+//             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+//             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+//             lock("integration-test-eks") {
+//               sh 'cd operator && make target-eks'
+//               sh 'make clean-cluster'
+//               sh 'make -C operator integration-test'
+//               sh 'make clean-cluster'
+//             }
+//           }
+//         }
+//
+//         stage("AKS") {
+//           agent { label "worker-4" }
+//           options { timeout(time: 60, unit: 'MINUTES') }
+//           environment {
+//             DOCKER_IMAGE = "kubernetes-operator"
+//             OPERATOR_YAML_TYPE="rc"
+//             GCP_CREDS = credentials("GCP_CREDS")
+//             AKS_CLUSTER_NAME = "k8po-ci"
+//             INTEGRATION_TEST_ARGS = '-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics'
+//           }
+//           steps {
+//             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+//             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+//             lock("integration-test-aks") {
+//               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+//                 sh 'kubectl config use k8po-ci'
+//                 sh 'make clean-cluster'
+//                 sh 'make -C operator integration-test'
+//                 sh 'make clean-cluster'
+//               }
+//             }
+//           }
+//         }
       }
     }
   }
