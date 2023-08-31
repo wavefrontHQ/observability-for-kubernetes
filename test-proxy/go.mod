@@ -5,8 +5,7 @@ go 1.20
 require (
 	github.com/gobwas/glob v0.2.3
 	github.com/sirupsen/logrus v1.9.0
-	github.com/soheilhy/cmux v0.1.5
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 	github.com/wavefronthq/wavefront-sdk-go v0.10.4
 	k8s.io/api v0.24.13
 )
