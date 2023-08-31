@@ -92,7 +92,7 @@ spec:
         - name: PL_STIRLING_SOURCES
           value: "kTracers"
 {{- end }}
-        image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/pem_image:0.14.2
+        image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/pem_image:0.14.2-multi
         name: pem
         resources:
 {{- if .Experimental.Hub.Pixie.Enable }}
@@ -132,7 +132,7 @@ spec:
           value: vizier-query-broker-svc
         - name: SERVICE_PORT
           value: "50300"
-        image: projects.registry.vmware.com/tanzu_observability/bitnami/os-shell:curl-11
+        image: projects.registry.vmware.com/tanzu_observability/bitnami/os-shell:11
         name: qb-wait
         securityContext:
           allowPrivilegeEscalation: false

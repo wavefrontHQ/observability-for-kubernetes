@@ -71,7 +71,7 @@ yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) 
 yq -i '(.spec.template.spec.containers[] | select(.name == "provisioner") | .resources) = {"requests": {"cpu": "50m", "memory": "10Mi"}, "limits": {"cpu": "100m", "memory": "100Mi"}}' "${REPO_ROOT}"/operator/deploy/internal/pixie/17-job-cert-provisioner-job.yaml
 yq -i '(.spec.template.spec.containers[] | select(.name == "pl-nats") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "1000m", "memory": "2Gi"}}' "${REPO_ROOT}"/operator/deploy/internal/pixie/23-statefulset-pl-nats.yaml
 
-sed -i '' 's/image: gcr.io\/pixie-oss\/pixie-dev-public\/curl:multiarch-7.87.0/image: projects.registry.vmware.com\/tanzu_observability\/bitnami\/os-shell:curl-11/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
+sed -i '' 's/image: gcr.io\/pixie-oss\/pixie-dev-public\/curl:multiarch-7.87.0/image: projects.registry.vmware.com\/tanzu_observability\/bitnami\/os-shell:11/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/tanzu_observability/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
