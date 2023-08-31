@@ -36,7 +36,7 @@ spec:
                   fieldPath: metadata.namespace
             - name: CLUSTER_ADVERTISE
               value: $(POD_NAME).pl-nats.$(POD_NAMESPACE).svc
-          image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier-deps/nats:2.9.19-scratch
+          image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier-deps/nats:2.9.19-scratch-multi
           lifecycle:
             preStop:
               exec:
