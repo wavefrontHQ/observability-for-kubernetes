@@ -3,6 +3,7 @@ package health
 import (
 	"context"
 	"fmt"
+	"regexp"
 	strings "strings"
 	"time"
 
@@ -43,12 +44,14 @@ func GenerateWavefrontStatus(objClient client.Client, wavefront *wf.Wavefront) w
 		componentStatuses = append(componentStatuses, daemonSetStatus(
 			objClient,
 			util.ObjKey(wavefront.Namespace, util.NodeCollectorName),
+			true,
 		))
 	}
 	if wavefront.Spec.DataCollection.Logging.Enable {
 		componentStatuses = append(componentStatuses, daemonSetStatus(
 			objClient,
 			util.ObjKey(wavefront.Namespace, util.LoggingName),
+			true,
 		))
 	}
 	if wavefront.Spec.Experimental.Hub.Pixie.Enable || wavefront.Spec.Experimental.Autotracing.Enable {
@@ -67,6 +70,7 @@ func GenerateWavefrontStatus(objClient client.Client, wavefront *wf.Wavefront) w
 		componentStatuses = append(componentStatuses, daemonSetStatus(
 			objClient,
 			util.ObjKey(wavefront.Namespace, util.PixieVizierPEMName),
+			false,
 		))
 		componentStatuses = append(componentStatuses, deploymentStatus(
 			objClient,
@@ -127,12 +131,13 @@ func deploymentStatus(objClient client.Client, key client.ObjectKey) wf.Resource
 		componentStatus,
 		objClient,
 		key.Namespace,
+		key.Name,
 		deployment.Labels["app.kubernetes.io/component"],
 	)
 	return componentStatus
 }
 
-func daemonSetStatus(objClient client.Client, key client.ObjectKey) wf.ResourceStatus {
+func daemonSetStatus(objClient client.Client, key client.ObjectKey, includeOOMKilled bool) wf.ResourceStatus {
 	componentStatus := wf.ResourceStatus{
 		Name: key.Name,
 	}
@@ -146,12 +151,15 @@ func daemonSetStatus(objClient client.Client, key client.ObjectKey) wf.ResourceS
 		daemonset.Status.NumberAvailable,
 		daemonset.Status.DesiredNumberScheduled,
 	)
-	componentStatus = reportStatusFromPod(
-		componentStatus,
-		objClient,
-		key.Namespace,
-		daemonset.Labels["app.kubernetes.io/component"],
-	)
+	if includeOOMKilled {
+		componentStatus = reportStatusFromPod(
+			componentStatus,
+			objClient,
+			key.Namespace,
+			key.Name,
+			daemonset.Labels["app.kubernetes.io/component"],
+		)
+	}
 	return componentStatus
 }
 
@@ -173,6 +181,7 @@ func statefulSetStatus(objClient client.Client, key client.ObjectKey) wf.Resourc
 		componentStatus,
 		objClient,
 		key.Namespace,
+		key.Name,
 		daemonset.Labels["app.kubernetes.io/component"],
 	)
 	return componentStatus
@@ -199,7 +208,7 @@ func reportStatusFromApp(componentStatus wf.ResourceStatus, ready int32, desired
 	return componentStatus
 }
 
-func reportStatusFromPod(componentStatus wf.ResourceStatus, objClient client.Client, namespace string, labelComponent string) wf.ResourceStatus {
+func reportStatusFromPod(componentStatus wf.ResourceStatus, objClient client.Client, namespace string, namePrefix string, labelComponent string) wf.ResourceStatus {
 	var podsList corev1.PodList
 	err := objClient.List(
 		context.Background(),
@@ -211,7 +220,11 @@ func reportStatusFromPod(componentStatus wf.ResourceStatus, objClient client.Cli
 		log.Log.Error(err, "error getting pod status")
 		return componentStatus
 	}
+	nameMatcher := regexp.MustCompile(fmt.Sprintf("^%s", namePrefix))
 	for _, pod := range podsList.Items {
+		if !nameMatcher.MatchString(pod.Name) {
+			continue
+		}
 		for _, containerStatus := range pod.Status.ContainerStatuses {
 			if oomKilledRecently(containerStatus.LastTerminationState.Terminated) {
 				componentStatus.Healthy = false
