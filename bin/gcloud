@@ -2,6 +2,7 @@
 set -euo pipefail
 
 BIN_DIR=$(dirname $(realpath "$0"))
+CALLER=$(basename "$0") # e.g. gcloud, gsutil, docker-credential-gcloud
 
 VERSION=440.0.0
 
@@ -30,4 +31,4 @@ if [[ ! -f "$BIN_DIR/.cache/google-cloud-sdk/bin/gcloud" ]] || ! "$BIN_DIR/.cach
 fi
 
 # shellcheck disable=SC2086
-"$BIN_DIR/.cache/google-cloud-sdk/bin/gcloud" $*
+"$BIN_DIR/.cache/google-cloud-sdk/bin/$CALLER" $*
