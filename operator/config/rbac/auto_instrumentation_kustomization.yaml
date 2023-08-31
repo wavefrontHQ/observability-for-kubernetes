@@ -9,7 +9,6 @@ resources:
 - components/pixie/04-role-pl-vizier-metadata-role.yaml
 - components/pixie/05-role-pl-vizier-query-broker-role.yaml
 - components/pixie/07-clusterrole-pl-node-view.yaml
-- components/pixie/08-clusterrole-pl-updater-cluster-role.yaml
 - components/pixie/09-clusterrole-pl-vizier-metadata.yaml
 - components/pixie/10-rolebinding-pl-cert-provisioner-binding_pl-cert-provisioner-role_pl-cert-provisioner-service-account.yaml
 - components/pixie/15-rolebinding-pl-vizier-metadata-binding_pl-vizier-metadata-role_metadata-service-account.yaml
