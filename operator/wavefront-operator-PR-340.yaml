@@ -1125,60 +1125,6 @@ metadata:
     app.kubernetes.io/component: pixie
     app.kubernetes.io/name: wavefront
     component: vizier
-    vizier-bootstrap: "true"
-  name: wavefront-pl-updater-cluster-role
-rules:
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterroles
-  - clusterrolebindings
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resourceNames:
-  - kube-system
-  resources:
-  - namespaces
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  - pods
-  - services
-  - endpoints
-  - namespaces
-  verbs:
-  - get
-  - watch
-  - list
-- apiGroups:
-  - apps
-  resources:
-  - replicasets
-  - deployments
-  verbs:
-  - get
-  - watch
-  - list
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
   name: wavefront-pl-vizier-metadata
 rules:
 - apiGroups:
@@ -1420,24 +1366,6 @@ metadata:
     app.kubernetes.io/component: pixie
     app.kubernetes.io/name: wavefront
     component: vizier
-  name: wavefront-pl-node-view-cluster-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: wavefront-pl-node-view
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: observability-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
   name: wavefront-pl-vizier-metadata-cluster-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -1513,7 +1441,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.24.0-alpha-ca97494c
+  collector: 1.24.0-alpha-c556996c
   logging: 2.1.6
   proxy: 13.0.1
 kind: ConfigMap
@@ -1585,7 +1513,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-ca97494c
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-c556996c
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
