@@ -165,6 +165,56 @@ pipeline {
           }
         }
 
+        stage("Kind K8s v1.22.17") {
+          agent {
+            label "worker-kind-k8s-1-22"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            DOCKER_IMAGE = "kubernetes-collector"
+            INTEGRATION_TEST_ARGS="all"
+            INTEGRATION_TEST_BUILD="ci"
+            KIND_K8S_VERSION='v1.22.17'
+          }
+          steps {
+            lock("integration-test-kind-1-22-17") {
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k kind'
+              sh './scripts/get-or-create-kind-cluster.sh'
+
+              sh 'cd collector && make clean-cluster'
+              sh 'cd collector && make integration-test'
+              sh 'cd collector && make clean-cluster'
+            }
+          }
+        }
+
+        stage("Kind K8s v1.23.17") {
+          agent {
+            label "worker-kind-k8s-1-23"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            DOCKER_IMAGE = "kubernetes-collector"
+            INTEGRATION_TEST_ARGS="all"
+            INTEGRATION_TEST_BUILD="ci"
+            KIND_K8S_VERSION='v1.23.17'
+          }
+          steps {
+            lock("integration-test-kind-1-23-17") {
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k kind'
+              sh './scripts/get-or-create-kind-cluster.sh'
+
+              sh 'cd collector && make clean-cluster'
+              sh 'cd collector && make integration-test'
+              sh 'cd collector && make clean-cluster'
+            }
+          }
+        }
+
 //         stage("GKE") {
 //           agent {
 //             label "worker-1"
