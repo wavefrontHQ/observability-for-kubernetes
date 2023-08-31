@@ -77,12 +77,14 @@ func TestReconcileReportHealthStatus(t *testing.T) {
 			"app.kubernetes.io/name":      "wavefront",
 			"app.kubernetes.io/component": "logging",
 		}
-		RespondsToAppStatuses(t,
-			wftest.NothingEnabledCR(func(w *wf.Wavefront) {
-				w.Spec.DataCollection.Logging.Enable = true
-			}),
+		cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Logging.Enable = true
+		})
+		apps := []client.Object{
 			daemonSet(labels, util.LoggingName),
-		)
+		}
+		RespondsToAppStatuses(t, cr, apps)
+		RespondsToAppsOOMKilled(t, cr, apps, apps)
 	})
 
 	t.Run("metrics", func(t *testing.T) {
@@ -90,13 +92,15 @@ func TestReconcileReportHealthStatus(t *testing.T) {
 			"app.kubernetes.io/name":      "wavefront",
 			"app.kubernetes.io/component": "collector",
 		}
-		RespondsToAppStatuses(t,
-			wftest.NothingEnabledCR(func(w *wf.Wavefront) {
-				w.Spec.DataCollection.Metrics.Enable = true
-			}),
+		cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Enable = true
+		})
+		apps := []client.Object{
 			daemonSet(labels, util.NodeCollectorName),
 			deployment(labels, util.ClusterCollectorName),
-		)
+		}
+		RespondsToAppStatuses(t, cr, apps)
+		RespondsToAppsOOMKilled(t, cr, apps, apps)
 	})
 
 	t.Run("proxy", func(t *testing.T) {
@@ -104,32 +108,19 @@ func TestReconcileReportHealthStatus(t *testing.T) {
 			"app.kubernetes.io/name":      "wavefront",
 			"app.kubernetes.io/component": "proxy",
 		}
-		RespondsToAppStatuses(t,
-			wftest.NothingEnabledCR(func(w *wf.Wavefront) {
-				w.Spec.DataExport.WavefrontProxy.Enable = true
-			}),
-			deployment(labels, util.ProxyName),
-		)
+		cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.DataExport.WavefrontProxy.Enable = true
+		})
+		apps := []client.Object{deployment(labels, util.ProxyName)}
+
+		RespondsToAppStatuses(t, cr, apps)
+		RespondsToAppsOOMKilled(t, cr, apps, apps)
 	})
 
 	t.Run("controller-manager", func(t *testing.T) {
-		wavefront := wftest.NothingEnabledCR()
-		RespondsToOOMKilled(t, wavefront,
-			&corev1.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: wftest.DefaultNamespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/name":      "wavefront",
-						"app.kubernetes.io/component": "controller-manager",
-					},
-					OwnerReferences: []metav1.OwnerReference{{
-						Kind: "Deployment",
-						Name: util.OperatorName,
-					}},
-				},
-				Spec: corev1.PodSpec{},
-			},
-		)
+		cr := wftest.NothingEnabledCR()
+		apps := []client.Object{operatorDeployment(1, 1)}
+		RespondsToAppsOOMKilled(t, cr, apps, apps)
 	})
 
 	t.Run("pixie", func(t *testing.T) {
@@ -137,31 +128,155 @@ func TestReconcileReportHealthStatus(t *testing.T) {
 			"app.kubernetes.io/name":      "wavefront",
 			"app.kubernetes.io/component": "pixie",
 		}
-		apps := []client.Object{
+		appsWithoutPEM := []client.Object{
 			deployment(labels, util.PixieKelvinName),
 			statefulSet(labels, util.PixieNatsName),
 			statefulSet(labels, util.PixieVizierMetadataName),
-			daemonSet(labels, util.PixieVizierPEMName),
 			deployment(labels, util.PixieVizierQueryBrokerName),
 		}
+		apps := append([]client.Object{daemonSet(labels, util.PixieVizierPEMName)}, appsWithoutPEM...)
 
 		t.Run("hub", func(t *testing.T) {
-			RespondsToAppStatuses(t,
-				wftest.NothingEnabledCR(func(w *wf.Wavefront) {
-					w.Spec.Experimental.Hub.Pixie.Enable = true
-				}),
-				apps...,
-			)
+			cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+				w.Spec.Experimental.Hub.Pixie.Enable = true
+			})
+			RespondsToAppStatuses(t, cr, apps)
+
+			RespondsToAppsOOMKilled(t, cr, apps, appsWithoutPEM)
+
+			t.Run("healthy when only the PEMs have been OOM killed in the last five minutes", func(t *testing.T) {
+				ourPod := corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: wftest.DefaultNamespace,
+						Labels:    apps[0].GetLabels(),
+						Name:      "vizier-pem-lxrhq",
+					},
+					Status: corev1.PodStatus{
+						ContainerStatuses: []corev1.ContainerStatus{{
+							LastTerminationState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode:   137, // OOMKilled
+									FinishedAt: metav1.Time{Time: time.Now()},
+								},
+							},
+						}},
+					},
+				}
+				client := setup(append([]client.Object{&ourPod}, apps...)...)
+
+				status := GenerateWavefrontStatus(client, cr)
+
+				require.Equal(t, Healthy, status.Status)
+				require.Contains(t, status.Message, "All components are healthy")
+				for _, resourceStatus := range status.ResourceStatuses {
+					if resourceStatus.Name == util.LoggingName {
+						require.Equal(t, Unhealthy, resourceStatus.Status)
+					}
+				}
+			})
 		})
 
 		t.Run("autotracing", func(t *testing.T) {
-			RespondsToAppStatuses(t,
-				wftest.NothingEnabledCR(func(w *wf.Wavefront) {
-					w.Spec.Experimental.Autotracing.Enable = true
-				}),
-				apps...,
-			)
+			cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+				w.Spec.Experimental.Autotracing.Enable = true
+			})
+			RespondsToAppStatuses(t, cr, apps)
+
+			RespondsToAppsOOMKilled(t, cr, apps, appsWithoutPEM)
+
+			t.Run("healthy when only the PEMs have been OOM killed in the last five minutes", func(t *testing.T) {
+				ourPod := corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: wftest.DefaultNamespace,
+						Labels:    apps[0].GetLabels(),
+						Name:      "vizier-pem-lxrhq",
+					},
+					Status: corev1.PodStatus{
+						ContainerStatuses: []corev1.ContainerStatus{{
+							LastTerminationState: corev1.ContainerState{
+								Terminated: &corev1.ContainerStateTerminated{
+									ExitCode:   137, // OOMKilled
+									FinishedAt: metav1.Time{Time: time.Now()},
+								},
+							},
+						}},
+					},
+				}
+				client := setup(append([]client.Object{&ourPod}, apps...)...)
+
+				status := GenerateWavefrontStatus(client, cr)
+
+				require.Equal(t, Healthy, status.Status)
+				require.Contains(t, status.Message, "All components are healthy")
+				for _, resourceStatus := range status.ResourceStatuses {
+					if resourceStatus.Name == util.LoggingName {
+						require.Equal(t, Unhealthy, resourceStatus.Status)
+					}
+				}
+			})
 		})
+	})
+}
+
+func RespondsToAppsOOMKilled(t *testing.T, cr *wf.Wavefront, init []client.Object, appsToVerify []client.Object) {
+	t.Run("apps OOM killed", func(t *testing.T) {
+		for _, app := range appsToVerify {
+			t.Run(app.GetName()+" resource", func(t *testing.T) {
+				pod := &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: wftest.DefaultNamespace,
+						Labels:    app.GetLabels(),
+						Name:      fmt.Sprintf("%s-some-random-chars", app.GetName()),
+					},
+				}
+				t.Run("unhealthy when it has been OOM killed in the last five minutes", func(t *testing.T) {
+					ourPod := *pod
+					ourPod.Status.ContainerStatuses = []corev1.ContainerStatus{{
+						LastTerminationState: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{
+								ExitCode:   137, // OOMKilled
+								FinishedAt: metav1.Time{Time: time.Now()},
+							},
+						},
+					}}
+					client := setup(append([]client.Object{&ourPod}, init...)...)
+
+					status := GenerateWavefrontStatus(client, cr)
+
+					require.Equal(t, Unhealthy, status.Status)
+					require.Contains(t, status.Message, "OOMKilled in the last 5m")
+					requireResourceStatusEqual(t, status, app.GetName(), Unhealthy)
+				})
+
+				t.Run("healthy when it has not been OOM killed in the last five minutes", func(t *testing.T) {
+					ourPod := *pod
+					ourPod.Status.ContainerStatuses = []corev1.ContainerStatus{{
+						LastTerminationState: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{
+								ExitCode:   137, // OOMKilled
+								FinishedAt: metav1.Time{Time: time.Now().Add(-OOMTimeout).Add(-10 * time.Second)},
+							},
+						},
+					}}
+					client := setup(append([]client.Object{&ourPod}, init...)...)
+
+					status := GenerateWavefrontStatus(client, cr)
+
+					require.Equal(t, Healthy, status.Status)
+					requireResourceStatusEqual(t, status, app.GetName(), "Running (1/1)")
+				})
+
+				t.Run("handles when it has not been terminated", func(t *testing.T) {
+					ourPod := *pod
+					ourPod.Status.ContainerStatuses = []corev1.ContainerStatus{{}}
+					client := setup(append([]client.Object{&ourPod}, init...)...)
+
+					require.NotPanics(t, func() {
+						GenerateWavefrontStatus(client, cr)
+					})
+				})
+			})
+		}
 	})
 }
 
@@ -222,40 +337,50 @@ func statefulSet(labels map[string]string, name string) *appsv1.StatefulSet {
 	}
 }
 
-func RespondsToAppStatuses(t *testing.T, cr *wf.Wavefront, apps ...client.Object) {
-	t.Run("reports healthy when all components are running", func(t *testing.T) {
-		fakeClient := setup(apps...)
+func RespondsToAppStatuses(t *testing.T, cr *wf.Wavefront, apps []client.Object) {
+	t.Run("app statuses", func(t *testing.T) {
+		t.Run("reports healthy when all components are running", func(t *testing.T) {
+			fakeClient := setup(apps...)
 
-		status := GenerateWavefrontStatus(fakeClient, cr)
+			status := GenerateWavefrontStatus(fakeClient, cr)
 
-		require.Equal(t, Healthy, status.Status)
-		assert.Equal(t, "All components are healthy", status.Message)
-		for _, app := range apps {
-			requireResourceStatusEqual(t, status, app.GetName(), "Running (1/1)")
+			require.Equal(t, Healthy, status.Status)
+			assert.Equal(t, "All components are healthy", status.Message)
+			for _, app := range apps {
+				requireResourceStatusEqual(t, status, app.GetName(), "Running (1/1)")
+			}
+		})
+
+		for i, subject := range apps {
+			initApps := make([]client.Object, len(apps)-1)
+			copy(initApps[0:i], apps[0:i])
+			if i+1 < len(apps) {
+				copy(initApps[i:], apps[i+1:])
+			}
+			t.Run(subject.GetName()+" resource", func(t *testing.T) {
+				t.Run("reports not running", func(t *testing.T) {
+					fakeClient := setup(initApps...)
+
+					status := GenerateWavefrontStatus(fakeClient, cr)
+
+					require.Equal(t, Unhealthy, status.Status)
+					require.Contains(t, status.Message, "")
+					requireResourceStatusEqual(t, status, subject.GetName(), NotRunning)
+				})
+
+				t.Run("reports not enough running", func(t *testing.T) {
+					fakeClient := setup(append([]client.Object{setReplicas(subject, 0, 1)}, initApps...)...)
+
+					status := GenerateWavefrontStatus(fakeClient, cr)
+
+					require.Equal(t, Unhealthy, status.Status)
+					name := subject.GetName()
+					require.Contains(t, status.Message, fmt.Sprintf("not enough instances of %s are running (0/1)", name))
+					requireResourceStatusEqual(t, status, subject.GetName(), "Running (0/1)")
+				})
+			})
 		}
 	})
-
-	for i, subject := range apps {
-		initApps := make([]client.Object, len(apps)-1)
-		copy(initApps[0:i], apps[0:i])
-		if i+1 < len(apps) {
-			copy(initApps[i:], apps[i+1:])
-		}
-		t.Run(subject.GetName(), func(t *testing.T) {
-			RespondsToAppStatus(t, cr, subject, initApps)
-		})
-	}
-
-	RespondsToOOMKilled(t,
-		cr,
-		&corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: wftest.DefaultNamespace,
-				Labels:    apps[0].GetLabels(),
-			},
-		},
-		apps...,
-	)
 }
 
 func setReplicas(app client.Object, available, desired int32) client.Object {
@@ -277,97 +402,21 @@ func setReplicas(app client.Object, available, desired int32) client.Object {
 	}
 }
 
-func RespondsToAppStatus(t *testing.T, cr *wf.Wavefront, subject client.Object, initApps []client.Object) {
-	t.Run("reports not running", func(t *testing.T) {
-		fakeClient := setup(initApps...)
-
-		status := GenerateWavefrontStatus(fakeClient, cr)
-
-		require.Equal(t, Unhealthy, status.Status)
-		require.Contains(t, status.Message, "")
-		requireResourceStatusEqual(t, status, subject.GetName(), NotRunning)
-	})
-
-	t.Run("reports not enough running", func(t *testing.T) {
-		fakeClient := setup(append([]client.Object{setReplicas(subject, 0, 1)}, initApps...)...)
-
-		status := GenerateWavefrontStatus(fakeClient, cr)
-
-		require.Equal(t, Unhealthy, status.Status)
-		name := subject.GetName()
-		require.Contains(t, status.Message, fmt.Sprintf("not enough instances of %s are running (0/1)", name))
-		requireResourceStatusEqual(t, status, subject.GetName(), "Running (0/1)")
-	})
-}
-
-func RespondsToOOMKilled(t *testing.T, wavefront *wf.Wavefront, pod *corev1.Pod, apps ...client.Object) {
-	t.Run("unhealthy when it has been OOM killed in the last five minutes", func(t *testing.T) {
-		ourPod := *pod
-		ourPod.Status.ContainerStatuses = []corev1.ContainerStatus{{
-			LastTerminationState: corev1.ContainerState{
-				Terminated: &corev1.ContainerStateTerminated{
-					ExitCode:   137, // OOMKilled
-					FinishedAt: metav1.Time{Time: time.Now()},
-				},
-			},
-		}}
-		client := setup(append([]client.Object{&ourPod}, apps...)...)
-
-		status := GenerateWavefrontStatus(client, wavefront)
-
-		require.Equal(t, Unhealthy, status.Status)
-		require.Contains(t, status.Message, "OOMKilled in the last 5m")
-		for _, resourceStatus := range status.ResourceStatuses {
-			if resourceStatus.Name == util.LoggingName {
-				require.Equal(t, Unhealthy, resourceStatus.Status)
-			}
-		}
-	})
-
-	t.Run("healthy when it has not been OOM killed in the last five minutes", func(t *testing.T) {
-		ourPod := *pod
-		ourPod.Status.ContainerStatuses = []corev1.ContainerStatus{{
-			LastTerminationState: corev1.ContainerState{
-				Terminated: &corev1.ContainerStateTerminated{
-					ExitCode:   137, // OOMKilled
-					FinishedAt: metav1.Time{Time: time.Now().Add(-OOMTimeout).Add(-10 * time.Second)},
-				},
-			},
-		}}
-		client := setup(append([]client.Object{&ourPod}, apps...)...)
-
-		status := GenerateWavefrontStatus(client, wavefront)
-
-		require.Equal(t, Healthy, status.Status)
-		for _, resourceStatus := range status.ResourceStatuses {
-			if resourceStatus.Name == util.LoggingName {
-				require.Contains(t, resourceStatus.Status, "Running")
-			}
-		}
-	})
-
-	t.Run("handles when it has not been terminated", func(t *testing.T) {
-		ourPod := *pod
-		ourPod.Status.ContainerStatuses = []corev1.ContainerStatus{{}}
-		client := setup(append([]client.Object{&ourPod}, apps...)...)
-
-		wavefront.Spec.DataCollection.Logging.Enable = true
-
-		require.NotPanics(t, func() {
-			GenerateWavefrontStatus(client, wavefront)
-		})
-	})
-}
-
 func pastMaxInstallTime() time.Time {
 	return time.Now().Add(-MaxInstallTime).Add(-time.Second * 10)
 }
 
 func setup(initObjs ...client.Object) client.Client {
-	return fake.NewClientBuilder().WithObjects(append(
-		initObjs,
-		operatorDeployment(1, 1),
-	)...).Build()
+	foundOperator := false
+	for _, initObj := range initObjs {
+		if initObj.GetName() == util.OperatorName {
+			foundOperator = true
+		}
+	}
+	if !foundOperator {
+		initObjs = append(initObjs, operatorDeployment(1, 1))
+	}
+	return fake.NewClientBuilder().WithObjects(initObjs...).Build()
 }
 
 func operatorDeployment(ready, desired int32) *appsv1.Deployment {
