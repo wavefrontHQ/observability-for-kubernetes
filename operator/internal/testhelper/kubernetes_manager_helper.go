@@ -437,13 +437,13 @@ func (skm MockKubernetesManager) GetUnstructuredCollectorServiceAccount() (*unst
 	)
 }
 
-func (skm MockKubernetesManager) GetUnstructuredCollectorConfigMap() (*unstructured.Unstructured, error) {
+func (skm MockKubernetesManager) GetUnstructuredCollectorConfigMap(configMapName string) (*unstructured.Unstructured, error) {
 	return skm.GetAppliedYAML(
 		"v1",
 		"ConfigMap",
 		"wavefront",
 		"collector",
-		"default-wavefront-collector-config",
+		configMapName,
 	)
 }
 
@@ -512,8 +512,8 @@ func (skm MockKubernetesManager) GetCollectorServiceAccount() (corev1.ServiceAcc
 	return serviceAccount, nil
 }
 
-func (skm MockKubernetesManager) GetCollectorConfigMap() (corev1.ConfigMap, error) {
-	yamlUnstructured, err := skm.GetUnstructuredCollectorConfigMap()
+func (skm MockKubernetesManager) GetCollectorConfigMap(configMapName string) (corev1.ConfigMap, error) {
+	yamlUnstructured, err := skm.GetUnstructuredCollectorConfigMap(configMapName)
 	if err != nil {
 		return corev1.ConfigMap{}, err
 	}
