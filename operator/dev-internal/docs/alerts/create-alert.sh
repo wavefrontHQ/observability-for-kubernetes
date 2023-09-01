@@ -31,6 +31,27 @@ function post_alert_to_wavefront() {
   echo "Alert has been created at: https://${wavefront_cluster}.wavefront.com/alerts/${alert_id}"
 }
 
+function check_alert_path() {
+  local alert_path=$1
+
+  if ! [ -f "${alert_path}" ] && ! [ -d "${alert_path}" ]; then
+    echo "Invalid alert path: ${alert_path}"
+    exit 1
+  fi
+
+  # Alert Path is a directory
+  if [ -d "${alert_path}" ]; then
+    for alert_file in "${alert_path}"/*; do
+      [ -f "${alert_file}" ] && check_alert_file "${alert_file}"
+    done
+  fi
+
+  # Alert Path is a file
+  if [ -f "${alert_path}" ]; then
+    check_alert_file "${alert_path}"
+  fi
+}
+
 function check_alert_file() {
   local alert_file=$1
 
@@ -68,10 +89,10 @@ function print_usage_and_exit() {
 }
 
 function print_usage() {
-  echo "Usage: create-alert.sh -t <WAVEFRONT_TOKEN> -c <WF_CLUSTER> -f <ALERT_FILE> -n <K8S_CLUSTER_NAME> -h"
+  echo "Usage: create-alert.sh -t <WAVEFRONT_TOKEN> -c <WF_CLUSTER> -f <ALERT_PATH> -n <K8S_CLUSTER_NAME> -h"
   echo -e "\t-t wavefront token (required)"
   echo -e "\t-c wavefront instance name (required)"
-  echo -e "\t-f path to alert file (required)"
+  echo -e "\t-f path to alert file or alert folder(required)"
   echo -e "\t-n kubernetes cluster name (required)"
   echo -e "\t-h print usage"
 }
@@ -79,14 +100,14 @@ function print_usage() {
 function main() {
   # Required arguments
   local WF_CLUSTER=
-  local ALERT_FILE=
+  local ALERT_PATH=
   local K8S_CLUSTER_NAME=
 
   while getopts 'c:t:f:n:h' opt; do
     case "${opt}" in
     t) WAVEFRONT_TOKEN="${OPTARG}" ;;
     c) WF_CLUSTER="${OPTARG}" ;;
-    f) ALERT_FILE="${OPTARG}" ;;
+    f) ALERT_PATH="${OPTARG}" ;;
     n) K8S_CLUSTER_NAME="${OPTARG}" ;;
     h) print_usage; exit 0 ;;
     \?) print_usage_and_exit "Invalid option" ;;
@@ -96,11 +117,22 @@ function main() {
   # Checking for required arguments
   check_required_argument "${WAVEFRONT_TOKEN}" "-t <WAVEFRONT_TOKEN> is required"
   check_required_argument "${WF_CLUSTER}" "-c <WF_CLUSTER> is required"
-  check_required_argument "${ALERT_FILE}" "-f <ALERT_FILE> is required"
+  check_required_argument "${ALERT_PATH}" "-f <ALERT_PATH> is required"
   check_required_argument "${K8S_CLUSTER_NAME}" "-n <K8S_CLUSTER_NAME> is required"
 
-  check_alert_file "${ALERT_FILE}"
-  post_alert_to_wavefront "${WAVEFRONT_TOKEN}" "${WF_CLUSTER}" "${ALERT_FILE}" "${K8S_CLUSTER_NAME}"
+  check_alert_path "${ALERT_PATH}"
+
+  if [ -f "${ALERT_PATH}" ]; then
+      post_alert_to_wavefront "${WAVEFRONT_TOKEN}" "${WF_CLUSTER}" "${ALERT_PATH}" "${K8S_CLUSTER_NAME}"
+  fi
+
+  if [ -d "${ALERT_PATH}" ]; then
+    for alert_file in "${ALERT_PATH}"/*; do
+      [ -f "${alert_file}" ] && post_alert_to_wavefront "${WAVEFRONT_TOKEN}" "${WF_CLUSTER}" "${alert_file}" "${K8S_CLUSTER_NAME}"
+    done
+
+  fi
+
 }
 
 main "$@"

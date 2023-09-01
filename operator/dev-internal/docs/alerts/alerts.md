@@ -15,7 +15,7 @@ We have alert templates on common Kubernetes issues.
 Usage of ./create-alert.sh:
     -t  (Required) Wavefront API token
     -c  (Required) Wavefront instance name
-    -f  (Required) path to alert file template
+    -f  (Required) path to alert file or alert folder
     -n  (Required) kubernetes cluster name
     -h  print usage info and exit
 ```
@@ -32,14 +32,15 @@ export ALERT_FILE_OUTPUT_PATH=<alert_file_output_path>
 export ALERT_TEMPLATE_FILE=<alert_template_file.json.tmpl>
 curl -sSL -o "$ALERT_FILE_OUTPUT_PATH" "https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/templates/$ALERT_TEMPLATE_FILE"
 ```
+**Note:** If you would like to create multiple alerts at once, please download alert templates under same folder. 
 
 ### Step 2: Create the alert template.
 
 1. Ensure that you have the information for the required fields:
-   - **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
-   - **Wavefront instance**. For example, the value of `<your_instance>` from your wavefront url (`https://<your_instance>.wavefront.com`).
-   - **Cluster name**. For example, the value of `clusterName` from your Wavefront Custom Resource configuration (ex: `mycluster-us-west-1`).
-   - **Alert template file**. For example, the download output path of the alert template file from **Step 1**.
+    - **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
+    - **Wavefront instance**. For example, the value of `<your_instance>` from your wavefront url (`https://<your_instance>.wavefront.com`).
+    - **Cluster name**. For example, a partial regex value (ex: `"prod*"`), or the value of `clusterName` from your Wavefront Custom Resource configuration (ex: [wavefront.yaml](../../deploy/scenarios/wavefront-getting-started.yaml)).
+    - **Alert template file**. For example, the download output path of the alert template file from **Step 1**.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/create-alert.sh | bash -s -- \
