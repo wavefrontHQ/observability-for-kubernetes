@@ -1745,6 +1745,11 @@ func TestReconcileKubernetesEventsByRuntimeSecret(t *testing.T) {
 			"k8s-events-only-wavefront-collector-config",
 			"    events:\n      filters:\n        tagAllowListSets:\n        - type:\n          - \"Warning\"\n        - type:\n          - \"Normal\"\n          kind:\n          - \"Pod\"\n          reason:\n          - \"Backoff\"\n        tagDenyList:\n          kind:\n          - \"Job\""))
 
+		configMap, _ := mockKM.GetCollectorConfigMap("k8s-events-only-wavefront-collector-config")
+		require.NotNil(t, configMap.Data["config.yaml"])
+		var configYaml map[string]interface{}
+		err = yaml.Unmarshal([]byte(configMap.Data["config.yaml"]), &configYaml)
+
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: K8S_EVENTS_ENDPOINT_TOKEN"))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: "+secret.Name))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("key: k8s-events-endpoint-token"))
