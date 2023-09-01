@@ -4,7 +4,9 @@ set -euo pipefail
 REPO_ROOT=$(git rev-parse --show-toplevel)
 rm -rf yamls
 
-curl -L "https://github.com/pixie-io/pixie/releases/download/release%2Fvizier%2Fv0.14.2/vizier_yamls.tar" --output yamls.tar
+PIXIE_VERSION="0.14.2"
+
+curl -L "https://github.com/pixie-io/pixie/releases/download/release%2Fvizier%2Fv${PIXIE_VERSION}/vizier_yamls.tar" --output yamls.tar
 
 tar -xvf yamls.tar
 
@@ -42,9 +44,23 @@ for index in "${!original_file_names[@]}"; do
   rm "$original_file_name"
 done
 
-rm splits/*cloud-conn*
 rm splits/secrets/01-secret-pl-deploy-secrets.yaml
+
+rm splits/*cloud-conn*
 rm splits/roles/*cloud-conn*
+
+rm splits/03-serviceaccount-pl-updater-service-account.yaml
+rm splits/roles/02-role-pl-updater-role.yaml
+rm splits/roles/12-rolebinding-pl-updater-binding_pl-updater-role_pl-updater-service-account.yaml
+rm splits/roles/20-clusterrolebinding-pl-updater-cluster-binding_pl-updater-cluster-role_pl-updater-service-account.yaml
+
+rm splits/roles/03-role-pl-vizier-crd-role.yaml
+rm splits/roles/13-rolebinding-pl-vizier-crd-binding_pl-vizier-crd-role_default.yaml
+rm splits/roles/14-rolebinding-pl-vizier-crd-metadata-binding_pl-vizier-crd-role_metadata-service-account.yaml
+rm splits/roles/17-rolebinding-pl-vizier-query-broker-crd-binding_pl-vizier-crd-role_query-broker-service-account.yaml
+
+rm splits/roles/08-clusterrole-pl-updater-cluster-role.yaml
+rm splits/roles/19-clusterrolebinding-pl-node-view-cluster-binding_pl-node-view_default.yaml
 
 yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/12-deployment-kelvin.yaml
 yq -i 'del( .spec.template.spec.initContainers[] | select(.name == "cc-wait") )' splits/14-deployment-vizier-query-broker.yaml
@@ -73,10 +89,13 @@ yq -i '(.spec.template.spec.containers[] | select(.name == "pl-nats") | .resourc
 
 sed -i '' 's/image: gcr.io\/pixie-oss\/pixie-dev-public\/curl:multiarch-7.87.0/image: projects.registry.vmware.com\/tanzu_observability\/bitnami\/os-shell:11/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/image: gcr.io/image: projects.registry.vmware.com\/tanzu_observability/' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
+sed -i '' 's/image: projects.registry.vmware.com\/tanzu_observability\/pixie-oss\/pixie-prod\/vizier-deps\/nats:2.9.19-scratch/image: projects.registry.vmware.com\/tanzu_observability\/pixie-oss\/pixie-prod\/vizier-deps\/nats:2.9.19-scratch-multi/' "${REPO_ROOT}"/operator/deploy/internal/pixie/23-statefulset-pl-nats.yaml
+sed -i '' "s/:${PIXIE_VERSION}/:${PIXIE_VERSION}-multi/" "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 sed -i '' 's/@sha256:.*//' "${REPO_ROOT}"/operator/deploy/internal/pixie/*.yaml
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/deploy/internal/pixie/00-secret-pl-cluster-secrets.yaml"
-sed -i '' "s/resources: {}/resources:\n{{ .Experimental.Hub.Pixie.Pem.Resources | toYaml | indent 12 }}/" "${REPO_ROOT}/operator/deploy/internal/pixie/16-daemonset-vizier-pem.yaml"
+sed -i '' "s/resources: {}/resources:\n{{- if .Experimental.Hub.Pixie.Enable }}\n{{ .Experimental.Hub.Pixie.Pem.Resources | toYaml | indent 12 }}\n{{- else }}\n{{ .Experimental.Autotracing.Pem.Resources | toYaml | indent 12 }}\n{{- end }}/" "${REPO_ROOT}/operator/deploy/internal/pixie/16-daemonset-vizier-pem.yaml"
+sed -i '' "s/value: default/value: default\n{{- if (not .Experimental.Hub.Pixie.Enable) }}\n        - name: PL_TABLE_STORE_DATA_LIMIT_MB\n          value: \"150\"\n        - name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT\n          value: \"90\"\n        - name: PL_STIRLING_SOURCES\n          value: \"kTracers\"\n{{- end }}/" "${REPO_ROOT}/operator/deploy/internal/pixie/16-daemonset-vizier-pem.yaml"
 sed -i '' 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/deploy/internal/pixie/18-configmap-pl-cloud-config.yaml"
 
 git add "${REPO_ROOT}/operator/config/rbac/components/pixie"
