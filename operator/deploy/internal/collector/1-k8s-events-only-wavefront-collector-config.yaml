@@ -29,7 +29,7 @@ data:
           reason:
           - "Backoff"
         tagDenyList:
-        - kind:
+          kind:
           - "Job"
     sources:
       kubernetes_source: {}
