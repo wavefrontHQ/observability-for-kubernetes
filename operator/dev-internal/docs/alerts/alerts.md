@@ -37,10 +37,10 @@ curl -sSL -o "$ALERT_FILE_OUTPUT_PATH" "https://raw.githubusercontent.com/wavefr
 ### Step 2: Create the alert template.
 
 1. Ensure that you have the information for the required fields:
-    - **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
-    - **Wavefront instance**. For example, the value of `<your_instance>` from your wavefront url (`https://<your_instance>.wavefront.com`).
-    - **Cluster name**. For example, the value of `clusterName` from your Wavefront Custom Resource configuration (ex: `mycluster-us-west-1`).
-    - **Alert template file**. For example, the download output path of the alert template file from **Step 1**.
+- **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
+- **Wavefront instance**. For example, the value of `<your_instance>` from your wavefront url (`https://<your_instance>.wavefront.com`).
+- **Cluster name**. For example, the value of `clusterName` from your Wavefront Custom Resource configuration (ex: `mycluster-us-west-1`).
+- **Alert template file**. For example, the download output path of the alert template file from **Step 1**.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/create-alert.sh | bash -s -- \
