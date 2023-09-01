@@ -1749,6 +1749,7 @@ func TestReconcileKubernetesEventsByRuntimeSecret(t *testing.T) {
 		require.NotNil(t, configMap.Data["config.yaml"])
 		var configYaml map[string]interface{}
 		err = yaml.Unmarshal([]byte(configMap.Data["config.yaml"]), &configYaml)
+		require.NoError(t, err)
 
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: K8S_EVENTS_ENDPOINT_TOKEN"))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: "+secret.Name))
