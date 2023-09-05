@@ -145,6 +145,7 @@ We have templates for common scenarios. See the comments in each file for usage 
  * [Getting started with logging configuration](deploy/scenarios/wavefront-logging-getting-started.yaml)
  * [Full logging configuration](deploy/scenarios/wavefront-logging-full-config.yaml)
  * [Bring your own logs shipper](deploy/scenarios/wavefront-bring-your-own-logs-shipper.yaml)
+ * [Enabling autotracing support](deploy/scenarios/wavefront-autotracing.yaml)
 
 You can see all configuration options in the [wavefront-full-config.yaml](deploy/scenarios/wavefront-full-config.yaml).
 
