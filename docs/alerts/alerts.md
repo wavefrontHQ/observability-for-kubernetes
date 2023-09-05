@@ -38,7 +38,7 @@ curl -sSL -o "$ALERT_FILE_OUTPUT_PATH" "https://raw.githubusercontent.com/wavefr
 1. Ensure that you have the information for the required fields:
    - **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
    - **Wavefront instance**. For example, the value of `<your_instance>` from your wavefront url (`https://<your_instance>.wavefront.com`).
-   - **Cluster name**. For example, a partial regex value (ex: `"prod*"`), or the value of `clusterName` from your Wavefront Custom Resource configuration (ex: [wavefront.yaml](../../deploy/scenarios/wavefront-getting-started.yaml)).
+   - **Cluster name**. For example, the value of `clusterName` from your Wavefront Custom Resource configuration (ex: `mycluster-us-west-1`).
    - **Alert template file**. For example, the download output path of the alert template file from **Step 1**.
 
 ```bash
