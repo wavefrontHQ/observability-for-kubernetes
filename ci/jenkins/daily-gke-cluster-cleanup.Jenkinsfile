@@ -14,7 +14,7 @@ pipeline {
 
   triggers {
     cron '''TZ=America/Denver
-44 18 * * 5'''
+0 19 * * *'''
   }
 
   stages {
