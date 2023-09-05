@@ -21,7 +21,7 @@ jobs:
   # "build on the spot" integration test
   - in_parallel:
     - task: test-on-k8s-1.21
-      file: observability-for-kubernetes/ci/concourse/ci-pipeline.yaml
+      file: observability-for-kubernetes/ci/concourse/tasks/run-collector-integration-test-on-kind.yaml
       input_mapping:
         repo: observability-for-kubernetes
       params:
