@@ -1,0 +1,18 @@
+---
+platform: linux
+image_resource:
+  type: registry-image
+  source:
+    repository: ubuntu
+
+inputs:
+  - name: repo
+params:
+  RELEASE_TYPE: alpha
+  DOCKER_IMAGE: kubernetes-collector
+  METRICS_RETRY_COUNT: 50
+  INTEGRATION_TEST_ARGS: all
+  INTEGRATION_TEST_BUILD: ci
+  KIND_K8S_VERSION:
+run:
+  path: repo/concourse/tasks/run-collector-integration-test-on-kind.sh

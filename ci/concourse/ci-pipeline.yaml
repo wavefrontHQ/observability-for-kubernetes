@@ -1,0 +1,28 @@
+resources:
+- name: observability-for-kubernetes
+  type: git
+  source:
+    uri: git@github.com:wavefrontHQ/observability-for-kubernetes.git
+    branch: K8SSAAS-2300-version-regression-and-warning-tests
+    private_key: ((osspi.jcornish-github-private-key))
+jobs:
+- name: update-self
+  plan:
+  - get: observability-for-kubernetes
+    trigger: true
+  - set_pipeline: observability-for-kubernetes-ci
+    file: observability-for-kubernetes/ci/concourse/ci-pipeline.yaml
+- name: collector-integration-tests
+  serial: true
+  plan:
+  - get: observability-for-kubernetes
+    trigger: true
+  # plan: make the first attempt with simple but slower
+  # "build on the spot" integration test
+  - in_parallel:
+    - task: test-on-k8s-1.21
+      file: observability-for-kubernetes/ci/concourse/ci-pipeline.yaml
+      input_mapping:
+        repo: observability-for-kubernetes
+      params:
+        KIND_K8S_VERSION: 'v1.21.14'
