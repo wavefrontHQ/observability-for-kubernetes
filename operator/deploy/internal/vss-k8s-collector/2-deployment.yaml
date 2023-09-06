@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vss-k8s-collector
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/component: vss-k8s-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wavefront
+      app.kubernetes.io/component: vss-k8s-collector
+  minReadySeconds: 5
+  progressDeadlineSeconds: 120
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wavefront
+        app.kubernetes.io/component: vss-k8s-collector
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: vss-k8s-collector
+
+
+      securityContext:
+        runAsNonRoot: true
+        runAsGroup: 1000
+        runAsUser: 100
+        fsGroup: 1000
+      volumes:
+
+      containers:
+      - name: collector
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+
+        image: "projects.registry.vmware.com/aria/k8s-collector:1.23.1"
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        env:
+        - name: CLIENT_ID
+          value: ""
+        - name: CLIENT_SECRET_PATH
+          value: "/etc/aria-k8s-csp-secret/COLLECTOR_CLIENT_SECRET"
+        - name: CSP_HOST_NAME
+          value: "https://console.cloud.vmware.com"
+        - name: ORG_ID
+          value: ""
+        - name: CLUSTER_NAME
+          value: ""
+        - name: CLUSTER_REGION
+          value: "NA"
+        - name: CLUSTER_CLOUD_PROVIDER
+          value: "AWS"
+        - name: CLUSTER_CLOUD_ACCOUNT_ID
+          value: ""
+        - name: COLLECTOR_ID
+          value: ""
+        - name: CLUSTER_MANAGED_BY
+          value: "false"
+        - name: ENABLE_LOGGING
+          value: "false"
+        - name: ENVIRONMENT
+          value: "prod"
+
+
+        ports:
+        - name: metrics
+          containerPort: 8080
+          protocol: TCP
+        volumeMounts:
