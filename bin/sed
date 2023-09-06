@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OS=$(go env GOOS)
+
+if [[ "$OS" == darwin ]]; then
+    if [[ -z "${HOMEBREW_PREFIX+x}" ]]; then
+        HOMEBREW_PREFIX=$(brew --prefix)
+    fi
+
+    SED_BIN="${HOMEBREW_PREFIX}/opt/gnu-sed/libexec/gnubin/sed"
+
+    if [[ ! -f "${SED_BIN}" ]]; then
+        printf "brew installing gnu-sed ...\n" 1>&2
+        HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew install --quiet gnu-sed
+        echo "done." 1>&2
+    fi
+else
+    SED_BIN=/usr/bin/sed
+fi
+# Cannot use `$*` here with our use of sed
+"$SED_BIN" "$@"
