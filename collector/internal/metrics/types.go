@@ -101,6 +101,16 @@ func (v *Value) GetValue() interface{} {
 	}
 }
 
+func (v *Value) IsZeroValue() bool {
+	if ValueInt64 == v.ValueType {
+		return v.IntValue == 0
+	} else if ValueFloat == v.ValueType {
+		return v.FloatValue == 0
+	} else {
+		return true
+	}
+}
+
 // LabeledValue is a metric value that is either a float64 or an int64 and that has it's own name and values
 type LabeledValue struct {
 	Name   string
