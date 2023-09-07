@@ -272,7 +272,11 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 	}
 
 	if spec.Experimental.Hub.Enable {
-		dirsToInclude = append(dirsToInclude, "vss-k8s-collector", "telegraf")
+		dirsToInclude = append(dirsToInclude, "vss-k8s-collector")
+	}
+
+	if spec.Experimental.Hub.Enable && spec.Experimental.Hub.Pixie.Enable {
+		dirsToInclude = append(dirsToInclude, "telegraf")
 	}
 
 	if spec.Experimental.Autotracing.Enable || spec.Experimental.Hub.Pixie.Enable {
