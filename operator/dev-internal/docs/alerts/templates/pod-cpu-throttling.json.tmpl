@@ -18,7 +18,7 @@
     }
   ],
   "conditions": {
-    "info": "round(sum((mavg(5m, rate(ts(\"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter\", cluster=\"K8S_CLUSTER_NAME\"))) * 300) by (container, pod, namespace)) / sum((mavg(5m, rate(ts(\"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter\", cluster=\"K8S_CLUSTER_NAME\"))) * 300) by (container, pod, namespace)) * 100) >= 25",
+    "info": "round(sum((mavg(5m, rate(ts(\"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter\", cluster=\"K8S_CLUSTER_NAME\"))) * 300) by (container, pod, namespace)) / sum((mavg(5m, rate(ts(\"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter\", cluster=\"K8S_CLUSTER_NAME\"))) * 300) by (container, pod, namespace)) * 100) >= 25"
   },
   "displayExpression": "${Display Condition}",
   "minutes": 15,
