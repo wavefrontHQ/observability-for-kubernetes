@@ -13,7 +13,7 @@ function main() {
   for cluster in ${CLUSTERS_TO_REMOVE[@]}; do
     name=$(echo ${cluster} | cut -d ',' -f 1)
     zone=$(echo ${cluster} | cut -d ',' -f 2 | cut -d '-' -f 3)
-    GKE_CLUSTER_NAME=${name} GCP_ZONE=${zone} make delete-gke-cluster || true
+    GKE_CLUSTER_NAME=${name} GCP_ZONE=${zone} make delete-gke-cluster &
   done
 }
 
