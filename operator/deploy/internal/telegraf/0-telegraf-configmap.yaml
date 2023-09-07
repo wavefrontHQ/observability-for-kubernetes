@@ -1,0 +1,161 @@
+# Source: telegraf-collector/templates/telegraf-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-configmap
+  namespace: {{ .Namespace }}
+data:
+  telegraf.conf: |
+    # Configuration for telegraf agent
+    [agent]
+      round_interval = true
+      metric_batch_size = 10000
+      metric_buffer_limit = 5000000
+      collection_jitter = "3s"
+      flush_interval = "20s"
+      flush_jitter = "3s"
+      precision = "0s"
+      debug = true
+      hostname = ""
+      omit_hostname = true
+
+    # Receive OpenTelemetry traces, metrics, and logs over gRPC
+    [[inputs.opentelemetry]]
+      ## Override the default (0.0.0.0:4317) destination OpenTelemetry gRPC service
+      ## address:port
+      service_address = "0.0.0.0:4317"
+
+      ## Override the default (5s) new connection timeout
+      timeout = "30s"
+
+      ## Override the default (prometheus-v1) metrics schema.
+      ## Supports: "prometheus-v1", "prometheus-v2"
+      ## For more information about the alternatives, read the Prometheus input
+      ## plugin notes.
+      metrics_schema = "prometheus-v2"
+
+    
+
+    
+
+    
+
+    
+
+    [[processors.starlark]]
+      order = 2
+      script = "/config/entityid-proc.star"
+
+      ## The constants of the Starlark script.
+      [processors.starlark.constants]
+        # These constants are the same as those provided to the k8s-collector
+        cloud_account_id = "${CLUSTER_CLOUD_ACCOUNT_ID}"
+        cluster_name = "${CLUSTER_NAME}"
+        cluster_cloud_provider = "${CLUSTER_CLOUD_PROVIDER}"
+        trace_entity_id = "${TRACE_ENTITY_ID}"
+        trace_metric = "${TRACE_METRIC}"
+
+    # A plugin that can transmit metrics over HTTP
+    [[outputs.http]]
+      alias = "${METRICS_DOMAIN}.${METRICS_STORAGE_POLICY}"
+
+      ## URL is the address to send metrics to
+      url = "${HTTP_INGESTION_URL}"
+
+      ## Timeout for HTTP message
+      timeout = "30s"
+
+      ## HTTP method, one of: "POST" or "PUT"
+      method = "POST"
+
+      ## Data format to output.
+      ## Each data format has it's own unique set of configuration options, read
+      ## more about them here:
+      ## https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_OUTPUT.md
+      data_format = "prometheusremotewrite"
+
+      ## Use batch serialization format (default) instead of line based format.
+      ## Batch format is more efficient and should be used unless line based
+      ## format is really needed.
+      use_batch_format = true
+
+      ## 500 responses from TSS
+      # * Indicates old data was sent to TSS and we can discard
+      # * Indicates duplicate tags sent to TSS (k8s.cluster.name == k8s_cluster_name due to prometheus behavior)
+      #non_retryable_statuscodes = [500]
+
+      ## Additional HTTP headers
+      [outputs.http.headers]
+        # Should be set to "application/x-protobuf" for prometheusremotewrite data_format
+        Content-Type = "application/x-protobuf"
+        Content-Encoding = "snappy"
+        X-Prometheus-Remote-Write-Version = "0.1.0"
+        Metrics-OrgId = "${ORG_ID}"
+        Metrics-Domain = "${METRICS_DOMAIN}"
+        Metrics-Storage-Policy = "${METRICS_STORAGE_POLICY}"
+        Authorization = "Bearer ${ACCESS_KEY}"
+
+  telegraf-aws.conf: |
+    [[processors.aws_imds]]
+      imds_tags = ["region"]
+      cache_ttl = "24h"
+      log_cache_stats = true
+
+  telegraf-gcp.conf: |
+    [[processors.gcp_imds]]
+      imds_tags = ["zone"]
+      cache_ttl = "24h"
+      log_cache_stats = true
+
+  telegraf-azure.conf: |
+    [[processors.azure_imds]]
+      imds_tags = ["location"]
+      cache_ttl = "24h"
+      log_cache_stats = true
+
+  telegraf-extra.conf: |
+    
+
+  entityid-proc.star: |
+    def apply(metric):
+      cluster_region = "NA"
+      if 'region' in metric.tags:
+        # AWS
+        cluster_region = metric.tags['region']
+      if 'location' in metric.tags:
+        # Azure
+        cluster_region = metric.tags['location']
+        metric.tags['region'] = cluster_region
+      if 'zone' in metric.tags:
+        # GCP
+        zone = metric.tags['zone'].split('/')[3]
+        cluster_region = zone.rsplit("-", 1)[0]
+        metric.tags['region'] = cluster_region
+      if cluster_cloud_provider == "Datacenter":
+        cluster_region = "on-prem"
+        metric.tags['region'] = "on-prem"
+      if 'aria.provider' not in metric.tags:
+        return metric
+      if 'kubernetes.namespace.name' not in metric.tags:
+        # TODO(ENS-10403)
+        return None
+      if cluster_region == 'NA':
+        # Do not report NA regioned metrics because this will generate an invalid _entity_id
+        print(metric)
+        return None
+      entity_id = [
+        metric.tags['aria.provider'],
+        metric.tags['aria.service'],
+        cloud_account_id,
+        cluster_region,
+        'Pod',
+        cluster_name + '.' + metric.tags['kubernetes.namespace.name'] + '.' + metric.tags['kubernetes.pod.name'],
+      ]
+      metric.tags['_entity_id'] = '.'.join(entity_id)
+      metric.tags['cloud_account_id'] = cloud_account_id
+      metric.tags['kubernetes.cluster.name'] = cluster_name
+      if trace_entity_id in [1, "1", "yes", "true", "True"]:
+        print('.'.join(entity_id))
+      if trace_metric in [1, "1", "yes", "true", "True"]:
+        print(metric)
+      return metric
