@@ -5,6 +5,11 @@ resources:
 - role_binding.yaml
 - components/collector/1-collector-roles.yaml
 - components/collector/2-collector-rbac.yaml
+- components/logging/1-logging-roles.yaml
+- components/logging/2-logging-rbac.yaml
+- components/vss-k8s-collector/1-cluster-roles.yaml
+- legacy-installation-detection/1-legacy-install-detection-roles.yaml
+- legacy-installation-detection/2-legacy-install-detection-rbac.yaml
 - components/pixie/00-role-pl-cert-provisioner-role.yaml
 - components/pixie/04-role-pl-vizier-metadata-role.yaml
 - components/pixie/05-role-pl-vizier-query-broker-role.yaml
@@ -15,7 +20,3 @@ resources:
 - components/pixie/16-rolebinding-pl-vizier-query-broker-binding_pl-vizier-query-broker-role_query-broker-service-account.yaml
 - components/pixie/21-clusterrolebinding-pl-vizier-metadata-cluster-binding_pl-vizier-metadata_metadata-service-account.yaml
 - components/pixie/22-clusterrolebinding-pl-vizier-metadata-node-view-cluster-binding_pl-node-view_metadata-service-account.yaml
-- components/logging/1-logging-roles.yaml
-- components/logging/2-logging-rbac.yaml
-- legacy-installation-detection/1-legacy-install-detection-roles.yaml
-- legacy-installation-detection/2-legacy-install-detection-rbac.yaml

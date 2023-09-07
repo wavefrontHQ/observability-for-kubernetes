@@ -7,5 +7,6 @@ resources:
 - components/collector/2-collector-rbac.yaml
 - components/logging/1-logging-roles.yaml
 - components/logging/2-logging-rbac.yaml
+- components/vss-k8s-collector/1-cluster-roles.yaml
 - legacy-installation-detection/1-legacy-install-detection-roles.yaml
 - legacy-installation-detection/2-legacy-install-detection-rbac.yaml

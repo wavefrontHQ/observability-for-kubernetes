@@ -30,6 +30,9 @@ spec:
         runAsUser: 100
         fsGroup: 1000
       volumes:
+      - name: "aria-k8s-collector"
+        secret:
+          secretName: "wavefront-secret"
 
       containers:
       - name: collector
@@ -50,29 +53,29 @@ spec:
             - ALL
         env:
         - name: CLIENT_ID
-          value: ""
+          value: "TODO"
         - name: CLIENT_SECRET_PATH
           value: "/etc/aria-k8s-csp-secret/COLLECTOR_CLIENT_SECRET"
         - name: CSP_HOST_NAME
-          value: "https://console.cloud.vmware.com"
+          value: "https://console-stg.cloud.vmware.com"
         - name: ORG_ID
-          value: ""
+          value: "TODO"
         - name: CLUSTER_NAME
-          value: ""
+          value: {{ .ClusterName }}
         - name: CLUSTER_REGION
           value: "NA"
         - name: CLUSTER_CLOUD_PROVIDER
           value: "AWS"
         - name: CLUSTER_CLOUD_ACCOUNT_ID
-          value: ""
+          value: "TODO"
         - name: COLLECTOR_ID
-          value: ""
+          value: "TODO"
         - name: CLUSTER_MANAGED_BY
           value: "false"
         - name: ENABLE_LOGGING
           value: "false"
         - name: ENVIRONMENT
-          value: "prod"
+          value: "TODO"
 
 
         ports:
@@ -80,3 +83,6 @@ spec:
           containerPort: 8080
           protocol: TCP
         volumeMounts:
+        - name: "aria-k8s-collector"
+          mountPath: "/etc/aria-k8s-csp-secret"
+          readOnly: true
