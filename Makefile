@@ -6,6 +6,11 @@ GOPATH?=$(or $(shell go env GOPATH),$(HOME)/go)
 GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
 
+.PHONY: api-docs
+api-docs:
+	crdoc --resources $(MONOREPO_DIR)/operator/dev-internal/deploy/wavefront-operator.yaml \
+		--output $(MONOREPO_DIR)/operator/dev-internal/docs/api.md
+
 .PHONY: promote-internal
 promote-internal:
 	cp -a $(MONOREPO_DIR)/operator/dev-internal/* $(MONOREPO_DIR)/

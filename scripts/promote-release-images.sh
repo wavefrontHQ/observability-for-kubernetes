@@ -32,6 +32,7 @@ rm -rf ${REPO_ROOT}/operator/dev-internal/docs/operator/custom-configuration.md.
 
 # Promote dev-internal to top level
 pushd ${REPO_ROOT}
+  make api-docs
   make promote-internal
 popd
 
