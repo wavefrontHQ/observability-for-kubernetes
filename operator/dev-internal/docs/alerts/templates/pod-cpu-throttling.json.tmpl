@@ -1,0 +1,41 @@
+{
+  "name": "Pod CPU Throttling",
+  "alertType": "THRESHOLD",
+  "alertSources": [
+    {
+      "name": "Alert Condition",
+      "query": "round(sum((mavg(5m, rate(ts(\"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter\", cluster=\"K8S_CLUSTER_NAME\"))) * 300) by (container, pod, namespace)) / sum((mavg(5m, rate(ts(\"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter\", cluster=\"K8S_CLUSTER_NAME\"))) * 300) by (container, pod, namespace)) * 100)",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${Alert Condition} >= 25, ${Alert Condition})",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE","AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "info": "round(sum((mavg(5m, rate(ts(\"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter\", cluster=\"K8S_CLUSTER_NAME\"))) * 300) by (container, pod, namespace)) / sum((mavg(5m, rate(ts(\"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter\", cluster=\"K8S_CLUSTER_NAME\"))) * 300) by (container, pod, namespace)) * 100) >= 25",
+  },
+  "displayExpression": "${Display Condition}",
+  "minutes": 15,
+  "resolveAfterMinutes": 2,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+     "dashboardId": "integration-kubernetes-workloads",
+     "parameters": {
+       "constants": {
+         "cluster": "K8S_CLUSTER_NAME"
+       }
+     }
+    }
+  ]
+}
