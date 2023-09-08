@@ -84,8 +84,9 @@ delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 
 # create a GKE cluster without weekly cleanup
 # usage: make create-gke-cluster GKE_CLUSTER_NAME=XXXX NOCLEANUP=true
+GKE_EXPIRES_IN_DAYS?=0
 create-gke-cluster: gke-cluster-name-check
-	$(eval GKE_LABELS := $(if $(NOCLEANUP),,--labels=delete-me=true))
+	$(eval GKE_LABELS := $(if $(NOCLEANUP),,--labels="delete-me=true,expires-in-days=$(GKE_EXPIRES_IN_DAYS)"))
 	@echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=$(GKE_MACHINE_TYPE) \
 		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 \
