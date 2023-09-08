@@ -74,6 +74,7 @@ gke-connect-to-cluster: gke-cluster-name-check
 gke-cluster-name-check:
 	@if [ -z ${GKE_CLUSTER_NAME} ]; then echo "Need to set GKE_CLUSTER_NAME" && exit 1; fi
 
+GKE_WAIT_FOR_COMPLETE?=true
 delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 	@echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters delete $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --quiet

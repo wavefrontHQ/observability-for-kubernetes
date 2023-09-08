@@ -27,7 +27,7 @@ function main() {
         --project wavefront-gcp-dev \
         --filter="createTime.date(\"+%s\")<${expired_creation_time}" \
         --format="csv[no-heading](name,zone)" \
-        | grep "${name}")
+        | grep "${name}" || echo "")
       if [ -z "${cluster}" ]; then
         continue
       fi
