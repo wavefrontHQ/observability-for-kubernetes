@@ -77,7 +77,10 @@ gke-cluster-name-check:
 GKE_WAIT_FOR_COMPLETE?=true
 delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 	@echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
-	gcloud container clusters delete $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --quiet
+	$(eval ASYNC_FLAG := $(if $(GKE_WAIT_FOR_COMPLETE),,--async))
+	gcloud container clusters delete $(GKE_CLUSTER_NAME) \
+		--zone $(GCP_REGION)-$(GCP_ZONE) \
+		--quiet $(ASYNC_FLAG)
 
 
 # create a GKE cluster without weekly cleanup
