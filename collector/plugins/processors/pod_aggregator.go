@@ -77,7 +77,7 @@ func (aggregator *PodAggregator) Process(batch *metrics.Batch) (*metrics.Batch, 
 			}
 
 			aggregatedValue, found := pod.Values[metricName]
-			if !found {
+			if !found || aggregatedValue.IsZeroValue() {
 				requireAggregate[podKey.String()+metricName] = true
 				aggregatedValue = metricValue
 			} else {
