@@ -16,23 +16,23 @@ function main() {
   for cluster in ${CLUSTERS_TO_REMOVE[@]}; do
     name=$(echo ${cluster} | cut -d ',' -f 1)
     zone=$(echo ${cluster} | cut -d ',' -f 2 | cut -d '-' -f 3)
-    expires_in_days=$(echo ${cluster} | cut -d ',' -f 3 | sed 's/.*expires-in-days=//g')
 
-#    echo "extracting name '${name}', zone '${zone}', and expires-in-days '${expires_in_days}' from '${cluster}'"
+    if echo "${cluster}" | grep 'expires-in-days' >/dev/null; then
+      expires_in_days=$(echo ${cluster} | cut -d ',' -f 3 | sed 's/.*expires-in-days=//g')
 
-    expired_creation_time=$(date --date="${expires_in_days} day ago" +%s)
-    echo "now vs expired_creation_time: $(date +%s) vs ${expired_creation_time}"
-    echo "### LISTING MATCHING CLUSTERS ###"
-    cluster=$(gcloud container clusters list \
+      expired_creation_time=$(date --date="${expires_in_days} day ago" +%s)
+      echo "now vs expired_creation_time: $(date +%s) vs ${expired_creation_time}"
+      echo "### LISTING MATCHING CLUSTERS ###"
+      cluster=$(gcloud container clusters list \
         --project wavefront-gcp-dev \
-        --filter="createTime.date(\"+%s\")>${expired_creation_time}" \
+        --filter="createTime.date(\"+%s\")<${expired_creation_time}" \
         --format="csv[no-heading](name,zone)" \
         | grep "${name}")
-    if [ -z "${cluster}" ]; then
+      if [ -z "${cluster}" ]; then
         continue
+      fi
     fi
-    name=$(echo ${cluster} | cut -d ',' -f 1)
-    zone=$(echo ${cluster} | cut -d ',' -f 2 | cut -d '-' -f 3)
+
     echo GKE_CLUSTER_NAME=${name} GCP_ZONE=${zone} GKE_WAIT_FOR_COMPLETE=false make delete-gke-cluster
   done
 }
