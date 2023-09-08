@@ -1,57 +1,59 @@
 # Alerts
-This page contains the steps to create an alert template.
+
+This page contains the steps to create alerts for the Observability for Kubernetes Operator.
+
+## Table of Content
+
+- [Alert Templates](#alert-templates)
+- [Creating Alerts](#creating-alerts)
+- [Example: Creating All the Alerts](#example-creating-all-the-alerts)
+- [Example: Creating a Single Alert](#example-creating-a-single-alert)
+- [Customizing Alerts](#customizing-alerts)
+
+## Alert Templates
 
 We have alert templates on common Kubernetes issues.
 
-* [Detect pod stuck in pending](templates/pod-stuck-in-pending.json.tmpl)
-* [Detect pod stuck in terminating](templates/pod-stuck-in-terminating.json.tmpl)
-* [Detect pod backoff event](templates/pod-backoff-event.json.tmpl)
-* [Detect workload with non-ready pods](templates/workload-not-ready.json.tmpl)
-* [Detect pod out-of-memory kills](templates/pod-out-of-memory-kills.json.tmpl)
+| Alert | Template |
+|---|---|
+| [Detect pod stuck in pending](templates/pod-stuck-in-pending.json.tmpl) | `pod-stuck-in-pending.json.tmpl` |
+| [Detect pod stuck in terminating](templates/pod-stuck-in-terminating.json.tmpl) | `pod-stuck-in-terminating.json.tmpl` |
+| [Detect pod backoff event](templates/pod-backoff-event.json.tmpl) | `pod-backoff-event.json.tmpl` |
+| [Detect workload with non-ready pods](templates/workload-not-ready.json.tmpl) | `workload-not-ready.json.tmpl` |
+| [Detect pod out-of-memory kills](templates/pod-out-of-memory-kills.json.tmpl) | `pod-out-of-memory-kills.json.tmpl` |
 
-## Flags
-
-```
-Usage of ./create-alert.sh:
-    -t  (Required) Wavefront API token
-    -c  (Required) Wavefront instance name
-    -f  (Required) path to alert file template
-    -n  (Required) kubernetes cluster name
-    -h  print usage info and exit
-```
-
-## Create an alert
-
-### Step 1: Download the alert template file.
-
-1. Replace `<alert_file_output_path>`, (ex: `/tmp/pod-stuck-in-pending.json`).
-2. Replace `<alert_template_file.json.tmpl>`, (ex: `pod-stuck-in-pending.json.tmpl`).
-
-```bash
-export ALERT_FILE_OUTPUT_PATH=<alert_file_output_path>
-export ALERT_TEMPLATE_FILE=<alert_template_file.json.tmpl>
-curl -sSL -o "$ALERT_FILE_OUTPUT_PATH" "https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/templates/$ALERT_TEMPLATE_FILE"
-```
-
-### Step 2: Create the alert template.
+## Creating Alerts
 
 1. Ensure that you have the information for the required fields:
-   - **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
-   - **Wavefront instance**. For example, the value of `<your_instance>` from your wavefront url (`https://<your_instance>.wavefront.com`).
-   - **Cluster name**. For example, the value of `clusterName` from your Wavefront Custom Resource configuration (ex: `mycluster-us-west-1`).
-   - **Alert template file**. For example, the download output path of the alert template file from **Step 1**.
+    - **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
+    - **Wavefront instance**. For example, the value of `<your_instance>` from your wavefront url (`https://<your_instance>.wavefront.com`).
+    - **Cluster name**. For example, the value of `clusterName` from your Wavefront Custom Resource configuration (ex: `mycluster-us-west-1`).
+    - **(Optional) Alert template**. For example, the value of `<alert_template_file.json.tmpl>` from the list of alert templates (ex: `pod-backoff-event.json.tmpl`).
+
+### Example: Creating All the Alerts
+
+```bash
+curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/create-all-alerts.sh | bash -s -- \
+  -t <YOUR_API_TOKEN> \
+  -c <YOUR_WAVEFRONT_INSTANCE> \
+  -n <YOUR_CLUSTER_NAME>
+```
+
+>**Note:** You will need to change YOUR_API_TOKEN, YOUR_WAVEFRONT_INSTANCE, and YOUR_CLUSTER_NAME in the above example.
+
+### Example: Creating a Single Alert
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/create-alert.sh | bash -s -- \
   -t <YOUR_API_TOKEN> \
   -c <YOUR_WAVEFRONT_INSTANCE> \
   -n <YOUR_CLUSTER_NAME> \
-  -f <PATH_TO_ALERT_FILE>
+  -f <ALERT_TEMPLATE>
 ```
 
-**Note:** You will need to change YOUR_API_TOKEN, YOUR_WAVEFRONT_INSTANCE, YOUR_CLUSTER_NAME, and PATH_TO_ALERT_FILE in the above example.
+>**Note:** You will need to change YOUR_API_TOKEN, YOUR_WAVEFRONT_INSTANCE, YOUR_CLUSTER_NAME, and ALERT_TEMPLATE in the above example.
 
-### Step 3: Customize the alert.
+## Customizing Alerts
 
 1. Log in to your service instance `https://<your_instance>.wavefront.com` as a user with the Alerts permission. Click **Alerting** > **All Alerts** from the toolbar to display the Alerts Browser.
 2. Click the alert name, or click the ellipsis icon next to the alert and select **Edit**.  You can search for the alert by typing the alert name in the search field.
@@ -59,4 +61,4 @@ curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubern
 4. Specify alert recipients to receive notifications when the alert changes state.
 5. Click **Save** in the top right to save your changes.
 
-See [Create and Manage Alerts](https://docs.wavefront.com/alerts_manage.html) for an overview on how to create and manage alerts.
+>**Note:** See [Create and Manage Alerts](https://docs.wavefront.com/alerts_manage.html) for an overview on how to create and manage alerts.
