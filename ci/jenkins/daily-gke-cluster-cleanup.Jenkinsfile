@@ -1,7 +1,5 @@
 pipeline {
-  agent {
-    label 'nimbus-cloud'
-  }
+  agent any
 
   tools {
     go 'Go 1.20'
@@ -24,4 +22,4 @@ pipeline {
       }
     }
   }
- }
+}
