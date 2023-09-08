@@ -37,7 +37,7 @@ function main() {
       fi
     fi
 
-    GKE_CLUSTER_NAME=${name} GCP_ZONE=${zone} GKE_WAIT_FOR_COMPLETE=false make delete-gke-cluster
+    GKE_CLUSTER_NAME=${name} GCP_ZONE=${zone} GKE_DELETE_ASYNC=true make delete-gke-cluster
   done
 }
 
