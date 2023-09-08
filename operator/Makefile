@@ -231,13 +231,26 @@ operator-yaml: copy-rbac-kustomization-yaml $(OPERATOR_YAML_TYPE)-kubernetes-yam
 .PHONY: deploy
 deploy: operator-yaml
 	kubectl apply -k $(OPERATOR_BUILD_DIR)
-	kubectl create -n $(NS) secret generic wavefront-secret --from-literal token=$(WAVEFRONT_TOKEN) \
-      --from-literal k8s-events-endpoint-token='a-key' \
-      --from-literal COLLECTOR_CLIENT_SECRET='todo' || true
+	kubectl create -n $(NS) secret generic wavefront-secret --from-literal token=$(WAVEFRONT_TOKEN) || true
+
+.PHONY: deploy-hub
+deploy-hub: deploy
+	helm install pxl-scripts "oci://projects.registry.vmware.com/adie/helm-charts/pxl-scripts" \
+      --create-namespace \
+      --namespace "observability-system" \
+      --set global.otel.url=telegraf.observability-system.svc.cluster.local:4317
+	kubectl delete --ignore-not-found=$(ignore-not-found) -n $(NS) secret wavefront-secret || true
+	kubectl delete --ignore-not-found=$(ignore-not-found) -n $(NS) secret aria-insights-secret || true
+	kubectl create -n $(NS) secret generic wavefront-secret \
+      --from-literal COLLECTOR_CLIENT_SECRET=$(VSS_COLLECTOR_CLIENT_SECRET) || true
+	kubectl create -n $(NS) secret generic aria-insights-secret \
+      --from-literal k8s-events-endpoint-token=$(K8S_EVENTS_ENDPOINT_TOKEN) \
+      --from-literal k8s-events-endpoint-url=$(K8S_EVENTS_ENDPOINT_URL) || true
 
 .PHONY: undeploy
 undeploy: operator-yaml
 	kubectl delete --ignore-not-found=$(ignore-not-found) -n $(NS) secret wavefront-secret || true
+	kubectl delete --ignore-not-found=$(ignore-not-found) -n $(NS) secret aria-insights-secret || true
 	kubectl delete --ignore-not-found=$(ignore-not-found) -k $(OPERATOR_BUILD_DIR) || true
 
 METRICS_RETRY_COUNT?=18

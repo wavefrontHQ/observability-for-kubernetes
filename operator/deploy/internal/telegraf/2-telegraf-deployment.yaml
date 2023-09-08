@@ -42,8 +42,29 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-
-
+        - name: ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Experimental.KubernetesEvents.SecretName }}
+              key: k8s-events-endpoint-token
+        - name: CLUSTER_CLOUD_ACCOUNT_ID
+          value: {{ .Experimental.Hub.ClusterCloudAccountID }}
+        - name: CLUSTER_CLOUD_PROVIDER
+          value: {{ .Experimental.Hub.ClusterCloudProvider }}
+        - name: CLUSTER_NAME
+          value: {{ .ClusterName }}
+        - name: CLUSTER_REGION
+          value: {{ .Experimental.Hub.ClusterRegion }}
+        - name: HTTP_INGESTION_URL
+          value: {{ .Experimental.Hub.TSSMetricsUrl }}
+        - name: METRICS_DOMAIN
+          value: {{ .Experimental.Hub.TSSMetricsDomain }}
+        - name: ORG_ID
+          value: {{ .Experimental.Hub.CSPOrgID }}
+        - name: TRACE_ENTITY_ID
+          value: "{{ .Experimental.Hub.TelegrafTraceEntityID }}"
+        - name: TRACE_METRIC
+          value: "{{ .Experimental.Hub.TelegrafTraceMetric }}"
         ports:
         - containerPort: 4317
         - containerPort: 9273

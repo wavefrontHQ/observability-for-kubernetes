@@ -1,0 +1,21 @@
+# Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
+apiVersion: wavefront.com/v1alpha1
+kind: Wavefront
+metadata:
+  name: wavefront
+  namespace: observability-system
+spec:
+  clusterName:
+  experimental:
+    hub:
+      enable: true
+      vssCollectorID:
+      clusterCloudAccountID:
+      clusterCloudProvider: Datacenter
+      clusterRegion: NA
+      cspOrgID:
+      cspClientID:
+      environment: stg-01
+      cspUrl: https://console-stg.cloud.vmware.com
+      tssMetricsUrl: https://data.be.symphony-dev.com/le-mans/v1/streams/tss-proto
+      tssMetricsDomain: aria-k8s

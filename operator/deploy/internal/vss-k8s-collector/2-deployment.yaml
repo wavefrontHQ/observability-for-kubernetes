@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: vss-k8s-collector
   namespace: {{ .Namespace }}
-  labels:
-    app.kubernetes.io/component: vss-k8s-collector
 spec:
   replicas: 1
   selector:
@@ -53,29 +51,33 @@ spec:
             - ALL
         env:
         - name: CLIENT_ID
-          value: "TODO"
+          value: {{ .Experimental.Hub.CSPClientID }}
         - name: CLIENT_SECRET_PATH
           value: "/etc/aria-k8s-csp-secret/COLLECTOR_CLIENT_SECRET"
-        - name: CSP_HOST_NAME
-          value: "https://console-stg.cloud.vmware.com"
-        - name: ORG_ID
-          value: "TODO"
+        - name: CLUSTER_CLOUD_ACCOUNT_ID
+          value: {{ .Experimental.Hub.ClusterCloudAccountID }}
+        - name: CLUSTER_CLOUD_PROVIDER
+          value: {{ .Experimental.Hub.ClusterCloudProvider }}
+        - name: CLUSTER_MANAGED_BY
+          value: "{{ .Experimental.Hub.ManagedCluster }}"
         - name: CLUSTER_NAME
           value: {{ .ClusterName }}
         - name: CLUSTER_REGION
-          value: "NA"
-        - name: CLUSTER_CLOUD_PROVIDER
-          value: "AWS"
-        - name: CLUSTER_CLOUD_ACCOUNT_ID
-          value: "TODO"
+          value: {{ .Experimental.Hub.ClusterRegion }}
         - name: COLLECTOR_ID
-          value: "TODO"
-        - name: CLUSTER_MANAGED_BY
-          value: "false"
+          value: {{ .Experimental.Hub.VSSCollectorID }}
+        - name: CSP_HOST_NAME
+          value: {{ .Experimental.Hub.CSPUrl }}
         - name: ENABLE_LOGGING
           value: "false"
         - name: ENVIRONMENT
-          value: "TODO"
+          value: {{ .Experimental.Hub.Environment }}
+        - name: NETWORK_MAP_METRICS_COLLECT_INTERVAL_SECONDS
+          value: {{ .Experimental.Hub.VSSNetworkMapMetricsCollectIntervalSeconds }}
+        - name: NETWORK_MAP_METRICS_ENDPOINT
+          value: {{ .Experimental.Hub.VSSNetworkMapMetricsUrl }}
+        - name: ORG_ID
+          value: {{ .Experimental.Hub.CSPOrgID }}
 
 
         ports:
