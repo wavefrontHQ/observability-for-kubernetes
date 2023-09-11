@@ -231,7 +231,8 @@ operator-yaml: copy-rbac-kustomization-yaml $(OPERATOR_YAML_TYPE)-kubernetes-yam
 .PHONY: deploy
 deploy: operator-yaml
 	kubectl apply -k $(OPERATOR_BUILD_DIR)
-	kubectl create -n $(NS) secret generic wavefront-secret --from-literal token=$(WAVEFRONT_TOKEN) || true
+	kubectl create -n $(NS) secret generic wavefront-secret --from-literal token=$(WAVEFRONT_TOKEN) \
+      --from-literal k8s-events-endpoint-token='a-key' || true
 
 .PHONY: deploy-hub
 deploy-hub: deploy
