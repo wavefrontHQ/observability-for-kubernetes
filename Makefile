@@ -81,21 +81,26 @@ delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 		--zone $(GCP_REGION)-$(GCP_ZONE) \
 		--quiet $(ASYNC_FLAG)
 
+# TODO get rid of delete-me and have expires=<DATE WITH TIMEZONE>
+# TODO: expiration time instead of expires in days
+# TODO don't really need it in days; we need it in hours
 
 # create a GKE cluster without weekly cleanup
 # usage: make create-gke-cluster GKE_CLUSTER_NAME=XXXX NOCLEANUP=true
-GKE_EXPIRES_IN_DAYS?=0
+GKE_EXPIRES_IN_HOURS?=10 # TODO run it every 2 hours
 create-gke-cluster: gke-cluster-name-check
-	$(eval GKE_LABELS := $(if $(NOCLEANUP),,--labels="delete-me=true,expires-in-days=$(GKE_EXPIRES_IN_DAYS)"))
+	$(eval EXPIRE_DATE := $(shell date -v +$(GKE_EXPIRES_IN_HOURS)H +%m-%d-%y))
+	$(eval EXPIRE_TIME := $(shell date -v +$(GKE_EXPIRES_IN_HOURS)H +%H_%M_%z))
+	$(eval GKE_LABELS := $(if $(NOCLEANUP),,--labels="expire-date=$(EXPIRE_DATE);expire-time=$(EXPIRE_TIME)"))
 	@echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
-	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=$(GKE_MACHINE_TYPE) \
+	echo gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=$(GKE_MACHINE_TYPE) \
 		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 \
 		--num-nodes=$(NUMBER_OF_NODES)  \
 		--cluster-version $(GKE_CLUSTER_VERSION) $(GKE_LABELS) \
 		--monitoring $(GKE_MONITORING) --logging $(GKE_LOGGING)
-	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) \
+	echo gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) \
 		--zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
-	kubectl create clusterrolebinding --clusterrole cluster-admin \
+	echo kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
 
