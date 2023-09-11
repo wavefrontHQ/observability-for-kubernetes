@@ -161,6 +161,7 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Workload Not Ready](docs/alerts/templates/workload-not-ready.json.tmpl) | Workload has pods that are not ready. |
 | [Pod Out-of-memory Kills](docs/alerts/templates/pod-out-of-memory-kills.json.tmpl) | Workload has pod with container status `OOMKilled`. |
 | [Container CPU Throttling](docs/alerts/templates/container-cpu-throttling.json.tmpl) | Workload has a container with high CPU throttling. |
+| [Container CPU Overutilization](docs/alerts/templates/container-cpu-overutilization.json.tmpl) | Workload has a container with high CPU utilization. |
 
 ## Bring Your Own Logs Shipper
 
