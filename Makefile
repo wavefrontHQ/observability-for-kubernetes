@@ -53,60 +53,96 @@ GCP_PROJECT?=wavefront-gcp-dev
 GCP_REGION=us-central1
 GCP_ZONE?=b
 GKE_NODE_POOL?=default-pool
-GKE_MONITORING?=NONE
-GKE_LOGGING?=NONE
+GKE_MONITORING=NONE
+GKE_LOGGING=NONE
 GKE_MACHINE_TYPE?=e2-standard-2
 NUMBER_OF_NODES?=3
 NUMBER_OF_ARM_NODES?=1
 GKE_CLUSTER_VERSION?=1.26
 
-.PHONY: target-gke connect-to-gke gke-connect-to-cluster gke-cluster-name-check delete-gke-cluster create-gke-cluster
-
+.PHONY: target-gke
 target-gke: connect-to-gke gke-connect-to-cluster
 
+.PHONY: connect-to-gke
 connect-to-gke:
 	gcloud config set project $(GCP_PROJECT)
 	gcloud auth configure-docker --quiet
 
+.PHONY: gke-connect-to-cluster
 gke-connect-to-cluster: gke-cluster-name-check
-	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) --zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
+	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) \
+		--zone $(GCP_REGION)-$(GCP_ZONE) \
+		--project $(GCP_PROJECT)
 
+.PHONY: gke-cluster-name-check
 gke-cluster-name-check:
 	@if [ -z ${GKE_CLUSTER_NAME} ]; then echo "Need to set GKE_CLUSTER_NAME" && exit 1; fi
 
+# usage: make delete-gke-cluster GKE_CLUSTER_NAME=XXXX GKE_ASYNC=true
+.PHONY: delete-gke-cluster
 delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
-	$(eval ASYNC_FLAG := $(if $(GKE_DELETE_ASYNC),--async,))
+	$(eval ASYNC_FLAG := $(if $(GKE_ASYNC),--async,))
 	@echo "Deleting GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters delete $(GKE_CLUSTER_NAME) \
 		--zone $(GCP_REGION)-$(GCP_ZONE) \
 		--quiet $(ASYNC_FLAG)
 
-
 # create a GKE cluster without weekly cleanup
 # usage: make create-gke-cluster GKE_CLUSTER_NAME=XXXX NOCLEANUP=true
+.PHONY: create-gke-cluster
 create-gke-cluster: gke-cluster-name-check
-	$(eval GKE_LABELS := $(if $(NOCLEANUP),,--labels=delete-me=true))
 	@echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
 	gcloud container clusters create $(GKE_CLUSTER_NAME) --machine-type=$(GKE_MACHINE_TYPE) \
 		--zone=$(GCP_REGION)-$(GCP_ZONE) --enable-ip-alias --create-subnetwork range=/21 \
 		--num-nodes=$(NUMBER_OF_NODES)  \
-		--cluster-version $(GKE_CLUSTER_VERSION) $(GKE_LABELS) \
+		--cluster-version $(GKE_CLUSTER_VERSION) \
 		--monitoring $(GKE_MONITORING) --logging $(GKE_LOGGING)
-	gcloud container clusters get-credentials $(GKE_CLUSTER_NAME) \
-		--zone $(GCP_REGION)-$(GCP_ZONE) --project $(GCP_PROJECT)
+	$(MAKE) gke-connect-to-cluster GKE_CLUSTER_NAME=$(GKE_CLUSTER_NAME) GCP_ZONE=$(GCP_ZONE)
+ifneq ($(NOCLEANUP), true)
+	$(MAKE) add-expire-labels-gke-cluster GKE_CLUSTER_NAME=$(GKE_CLUSTER_NAME) GCP_ZONE=$(GCP_ZONE)
+endif
 	kubectl create clusterrolebinding --clusterrole cluster-admin \
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
 
+GKE_EXPIRES_IN_HOURS?=10
+.PHONY: add-expire-labels-gke-cluster
+add-expire-labels-gke-cluster: gke-cluster-name-check
+	$(eval EXPIRE_DATE := $(shell date -v "+$(GKE_EXPIRES_IN_HOURS)H" +%m-%d-%y))
+	$(eval EXPIRE_TIME := $(shell date -v "+$(GKE_EXPIRES_IN_HOURS)H" +%H%M%z))
+	$(eval GKE_LABELS := "expire-date=$(EXPIRE_DATE),expire-time=$(EXPIRE_TIME)")
+	$(MAKE) update-gke-cluster-labels GKE_CLUSTER_NAME=$(GKE_CLUSTER_NAME) GCP_ZONE=$(GCP_ZONE) $(GKE_LABELS)
+
+# add or update labels for existing GKE cluster
+# usage: make update-gke-cluster-labels GKE_CLUSTER_NAME=XXXX GKE_LABELS=YYYY
+.PHONY: update-gke-cluster-labels
+update-gke-cluster-labels: gke-cluster-name-check
+	gcloud container clusters update $(GKE_CLUSTER_NAME) \
+		--zone=$(GCP_REGION)-$(GCP_ZONE) \
+		--update-labels=$(GKE_LABELS)
+
+# create a GKE cluster in zone a with 2 amd64 and 1 arm64 node
+# usage: make create-gke-cluster-with-arm-nodes GKE_CLUSTER_NAME=XXXX GCP_ZONE=a NUMBER_OF_NODES=2 NUMBER_OF_ARM_NODES=1
+.PHONY: create-gke-cluster-with-arm-nodes
 create-gke-cluster-with-arm-nodes: create-gke-cluster add-arm-node-pool-gke-cluster
 
-resize-node-pool-gke-cluster: gke-cluster-name-check
-	gcloud container clusters resize $(GKE_CLUSTER_NAME) --zone=$(GCP_REGION)-$(GCP_ZONE) \
-        --node-pool $(GKE_NODE_POOL) --num-nodes $(NUMBER_OF_NODES) -q
-
+.PHONY: add-arm-node-pool-gke-cluster
 add-arm-node-pool-gke-cluster: gke-cluster-name-check
-	gcloud container  node-pools create arm-pool --cluster=$(GKE_CLUSTER_NAME) --zone=$(GCP_REGION)-$(GCP_ZONE) \
-        --machine-type=t2a-standard-1 --num-nodes=$(NUMBER_OF_ARM_NODES)
+	gcloud container node-pools create arm-pool \
+		--cluster=$(GKE_CLUSTER_NAME) \
+		--zone=$(GCP_REGION)-$(GCP_ZONE) \
+        --machine-type=t2a-standard-1 \
+        --num-nodes=$(NUMBER_OF_ARM_NODES)
+
+# usage: make resize-node-pool-gke-cluster GKE_CLUSTER_NAME=XXXX GKE_ASYNC=true
+.PHONY: resize-node-pool-gke-cluster
+resize-node-pool-gke-cluster: gke-cluster-name-check
+	$(eval ASYNC_FLAG := $(if $(GKE_ASYNC),--async,))
+	gcloud container clusters resize $(GKE_CLUSTER_NAME) \
+		--zone=$(GCP_REGION)-$(GCP_ZONE) \
+		--node-pool $(GKE_NODE_POOL) \
+		--num-nodes $(NUMBER_OF_NODES) \
+		--quiet $(ASYNC_FLAG)
 
 #----- AKS -----#
 AKS_CLUSTER_NAME?=k8po-ci
