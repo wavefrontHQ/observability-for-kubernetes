@@ -89,7 +89,6 @@ delete-gke-cluster: gke-cluster-name-check gke-connect-to-cluster
 
 # create a GKE cluster without weekly cleanup
 # usage: make create-gke-cluster GKE_CLUSTER_NAME=XXXX NOCLEANUP=true
-GKE_EXPIRES_IN_HOURS?=10
 .PHONY: create-gke-cluster
 create-gke-cluster: gke-cluster-name-check
 	@echo "Creating GKE K8s Cluster: $(GKE_CLUSTER_NAME)"
@@ -106,6 +105,7 @@ endif
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
 
+GKE_EXPIRES_IN_HOURS?=10
 .PHONY: add-expire-labels-gke-cluster
 add-expire-labels-gke-cluster: gke-cluster-name-check
 	$(eval EXPIRE_DATE := $(shell date -v "+$(GKE_EXPIRES_IN_HOURS)H" +%m-%d-%y))
