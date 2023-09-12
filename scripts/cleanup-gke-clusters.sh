@@ -40,13 +40,13 @@ function main() {
         expire_date="${value}"
       fi
       if [ "${key}" == "expire-time" ]; then
-        expire_time="${value}"
+        expire_time=$(echo "${value}" | tr '_' ':')
       fi
     done
 
     local expire_datetime expire_timestamp now_timestamp
-    expire_datetime=$(date -f %m-%d-%y_%H%M%z -j "${expire_date}_${expire_time}")
-    expire_timestamp=$(date -f %m-%d-%y_%H%M%z -j "${expire_date}_${expire_time}" +%s)
+    expire_datetime=$(date --date="${expire_date} ${expire_time}")
+    expire_timestamp=$(date --date="${expire_date} ${expire_time}" +%s)
     now_timestamp=$(date +%s)
 
     if [ "$expire_timestamp" -ge "$now_timestamp" ]; then

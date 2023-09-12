@@ -108,8 +108,8 @@ endif
 GKE_EXPIRES_IN_HOURS?=10
 .PHONY: add-expire-labels-gke-cluster
 add-expire-labels-gke-cluster: gke-cluster-name-check
-	$(eval EXPIRE_DATE := $(shell date -v "+$(GKE_EXPIRES_IN_HOURS)H" +%m-%d-%y))
-	$(eval EXPIRE_TIME := $(shell date -v "+$(GKE_EXPIRES_IN_HOURS)H" +%H%M%z))
+	$(eval EXPIRE_DATE := $(shell date -v "+$(GKE_EXPIRES_IN_HOURS)H" +%Y-%m-%d))
+	$(eval EXPIRE_TIME := $(shell date -v "+$(GKE_EXPIRES_IN_HOURS)H" +%H_%M%z))
 	$(eval GKE_LABELS := "expire-date=$(EXPIRE_DATE),expire-time=$(EXPIRE_TIME)")
 	$(MAKE) update-gke-cluster-labels GKE_CLUSTER_NAME=$(GKE_CLUSTER_NAME) GCP_ZONE=$(GCP_ZONE) $(GKE_LABELS)
 
