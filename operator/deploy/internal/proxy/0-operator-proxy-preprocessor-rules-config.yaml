@@ -24,6 +24,18 @@ data:
       action: addTag
       tag: cluster
       value: "{{ .ClusterName }}"
+    - rule: rename-namespace-tag
+      action: renameTag
+      tag: namespace
+      newtag: namespace_name
+    - rule: rename-container-tag
+      action: renameTag
+      tag: container
+      newtag: container_name
+    - rule: rename-pod-tag
+      action: renameTag
+      tag: pod
+      newtag: pod_name
     - rule: span-drop-cluster-uuid
       action: spanDropTag
       key: cluster_uuid
