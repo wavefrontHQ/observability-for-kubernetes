@@ -30,8 +30,8 @@ function main() {
     echo "Found cluster '${name}' with expiration labels '${labels}'"
 
     local expire_date expire_time
-    expire_date=$(date +%m-%d-%y)
-    expire_time=$(date +%H%M%z)
+    expire_date=$(date -u +%F)
+    expire_time=$(date -u +%T)
 
     for label_pair in ${labels//;/ } ; do
       key=$(echo "${label_pair}" | cut -d '=' -f 1)
@@ -45,8 +45,8 @@ function main() {
     done
 
     local expire_datetime expire_timestamp now_timestamp
-    expire_datetime=$(date --date="${expire_date} ${expire_time}")
-    expire_timestamp=$(date --date="${expire_date} ${expire_time}" +%s)
+    expire_datetime=$(date -u --date="${expire_date} ${expire_time}")
+    expire_timestamp=$(date -u --date="${expire_date} ${expire_time}" +%s)
     now_timestamp=$(date +%s)
 
     if [ "$expire_timestamp" -ge "$now_timestamp" ]; then
