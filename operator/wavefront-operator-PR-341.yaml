@@ -981,144 +981,6 @@ metadata:
     app.kubernetes.io/component: pixie
     app.kubernetes.io/name: wavefront
     component: vizier
-    vizier-bootstrap: "true"
-  name: wavefront-pl-updater-role
-  namespace: observability-system
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  - secrets
-  - pods
-  - services
-  - persistentvolumes
-  - persistentvolumeclaims
-  - serviceaccounts
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  - pods/log
-  verbs:
-  - get
-  - watch
-  - list
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  - daemonsets
-  - statefulsets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - batch
-  resources:
-  - cronjobs
-  - jobs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - coordination.k8s.io
-  resourceNames:
-  - cloud-conn-election
-  - metadata-election
-  resources:
-  - leases
-  verbs:
-  - get
-  - update
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - create
-- apiGroups:
-  - px.dev
-  resources:
-  - viziers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - px.dev
-  resources:
-  - viziers/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - roles
-  - rolebindings
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
-    vizier-bootstrap: "true"
-  name: wavefront-pl-vizier-crd-role
-  namespace: observability-system
-rules:
-- apiGroups:
-  - px.dev
-  resources:
-  - viziers
-  - viziers/status
-  verbs:
-  - get
-  - list
-  - watch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
   name: wavefront-pl-vizier-metadata-role
   namespace: observability-system
 rules:
@@ -1250,60 +1112,6 @@ rules:
   - ""
   resources:
   - nodes
-  verbs:
-  - get
-  - watch
-  - list
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
-    vizier-bootstrap: "true"
-  name: wavefront-pl-updater-cluster-role
-rules:
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - clusterroles
-  - clusterrolebindings
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resourceNames:
-  - kube-system
-  resources:
-  - namespaces
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  - pods
-  - services
-  - endpoints
-  - namespaces
-  verbs:
-  - get
-  - watch
-  - list
-- apiGroups:
-  - apps
-  resources:
-  - replicasets
-  - deployments
   verbs:
   - get
   - watch
@@ -1487,64 +1295,6 @@ metadata:
     app.kubernetes.io/component: pixie
     app.kubernetes.io/name: wavefront
     component: vizier
-    vizier-bootstrap: "true"
-  name: wavefront-pl-updater-binding
-  namespace: observability-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: wavefront-pl-updater-role
-subjects:
-- kind: ServiceAccount
-  name: pl-updater-service-account
-  namespace: observability-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
-  name: wavefront-pl-vizier-crd-binding
-  namespace: observability-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: wavefront-pl-vizier-crd-role
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: observability-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
-  name: wavefront-pl-vizier-crd-metadata-binding
-  namespace: observability-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: wavefront-pl-vizier-crd-role
-subjects:
-- kind: ServiceAccount
-  name: metadata-service-account
-  namespace: observability-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
   name: wavefront-pl-vizier-metadata-binding
   namespace: observability-system
 roleRef:
@@ -1570,25 +1320,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: wavefront-pl-vizier-query-broker-role
-subjects:
-- kind: ServiceAccount
-  name: query-broker-service-account
-  namespace: observability-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
-  name: wavefront-pl-vizier-query-broker-crd-binding
-  namespace: observability-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: wavefront-pl-vizier-crd-role
 subjects:
 - kind: ServiceAccount
   name: query-broker-service-account
@@ -1625,43 +1356,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: wavefront-controller-manager
-  namespace: observability-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
-  name: wavefront-pl-node-view-cluster-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: wavefront-pl-node-view
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: observability-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    app: pl-monitoring
-    app.kubernetes.io/component: pixie
-    app.kubernetes.io/name: wavefront
-    component: vizier
-    vizier-bootstrap: "true"
-  name: wavefront-pl-updater-cluster-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: wavefront-pl-updater-cluster-role
-subjects:
-- kind: ServiceAccount
-  name: pl-updater-service-account
   namespace: observability-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -1747,9 +1441,9 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.24.0-alpha-c6039a8f
-  logging: 2.1.6
-  proxy: 13.0.1
+  collector: 1.25.0-alpha-e614c0c4
+  logging: 2.1.9
+  proxy: "13.1"
 kind: ConfigMap
 metadata:
   labels:
@@ -1819,7 +1513,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.12.0-alpha-c6039a8f
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.13.0-alpha-e614c0c4
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
