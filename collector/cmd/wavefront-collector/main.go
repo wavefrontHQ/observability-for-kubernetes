@@ -102,8 +102,6 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 		cfg.Sources.StateConfig.WorkloadCache = workloadCache
 	}
 
-	setSourceToNodeNameForCadvisor(cfg)
-
 	// create sources manager
 	sourceManager := sources.Manager()
 	sourceManager.SetClient(kubeClient)
@@ -146,10 +144,6 @@ func createAgentOrDie(cfg *configuration.Config) *agent.Agent {
 	ag := agent.NewAgent(flushManager, discoveryManager, eventRouter)
 	ag.Start()
 	return ag
-}
-
-func setSourceToNodeNameForCadvisor(cfg *configuration.Config) {
-	cfg.Sources.CadvisorConfig.Source = util.GetNodeName()
 }
 
 func registerListeners(ag *agent.Agent, opt *options.CollectorRunOptions) {
