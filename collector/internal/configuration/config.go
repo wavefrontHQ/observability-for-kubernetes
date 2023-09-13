@@ -22,6 +22,8 @@ const (
 	ExternalSinkType  SinkType = "external"
 )
 
+const MinFlushInterval = 5 * time.Second
+
 // The main configuration struct that drives the Wavefront collector
 type Config struct {
 	// the global interval at which data is pushed. Defaults to 60 seconds.
@@ -329,7 +331,7 @@ func reconcileGlobalProperties(cfg *Config) {
 }
 
 func validateCfg(cfg *Config) error {
-	if cfg.FlushInterval < 5*time.Second {
+	if cfg.FlushInterval < MinFlushInterval {
 		return fmt.Errorf("metric resolution should not be less than 5 seconds: %d", cfg.FlushInterval)
 	}
 	if cfg.Sources == nil {

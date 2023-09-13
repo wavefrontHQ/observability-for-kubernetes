@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/discovery"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/filter"
@@ -13,7 +14,7 @@ import (
 
 func Combine(a, b *Config) *Config {
 	return &Config{
-		FlushInterval:             max(a.FlushInterval, b.FlushInterval),
+		FlushInterval:             combineFlushIntervals(a.FlushInterval, b.FlushInterval),
 		DefaultCollectionInterval: max(a.DefaultCollectionInterval, b.DefaultCollectionInterval),
 		SinkExportDataTimeout:     max(a.SinkExportDataTimeout, b.SinkExportDataTimeout),
 		EnableDiscovery:           a.EnableDiscovery || b.EnableDiscovery,
@@ -26,6 +27,16 @@ func Combine(a, b *Config) *Config {
 		OmitBucketSuffix:          a.OmitBucketSuffix || b.OmitBucketSuffix,
 		Experimental:              combineStringSet(a.Experimental, b.Experimental),
 	}
+}
+
+func combineFlushIntervals(a, b time.Duration) time.Duration {
+	if a < MinFlushInterval {
+		return b
+	}
+	if b < MinFlushInterval {
+		return a
+	}
+	return min(a, b)
 }
 
 func combineDiscoveryConfig(a, b discovery.Config) discovery.Config {
@@ -362,6 +373,13 @@ func combineStringSet(a, b []string) []string {
 
 func max[T constraints.Ordered](a, b T) T {
 	if a >= b {
+		return a
+	}
+	return b
+}
+
+func min[T constraints.Ordered](a, b T) T {
+	if a <= b {
 		return a
 	}
 	return b

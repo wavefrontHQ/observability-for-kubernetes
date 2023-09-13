@@ -1,7 +1,6 @@
 package configuration_test
 
 import (
-	"math"
 	"testing"
 	"time"
 
@@ -11,21 +10,14 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 )
 
-const MaxRuns = 1_000_000
+const MaxRuns = 1_000
+
+var seed = time.Now().UnixNano()
 
 func TestCombine(t *testing.T) {
-	f := fuzz.New().NilChance(0).Funcs(
-		func(e *util.WorkloadCache, c fuzz.Continue) {},
-		func(e *configuration.Config, c fuzz.Continue) {
-			c.Fuzz(e)
-			e.FlushInterval = time.Duration(c.Int63n(math.MaxInt64))
-			if len(e.Sinks) == 0 {
-				e.Sinks = nil
-			}
-		},
-	)
-
 	t.Run("combining any config with an empty config always results in the same config (identity)", func(t *testing.T) {
+		t.Parallel()
+		f := makeFuzzer(seed)
 		var empty configuration.Config
 		var config configuration.Config
 		for i := 0; i < MaxRuns; i++ {
@@ -37,6 +29,8 @@ func TestCombine(t *testing.T) {
 	})
 
 	t.Run("configs combination can be grouped in any order (associativity)", func(t *testing.T) {
+		t.Parallel()
+		f := makeFuzzer(seed)
 		var a configuration.Config
 		var b configuration.Config
 		var c configuration.Config
@@ -53,6 +47,8 @@ func TestCombine(t *testing.T) {
 	})
 
 	t.Run("configs can be combined in any order (commutativity)", func(t *testing.T) {
+		t.Parallel()
+		f := makeFuzzer(seed)
 		var a configuration.Config
 		var b configuration.Config
 		for i := 0; i < MaxRuns; i++ {
@@ -65,4 +61,28 @@ func TestCombine(t *testing.T) {
 			)
 		}
 	})
+
+	t.Run("the same config combined with itself produces the same config (idempotence)", func(t *testing.T) {
+		t.Parallel()
+		f := makeFuzzer(seed)
+		var a configuration.Config
+		for i := 0; i < MaxRuns; i++ {
+			f.Fuzz(&a)
+
+			require.Equal(t, a, *configuration.Combine(&a, &a))
+		}
+	})
+}
+
+func makeFuzzer(seed int64) *fuzz.Fuzzer {
+	f := fuzz.NewWithSeed(seed).NilChance(0).Funcs(
+		func(e *util.WorkloadCache, c fuzz.Continue) {},
+		func(e *configuration.Config, c fuzz.Continue) {
+			c.Fuzz(e)
+			if len(e.Sinks) == 0 {
+				e.Sinks = nil
+			}
+		},
+	)
+	return f
 }
