@@ -10,7 +10,7 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 )
 
-const MaxRuns = 1_000
+const MaxRuns = 100_000
 
 var seed = time.Now().UnixNano()
 
@@ -77,12 +77,6 @@ func TestCombine(t *testing.T) {
 func makeFuzzer(seed int64) *fuzz.Fuzzer {
 	f := fuzz.NewWithSeed(seed).NilChance(0).Funcs(
 		func(e *util.WorkloadCache, c fuzz.Continue) {},
-		func(e *configuration.Config, c fuzz.Continue) {
-			c.Fuzz(e)
-			if len(e.Sinks) == 0 {
-				e.Sinks = nil
-			}
-		},
 	)
 	return f
 }

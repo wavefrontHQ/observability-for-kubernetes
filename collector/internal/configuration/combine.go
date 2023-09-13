@@ -30,10 +30,10 @@ func Combine(a, b *Config) *Config {
 }
 
 func combineFlushIntervals(a, b time.Duration) time.Duration {
-	if a < MinFlushInterval {
+	if a == 0 {
 		return b
 	}
-	if b < MinFlushInterval {
+	if b == 0 {
 		return a
 	}
 	return min(a, b)
