@@ -1,5 +1,6 @@
 # Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
 # This is not a valid configuration since some options are not compatible. See notes for more information.
+# Unless otherwise specified, the values here are set to their default values.
 apiVersion: wavefront.com/v1alpha1
 kind: Wavefront
 metadata:
