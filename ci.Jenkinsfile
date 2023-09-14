@@ -60,10 +60,15 @@ pipeline {
             DOCKER_IMAGE = "kubernetes-collector"
           }
           steps {
-             sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
-             sh 'cd collector'
-             sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-             sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
+            sh 'cd collector && ./hack/jenkins/install_docker_buildx.sh'
+            sh 'cd collector'
+            sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+            sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
+
+            /* Setup for Later Integration Tests */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            // sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh' // already run above
           }
         }
 
@@ -88,6 +93,11 @@ pipeline {
             sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
             sh 'cd operator && make docker-xplatform-build'
             sh 'cd operator && ./hack/jenkins/create-rc-ci.sh'
+
+            /* Setup for Later Integration Tests */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+            // sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            // sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             script {
               env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
             }
@@ -103,6 +113,11 @@ pipeline {
           }
           steps {
             sh 'cd collector && make checkfmt vet tests'
+
+            /* Setup for Later Integration Tests */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
           }
         }
         stage("Operator Go Tests") {
@@ -161,9 +176,6 @@ pipeline {
           steps {
             lock("integration-test-gke") {
               /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh 'make gke-connect-to-cluster'
 
               /* Collector Integration Tests */
@@ -197,9 +209,6 @@ pipeline {
           steps {
             lock("integration-test-eks") {
               /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh 'make target-eks'
 
               /* Collector Integration Tests */
@@ -233,9 +242,6 @@ pipeline {
             lock("integration-test-aks") {
               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
                 /* Setup */
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-                sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
                 sh 'kubectl config use k8po-ci'
 
                 /* Collector Integration Tests */
