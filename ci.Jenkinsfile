@@ -94,7 +94,7 @@ pipeline {
           }
         }
 
-        stage("Collector Go Tests") {
+        stage("Collector Go Tests") { // TODO: idea: test while preparing all workers with setup scripts
           agent {
             label "worker-3"
           }
@@ -132,9 +132,11 @@ pipeline {
       }
     }
 
-    stage('Run Collector Integration Tests') {
+    stage('Run Integration Tests') {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       environment {
+        OPERATOR_YAML_TYPE="rc"
+        TOKEN = credentials('GITHUB_TOKEN')
         METRICS_RETRY_COUNT = "${params.METRICS_RETRY_COUNT}"
       }
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
@@ -148,6 +150,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
+            GCP_PROJECT = "wavefront-gcp-dev"
             GCP_CREDS = credentials("GCP_CREDS")
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
             GCP_ZONE="a"
@@ -157,23 +160,34 @@ pipeline {
           }
           steps {
             lock("integration-test-gke") {
+              /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd collector && make gke-connect-to-cluster'
-              sh 'cd collector && make clean-cluster'
-              sh 'cd collector && make integration-test'
-              sh 'cd collector && make clean-cluster'
+              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+              sh 'make gke-connect-to-cluster'
+
+              /* Collector Integration Tests */
+              sh 'make clean-cluster'
+              sh 'make -C collector integration-test'
+              sh 'make clean-cluster' // TODO remove second clean for efficiency
+
+              /* Operator Integration Tests */
+              sh 'make clean-cluster'
+              sh 'make -C operator integration-test'
+              sh 'make clean-cluster' // TODO remove second clean for efficiency
             }
           }
         }
 
         stage("EKS") {
           agent {
-            label "worker-2"
+            label "worker-2" // NOTE operator EKS was on worker-3
           }
           options {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
+            // GCP_CREDS = credentials("GCP_CREDS") // pretty sure this is not necessary
             DOCKER_IMAGE = "kubernetes-collector"
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
@@ -182,23 +196,34 @@ pipeline {
           }
           steps {
             lock("integration-test-eks") {
+              /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-              sh 'cd collector && make target-eks'
-              sh 'cd collector && make clean-cluster'
-              sh 'cd collector && make integration-test'
-              sh 'cd collector && make clean-cluster'
+              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+              sh 'make target-eks'
+
+              /* Collector Integration Tests */
+              sh 'make clean-cluster'
+              sh 'make -C collector integration-test'
+              sh 'make clean-cluster' // TODO remove second clean for efficiency
+
+              /* Operator Integration Tests */
+              sh 'make clean-cluster'
+              sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"'
+              sh 'make clean-cluster' // TODO remove second clean for efficiency
             }
           }
         }
 
         stage("AKS") {
           agent {
-            label "worker-3"
+            label "worker-3" // NOTE operator EKS was on worker-3, operator AKS was on worker-4
           }
           options {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
+            // GCP_CREDS = credentials("GCP_CREDS") // pretty sure this is not necessary
             AKS_CLUSTER_NAME = "k8po-ci"
             DOCKER_IMAGE = "kubernetes-collector"
             INTEGRATION_TEST_ARGS="all"
@@ -207,94 +232,21 @@ pipeline {
           steps {
             lock("integration-test-aks") {
               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+                /* Setup */
                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+                sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
                 sh 'kubectl config use k8po-ci'
-                sh 'cd collector && make clean-cluster'
-                sh 'cd collector && make integration-test'
-                sh 'cd collector && make clean-cluster'
-              }
-            }
-          }
-        }
-      }
-    }
 
-    stage("Run Operator Integration Tests") {
-      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
-      environment {
-        OPERATOR_YAML_TYPE="rc"
-        TOKEN = credentials('GITHUB_TOKEN')
-        METRICS_RETRY_COUNT = "${params.METRICS_RETRY_COUNT}"
-      }
-
-      parallel {
-        stage("GKE") {
-          agent {
-            label "worker-1"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
-            GCP_ZONE="a"
-            GCP_CREDS = credentials("GCP_CREDS")
-            GCP_PROJECT = "wavefront-gcp-dev"
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            lock("integration-test-gke") {
-              sh 'cd operator && make gke-connect-to-cluster'
-              sh 'make clean-cluster'
-              sh 'make -C operator integration-test'
-              sh 'make clean-cluster'
-            }
-          }
-        }
-
-        stage("EKS") {
-          agent {
-            label "worker-3"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS")
-            AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
-            AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-            INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            lock("integration-test-eks") {
-              sh 'cd operator && make target-eks'
-              sh 'make clean-cluster'
-              sh 'make -C operator integration-test'
-              sh 'make clean-cluster'
-            }
-          }
-        }
-
-        stage("AKS") {
-          agent { label "worker-4" }
-          options { timeout(time: 60, unit: 'MINUTES') }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS")
-            AKS_CLUSTER_NAME = "k8po-ci"
-            INTEGRATION_TEST_ARGS = '-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics'
-          }
-          steps {
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-            lock("integration-test-aks") {
-              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                sh 'kubectl config use k8po-ci'
+                /* Collector Integration Tests */
                 sh 'make clean-cluster'
-                sh 'make -C operator integration-test'
+                sh 'make -C collector integration-test'
+                sh 'make clean-cluster' // TODO remove second clean for efficiency
+
+                /* Operator Integration Tests */
                 sh 'make clean-cluster'
+                sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics"'
+                sh 'make clean-cluster' // TODO remove second clean for efficiency
               }
             }
           }
