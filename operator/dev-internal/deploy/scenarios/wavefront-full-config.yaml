@@ -57,12 +57,12 @@ spec:
           - kubernetes.collector.runtime.*
         tagGuaranteeList:
           - label.env
-      defaultCollectionInterval: 60s #defaults to 60s
+      defaultCollectionInterval: 60s
       # Rules based and Prometheus endpoints auto-discovery.
-      enableDiscovery: true #defaults to true
+      enableDiscovery: true
       # controlPlane can enable/disable control plane metrics
       controlPlane:
-        enable: true #defaults to true
+        enable: true
       clusterCollector:
         resources:
           limits:
