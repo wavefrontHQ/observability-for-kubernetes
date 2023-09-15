@@ -131,7 +131,6 @@ See below for configuration options.
 We have templates for common scenarios. See the comments in each file for usage instructions.
 
  * [Using a custom private registry](deploy/scenarios/wavefront-custom-private-registry.yaml)
- * [Using an existing Collector ConfigMap](deploy/scenarios/wavefront-collector-existing-configmap.yaml)
  * [With plugin configuration in a secret](deploy/scenarios/wavefront-collector-with-plugin-secret.yaml)
  * [Filtering metrics upon collection](deploy/scenarios/wavefront-collector-filtering.yaml)
  * [Disabling control plane metrics](deploy/scenarios/wavefront-disable-control-plane-metrics.yaml)
@@ -145,7 +144,6 @@ We have templates for common scenarios. See the comments in each file for usage 
  * [Getting started with logging configuration](deploy/scenarios/wavefront-logging-getting-started.yaml)
  * [Full logging configuration](deploy/scenarios/wavefront-logging-full-config.yaml)
  * [Bring your own logs shipper](deploy/scenarios/wavefront-bring-your-own-logs-shipper.yaml)
- * [Enabling autotracing support](deploy/scenarios/wavefront-autotracing.yaml)
 
 You can see all configuration options in the [wavefront-full-config.yaml](deploy/scenarios/wavefront-full-config.yaml).
 
@@ -162,6 +160,8 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Pod Backoff Event](docs/alerts/templates/pod-backoff-event.json.tmpl) | Workload has pod with container status `ImagePullBackOff` or `CrashLoopBackOff`. |
 | [Workload Not Ready](docs/alerts/templates/workload-not-ready.json.tmpl) | Workload has pods that are not ready. |
 | [Pod Out-of-memory Kills](docs/alerts/templates/pod-out-of-memory-kills.json.tmpl) | Workload has pod with container status `OOMKilled`. |
+| [Container CPU Throttling](docs/alerts/templates/container-cpu-throttling.json.tmpl) | Workload has a container with high CPU throttling. |
+| [Container CPU Overutilization](docs/alerts/templates/container-cpu-overutilization.json.tmpl) | Workload has a container with high CPU utilization. |
 
 ## Bring Your Own Logs Shipper
 
