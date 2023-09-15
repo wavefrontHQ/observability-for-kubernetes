@@ -51,7 +51,7 @@ pipeline {
       parallel{
         stage("Publish Collector") {
           agent {
-            label "worker-1"
+            label "worker-1" // TODO move test and publish to separate workers for parallel locks
           }
           options {
             timeout(time: 60, unit: 'MINUTES')
@@ -65,8 +65,17 @@ pipeline {
             sh 'cd collector'
             sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
             sh 'cd collector && HARBOR_CREDS_USR=$(echo $HARBOR_CREDS_USR | sed \'s/\\$/\\$\\$/\') make clean docker-xplatform-build'
+          }
+        }
 
-            /* Setup for Later Integration Tests */
+        stage("Prepare worker-1 for Integration Tests") {
+          agent {
+            label "worker-1"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             // sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh' // already run above
@@ -93,18 +102,33 @@ pipeline {
             sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
             sh 'cd operator && make docker-xplatform-build'
             sh 'cd operator && ./hack/jenkins/create-rc-ci.sh'
-
-            /* Setup for Later Integration Tests */
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-            // sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            // sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
             script {
               env.OPERATOR_YAML_RC_SHA = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
             }
           }
         }
 
-        stage("Collector Go Tests") { // TODO: idea: test while preparing all workers with setup scripts
+        stage("Prepare worker-2 for Integration Tests") {
+          agent {
+            label "worker-2"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+//             RELEASE_TYPE = "alpha"
+//             COLLECTOR_PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
+//             TOKEN = credentials('GITHUB_TOKEN')
+//             COLLECTOR_IMAGE = "kubernetes-collector"
+          }
+          steps {
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+            // sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            // sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+          }
+        }
+
+        stage("Collector Go Tests") {
           agent {
             label "worker-3"
           }
@@ -113,13 +137,23 @@ pipeline {
           }
           steps {
             sh 'cd collector && make checkfmt vet tests'
+          }
+        }
 
-            /* Setup for Later Integration Tests */
+        stage("Prepare worker-3 for Integration Tests") {
+          agent {
+            label "worker-3"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
             sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
           }
         }
+
         stage("Operator Go Tests") {
           agent {
             label "worker-4"
