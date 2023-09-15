@@ -194,7 +194,7 @@ pipeline {
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
-        stage("GKE") {
+        stage("GKE") { // TODO parallelize with new GKE cluster
           agent {
             label "gke-integration-worker"
           }
@@ -217,12 +217,10 @@ pipeline {
               /* Collector Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C collector integration-test'
-              sh 'make clean-cluster' // TODO remove second clean for efficiency
 
               /* Operator Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C operator integration-test'
-              sh 'make clean-cluster' // TODO remove second clean for efficiency
             }
           }
         }
@@ -249,12 +247,10 @@ pipeline {
               /* Collector Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C collector integration-test'
-              sh 'make clean-cluster' // TODO remove second clean for efficiency
 
               /* Operator Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"'
-              sh 'make clean-cluster' // TODO remove second clean for efficiency
             }
           }
         }
@@ -281,12 +277,10 @@ pipeline {
                 /* Collector Integration Tests */
                 sh 'make clean-cluster'
                 sh 'make -C collector integration-test'
-                sh 'make clean-cluster' // TODO remove second clean for efficiency
 
                 /* Operator Integration Tests */
                 sh 'make clean-cluster'
                 sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics"'
-                sh 'make clean-cluster' // TODO remove second clean for efficiency
               }
             }
           }
