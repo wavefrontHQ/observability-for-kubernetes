@@ -11,7 +11,6 @@ pipeline {
     PATH = "${env.WORKSPACE}/bin:${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
     GITHUB_TOKEN = credentials("GITHUB_TOKEN")
     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
-    GCP_CREDS = credentials("GCP_CREDS")
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
     DOCKER_IMAGE = "kubernetes-operator"
     VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
@@ -46,7 +45,7 @@ pipeline {
       }
     }
 
-    stage("Go Tests and Publish Images") {
+    stage("Go Tests, Publish Images, and Prepare for Integration Tests") {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       parallel{
         stage("Publish Collector") {
@@ -76,6 +75,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
+            GCP_CREDS = credentials("GCP_CREDS")
             RELEASE_TYPE = "alpha"
             COLLECTOR_PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             TOKEN = credentials('GITHUB_TOKEN')
@@ -138,6 +138,9 @@ pipeline {
           options {
             timeout(time: 60, unit: 'MINUTES')
           }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+          }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
             sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -153,7 +156,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            TOKEN = credentials('GITHUB_TOKEN') // TODO clean up
+            GCP_CREDS = credentials("GCP_CREDS")
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
@@ -168,6 +171,9 @@ pipeline {
           }
           options {
             timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
