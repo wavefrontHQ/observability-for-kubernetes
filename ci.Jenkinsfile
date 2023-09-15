@@ -131,7 +131,7 @@ pipeline {
           }
         }
 
-        stage("Prepare gke-integration-worker for Integration Tests") {
+        stage("Prepare gke-worker for Integration Tests") {
           agent {
             label "gke-integration-worker"
           }
@@ -148,7 +148,7 @@ pipeline {
           }
         }
 
-        stage("Prepare eks-integration-worker for Integration Tests") {
+        stage("Prepare eks-worker for Integration Tests") {
           agent {
             label "eks-integration-worker"
           }
@@ -165,7 +165,7 @@ pipeline {
           }
         }
 
-        stage("Prepare aks-integration-worker for Integration Tests") {
+        stage("Prepare aks-worker for Integration Tests") {
           agent {
             label "aks-integration-worker"
           }
