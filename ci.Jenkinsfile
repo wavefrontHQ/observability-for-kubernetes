@@ -68,20 +68,6 @@ pipeline {
           }
         }
 
-        stage("Prepare worker-1 for Integration Tests") {
-          agent {
-            label "worker-1"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          steps {
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            // sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh' // already run above
-          }
-        }
-
         stage("Publish Operator") {
           agent {
             label "worker-2"
@@ -108,23 +94,6 @@ pipeline {
           }
         }
 
-        stage("Prepare worker-2 for Integration Tests") {
-          agent {
-            label "worker-2"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            TOKEN = credentials('GITHUB_TOKEN') // TODO clean up
-          }
-          steps {
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-            // sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            // sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-          }
-        }
-
         stage("Collector Go Tests") {
           agent {
             label "worker-3"
@@ -134,20 +103,6 @@ pipeline {
           }
           steps {
             sh 'cd collector && make checkfmt vet tests'
-          }
-        }
-
-        stage("Prepare worker-3 for Integration Tests") {
-          agent {
-            label "worker-3"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          steps {
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
           }
         }
 
@@ -175,6 +130,51 @@ pipeline {
             sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
           }
         }
+
+        stage("Prepare gke-integration-worker for Integration Tests") {
+          agent {
+            label "gke-integration-worker"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          steps {
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+          }
+        }
+
+        stage("Prepare eks-integration-worker for Integration Tests") {
+          agent {
+            label "eks-integration-worker"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            TOKEN = credentials('GITHUB_TOKEN') // TODO clean up
+          }
+          steps {
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+          }
+        }
+
+        stage("Prepare aks-integration-worker for Integration Tests") {
+          agent {
+            label "aks-integration-worker"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          steps {
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+          }
+        }
       }
     }
 
@@ -190,7 +190,7 @@ pipeline {
       parallel {
         stage("GKE") {
           agent {
-            label "worker-1"
+            label "gke-integration-worker"
           }
           options {
             timeout(time: 60, unit: 'MINUTES')
@@ -223,7 +223,7 @@ pipeline {
 
         stage("EKS") {
           agent {
-            label "worker-2" // NOTE operator EKS was on worker-3
+            label "eks-integration-worker" // NOTE operator EKS was on worker-3
           }
           options {
             timeout(time: 60, unit: 'MINUTES')
@@ -255,7 +255,7 @@ pipeline {
 
         stage("AKS") {
           agent {
-            label "worker-3" // NOTE operator EKS was on worker-3, operator AKS was on worker-4
+            label "aks-integration-worker" // NOTE operator EKS was on worker-3, operator AKS was on worker-4
           }
           options {
             timeout(time: 60, unit: 'MINUTES')
