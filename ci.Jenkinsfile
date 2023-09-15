@@ -223,7 +223,7 @@ pipeline {
 
         stage("EKS") {
           agent {
-            label "eks-integration-worker" // NOTE operator EKS was on worker-3
+            label "eks-integration-worker"
           }
           options {
             timeout(time: 60, unit: 'MINUTES')
@@ -255,7 +255,7 @@ pipeline {
 
         stage("AKS") {
           agent {
-            label "aks-integration-worker" // NOTE operator EKS was on worker-3, operator AKS was on worker-4
+            label "aks-integration-worker"
           }
           options {
             timeout(time: 60, unit: 'MINUTES')
