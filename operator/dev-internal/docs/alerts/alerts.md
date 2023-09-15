@@ -11,6 +11,7 @@ We have alert templates on common Kubernetes issues.
 * [Detect container cpu throttling](templates/container-cpu-throttling.json.tmpl)
 * [Detect container cpu overutilization](templates/container-cpu-overutilization.json.tmpl)
 * [Detect persistent volumes with no claims](templates/persistent-volumes-no-claim.json.tmpl)
+* [Detect persistent volumes with error](templates/persistent-volumes-error.json.tmpl)
 
 ## Flags
 

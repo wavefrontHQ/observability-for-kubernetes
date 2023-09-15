@@ -167,7 +167,8 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 
 | Alert name | Description |
 |---|---|
-| [Persistent Volume no claim](docs/alerts/templates/persistent-volumes-no-claim.json.tmpl) | Persistent Volume is left unclaimed. |
+| [Persistent Volume no claim](docs/alerts/templates/persistent-volumes-no-claim.json.tmpl) | Persistent Volume has no claim. |
+| [Persistent Volume error](docs/alerts/templates/persistent-volumes-error.json.tmpl) | Persistent Volume has issues with provisioning. |
 
 ## Bring Your Own Logs Shipper
 
