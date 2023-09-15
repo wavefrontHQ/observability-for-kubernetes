@@ -11,6 +11,7 @@ pipeline {
     PATH = "${env.WORKSPACE}/bin:${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
     GITHUB_TOKEN = credentials("GITHUB_TOKEN")
     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability_keights_saas-robot")
+    GCP_CREDS = credentials("GCP_CREDS")
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
     DOCKER_IMAGE = "kubernetes-operator"
     VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
@@ -80,7 +81,6 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
             RELEASE_TYPE = "alpha"
             COLLECTOR_PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             TOKEN = credentials('GITHUB_TOKEN')
@@ -166,7 +166,6 @@ pipeline {
           }
           environment {
             GCP_PROJECT = "wavefront-gcp-dev"
-            GCP_CREDS = credentials("GCP_CREDS")
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
             GCP_ZONE="a"
             DOCKER_IMAGE = "kubernetes-collector"
@@ -199,7 +198,6 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            // GCP_CREDS = credentials("GCP_CREDS") // pretty sure this is not necessary
             DOCKER_IMAGE = "kubernetes-collector"
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
@@ -232,7 +230,6 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            // GCP_CREDS = credentials("GCP_CREDS") // pretty sure this is not necessary
             AKS_CLUSTER_NAME = "k8po-ci"
             DOCKER_IMAGE = "kubernetes-collector"
             INTEGRATION_TEST_ARGS="all"
