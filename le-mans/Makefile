@@ -5,7 +5,7 @@ LM_VERSION=1.0.11-SNAPSHOT
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/
 
 troll_server_files=$(shell find troll-server/src)
-troll_server_port=8081
+troll_server_port=8000
 cred_files=tmp/csp_username tmp/csp_password
 homebrew_etc_dir=$(shell brew --prefix)/etc
 
@@ -31,7 +31,7 @@ clean:
 	cd le-mans; mvn clean
 
 start-echo-server:
-	python3 scripts/le-mans/echo-server.py $(troll_server_port)
+	python3 scripts/echo-server.py $(troll_server_port)
 
 ## Le Mans
 ensure-cred-files: | tmp
