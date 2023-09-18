@@ -167,14 +167,9 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 
 | Alert name | Description |
 |---|---|
-| [Persistent Volume Claim Overutilization](docs/alerts/templates/persistent-volume-claim-overutilization.json.tmpl) | Workload has low available disk space for a claimed PersistentVolume. |
-
-### Persistent Volume Failures
-
-| Alert name | Description |
-|---|---|
-| [Persistent Volume no claim](docs/alerts/templates/persistent-volumes-no-claim.json.tmpl) | Persistent Volume has no claim. |
-| [Persistent Volume error](docs/alerts/templates/persistent-volumes-error.json.tmpl) | Persistent Volume has issues with provisioning. |
+| [Persistent Volumes No Claim](docs/alerts/templates/persistent-volumes-no-claim.json.tmpl) | Persistent Volume has no claim. |
+| [Persistent Volumes Error](docs/alerts/templates/persistent-volumes-error.json.tmpl) | Persistent Volume has issues with provisioning. |
+| [Persistent Volume Claim Overutilization](docs/alerts/templates/persistent-volume-claim-overutilization.json.tmpl) | Workload has low available disk space for a claimed Persistent Volume. |
 
 ## Bring Your Own Logs Shipper
 
