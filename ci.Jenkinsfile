@@ -75,7 +75,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_CREDS = credentials("wavefront-gcp-dev")
             RELEASE_TYPE = "alpha"
             COLLECTOR_PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             TOKEN = credentials('GITHUB_TOKEN')
@@ -139,7 +139,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_CREDS = credentials("wavefront-gcp-dev")
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
@@ -156,7 +156,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_CREDS = credentials("wavefront-gcp-dev")
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
@@ -173,7 +173,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_CREDS = credentials("wavefront-gcp-dev")
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
@@ -190,7 +190,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_CREDS = credentials("wavefront-gcp-dev")
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
@@ -207,7 +207,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_CREDS = credentials("wavefront-gcp-dev")
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
@@ -224,7 +224,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_CREDS = credentials("wavefront-gcp-dev")
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
@@ -253,7 +253,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_CREDS = credentials("wavefront-gcp-dev")
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
             GCP_ZONE="a"
