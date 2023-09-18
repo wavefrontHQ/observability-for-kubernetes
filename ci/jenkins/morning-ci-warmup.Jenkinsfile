@@ -8,6 +8,7 @@ pipeline {
   environment {
     PATH = "${env.WORKSPACE}/bin:${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
     GCP_CREDS = credentials("GCP_CREDS")
+    GITHUB_TOKEN = credentials("GITHUB_TOKEN")
   }
 
   triggers {
