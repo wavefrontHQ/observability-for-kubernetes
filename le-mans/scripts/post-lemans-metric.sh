@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-STREAM_NAME=experiment7
+if [ -z "$STREAM_NAME" ]; then
+  echo "Set STREAM_NAME before running this script"
+  exit 1
+fi
 LEMANS_GATEWAY_SERVER="localhost:8002"
 CSP_SECRET="$(echo -n "$(cat tmp/csp_username):$(cat tmp/csp_password)" | base64)"
 

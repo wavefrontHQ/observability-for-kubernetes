@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-STREAM_NAME=experiment4
+if [ -z "$STREAM_NAME" ]; then
+  echo "Set STREAM_NAME before running this script"
+  exit 1
+fi
 RECEIVER_NAME="$STREAM_NAME"
 LEMANS_RESOURCE_SERVER="localhost:8001"
 RECEIVER_URI=http://troll-lb.acceptance.svc.cluster.local:8000/report

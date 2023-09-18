@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-STREAM_NAME=experiment6
+if [ -z "$STREAM_NAME" ]; then
+  echo "Set STREAM_NAME before running this script"
+  exit 1
+fi
 RECEIVER_NAME="$STREAM_NAME-receiver"
 LEMANS_RESOURCE_SERVER="localhost:8001"
 RECEIVER_URI=http://localhost:8000/report
