@@ -151,7 +151,7 @@ You can see all configuration options in the [wavefront-full-config.yaml](deploy
 
 We have alerts on common Kubernetes issues. For details on creating alerts, see [alerts.md](docs/alerts/alerts.md).
 
-### Pod Failure
+### Pod Failures
 
 | Alert name | Description |
 |---|---|
@@ -162,6 +162,13 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Pod Out-of-memory Kills](docs/alerts/templates/pod-out-of-memory-kills.json.tmpl) | Workload has pod with container status `OOMKilled`. |
 | [Container CPU Throttling](docs/alerts/templates/container-cpu-throttling.json.tmpl) | Workload has a container with high CPU throttling. |
 | [Container CPU Overutilization](docs/alerts/templates/container-cpu-overutilization.json.tmpl) | Workload has a container with high CPU utilization. |
+
+### Persistent Volume Failures
+
+| Alert name | Description |
+|---|---|
+| [Persistent Volume no claim](docs/alerts/templates/persistent-volumes-no-claim.json.tmpl) | Persistent Volume has no claim. |
+| [Persistent Volume error](docs/alerts/templates/persistent-volumes-error.json.tmpl) | Persistent Volume has issues with provisioning. |
 
 ## Bring Your Own Logs Shipper
 
