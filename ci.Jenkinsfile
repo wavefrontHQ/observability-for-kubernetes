@@ -148,6 +148,57 @@ pipeline {
           }
         }
 
+        stage("Prepare operator-worker-1") {
+          agent {
+            label "gke-operator-worker-1"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+          }
+          steps {
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+          }
+        }
+
+        stage("Prepare operator-worker-2") {
+          agent {
+            label "gke-operator-worker-2"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+          }
+          steps {
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+          }
+        }
+
+        stage("Prepare operator-worker-3") {
+          agent {
+            label "gke-operator-worker-3"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+          }
+          steps {
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
+          }
+        }
+
         stage("Prepare eks-worker for Integration Tests") {
           agent {
             label "eks-integration-worker"
@@ -194,7 +245,7 @@ pipeline {
       // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
       // But we want to make sure that the combined and default integration tests are run on both
       parallel {
-        stage("GKE") { // TODO parallelize with new GKE cluster
+        stage("GKE Collector") {
           agent {
             label "gke-integration-worker"
           }
@@ -217,6 +268,80 @@ pipeline {
               /* Collector Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C collector integration-test'
+            }
+          }
+        }
+
+        stage("GKE Operator 1") {
+          agent {
+            label "gke-operator-worker-1"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_PROJECT = "wavefront-gcp-dev"
+            GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-1"
+            GCP_ZONE="a"
+            // DOCKER_IMAGE = "kubernetes-collector" // ???
+            INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
+          }
+          steps {
+            lock("integration-test-gke") {
+              /* Setup */
+              sh './ci/jenkins/get-or-create-cluster.sh'
+
+              /* Operator Integration Tests */
+              sh 'make clean-cluster'
+              sh 'make -C operator integration-test'
+            }
+          }
+        }
+
+        stage("GKE Operator 2") {
+          agent {
+            label "gke-operator-worker-2"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_PROJECT = "wavefront-gcp-dev"
+            GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-2"
+            GCP_ZONE="a"
+            // DOCKER_IMAGE = "kubernetes-collector" // ???
+            INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
+          }
+          steps {
+            lock("integration-test-gke") {
+              /* Setup */
+              sh './ci/jenkins/get-or-create-cluster.sh'
+
+              /* Operator Integration Tests */
+              sh 'make clean-cluster'
+              sh 'make -C operator integration-test'
+            }
+          }
+        }
+
+        stage("GKE Operator 3") {
+          agent {
+            label "gke-operator-worker-3"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_PROJECT = "wavefront-gcp-dev"
+            GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-3"
+            GCP_ZONE="a"
+            // DOCKER_IMAGE = "kubernetes-collector" // ???
+            INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
+          }
+          steps {
+            lock("integration-test-gke") {
+              /* Setup */
+              sh './ci/jenkins/get-or-create-cluster.sh'
 
               /* Operator Integration Tests */
               sh 'make clean-cluster'
