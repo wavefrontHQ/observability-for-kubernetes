@@ -1,0 +1,42 @@
+{
+  "name": "PVC Overutilization",
+  "alertType": "THRESHOLD",
+  "alertSources": [
+    {
+      "name": "Alert Condition",
+      "query": "round(mmin(5m, align(1m, ts(\"kubernetes.pod.filesystem.available\", pvc_name=\"*\" and cluster=\"K8S_CLUSTER_NAME\"))) / mmax(5m, align(1m, ts(\"kubernetes.pod.filesystem.limit\", pvc_name=\"*\" and cluster=\"K8S_CLUSTER_NAME\"))) * 100)",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${Alert Condition} <= 15, ${Alert Condition})",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE","AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "warn": "round(mmin(5m, align(1m, ts(\"kubernetes.pod.filesystem.available\", pvc_name=\"*\" and cluster=\"K8S_CLUSTER_NAME\"))) / mmax(5m, align(1m, ts(\"kubernetes.pod.filesystem.limit\", pvc_name=\"*\" and cluster=\"K8S_CLUSTER_NAME\"))) * 100) <= 15",
+    "severe": "round(mmin(5m, align(1m, ts(\"kubernetes.pod.filesystem.available\", pvc_name=\"*\" and cluster=\"K8S_CLUSTER_NAME\"))) / mmax(5m, align(1m, ts(\"kubernetes.pod.filesystem.limit\", pvc_name=\"*\" and cluster=\"K8S_CLUSTER_NAME\"))) * 100) <= 5"
+  },
+  "displayExpression": "${Display Condition}",
+  "minutes": 15,
+  "resolveAfterMinutes": 2,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+     "dashboardId": "integration-kubernetes-workloads",
+     "parameters": {
+       "constants": {
+         "cluster": "K8S_CLUSTER_NAME"
+       }
+     }
+    }
+  ]
+}
