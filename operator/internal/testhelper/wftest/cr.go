@@ -14,7 +14,7 @@ func CR(options ...CROption) *wf.Wavefront {
 			Namespace: DefaultNamespace,
 		},
 		Spec: wf.WavefrontSpec{
-			ClusterName:          "testClusterName",
+			ClusterName:          DefaultClusterName,
 			WavefrontUrl:         "testWavefrontUrl",
 			WavefrontTokenSecret: "testToken",
 			Namespace:            DefaultNamespace,

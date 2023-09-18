@@ -27,6 +27,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -115,18 +116,41 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if errors.IsNotFound(err) {
+		// create all components readAndDeleteResources
 		_ = r.readAndDeleteResources()
 		return ctrl.Result{}, nil
 	}
 
-	validationResult := r.preprocessAndValidate(wavefront, ctx)
+	components := r.createComponents(wavefront.Spec)
+	//add call to components preprocessAndValidate
+	var validationResult validation.Result
+	for _, component := range components {
+		validationResult = component.PreprocessAndValidate()
+		if validationResult.IsError() {
+			break
+		}
+	}
+	if validationResult.IsValid() {
+		validationResult = r.preprocessAndValidate(wavefront, ctx)
+	}
 
 	if !validationResult.IsError() {
+		//add call to components readAndCreateResources
+		for _, component := range components {
+			err = component.ReadAndCreatResources()
+			if err != nil {
+				return errorCRTLResult(err)
+			}
+		}
 		err = r.readAndCreateResources(wavefront.Spec)
 		if err != nil {
 			return errorCRTLResult(err)
 		}
 	} else {
+		//add call to components readAndDeleteResources
+		for _, component := range components {
+			_ = component.ReadAndDeleteResources()
+		}
 		_ = r.readAndDeleteResources()
 	}
 	wavefrontStatus, err := r.reportHealthStatus(ctx, wavefront, validationResult)
@@ -483,4 +507,8 @@ func (r *WavefrontReconciler) reportMetrics(sendStatusMetrics bool, clusterName 
 
 func errorCRTLResult(err error) (ctrl.Result, error) {
 	return ctrl.Result{}, err
+}
+
+func (r *WavefrontReconciler) createComponents(wfSpec wf.WavefrontSpec) []components.Component {
+	return make([]components.Component, 0)
 }
