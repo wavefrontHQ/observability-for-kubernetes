@@ -1,5 +1,5 @@
 {
-  "name": "PVC Overutilization",
+  "name": "Persistent Volume Claim Overutilization",
   "alertType": "THRESHOLD",
   "alertSources": [
     {
@@ -22,8 +22,8 @@
     "severe": "round(mmin(5m, align(1m, ts(\"kubernetes.pod.filesystem.available\", pvc_name=\"*\" and cluster=\"K8S_CLUSTER_NAME\"))) / mmax(5m, align(1m, ts(\"kubernetes.pod.filesystem.limit\", pvc_name=\"*\" and cluster=\"K8S_CLUSTER_NAME\"))) * 100) <= 5"
   },
   "displayExpression": "${Display Condition}",
-  "minutes": 15,
-  "resolveAfterMinutes": 2,
+  "minutes": 5,
+  "resolveAfterMinutes": 5,
   "tags": {
     "customerTags": [
       "integration.kubernetes"

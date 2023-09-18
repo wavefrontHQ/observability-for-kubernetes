@@ -147,7 +147,7 @@ We have templates for common scenarios. See the comments in each file for usage 
 
 You can see all configuration options in the [wavefront-full-config.yaml](deploy/scenarios/wavefront-full-config.yaml).
 
-# Creating Alerts
+## Creating Alerts
 
 We have alerts on common Kubernetes issues. For details on creating alerts, see [alerts.md](docs/alerts/alerts.md).
 
@@ -162,7 +162,12 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Pod Out-of-memory Kills](docs/alerts/templates/pod-out-of-memory-kills.json.tmpl) | Workload has pod with container status `OOMKilled`. |
 | [Container CPU Throttling](docs/alerts/templates/container-cpu-throttling.json.tmpl) | Workload has a container with high CPU throttling. |
 | [Container CPU Overutilization](docs/alerts/templates/container-cpu-overutilization.json.tmpl) | Workload has a container with high CPU utilization. |
-| [PVC Overutilization](docs/alerts/templates/pvc-overutilization.json.tmpl) | Available disk space for a PVC is below the threshold. |
+
+### Persistent Volume Failures
+
+| Alert name | Description |
+|---|---|
+| [Persistent Volume Claim Overutilization](docs/alerts/templates/persistent-volume-claim-overutilization.json.tmpl) | Workload has low available disk space for a claimed PersistentVolume. |
 
 ### Persistent Volume Failures
 
