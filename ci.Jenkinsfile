@@ -253,6 +253,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
+            GCP_CREDS = credentials("GCP_CREDS")
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
             GCP_ZONE="a"
@@ -283,7 +284,6 @@ pipeline {
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-1"
             GCP_ZONE="a"
-            // DOCKER_IMAGE = "kubernetes-collector" // ???
             INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
           }
           steps {
@@ -309,8 +309,7 @@ pipeline {
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-2"
             GCP_ZONE="a"
-            // DOCKER_IMAGE = "kubernetes-collector" // ???
-            INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
+            INTEGRATION_TEST_ARGS="-r common-metrics -r logging-integration -r allow-legacy-install"
           }
           steps {
             lock("integration-test-gke") {
@@ -335,8 +334,7 @@ pipeline {
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-3"
             GCP_ZONE="a"
-            // DOCKER_IMAGE = "kubernetes-collector" // ???
-            INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
+            INTEGRATION_TEST_ARGS="-r advanced -r with-http-proxy -r control-plane"
           }
           steps {
             lock("integration-test-gke") {
