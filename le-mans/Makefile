@@ -43,12 +43,10 @@ ensure-postgres: tmp/dbconfig
 	brew services | grep postgresql@14 | grep started || brew services start postgresql@14
 
 ensure-kafka: stop-kafka
-	docker run --detach --name zookeeper --env ALLOW_ANONYMOUS_LOGIN=yes docker.io/bitnami/zookeeper
-	docker run --name kafka --publish 9092:9092 --env ALLOW_PLAINTEXT_LISTENER=yes docker.io/bitnami/kafka
+	docker-compose up --detach
 
 stop-kafka:
-	docker rm --force zookeeper
-	docker rm --force kafka
+	docker-compose down
 
 start-resource-verticle: ensure-postgres le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar
 	java -jar le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar \

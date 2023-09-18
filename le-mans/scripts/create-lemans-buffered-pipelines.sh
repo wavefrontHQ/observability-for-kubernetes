@@ -46,7 +46,7 @@ cat <<-JSON >"$consumer_receiver_starter_json_file"
 }
 JSON
 
-curl --location --fail-with-body --request PATCH "http://$LEMANS_RESOURCE_SERVER/le-mans/v2/resources/receiver-starters/$STREAM_NAME-consumer" \
+curl --location --fail-with-body --request POST "http://$LEMANS_RESOURCE_SERVER/le-mans/v2/resources/receiver-starters" \
   --header "x-xenon-auth-token: $CSP_AUTH_TOKEN" \
   --header 'Content-Type: application/json' \
   --data @"$consumer_receiver_starter_json_file"
