@@ -4,11 +4,13 @@ This page contains the steps to create alerts for the Observability for Kubernet
 
 ## Table of Content
 
-- [Alert Templates](#alert-templates)
-- [Creating Alerts](#creating-alerts)
-- [Example: Creating All the Alerts](#example-creating-all-the-alerts)
-- [Example: Creating a Single Alert](#example-creating-a-single-alert)
-- [Customizing Alerts](#customizing-alerts)
+- [Alerts](#alerts)
+  - [Table of Content](#table-of-content)
+  - [Alert Templates](#alert-templates)
+  - [Creating Alerts](#creating-alerts)
+    - [Example: Creating All the Alerts](#example-creating-all-the-alerts)
+    - [Example: Creating a Single Alert](#example-creating-a-single-alert)
+  - [Customizing Alerts](#customizing-alerts)
 
 ## Alert Templates
 
@@ -25,6 +27,7 @@ We have alert templates on common Kubernetes issues.
 | [Detect container cpu overutilization](templates/container-cpu-overutilization.json.tmpl) | `container-cpu-overutilization.json.tmpl` |
 | [Detect persistent volumes with no claims](templates/persistent-volumes-no-claim.json.tmpl) | `persistent-volumes-no-claim.json.tmpl` |
 | [Detect persistent volumes with error](templates/persistent-volumes-error.json.tmpl) | `persistent-volumes-error.json.tmpl` |
+| [Detect persistent volumes filling up](templates/persistent-volume-claim-overutilization.json.tmpl) | `persistent-volume-claim-overutilization.json.tmpl` |
 
 ## Creating Alerts
 
