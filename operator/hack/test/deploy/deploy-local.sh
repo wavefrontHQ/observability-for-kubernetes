@@ -19,7 +19,7 @@ function main() {
 
   # Default
   local NS=observability-system
-  local WAVEFRONT_URL="https://nimba.wavefront.com"
+  local WAVEFRONT_URL='https://nimba.wavefront.com'
   local CONFIG_CLUSTER_NAME
   CONFIG_CLUSTER_NAME=$(create_cluster_name)
 
