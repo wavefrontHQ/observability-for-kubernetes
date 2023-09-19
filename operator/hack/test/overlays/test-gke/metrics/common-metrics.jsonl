@@ -1,6 +1,6 @@
-{"Name":"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter","Value":"","Timestamp":"","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","~source":"gke-*"},"Buckets":null}
-{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Value":"","Timestamp":"","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","~source":"gke-*"},"Buckets":null}
-{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Value":"","Timestamp":"","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","~source":"gke-*"},"Buckets":null}
+{"Name":"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter","Value":"","Timestamp":"","Tags":{"~source":"gke-*"},"Buckets":null}
+{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Value":"","Timestamp":"","Tags":{"~source":"gke-*"},"Buckets":null}
+{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Value":"","Timestamp":"","Tags":{"~source":"gke-*"},"Buckets":null}
 {"Name":"kubernetes.controlplane.apiserver.storage.objects.gauge","Tags":{"cluster":"","resource":"","source":""}}
 {"Name":"kubernetes.controlplane.apiserver.storage.db.total.size.in.bytes.gauge","Tags":{"cluster":"","endpoint":"","source":""}}
 ~{"Name":"kubernetes.controlplane.coredns.dns.request.duration.seconds","Tags":{"cluster":"","source":""}}

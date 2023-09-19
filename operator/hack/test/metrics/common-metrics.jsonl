@@ -1,9 +1,9 @@
-~{"Name":"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter","Value":"","Timestamp":"","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","~source":"wavefront-node-collector-*"},"Buckets":null}
-~{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Value":"","Timestamp":"","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","~source":"wavefront-node-collector-*"},"Buckets":null}
-~{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Value":"","Timestamp":"","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","~source":"wavefront-node-collector-*"},"Buckets":null}
-~{"Name":"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter","Value":"","Timestamp":"","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","~source":"wavefront-cluster-collector-*"},"Buckets":null}
-~{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Value":"","Timestamp":"","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","~source":"wavefront-cluster-collector-*"},"Buckets":null}
-~{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Value":"","Timestamp":"","Tags":{"cluster":"","container":"","id":"","image":"","name":"","namespace":"","pod":"","~source":"wavefront-cluster-collector-*"},"Buckets":null}
+~{"Name":"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter","Value":"","Timestamp":"","Tags":{"~source":"wavefront-node-collector-*"},"Buckets":null}
+~{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Value":"","Timestamp":"","Tags":{"~source":"wavefront-node-collector-*"},"Buckets":null}
+~{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Value":"","Timestamp":"","Tags":{"~source":"wavefront-node-collector-*"},"Buckets":null}
+~{"Name":"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter","Value":"","Timestamp":"","Tags":{"~source":"wavefront-cluster-collector-*"},"Buckets":null}
+~{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.seconds.total.counter","Value":"","Timestamp":"","Tags":{"~source":"wavefront-cluster-collector-*"},"Buckets":null}
+~{"Name":"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter","Value":"","Timestamp":"","Tags":{"~source":"wavefront-cluster-collector-*"},"Buckets":null}
 {"Name":"kubernetes.cluster.cpu.limit","Tags":{"cluster":"","source":"","type":"cluster"}}
 {"Name":"kubernetes.cluster.cpu.request","Tags":{"cluster":"","source":"","type":"cluster"}}
 {"Name":"kubernetes.cluster.memory.limit","Tags":{"cluster":"","source":"","type":"cluster"}}
