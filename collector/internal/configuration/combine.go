@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"math"
 	"net/url"
 	"reflect"
 	"sort"
@@ -12,10 +13,19 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
+var Empty = &Config{
+	FlushInterval:             time.Duration(math.MaxInt64),
+	DefaultCollectionInterval: time.Duration(math.MaxInt64),
+	SinkExportDataTimeout:     time.Duration(math.MinInt64),
+	DiscoveryConfig: discovery.Config{
+		DiscoveryInterval: time.Duration(math.MaxInt64),
+	},
+}
+
 func Combine(a, b *Config) *Config {
 	return &Config{
-		FlushInterval:             combineFlushIntervals(a.FlushInterval, b.FlushInterval),
-		DefaultCollectionInterval: max(a.DefaultCollectionInterval, b.DefaultCollectionInterval),
+		FlushInterval:             combineRecurringIntervals(a.FlushInterval, b.FlushInterval),
+		DefaultCollectionInterval: combineRecurringIntervals(a.DefaultCollectionInterval, b.DefaultCollectionInterval),
 		SinkExportDataTimeout:     max(a.SinkExportDataTimeout, b.SinkExportDataTimeout),
 		EnableDiscovery:           a.EnableDiscovery || b.EnableDiscovery,
 		EnableEvents:              a.EnableEvents || b.EnableEvents,
@@ -29,19 +39,13 @@ func Combine(a, b *Config) *Config {
 	}
 }
 
-func combineFlushIntervals(a, b time.Duration) time.Duration {
-	if a == 0 {
-		return b
-	}
-	if b == 0 {
-		return a
-	}
+func combineRecurringIntervals(a, b time.Duration) time.Duration {
 	return min(a, b)
 }
 
 func combineDiscoveryConfig(a, b discovery.Config) discovery.Config {
 	return discovery.Config{
-		DiscoveryInterval:          max(a.DiscoveryInterval, b.DiscoveryInterval),
+		DiscoveryInterval:          min(a.DiscoveryInterval, b.DiscoveryInterval),
 		AnnotationPrefix:           max(a.AnnotationPrefix, b.AnnotationPrefix),
 		AnnotationExcludes:         combineSelectorSets(a.AnnotationExcludes, b.AnnotationExcludes),
 		EnableRuntimePlugins:       a.EnableRuntimePlugins || b.EnableRuntimePlugins,
@@ -52,9 +56,14 @@ func combineDiscoveryConfig(a, b discovery.Config) discovery.Config {
 	}
 }
 
-var combineDiscoveryPrometheusConfig = combineSets[discovery.PrometheusConfig](func(a, b discovery.PrometheusConfig) bool {
-	return a.Name == b.Name
-})
+var combineDiscoveryPrometheusConfig = combineSets[discovery.PrometheusConfig](
+	func(a, b discovery.PrometheusConfig) bool {
+		return a.Name < b.Name
+	},
+	func(a, b discovery.PrometheusConfig) bool {
+		return a.Name == b.Name
+	},
+)
 
 func combineDiscoveryGlobalConfig(a discovery.GlobalConfig, b discovery.GlobalConfig) discovery.GlobalConfig {
 	return discovery.GlobalConfig{
@@ -62,17 +71,22 @@ func combineDiscoveryGlobalConfig(a discovery.GlobalConfig, b discovery.GlobalCo
 	}
 }
 
-var combinePluginConfigSets = combineSets[discovery.PluginConfig](func(a, b discovery.PluginConfig) bool {
-	return a.Name == b.Name
-})
+var combinePluginConfigSets = combineSets[discovery.PluginConfig](
+	func(a, b discovery.PluginConfig) bool {
+		return a.Name < b.Name
+	},
+	func(a, b discovery.PluginConfig) bool {
+		return a.Name == b.Name
+	},
+)
 
-func combineSets[T any](equal func(T, T) bool) func([]T, []T) []T {
-	return combineSetsWithCombinableElements(equal, func(a, b T) T {
+func combineSets[T any](less func(T, T) bool, equal func(T, T) bool) func([]T, []T) []T {
+	return combineSetsWithCombinableElements(less, equal, func(a, b T) T {
 		return a
 	})
 }
 
-func combineSetsWithCombinableElements[T any](equal func(T, T) bool, combineElement func(T, T) T) func([]T, []T) []T {
+func combineSetsWithCombinableElements[T any](less func(T, T) bool, equal func(T, T) bool, combineElement func(T, T) T) func([]T, []T) []T {
 	return func(a, b []T) []T {
 		var c []T
 		if len(a) > 0 {
@@ -92,6 +106,9 @@ func combineSetsWithCombinableElements[T any](equal func(T, T) bool, combineElem
 				c = append(c, bElem)
 			}
 		}
+		sort.Slice(c, func(i, j int) bool {
+			return less(c[i], c[j])
+		})
 		return c
 	}
 }
@@ -100,11 +117,61 @@ func deepEq[T any](a, b T) bool {
 	return reflect.DeepEqual(a, b)
 }
 
-var combineSelectorSets = combineSets[discovery.Selectors](deepEq[discovery.Selectors])
+func setIsLess[T constraints.Ordered](a, b []T) bool {
+	aCopy := make([]T, len(a))
+	copy(aCopy, a)
+	sort.Slice(aCopy, func(i, j int) bool {
+		return aCopy[i] < aCopy[j]
+	})
+	bCopy := make([]T, len(b))
+	copy(bCopy, b)
+	sort.Slice(bCopy, func(i, j int) bool {
+		return bCopy[i] < bCopy[j]
+	})
+	for i := 0; i < min(len(a), len(b)); i++ {
+		if a[i] >= b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func labelsMapIsLess(a, b map[string][]string) bool {
+	oneIsStrictlyLess := false
+	for k := range a {
+		if setIsLess(b[k], a[k]) {
+			return false
+		}
+		if setIsLess(a[k], b[k]) {
+			oneIsStrictlyLess = true
+		}
+	}
+	for k := range b {
+		if setIsLess(b[k], a[k]) {
+			return false
+		}
+		if setIsLess(a[k], b[k]) {
+			oneIsStrictlyLess = true
+		}
+	}
+	return oneIsStrictlyLess
+}
+
+var combineSelectorSets = combineSets[discovery.Selectors](
+	func(a, b discovery.Selectors) bool {
+		return a.ResourceType < b.ResourceType &&
+			setIsLess(a.Images, b.Images) &&
+			labelsMapIsLess(a.Labels, b.Labels) &&
+			setIsLess(a.Namespaces, b.Namespaces)
+	},
+	deepEq[discovery.Selectors],
+)
 
 func combineEventsConfig(a, b EventsConfig) EventsConfig {
 	return EventsConfig{
-		Filters: combineEventsFilter(a.Filters, b.Filters),
+		Filters:     combineEventsFilter(a.Filters, b.Filters),
+		ClusterName: max(a.ClusterName, b.ClusterName),
+		ClusterUUID: max(a.ClusterUUID, b.ClusterUUID),
 	}
 }
 
@@ -159,9 +226,68 @@ func combineSystemdConfigs(a, b SystemdSourceConfig) SystemdSourceConfig {
 	}
 }
 
-var combineTelegrafConfigSets = combineSetsWithCombinableElements[*TelegrafSourceConfig](func(a, b *TelegrafSourceConfig) bool {
-	return false
-}, combineTelegrafConfigs)
+func tagsIsLess(a, b map[string]string) bool {
+	oneStrictlyLess := false
+	for k := range a {
+		if a[k] > b[k] {
+			return false
+		}
+		if a[k] < b[k] {
+			oneStrictlyLess = true
+		}
+	}
+	for k := range b {
+		if a[k] > b[k] {
+			return false
+		}
+		if a[k] < b[k] {
+			oneStrictlyLess = true
+		}
+	}
+	return oneStrictlyLess
+}
+
+func transformsIsLess(a, b Transforms) bool {
+	return a.Source < b.Source &&
+		a.Prefix < b.Prefix &&
+		tagsIsLess(a.Tags, b.Tags) &&
+		filterIsLess(a.Filters, b.Filters) &&
+		(!a.ConvertHistograms && b.ConvertHistograms)
+}
+
+func filterIsLess(a, b filter.Config) bool {
+	return setIsLess(a.MetricAllowList, b.MetricAllowList) &&
+		setIsLess(a.MetricDenyList, b.MetricDenyList) &&
+		labelsMapIsLess(a.MetricTagAllowList, b.MetricTagAllowList) &&
+		labelsMapIsLess(a.MetricTagDenyList, b.MetricTagDenyList) &&
+		setIsLess(a.TagInclude, b.TagInclude) &&
+		setIsLess(a.TagExclude, b.TagInclude) &&
+		setIsLess(a.TagGuaranteeList, b.TagGuaranteeList) &&
+		setIsLess(a.MetricWhitelist, b.MetricWhitelist) &&
+		setIsLess(a.MetricBlacklist, b.MetricBlacklist) &&
+		labelsMapIsLess(a.MetricTagWhitelist, b.MetricTagWhitelist) &&
+		labelsMapIsLess(a.MetricTagBlacklist, b.MetricTagBlacklist)
+}
+
+var combineTelegrafConfigSets = combineSetsWithCombinableElements[*TelegrafSourceConfig](
+	func(a, b *TelegrafSourceConfig) bool {
+		return transformsIsLess(a.Transforms, b.Transforms) &&
+			collectionConfigIsLess(a.Collection, b.Collection) &&
+			setIsLess(a.Plugins, b.Plugins) &&
+			a.Conf < b.Conf
+	},
+	func(a, b *TelegrafSourceConfig) bool {
+		return reflect.DeepEqual(a.Transforms, b.Transforms) &&
+			reflect.DeepEqual(a.Collection, b.Collection) &&
+			reflect.DeepEqual(a.Plugins, b.Plugins) &&
+			a.Conf == b.Conf
+	},
+	combineTelegrafConfigs,
+)
+
+func collectionConfigIsLess(a, b CollectionConfig) bool {
+	return a.Interval < b.Interval && a.Timeout < b.Timeout
+}
 
 func combineTelegrafConfigs(a, b *TelegrafSourceConfig) *TelegrafSourceConfig {
 	return &TelegrafSourceConfig{
@@ -172,17 +298,25 @@ func combineTelegrafConfigs(a, b *TelegrafSourceConfig) *TelegrafSourceConfig {
 	}
 }
 
-var combinePrometheusConfigSets = combineSetsWithCombinableElements[*PrometheusSourceConfig](func(a, b *PrometheusSourceConfig) bool {
-	return a.URL == b.URL
-}, combinePrometheusSourceConfigs)
+var combinePrometheusConfigSets = combineSetsWithCombinableElements[*PrometheusSourceConfig](
+	func(a, b *PrometheusSourceConfig) bool {
+		return a.URL < b.URL
+	},
+	func(a, b *PrometheusSourceConfig) bool {
+		return a.URL == b.URL
+	},
+	combinePrometheusSourceConfigs,
+)
 
 func combinePrometheusSourceConfigs(a, b *PrometheusSourceConfig) *PrometheusSourceConfig {
 	return &PrometheusSourceConfig{
-		Transforms:       combineTransforms(a.Transforms, b.Transforms),
-		Collection:       combineCollectionConfig(a.Collection, b.Collection),
-		URL:              max(a.URL, b.URL),
-		HTTPClientConfig: combineHTTPClientConfig(a.HTTPClientConfig, b.HTTPClientConfig),
-		Name:             max(a.Name, b.Name),
+		Transforms:        combineTransforms(a.Transforms, b.Transforms),
+		Collection:        combineCollectionConfig(a.Collection, b.Collection),
+		URL:               max(a.URL, b.URL),
+		HTTPClientConfig:  combineHTTPClientConfig(a.HTTPClientConfig, b.HTTPClientConfig),
+		Name:              max(a.Name, b.Name),
+		Discovered:        max(a.Discovered, b.Discovered),
+		UseLeaderElection: a.UseLeaderElection || b.UseLeaderElection,
 	}
 }
 
@@ -269,26 +403,55 @@ func combineCollectionConfig(a, b CollectionConfig) CollectionConfig {
 	}
 }
 
-var combineSinks = combineSetsWithCombinableElements[*SinkConfig](func(a, b *SinkConfig) bool {
-	return a.Type == b.Type && a.EnableEvents == b.EnableEvents &&
-		a.Server == b.Server && a.Token == b.Token &&
-		a.ProxyAddress == b.ProxyAddress &&
-		a.ExternalEndpointURL == b.ExternalEndpointURL
-}, combineSinkConfig)
+func boolPtrIsLess(a, b *bool) bool {
+	if b == nil {
+		return false
+	}
+	if a == nil {
+		return true
+	}
+	return !*a && *b
+}
+
+var combineSinks = combineSetsWithCombinableElements[*SinkConfig](
+	func(a *SinkConfig, b *SinkConfig) bool {
+		return transformsIsLess(a.Transforms, b.Transforms) &&
+			a.Type < b.Type &&
+			boolPtrIsLess(a.EnableEvents, b.EnableEvents) &&
+			a.Server < b.Server &&
+			a.Token < b.Token &&
+			a.ProxyAddress < b.ProxyAddress &&
+			a.ExternalEndpointURL < b.ExternalEndpointURL
+	},
+	func(a, b *SinkConfig) bool {
+		return reflect.DeepEqual(a.Transforms, b.Transforms) &&
+			a.Type == b.Type &&
+			a.EnableEvents == b.EnableEvents &&
+			a.Server == b.Server &&
+			a.Token == b.Token &&
+			a.ProxyAddress == b.ProxyAddress &&
+			a.ExternalEndpointURL == b.ExternalEndpointURL
+	},
+	combineSinkConfig,
+)
 
 func combineSinkConfig(a, b *SinkConfig) *SinkConfig {
 	return &SinkConfig{
-		Type:                max(a.Type, b.Type),
-		EnableEvents:        combineBoolPtrs(a.EnableEvents, b.EnableEvents),
-		Server:              max(a.Server, b.Server),
-		Token:               max(a.Token, b.Token),
-		ProxyAddress:        max(a.ProxyAddress, b.ProxyAddress),
-		ExternalEndpointURL: max(a.ExternalEndpointURL, b.ExternalEndpointURL),
-		Transforms:          combineTransforms(a.Transforms, b.Transforms),
-		BatchSize:           max(a.BatchSize, b.BatchSize),
-		MaxBufferSize:       max(a.MaxBufferSize, b.MaxBufferSize),
-		TestMode:            a.TestMode || b.TestMode,
-		ErrorLogPercent:     max(a.ErrorLogPercent, b.ErrorLogPercent),
+		Type:                      max(a.Type, b.Type),
+		EnableEvents:              combineBoolPtrs(a.EnableEvents, b.EnableEvents),
+		Server:                    max(a.Server, b.Server),
+		Token:                     max(a.Token, b.Token),
+		ProxyAddress:              max(a.ProxyAddress, b.ProxyAddress),
+		ExternalEndpointURL:       max(a.ExternalEndpointURL, b.ExternalEndpointURL),
+		Transforms:                combineTransforms(a.Transforms, b.Transforms),
+		BatchSize:                 max(a.BatchSize, b.BatchSize),
+		MaxBufferSize:             max(a.MaxBufferSize, b.MaxBufferSize),
+		TestMode:                  a.TestMode || b.TestMode,
+		ErrorLogPercent:           max(a.ErrorLogPercent, b.ErrorLogPercent),
+		ExternalEndpointAccessKey: max(a.ExternalEndpointAccessKey, b.ExternalEndpointAccessKey),
+		ClusterName:               max(a.ClusterName, b.ClusterName),
+		InternalStatsPrefix:       max(a.InternalStatsPrefix, b.InternalStatsPrefix),
+		HeartbeatInterval:         min(a.HeartbeatInterval, b.HeartbeatInterval),
 	}
 }
 
@@ -307,7 +470,7 @@ func defaultBoolPtr(a *bool) bool {
 func combineTransforms(a, b Transforms) Transforms {
 	return Transforms{
 		Source:            max(a.Source, b.Source),
-		Prefix:            max(a.Source, b.Source),
+		Prefix:            max(a.Prefix, b.Prefix),
 		Tags:              combineTags(a.Tags, b.Tags),
 		Filters:           combineFilterConfig(a.Filters, b.Filters),
 		ConvertHistograms: a.ConvertHistograms || b.ConvertHistograms,
@@ -330,9 +493,12 @@ func combineFilterConfig(a, b filter.Config) filter.Config {
 	}
 }
 
-var combineTagSetLists = combineSets[map[string][]string](func(a, b map[string][]string) bool {
-	return reflect.DeepEqual(a, b)
-})
+var combineTagSetLists = combineSets[map[string][]string](
+	labelsMapIsLess,
+	func(a, b map[string][]string) bool {
+		return reflect.DeepEqual(a, b)
+	},
+)
 
 var combineTags = combineMaps[string, string](max[string])
 var combineTagSets = combineMaps[string, []string](combineStringSet)
@@ -353,23 +519,12 @@ func combineMaps[K comparable, V any](combineValue func(V, V) V) func(a, b map[K
 	}
 }
 
-func combineStringSet(a, b []string) []string {
-	var c []string
-	if len(a) > 0 {
-		c = make([]string, len(a))
-		copy(c, a)
-	}
-	sort.Strings(c)
-	for _, tag := range b {
-		i := sort.SearchStrings(c, tag)
-		if i < len(c) && c[i] == tag {
-			continue
-		}
-		c = append(c, tag)
-		sort.Strings(c)
-	}
-	return c
-}
+var combineStringSet = combineSets[string](
+	func(a string, b string) bool {
+		return a < b
+	},
+	deepEq[string],
+)
 
 func max[T constraints.Ordered](a, b T) T {
 	if a >= b {
