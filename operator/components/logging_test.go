@@ -32,13 +32,12 @@ func TestProcessAndValidate(t *testing.T) {
 }
 
 func TestResources(t *testing.T) {
-	t.Run("component config is not valid", func(t *testing.T) {
-		config := LoggingComponentConfig{}
-		loggingComponent := NewLoggingComponent(config, os.DirFS(DeployDir))
+	t.Run("default configuration", func(t *testing.T) {
+		loggingComponent := NewLoggingComponent(validLoggingComponentConfig(), os.DirFS(DeployDir))
 		toApply, toDelete, err := loggingComponent.Resources()
 		require.Nil(t, err)
 		require.NotEmpty(t, toApply)
-		require.NotEmpty(t, toDelete)
+		require.Empty(t, toDelete)
 	})
 
 }
