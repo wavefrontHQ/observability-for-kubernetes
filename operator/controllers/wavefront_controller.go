@@ -77,6 +77,8 @@ type WavefrontReconciler struct {
 	Versions          Versions
 	namespace         string
 	ClusterUUID       string
+
+	AllComponents map[components.Component]bool
 }
 
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts,verbs=get;list;watch;create;update;patch;delete
@@ -121,19 +123,21 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	enabledComponents := r.createComponents(wavefront.Spec)
 	//add call to components preprocessAndValidate
 	var validationResult validation.Result
-	for _, component := range enabledComponents {
-		validationResult = component.PreprocessAndValidate()
-		if validationResult.IsError() {
-			break
-		}
-	}
 	if validationResult.IsValid() {
 		validationResult = r.preprocessAndValidate(wavefront, ctx)
 	}
 
+	r.createComponents(wavefront.Spec)
+	for component, enable := range r.AllComponents {
+		if enable {
+			validationResult = component.PreprocessAndValidate()
+			if validationResult.IsError() {
+				break
+			}
+		}
+	}
 	if !validationResult.IsError() {
 		//add call to components readAndCreateResources
 		//for _, component := range components {
@@ -278,6 +282,13 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 			resourcesToDelete = append(resourcesToDelete, resource)
 		}
 	}
+	for component, enable := range r.AllComponents {
+		if enable {
+			toApply, toDelete, _ := component.Resources()
+			resourcesToApply = append(resourcesToApply, toApply...)
+			resourcesToDelete = append(resourcesToDelete, toDelete...)
+		}
+	}
 	return resourcesToApply, resourcesToDelete, nil
 }
 
@@ -291,9 +302,9 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		dirsToInclude = append(dirsToInclude, "collector")
 	}
 
-	if spec.CanExportData && spec.DataCollection.Logging.Enable {
-		dirsToInclude = append(dirsToInclude, "logging")
-	}
+	//if spec.CanExportData && spec.DataCollection.Logging.Enable {
+	//	dirsToInclude = append(dirsToInclude, "logging")
+	//}
 
 	if spec.Experimental.Autotracing.Enable || spec.Experimental.Hub.Pixie.Enable {
 		dirsToInclude = append(dirsToInclude, "pixie")
@@ -509,6 +520,24 @@ func errorCRTLResult(err error) (ctrl.Result, error) {
 	return ctrl.Result{}, err
 }
 
-func (r *WavefrontReconciler) createComponents(wfSpec wf.WavefrontSpec) []components.Component {
-	return make([]components.Component, 0)
+func (r *WavefrontReconciler) createComponents(wfSpec wf.WavefrontSpec) {
+	comps := make(map[components.Component]bool)
+	config := components.LoggingComponentConfig{
+		ClusterName:            wfSpec.ClusterName,
+		Namespace:              wfSpec.Namespace,
+		LoggingVersion:         wfSpec.DataCollection.Logging.LoggingVersion,
+		ImageRegistry:          wfSpec.ImageRegistry,
+		ProxyAddress:           wfSpec.DataCollection.Logging.ProxyAddress,
+		ProxyAvailableReplicas: wfSpec.DataExport.WavefrontProxy.AvailableReplicas,
+		Tolerations:            wfSpec.DataCollection.Tolerations,
+		Resources:              wfSpec.DataCollection.Logging.Resources,
+		TagAllowList:           wfSpec.DataCollection.Logging.Filters.TagAllowList,
+		TagDenyList:            wfSpec.DataCollection.Logging.Filters.TagDenyList,
+		Tags:                   wfSpec.DataCollection.Logging.Tags,
+	}
+
+	loggingComponent := components.NewLoggingComponent(config, os.DirFS(components.DeployDir))
+
+	comps[&loggingComponent] = wfSpec.DataCollection.Logging.Enable
+	r.AllComponents = comps
 }

@@ -26,7 +26,8 @@ func CR(options ...CROption) *wf.Wavefront {
 					},
 				},
 				Logging: wf.Logging{
-					Enable: true,
+					Enable:         true,
+					LoggingVersion: "2.1.6",
 				},
 			},
 			DataExport: wf.DataExport{
