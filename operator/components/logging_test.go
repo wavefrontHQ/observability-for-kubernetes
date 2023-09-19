@@ -1,6 +1,7 @@
 package components
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,24 +11,36 @@ import (
 func TestProcessAndValidate(t *testing.T) {
 	t.Run("component config is not valid", func(t *testing.T) {
 		config := LoggingComponentConfig{}
-		loggingComponent := NewLoggingComponent(config)
+		loggingComponent := NewLoggingComponent(config, os.DirFS(DeployDir))
 		result := loggingComponent.PreprocessAndValidate()
 		require.False(t, result.IsValid())
 	})
 
 	t.Run("create config hash", func(t *testing.T) {
 		config := validLoggingComponentConfig()
-		loggingComponent := NewLoggingComponent(config)
+		loggingComponent := NewLoggingComponent(config, os.DirFS(DeployDir))
 		_ = loggingComponent.PreprocessAndValidate()
 		require.NotEmpty(t, loggingComponent.Config.ConfigHash)
 	})
 
 	t.Run("component config is valid", func(t *testing.T) {
 		config := validLoggingComponentConfig()
-		loggingComponent := NewLoggingComponent(config)
+		loggingComponent := NewLoggingComponent(config, os.DirFS(DeployDir))
 		result := loggingComponent.PreprocessAndValidate()
 		require.True(t, result.IsValid())
 	})
+}
+
+func TestResources(t *testing.T) {
+	t.Run("component config is not valid", func(t *testing.T) {
+		config := LoggingComponentConfig{}
+		loggingComponent := NewLoggingComponent(config, os.DirFS(DeployDir))
+		toApply, toDelete, err := loggingComponent.Resources()
+		require.Nil(t, err)
+		require.NotEmpty(t, toApply)
+		require.NotEmpty(t, toDelete)
+	})
+
 }
 
 func validLoggingComponentConfig() LoggingComponentConfig {

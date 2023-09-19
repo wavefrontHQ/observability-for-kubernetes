@@ -121,10 +121,10 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	components := r.createComponents(wavefront.Spec)
+	enabledComponents := r.createComponents(wavefront.Spec)
 	//add call to components preprocessAndValidate
 	var validationResult validation.Result
-	for _, component := range components {
+	for _, component := range enabledComponents {
 		validationResult = component.PreprocessAndValidate()
 		if validationResult.IsError() {
 			break
@@ -136,21 +136,21 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	if !validationResult.IsError() {
 		//add call to components readAndCreateResources
-		for _, component := range components {
-			err = component.ReadAndCreatResources()
-			if err != nil {
-				return errorCRTLResult(err)
-			}
-		}
+		//for _, component := range components {
+		//	err = component.ReadAndCreatResources()
+		//	if err != nil {
+		//		return errorCRTLResult(err)
+		//	}
+		//}
 		err = r.readAndCreateResources(wavefront.Spec)
 		if err != nil {
 			return errorCRTLResult(err)
 		}
 	} else {
 		//add call to components readAndDeleteResources
-		for _, component := range components {
-			_ = component.ReadAndDeleteResources()
-		}
+		//for _, component := range components {
+		//	_ = component.ReadAndDeleteResources()
+		//}
 		_ = r.readAndDeleteResources()
 	}
 	wavefrontStatus, err := r.reportHealthStatus(ctx, wavefront, validationResult)
