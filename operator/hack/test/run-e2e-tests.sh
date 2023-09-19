@@ -560,11 +560,11 @@ function print_usage_and_exit() {
   echo -e "\t-t wavefront token (required)"
   echo -e "\t-c wavefront instance name (default: 'nimba')"
   echo -e "\t-v operator version (default: load from 'release/OPERATOR_VERSION')"
-  echo -e "\t-n config cluster name for metric grouping (default: \$(whoami)-<default version from file>-release-test)"
+  echo -e "\t-n k8s cluster name (default: '$(create_cluster_name)')"
   echo -e "\t-r tests to run (runs all by default)"
   echo -e "\t-d namespace to create CR in (default: observability-system)"
   echo -e "\t-e no cl[e]anup after test to debug testing framework"
-  echo -e "\t-y operator YAML content command (default: 'cat \"\${OPERATOR_REPO_ROOT}/build/operator/wavefront-operator.yaml\")"
+  echo -e "\t-y operator YAML content command (default: '${OPERATOR_REPO_ROOT}/build/operator/wavefront-operator.yaml')"
   echo -e "\t\t example usage: -y 'curl https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/rc/operator/wavefront-operator-PR-116.yaml'"
   exit 1
 }
