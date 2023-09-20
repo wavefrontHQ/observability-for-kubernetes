@@ -226,6 +226,8 @@ function main() {
     exit_on_fail wait_for_query_non_zero "at(%22end%22%2C%202m%2C%20ts(ts(~proxy.logs.*.received.bytes%2C%20source%3D%22${LOGGING_TEST_PROXY_NAME}%22))"
   fi
 
+#  TODO I think we should move these tests to a separate test file and keep this script light
+
   if [[ -f "${EXTRA_TESTS}" ]]; then
     source "${EXTRA_TESTS}"
   else
