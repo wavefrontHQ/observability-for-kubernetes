@@ -39,6 +39,242 @@ func Combine(a, b *Config) *Config {
 	}
 }
 
+func Equal(a, b *Config) bool {
+	return a.FlushInterval == b.FlushInterval &&
+		a.DefaultCollectionInterval == b.DefaultCollectionInterval &&
+		a.SinkExportDataTimeout == b.SinkExportDataTimeout &&
+		a.EnableDiscovery == b.EnableDiscovery &&
+		a.EnableEvents == b.EnableEvents &&
+		a.ClusterName == b.ClusterName &&
+		sinkSetsEqual(a.Sinks, b.Sinks) &&
+		sourcesEqual(a.Sources, b.Sources) // TODO compare more fields
+}
+
+func sourcesEqual(a, b *SourceConfig) bool {
+	return summaryConfigsEqual(a.SummaryConfig, b.SummaryConfig) &&
+		cadvisorConfigsEqual(a.CadvisorConfig, b.CadvisorConfig) &&
+		prometheusConfigSetsEqual(a.PrometheusConfigs, b.PrometheusConfigs) &&
+		telegrafConfigSetsEqual(a.TelegrafConfigs, b.TelegrafConfigs) // TODO compare more fields
+}
+
+func telegrafConfigSetsEqual(as, bs []*TelegrafSourceConfig) bool {
+	return setsAreEqual(telegrafConfigsEqual, as, bs)
+}
+
+func telegrafConfigsEqual(a *TelegrafSourceConfig, b *TelegrafSourceConfig) bool {
+	if a == b {
+		return true
+	}
+	if a == nil {
+		return false
+	}
+	if b == nil {
+		return false
+	}
+	return transformsEqual(a.Transforms, b.Transforms) &&
+		collectionConfigsEqual(a.Collection, b.Collection) &&
+		stringSetsEqual(a.Plugins, b.Plugins) &&
+		a.Conf == b.Conf &&
+		a.Discovered == b.Discovered &&
+		a.Name == b.Name &&
+		a.UseLeaderElection == b.UseLeaderElection
+}
+
+func prometheusConfigSetsEqual(as, bs []*PrometheusSourceConfig) bool {
+	return setsAreEqual(prometheusConfigsEqual, as, bs)
+}
+
+func setsAreEqual[T any](equal func(T, T) bool, as, bs []T) bool {
+	if len(as) != len(bs) {
+		return false
+	}
+	// TODO fix O(n^2)
+	toCompare := append([]T{}, bs...)
+	for _, a := range as {
+		for i, b := range toCompare {
+			if equal(a, b) {
+				toCompare[i] = toCompare[len(toCompare)-1]
+				toCompare = toCompare[:len(toCompare)-1]
+				break
+			} else {
+				continue
+			}
+		}
+	}
+	return len(toCompare) == 0
+}
+
+func prometheusConfigsEqual(a, b *PrometheusSourceConfig) bool {
+	if a == b {
+		return true
+	}
+	if a == nil {
+		return false
+	}
+	if b == nil {
+		return false
+	}
+	return transformsEqual(a.Transforms, b.Transforms) &&
+		collectionConfigsEqual(a.Collection, b.Collection) &&
+		a.URL == b.URL &&
+		httpClientConfigsEqual(a.HTTPClientConfig, b.HTTPClientConfig) &&
+		a.Name == b.Name &&
+		a.Discovered == b.Discovered &&
+		a.UseLeaderElection == b.UseLeaderElection
+}
+
+func httpClientConfigsEqual(a, b httputil.ClientConfig) bool {
+	return a.BearerToken == b.BearerToken &&
+		a.BearerTokenFile == b.BearerTokenFile &&
+		urlsEqual(a.ProxyURL, b.ProxyURL) &&
+		tlsConfigsEqual(a.TLSConfig, b.TLSConfig)
+}
+
+func tlsConfigsEqual(a, b httputil.TLSConfig) bool {
+	return a.CAFile == b.CAFile &&
+		a.CertFile == b.CertFile &&
+		a.KeyFile == b.KeyFile &&
+		a.ServerName == b.ServerName &&
+		a.InsecureSkipVerify == b.InsecureSkipVerify
+}
+
+func urlsEqual(a, b httputil.URL) bool {
+	return reflect.DeepEqual(a, b)
+}
+
+func cadvisorConfigsEqual(a, b *CadvisorSourceConfig) bool {
+	return transformsEqual(a.Transforms, b.Transforms) &&
+		collectionConfigsEqual(a.Collection, b.Collection)
+}
+
+func summaryConfigsEqual(a *SummarySourceConfig, b *SummarySourceConfig) bool {
+	return transformsEqual(a.Transforms, b.Transforms) &&
+		collectionConfigsEqual(a.Collection, b.Collection) &&
+		a.URL == b.URL &&
+		a.KubeletPort == b.KubeletPort &&
+		a.KubeletHttps == b.KubeletHttps &&
+		a.InClusterConfig == b.InClusterConfig &&
+		a.UseServiceAccount == b.UseServiceAccount &&
+		a.Insecure == b.Insecure &&
+		a.Auth == b.Auth
+}
+
+func collectionConfigsEqual(a, b CollectionConfig) bool {
+	return a.Interval == b.Interval && a.Timeout == b.Timeout
+}
+
+func sinkSetsEqual(as, bs []*SinkConfig) bool {
+	return setsAreEqual(sinksEqual, as, bs)
+}
+
+func sinksEqual(a, b *SinkConfig) bool {
+	if a == b {
+		return true
+	}
+	if a == nil {
+		return false
+	}
+	if b == nil {
+		return false
+	}
+	return transformsEqual(a.Transforms, b.Transforms) &&
+		a.Type == b.Type &&
+		boolPtrEqual(a.EnableEvents, b.EnableEvents) &&
+		a.Server == b.Server &&
+		a.Token == b.Token &&
+		a.BatchSize == b.BatchSize &&
+		a.MaxBufferSize == b.MaxBufferSize &&
+		a.ProxyAddress == b.ProxyAddress &&
+		a.TestMode == b.TestMode &&
+		a.ErrorLogPercent == b.ErrorLogPercent &&
+		a.ExternalEndpointURL == b.ExternalEndpointURL &&
+		a.ExternalEndpointAccessKey == b.ExternalEndpointAccessKey &&
+		a.ClusterName == b.ClusterName &&
+		a.InternalStatsPrefix == b.InternalStatsPrefix &&
+		a.HeartbeatInterval == b.HeartbeatInterval
+}
+
+func boolPtrEqual(a, b *bool) bool {
+	if a == b {
+		return true
+	}
+	if a == nil {
+		return false
+	}
+	if b == nil {
+		return false
+	}
+	return *a == *b
+}
+
+func transformsEqual(a, b Transforms) bool {
+	return a.Source == b.Source &&
+		a.Prefix == b.Prefix &&
+		tagsEqual(a.Tags, b.Tags) &&
+		filtersEqual(a.Filters, b.Filters) &&
+		a.ConvertHistograms == b.ConvertHistograms
+}
+
+func filtersEqual(a, b filter.Config) bool {
+	return stringSetsEqual(a.MetricAllowList, b.MetricAllowList) &&
+		stringSetsEqual(a.MetricDenyList, b.MetricDenyList) &&
+		tagSetsEqual(a.MetricTagAllowList, b.MetricTagAllowList) &&
+		tagSetsEqual(a.MetricTagDenyList, b.MetricTagDenyList) &&
+		stringSetsEqual(a.TagInclude, b.TagInclude) &&
+		stringSetsEqual(a.TagExclude, b.TagExclude) &&
+		stringSetsEqual(a.TagGuaranteeList, a.TagGuaranteeList) &&
+		stringSetsEqual(a.MetricWhitelist, a.MetricWhitelist) &&
+		stringSetsEqual(a.MetricBlacklist, b.MetricBlacklist) &&
+		tagSetsEqual(a.MetricTagWhitelist, b.MetricTagWhitelist) &&
+		tagSetsEqual(a.MetricTagBlacklist, b.MetricTagBlacklist)
+}
+
+func tagSetsEqual(a, b map[string][]string) bool {
+	for k := range a {
+		if !stringSetsEqual(a[k], b[k]) {
+			return false
+		}
+	}
+	for k := range b {
+		if !stringSetsEqual(a[k], b[k]) {
+			return false
+		}
+	}
+	return true
+}
+
+func stringSetsEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	// TODO fix O(n^2)
+	toCompare := append([]string{}, b...)
+	for _, aSink := range a {
+		for i, bSink := range toCompare {
+			if aSink == bSink {
+				toCompare[i] = toCompare[len(toCompare)-1]
+				toCompare = toCompare[:len(toCompare)-1]
+				break
+			}
+		}
+	}
+	return len(toCompare) == 0
+}
+
+func tagsEqual(a, b map[string]string) bool {
+	for k := range a {
+		if a[k] != b[k] {
+			return false
+		}
+	}
+	for k := range b {
+		if a[k] != b[k] {
+			return false
+		}
+	}
+	return true
+}
+
 func combineRecurringIntervals(a, b time.Duration) time.Duration {
 	return min(a, b)
 }

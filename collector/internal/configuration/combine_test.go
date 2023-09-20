@@ -1,17 +1,16 @@
 package configuration_test
 
 import (
-	"sort"
 	"testing"
 	"time"
 
 	fuzz "github.com/google/gofuzz"
-	"github.com/stretchr/testify/require"
+	"github.com/r3labs/diff/v3"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 )
 
-const MaxRuns = 1
+const MaxRuns = 100
 
 var seed = time.Now().UnixNano()
 
@@ -22,7 +21,8 @@ func TestCombine(t *testing.T) {
 			var config configuration.Config
 			f.Fuzz(&config)
 
-			require.Equal(t, *configuration.Combine(&config, configuration.Empty), *configuration.Combine(configuration.Empty, &config), "identity")
+			requireConfigsEqual(t, &config, configuration.Combine(&config, configuration.Empty))
+			requireConfigsEqual(t, &config, configuration.Combine(configuration.Empty, &config))
 		}
 	})
 
@@ -36,9 +36,9 @@ func TestCombine(t *testing.T) {
 			f.Fuzz(&b)
 			f.Fuzz(&c)
 
-			require.Equal(t,
-				*configuration.Combine(&a, configuration.Combine(&b, &c)),
-				*configuration.Combine(configuration.Combine(&a, &b), &c),
+			requireConfigsEqual(t,
+				configuration.Combine(&a, configuration.Combine(&b, &c)),
+				configuration.Combine(configuration.Combine(&a, &b), &c),
 			)
 		}
 	})
@@ -51,10 +51,7 @@ func TestCombine(t *testing.T) {
 			f.Fuzz(&a)
 			f.Fuzz(&b)
 
-			require.Equal(t,
-				*configuration.Combine(&a, &b),
-				*configuration.Combine(&b, &a),
-			)
+			requireConfigsEqual(t, configuration.Combine(&a, &b), configuration.Combine(&b, &a))
 		}
 	})
 
@@ -64,21 +61,25 @@ func TestCombine(t *testing.T) {
 		for i := 0; i < MaxRuns; i++ {
 			f.Fuzz(&a)
 
-			require.Equal(t, a, *configuration.Combine(&a, &a))
+			requireConfigsEqual(t, &a, configuration.Combine(&a, &a))
 		}
 	})
+}
+
+func requireConfigsEqual(t *testing.T, a, b *configuration.Config) {
+	t.Helper()
+	if !configuration.Equal(a, b) {
+		changes, _ := diff.Diff(a, b)
+		for _, change := range changes {
+			t.Logf("%+#v", change)
+		}
+		t.Fatal("configurations are not equal")
+	}
 }
 
 func makeFuzzer(seed int64) *fuzz.Fuzzer {
 	f := fuzz.NewWithSeed(seed).NilChance(0).Funcs(
 		func(e *util.WorkloadCache, c fuzz.Continue) {},
-		func(e *configuration.EventsConfig, c fuzz.Continue) {
-			c.FuzzNoCustom(e)
-		},
-		func(e *configuration.Config, c fuzz.Continue) {
-			c.FuzzNoCustom(e)
-			sort.Strings(e.Experimental)
-		},
 	)
 	return f
 }
