@@ -27,7 +27,7 @@ type LoggingComponentConfig struct {
 	Tolerations            []wf.Toleration
 	Resources              wf.Resources
 
-	// internally set
+	// internal use only
 	ConfigHash           string `json:"-"`
 	ControllerManagerUID string `json:"-"`
 }
