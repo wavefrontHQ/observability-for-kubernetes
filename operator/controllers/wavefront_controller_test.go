@@ -1290,6 +1290,29 @@ func TestReconcileLogging(t *testing.T) {
 		require.True(t, mockKM.LoggingConfigMapContains("URI               /logs/json_lines?f=logs_json_lines"))
 	})
 
+	t.Run("can be disabled", func(t *testing.T) {
+		CanBeDisabled(t,
+			wftest.CR(func(w *wf.Wavefront) {
+				w.Spec.DataCollection.Logging.Enable = false
+			}),
+			&appsv1.DaemonSet{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "apps/v1",
+					Kind:       "DaemonSet",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      util.LoggingName,
+					Namespace: wftest.DefaultNamespace,
+					Labels: map[string]string{
+						"app.kubernetes.io/name":      "wavefront",
+						"app.kubernetes.io/component": "logging",
+					},
+				},
+			},
+		)
+	})
+
+	//TODO - Component Refactor the logging test below to the logging component test
 	t.Run("default resources for logging", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(), nil)
 
@@ -1375,27 +1398,6 @@ func TestReconcileLogging(t *testing.T) {
 		require.True(t, mockKM.LoggingConfigMapContains("Proxy             http://my-proxy:8888"))
 	})
 
-	t.Run("can be disabled", func(t *testing.T) {
-		CanBeDisabled(t,
-			wftest.CR(func(w *wf.Wavefront) {
-				w.Spec.DataCollection.Logging.Enable = false
-			}),
-			&appsv1.DaemonSet{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "apps/v1",
-					Kind:       "DaemonSet",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      util.LoggingName,
-					Namespace: wftest.DefaultNamespace,
-					Labels: map[string]string{
-						"app.kubernetes.io/name":      "wavefront",
-						"app.kubernetes.io/component": "logging",
-					},
-				},
-			},
-		)
-	})
 }
 
 func TestReconcileAutoTracing(t *testing.T) {

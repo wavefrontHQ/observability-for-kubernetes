@@ -118,7 +118,6 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	if errors.IsNotFound(err) {
-		// create all components readAndDeleteResources
 		_ = r.readAndDeleteResources()
 		return ctrl.Result{}, nil
 	}
