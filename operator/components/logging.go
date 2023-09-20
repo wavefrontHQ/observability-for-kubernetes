@@ -3,7 +3,9 @@ package components
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
+	"strings"
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
@@ -76,6 +78,8 @@ func (logging *LoggingComponent) Validate() validation.Result {
 
 	if len(logging.Config.ProxyAddress) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing proxy address"))
+	} else if !strings.HasPrefix(logging.Config.ProxyAddress, "http") {
+		return validation.NewErrorResult(errors.New(fmt.Sprintf("logging: proxy address (%s) must start with http", logging.Config.ProxyAddress)))
 	}
 
 	return validation.Result{}
