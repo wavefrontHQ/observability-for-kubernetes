@@ -128,7 +128,7 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		validationResult = validation.NewErrorResult(err)
 	} else {
-		validationResult = r.validate(wavefront, ctx)
+		validationResult = r.validate(wavefront)
 	}
 
 	if !validationResult.IsError() {
@@ -156,7 +156,7 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}, nil
 }
 
-func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront, ctx context.Context) validation.Result {
+func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront) validation.Result {
 	var result validation.Result
 	for component, enable := range r.components {
 		if enable {
@@ -428,7 +428,7 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		wavefront.Spec.Openshift = true
 	}
 
-	err = r.createComponents(wavefront)
+	r.components, err = components.BuildComponents(wavefront)
 	if err != nil {
 		return err
 	}
@@ -516,35 +516,4 @@ func (r *WavefrontReconciler) reportMetrics(sendStatusMetrics bool, clusterName 
 
 func errorCRTLResult(err error) (ctrl.Result, error) {
 	return ctrl.Result{}, err
-}
-
-func (r *WavefrontReconciler) createComponents(wf *wf.Wavefront) error {
-	//TODO: Component Refactor - move to component factory
-	createdComponents := make(map[components.Component]bool)
-	config := components.LoggingComponentConfig{
-		ClusterName:     wf.Spec.ClusterName,
-		Namespace:       wf.Spec.Namespace,
-		LoggingVersion:  wf.Spec.DataCollection.Logging.LoggingVersion,
-		ImageRegistry:   wf.Spec.ImageRegistry,
-		ImagePullSecret: wf.Spec.ImagePullSecret,
-
-		ProxyAddress:           wf.Spec.DataCollection.Logging.ProxyAddress,
-		ProxyAvailableReplicas: wf.Spec.DataExport.WavefrontProxy.AvailableReplicas,
-		Tolerations:            wf.Spec.DataCollection.Tolerations,
-		Resources:              wf.Spec.DataCollection.Logging.Resources,
-		TagAllowList:           wf.Spec.DataCollection.Logging.Filters.TagAllowList,
-		TagDenyList:            wf.Spec.DataCollection.Logging.Filters.TagDenyList,
-		Tags:                   wf.Spec.DataCollection.Logging.Tags,
-
-		ControllerManagerUID: wf.Spec.ControllerManagerUID,
-	}
-
-	loggingComponent, err := components.NewLoggingComponent(config, os.DirFS(components.DeployDir))
-	if err != nil {
-		return err
-	}
-
-	createdComponents[&loggingComponent] = wf.Spec.CanExportData && wf.Spec.DataCollection.Logging.Enable
-	r.components = createdComponents
-	return nil
 }

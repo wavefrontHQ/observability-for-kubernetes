@@ -42,6 +42,21 @@ func (logging *LoggingComponent) Name() string {
 	return "logging"
 }
 
+func NewLoggingComponent(componentConfig LoggingComponentConfig, fs fs.FS) (LoggingComponent, error) {
+
+	configHashBytes, err := json.Marshal(componentConfig)
+	if err != nil {
+		return LoggingComponent{}, errors.New("logging: problem calculating config hash")
+	}
+	componentConfig.ConfigHash = hashValue(configHashBytes)
+
+	return LoggingComponent{
+		Config:    componentConfig,
+		fs:        fs,
+		DeployDir: DeployDir + "/logging",
+	}, nil
+}
+
 func (logging *LoggingComponent) Validate() validation.Result {
 	if len(logging.Config.ClusterName) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing cluster name"))
@@ -66,21 +81,6 @@ func (logging *LoggingComponent) Validate() validation.Result {
 	return validation.Result{}
 }
 
-func NewLoggingComponent(componentConfig LoggingComponentConfig, fs fs.FS) (LoggingComponent, error) {
-
-	configHashBytes, err := json.Marshal(componentConfig)
-	if err != nil {
-		return LoggingComponent{}, errors.New("logging: problem calculating config hash")
-	}
-	componentConfig.ConfigHash = hashValue(configHashBytes)
-
-	return LoggingComponent{
-		Config:    componentConfig,
-		fs:        fs,
-		DeployDir: DeployDir + "/logging",
-	}, nil
-}
-
 func (logging *LoggingComponent) Resources() ([]client.Object, []client.Object, error) {
-	return CreateResources(logging.fs, logging.DeployDir, logging.Name(), logging.Config.ControllerManagerUID, logging.Config)
+	return BuildResources(logging.fs, logging.DeployDir, logging.Name(), logging.Config.ControllerManagerUID, logging.Config)
 }
