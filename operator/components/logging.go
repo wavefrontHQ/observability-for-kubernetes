@@ -60,40 +60,32 @@ func (logging *LoggingComponent) Name() string {
 
 func (logging *LoggingComponent) PreprocessAndValidate() validation.Result {
 	if len(logging.Config.ClusterName) == 0 {
-		return validation.NewErrorResult(errors.New("missing cluster name"))
+		return validation.NewErrorResult(errors.New("logging: missing cluster name"))
 	}
 
 	if len(logging.Config.Namespace) == 0 {
-		return validation.NewErrorResult(errors.New("missing namespace"))
+		return validation.NewErrorResult(errors.New("logging: missing namespace"))
 	}
 
 	if len(logging.Config.LoggingVersion) == 0 {
-		return validation.NewErrorResult(errors.New("missing logging version"))
+		return validation.NewErrorResult(errors.New("logging: missing log image version"))
 	}
 
 	if len(logging.Config.ImageRegistry) == 0 {
-		return validation.NewErrorResult(errors.New("missing image registry"))
+		return validation.NewErrorResult(errors.New("logging: missing image registry"))
 	}
 
 	if len(logging.Config.ProxyAddress) == 0 {
-		return validation.NewErrorResult(errors.New("missing proxy address"))
+		return validation.NewErrorResult(errors.New("logging: missing proxy address"))
 	}
 
 	configHashBytes, err := json.Marshal(logging.Config)
 	if err != nil {
-		return validation.NewErrorResult(errors.New("problem calculating config hash"))
+		return validation.NewErrorResult(errors.New("logging: problem calculating config hash"))
 	}
 	logging.Config.ConfigHash = hashValue(configHashBytes)
 
 	return validation.Result{}
-}
-
-func (logging *LoggingComponent) ReadAndCreateResources() error {
-	return nil
-}
-
-func (logging *LoggingComponent) ReadAndDeleteResources() error {
-	return nil
 }
 
 func NewLoggingComponent(componentConfig LoggingComponentConfig, fs fs.FS) LoggingComponent {
@@ -112,6 +104,7 @@ func hashValue(bytes []byte) string {
 }
 
 func (logging *LoggingComponent) Resources() ([]client.Object, []client.Object, error) {
+	// TODO Move Resources functionality of this function to a ComponentResourceGenerator passing the appropriate values
 	files, err := resourceFiles(logging.DeployDir, []string{logging.TemplateDirectory()})
 	if err != nil {
 		return nil, nil, err

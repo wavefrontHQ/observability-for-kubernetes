@@ -129,32 +129,12 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		validationResult = r.preprocessAndValidate(wavefront, ctx)
 	}
 
-	r.createComponents(wavefront.Spec)
-	for component, enable := range r.AllComponents {
-		if enable {
-			validationResult = component.PreprocessAndValidate()
-			if validationResult.IsError() {
-				break
-			}
-		}
-	}
 	if !validationResult.IsError() {
-		//add call to components readAndCreateResources
-		//for _, component := range components {
-		//	err = component.ReadAndCreatResources()
-		//	if err != nil {
-		//		return errorCRTLResult(err)
-		//	}
-		//}
 		err = r.readAndCreateResources(wavefront.Spec)
 		if err != nil {
 			return errorCRTLResult(err)
 		}
 	} else {
-		//add call to components readAndDeleteResources
-		//for _, component := range components {
-		//	_ = component.ReadAndDeleteResources()
-		//}
 		_ = r.readAndDeleteResources()
 	}
 	wavefrontStatus, err := r.reportHealthStatus(ctx, wavefront, validationResult)
@@ -179,7 +159,17 @@ func (r *WavefrontReconciler) preprocessAndValidate(wavefront *wf.Wavefront, ctx
 	if err != nil {
 		return validation.NewErrorResult(err)
 	}
+	r.createComponents(wavefront)
 
+	var result validation.Result
+	for component, enable := range r.AllComponents {
+		if enable {
+			result = component.PreprocessAndValidate()
+			if result.IsError() {
+				break
+			}
+		}
+	}
 	return validation.Validate(r.Client, wavefront)
 }
 
@@ -283,10 +273,12 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 		}
 	}
 	for component, enable := range r.AllComponents {
+		toApply, toDelete, _ := component.Resources()
+		resourcesToDelete = append(resourcesToDelete, toDelete...)
 		if enable {
-			toApply, toDelete, _ := component.Resources()
 			resourcesToApply = append(resourcesToApply, toApply...)
-			resourcesToDelete = append(resourcesToDelete, toDelete...)
+		} else {
+			resourcesToDelete = append(resourcesToDelete, toApply...)
 		}
 	}
 	return resourcesToApply, resourcesToDelete, nil
@@ -412,14 +404,14 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	wavefront.Spec.Namespace = r.namespace
 	wavefront.Spec.ClusterUUID = r.ClusterUUID
 
+	wavefront.Spec.DataCollection.Metrics.CollectorVersion = r.Versions.CollectorVersion
+	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
+	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
+
 	err := preprocessor.PreProcess(r.Client, wavefront)
 	if err != nil {
 		return err
 	}
-
-	wavefront.Spec.DataCollection.Metrics.CollectorVersion = r.Versions.CollectorVersion
-	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
-	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
 
 	if wavefront.Spec.CanExportData {
 		err := r.MetricConnection.Connect(wavefront.Spec.DataCollection.Metrics.ProxyAddress)
@@ -436,6 +428,7 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		wavefront.Spec.Openshift = true
 	}
 
+	r.createComponents(wavefront)
 	return nil
 }
 
@@ -520,24 +513,29 @@ func errorCRTLResult(err error) (ctrl.Result, error) {
 	return ctrl.Result{}, err
 }
 
-func (r *WavefrontReconciler) createComponents(wfSpec wf.WavefrontSpec) {
+func (r *WavefrontReconciler) createComponents(wf *wf.Wavefront) {
+	//TODO move to component factory
 	comps := make(map[components.Component]bool)
 	config := components.LoggingComponentConfig{
-		ClusterName:            wfSpec.ClusterName,
-		Namespace:              wfSpec.Namespace,
-		LoggingVersion:         wfSpec.DataCollection.Logging.LoggingVersion,
-		ImageRegistry:          wfSpec.ImageRegistry,
-		ProxyAddress:           wfSpec.DataCollection.Logging.ProxyAddress,
-		ProxyAvailableReplicas: wfSpec.DataExport.WavefrontProxy.AvailableReplicas,
-		Tolerations:            wfSpec.DataCollection.Tolerations,
-		Resources:              wfSpec.DataCollection.Logging.Resources,
-		TagAllowList:           wfSpec.DataCollection.Logging.Filters.TagAllowList,
-		TagDenyList:            wfSpec.DataCollection.Logging.Filters.TagDenyList,
-		Tags:                   wfSpec.DataCollection.Logging.Tags,
+		ClusterName:     wf.Spec.ClusterName,
+		Namespace:       wf.Spec.Namespace,
+		LoggingVersion:  wf.Spec.DataCollection.Logging.LoggingVersion,
+		ImageRegistry:   wf.Spec.ImageRegistry,
+		ImagePullSecret: wf.Spec.ImagePullSecret,
+
+		ProxyAddress:           wf.Spec.DataCollection.Logging.ProxyAddress,
+		ProxyAvailableReplicas: wf.Spec.DataExport.WavefrontProxy.AvailableReplicas,
+		Tolerations:            wf.Spec.DataCollection.Tolerations,
+		Resources:              wf.Spec.DataCollection.Logging.Resources,
+		TagAllowList:           wf.Spec.DataCollection.Logging.Filters.TagAllowList,
+		TagDenyList:            wf.Spec.DataCollection.Logging.Filters.TagDenyList,
+		Tags:                   wf.Spec.DataCollection.Logging.Tags,
+
+		ControllerManagerUID: wf.Spec.ControllerManagerUID,
 	}
 
 	loggingComponent := components.NewLoggingComponent(config, os.DirFS(components.DeployDir))
 
-	comps[&loggingComponent] = wfSpec.DataCollection.Logging.Enable
+	comps[&loggingComponent] = wf.Spec.CanExportData && wf.Spec.DataCollection.Logging.Enable
 	r.AllComponents = comps
 }
