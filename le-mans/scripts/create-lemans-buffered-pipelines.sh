@@ -45,7 +45,7 @@ cat <<-JSON >"$consumer_receiver_starter_json_file"
 {
    "name": "$STREAM_NAME-consumer",
    "factoryLink": "/le-mans/consumers/kafka",
-   "startJsonState": "{'topic': '$STREAM_NAME', 'retryTopic': '$STREAM_NAME', 'statusCodesToRetryIndefinitely': [503], 'contentType': 'application/json', 'receiverLink': '/le-mans/v2/resources/receivers/$STREAM_NAME-receiver', 'maxRetryLimit': 10000, 'kafkaProperties': {'group.id': 'le-mans', 'fetch.min.bytes': 1, 'key.deserializer': 'org.apache.kafka.common.serialization.StringDeserializer', 'max.poll.records': 150, 'max.partition.fetch.bytes': 2097152, 'auto.offset.reset': 'latest', 'bootstrap.servers': 'localhost:9092', 'value.deserializer': 'org.apache.kafka.common.serialization.StringDeserializer'}, 'kafkaProducerPath': '/le-mans/receivers/kafka-producer/$STREAM_NAME-producer'}"
+   "startJsonState": "{'topic': '$STREAM_NAME', 'retryTopic': '$STREAM_NAME', 'statusCodesToRetryIndefinitely': [503], 'contentType': 'application/json', 'receiverLink': '/le-mans/v2/resources/receivers/$STREAM_NAME-receiver', 'maxRetryLimit': 10000, 'kafkaProperties': {'group.id': 'le-mans', 'fetch.min.bytes': 1, 'key.deserializer': 'org.apache.kafka.common.serialization.StringDeserializer', 'max.poll.records': 150, 'max.partition.fetch.bytes': 2097152, 'auto.offset.reset': 'latest', 'bootstrap.servers': 'kafka:9092', 'value.deserializer': 'org.apache.kafka.common.serialization.StringDeserializer'}, 'kafkaProducerPath': '/le-mans/receivers/kafka-producer/$STREAM_NAME-producer'}"
 }
 JSON
 
@@ -61,7 +61,7 @@ cat <<-JSON >"$producer_receiver_starter_json_file"
 {
     "name": "$STREAM_NAME-producer",
     "factoryLink": "/le-mans/receivers/kafka-producer",
-    "startJsonState": "{'topicName':'$STREAM_NAME','numberOfPartitions':'1','replicationFactor':'1','retentionPeriod':'7200000','kafkaProperties':{'bootstrap.servers':'localhost:9092','key.serializer':'org.apache.kafka.common.serialization.StringSerializer','value.serializer':'org.apache.kafka.common.serialization.StringSerializer','retries':'0','linger.ms':'5','lemans.KafkaProducerService.KAFKA_KEY':'org_id','partitioner.class':'com.vmware.lemans.receivers.kafka.RoundRobinPartitioner'}}"
+    "startJsonState": "{'topicName':'$STREAM_NAME','numberOfPartitions':'1','replicationFactor':'1','retentionPeriod':'7200000','kafkaProperties':{'bootstrap.servers':'kafka:9092','key.serializer':'org.apache.kafka.common.serialization.StringSerializer','value.serializer':'org.apache.kafka.common.serialization.StringSerializer','retries':'0','linger.ms':'5','lemans.KafkaProducerService.KAFKA_KEY':'org_id','partitioner.class':'com.vmware.lemans.receivers.kafka.RoundRobinPartitioner'}}"
 
 }
 JSON

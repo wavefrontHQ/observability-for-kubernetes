@@ -36,13 +36,13 @@ services:
     ports:
     - "8001:8001"
     hostname: resources
-    command: "bash /opt/le-mans/bin/start-resources.sh --cspUri=https://console-stg.cloud.vmware.com"
+    command: "bash /opt/le-mans/bin/start-resources.sh --cspUri=https://console-stg.cloud.vmware.com --enableJwksCspKeyFormat=true"
     environment:
     # KRaft settings
     - BINDING_ADDRESS=0.0.0.0
     - BINDING_PORT=8001
     - LEMS_HOME=tmp
-    - PUBLIC_URI=http://localhost:8001
+    - PUBLIC_URI=http://resources:8001
     - DB_CONFIG_FILE=/opt/le-mans/tmp/dbconfig
     volumes:
     - "./tmp:/opt/le-mans/tmp"
@@ -50,8 +50,8 @@ services:
     image: lemans/lemans-gateway
     ports:
     - "8002:8002"
-    hostname: localhost
-    command: "bash /opt/le-mans/bin/start-gateway.sh --cspUri=https://console-stg.cloud.vmware.com"
+    hostname: gateway
+    command: "bash /opt/le-mans/bin/start-gateway.sh --cspUri=https://console-stg.cloud.vmware.com --enableJwksCspKeyFormat=true"
     environment:
     # KRaft settings
     - BINDING_ADDRESS=0.0.0.0
@@ -59,4 +59,4 @@ services:
     - RESOURCES_HOST_URI=http://resources:8001
     - CSP_CLIENT_ID=hnIsmQ7VH1JPvshExJMmEY7Hm1FAxLstxOI
     - CSP_CLIENT_SECRET=qmbXDu16NH7UOwq67jwPhIqmNydGWmZADTiY8BgERhJ5HdZSKc
-    - PUBLIC_URI=https://console-stg.cloud.vmware.com
+    - PUBLIC_URI=http://localhost:8002
