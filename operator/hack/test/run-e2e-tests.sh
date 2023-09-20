@@ -619,7 +619,7 @@ function main() {
       "validation-errors-preprocessor-rules"
       "allow-legacy-install"
       "basic"
-      "basic-e2e"
+      "proxy-preprocessor"
       "advanced"
       "logging-integration"
       "with-http-proxy"
@@ -659,9 +659,6 @@ function main() {
   fi
   if [[ " ${tests_to_run[*]} " =~ " basic " ]]; then
     run_test "basic" "health" "static_analysis"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " basic-e2e " ]]; then
-    run_test "basic" "test_wavefront_metrics"
   fi
   if [[ " ${tests_to_run[*]} " =~ " proxy-preprocessor " ]]; then
     run_test "basic" "test_wavefront_metrics" "proxy"
