@@ -1,5 +1,4 @@
-.PHONY=setup lint test start troll-server-container start-troll-server-container
-.PHONY=start-resource-verticle start-gateway-host ensure-postgres setup
+.PHONY=dockerize-lemans
 .PHONY: tmp/dbconfig
 LM_VERSION=1.0.11-SNAPSHOT
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/
@@ -39,32 +38,28 @@ ensure-cred-files: | tmp
 	touch tmp/csp_password
 	echo "Template credentials files available at `pwd`/tmp"
 
-ensure-postgres: tmp/dbconfig
-	brew services | grep postgresql@14 | grep started || brew services start postgresql@14
+start-lemans: dockerize-lemans | stop-lemans
+	docker compose up
 
-ensure-kafka: stop-kafka
-	docker-compose up --detach
+stop-lemans:
+	docker compose down
 
-stop-kafka:
-	docker-compose down
+dockerize-lemans: le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar le-mans/docker/resources/base/lib le-mans/docker/gateway/base/lib
+	cp le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar le-mans/docker/resources/base/lib/le-mans-resources.jar
+	docker build -t lemans/lemans-resources le-mans/docker/resources
+	cp le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar le-mans/docker/gateway/base/lib/le-mans-gateway.jar
+	docker build -t lemans/lemans-gateway le-mans/docker/gateway
 
-start-resource-verticle: ensure-postgres le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar
-	java -jar le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar \
-		--bindAddress=0.0.0.0 --port=8001 --isAuthorizationEnabled=true \
-		--sandbox=tmp/sandbox --dbConfigFile=tmp/dbconfig \
-		--cspUri=https://console-stg.cloud.vmware.com \
-		--enableJwksCspKeyFormat=true
+le-mans/docker/resources/base/lib:
+	mkdir $@
 
-start-gateway-host: $(cred_files) ensure-kafka le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar
-	java -jar le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar \
-		--bindAddress=0.0.0.0 --port=8002 --resourcesHostUri=http://localhost:8001 \
-		--cspClientId="$(shell cat tmp/csp_username)" --cspClientSecret='$(shell cat tmp/csp_password)' \
-		--cspUri=https://console-stg.cloud.vmware.com --enableJwksCspKeyFormat=true
+le-mans/docker/gateway/base/lib:
+	mkdir $@
 
-le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar:
+le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar: le-mans
 	cd le-mans; mvn -s tools/build/maven-settings.xml clean install -DskipTests
 
-le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar:
+le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar: le-mans
 	cd le-mans; mvn -s tools/build/maven-settings.xml clean install -DskipTests
 
 tmp/dbconfig: | tmp
@@ -75,3 +70,6 @@ tmp/csp_username: | tmp
 
 tmp/csp_password: | tmp
 	op read 'op://AOA-TAS2TO/Lemans CSP Credentials/password' -o $@
+
+le-mans:
+	git clone https://$(shell whoami)@bellevue-ci-gerrit.eng.vmware.com/le-mans

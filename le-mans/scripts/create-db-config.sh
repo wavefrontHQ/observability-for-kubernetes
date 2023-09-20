@@ -2,9 +2,9 @@
 set -e pipefail
 
 cat <<EOF
-dataSource.user=$(whoami)
+dataSource.user=postgres
 dataSource.portNumber=5432
-dataSource.serverName=localhost
+dataSource.serverName=postgres
 dataSource.databaseName=postgres
-dataSource.password=
+dataSource.password=password
 EOF

@@ -1,4 +1,4 @@
-version: '2'
+version: '3.8'
 
 services:
   zookeeper:
@@ -10,6 +10,8 @@ services:
         yes
   kafka:
     image: docker.io/bitnami/kafka:3.5
+    depends_on:
+    - zookeeper
     ports:
     - "9092:9092"
     hostname: kafka
@@ -33,6 +35,8 @@ services:
     - POSTGRES_HOST_AUTH_METHOD=trust
   lemans-resource-server:
     image: lemans/lemans-resources
+    depends_on:
+    - postgres
     ports:
     - "8001:8001"
     hostname: resources
@@ -46,8 +50,16 @@ services:
     - DB_CONFIG_FILE=/opt/le-mans/tmp/dbconfig
     volumes:
     - "./tmp:/opt/le-mans/tmp"
+#    healthcheck:
+#      test: [ "CMD", "curl", "http://resources:8001", "||", "exit", "1" ]
+#      interval: 15s
+#      timeout: 10s
+#      retries: 3
   lemans-gateway:
     image: lemans/lemans-gateway
+#    depends_on:
+#      lemans-resource-server:
+#        condition: service_healthy
     ports:
     - "8002:8002"
     hostname: gateway
