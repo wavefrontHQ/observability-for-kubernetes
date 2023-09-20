@@ -39,7 +39,7 @@ ensure-cred-files: | tmp
 	echo "Template credentials files available at `pwd`/tmp"
 
 start-lemans: dockerize-lemans stop-lemans tmp/dbconfig tmp/csp_password tmp/csp_username
-	docker compose up
+	CSP_CLIENT_ID='$(shell cat tmp/csp_username)' CSP_CLIENT_SECRET='$(shell cat cat tmp/csp_password)' docker compose up
 
 stop-lemans:
 	docker compose down

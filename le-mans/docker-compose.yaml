@@ -69,8 +69,8 @@ services:
     - BINDING_ADDRESS=0.0.0.0
     - BINDING_PORT=8002
     - RESOURCES_HOST_URI=http://resources:8001
-    - CSP_CLIENT_ID=hnIsmQ7VH1JPvshExJMmEY7Hm1FAxLstxOI
-    - CSP_CLIENT_SECRET=qmbXDu16NH7UOwq67jwPhIqmNydGWmZADTiY8BgERhJ5HdZSKc
+    - CSP_CLIENT_ID=${CSP_CLIENT_ID}
+    - CSP_CLIENT_SECRET=${CSP_CLIENT_SECRET}
     - PUBLIC_URI=http://localhost:8002
   echo-server:
     image: python
