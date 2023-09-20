@@ -38,7 +38,7 @@ ensure-cred-files: | tmp
 	touch tmp/csp_password
 	echo "Template credentials files available at `pwd`/tmp"
 
-start-lemans: dockerize-lemans | stop-lemans
+start-lemans: dockerize-lemans stop-lemans tmp/dbconfig tmp/csp_password tmp/csp_username
 	docker compose up
 
 stop-lemans:

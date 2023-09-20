@@ -7,7 +7,7 @@ if [ -z "$STREAM_NAME" ]; then
 fi
 RECEIVER_NAME="$STREAM_NAME-receiver"
 LEMANS_RESOURCE_SERVER="localhost:8001"
-RECEIVER_URI=http://localhost:8000/report
+RECEIVER_URI=http://echo-server:8000/report
 CSP_SECRET="$(echo -n "$(cat tmp/csp_username):$(cat tmp/csp_password)" | base64)"
 
 token_file=$(mktemp)

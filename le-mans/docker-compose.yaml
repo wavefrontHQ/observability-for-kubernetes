@@ -72,3 +72,11 @@ services:
     - CSP_CLIENT_ID=hnIsmQ7VH1JPvshExJMmEY7Hm1FAxLstxOI
     - CSP_CLIENT_SECRET=qmbXDu16NH7UOwq67jwPhIqmNydGWmZADTiY8BgERhJ5HdZSKc
     - PUBLIC_URI=http://localhost:8002
+  echo-server:
+    image: python
+    ports:
+    - "8000:8000"
+    hostname: echo-server
+    command: "python3 /opt/le-mans/scripts/echo-server.py 8000"
+    volumes:
+    - "./scripts:/opt/le-mans/scripts"
