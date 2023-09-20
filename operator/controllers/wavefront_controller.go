@@ -466,6 +466,7 @@ func (r *WavefrontReconciler) shouldEnableEtcdCollection(wavefront *wf.Wavefront
 // Reporting Health Status
 func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, wavefront *wf.Wavefront, validationResult validation.Result) (wf.WavefrontStatus, error) {
 
+	// TODO: Component Refactor - use components to get which resources should be queried for status
 	wavefrontStatus := health.GenerateWavefrontStatus(r.Client, wavefront)
 
 	if !validationResult.IsValid() {
@@ -514,7 +515,7 @@ func errorCRTLResult(err error) (ctrl.Result, error) {
 }
 
 func (r *WavefrontReconciler) createComponents(wf *wf.Wavefront) {
-	//TODO move to component factory
+	//TODO: Component Refactor - move to component factory
 	comps := make(map[components.Component]bool)
 	config := components.LoggingComponentConfig{
 		ClusterName:     wf.Spec.ClusterName,

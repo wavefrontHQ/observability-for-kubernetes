@@ -62,6 +62,7 @@ func TestResources(t *testing.T) {
 		require.Empty(t, toDelete)
 	})
 
+	//TODO - Component Refactor - move over most of the component level tests from wavefront_controller_test#TestReconcileLogging
 }
 
 func validLoggingComponentConfig() LoggingComponentConfig {
