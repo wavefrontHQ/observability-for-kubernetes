@@ -16,30 +16,31 @@ import (
 func TestProcessAndValidate(t *testing.T) {
 	t.Run("component config is not valid", func(t *testing.T) {
 		config := LoggingComponentConfig{}
-		loggingComponent := NewLoggingComponent(config, os.DirFS(DeployDir))
-		result := loggingComponent.PreprocessAndValidate()
+		loggingComponent, err := NewLoggingComponent(config, os.DirFS(DeployDir))
+		result := loggingComponent.Validate()
+		require.Nil(t, err)
 		require.False(t, result.IsValid())
 	})
 
 	t.Run("create config hash", func(t *testing.T) {
 		config := validLoggingComponentConfig()
-		loggingComponent := NewLoggingComponent(config, os.DirFS(DeployDir))
-		_ = loggingComponent.PreprocessAndValidate()
+		loggingComponent, _ := NewLoggingComponent(config, os.DirFS(DeployDir))
+		_ = loggingComponent.Validate()
 		require.NotEmpty(t, loggingComponent.Config.ConfigHash)
 	})
 
 	t.Run("component config is valid", func(t *testing.T) {
 		config := validLoggingComponentConfig()
-		loggingComponent := NewLoggingComponent(config, os.DirFS(DeployDir))
-		result := loggingComponent.PreprocessAndValidate()
+		loggingComponent, _ := NewLoggingComponent(config, os.DirFS(DeployDir))
+		result := loggingComponent.Validate()
 		require.True(t, result.IsValid())
 	})
 }
 
 func TestResources(t *testing.T) {
 	t.Run("default configuration", func(t *testing.T) {
-		loggingComponent := NewLoggingComponent(validLoggingComponentConfig(), os.DirFS(DeployDir))
-		result := loggingComponent.PreprocessAndValidate()
+		loggingComponent, _ := NewLoggingComponent(validLoggingComponentConfig(), os.DirFS(DeployDir))
+		result := loggingComponent.Validate()
 		require.True(t, result.IsValid())
 
 		toApply, toDelete, err := loggingComponent.Resources()

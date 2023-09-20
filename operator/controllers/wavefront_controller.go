@@ -78,7 +78,7 @@ type WavefrontReconciler struct {
 	namespace         string
 	ClusterUUID       string
 
-	AllComponents map[components.Component]bool
+	components map[components.Component]bool
 }
 
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts,verbs=get;list;watch;create;update;patch;delete
@@ -123,10 +123,12 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	//add call to components preprocessAndValidate
 	var validationResult validation.Result
-	if validationResult.IsValid() {
-		validationResult = r.preprocessAndValidate(wavefront, ctx)
+	err = r.preprocess(wavefront, ctx)
+	if err != nil {
+		validationResult = validation.NewErrorResult(err)
+	} else {
+		validationResult = r.validate(wavefront, ctx)
 	}
 
 	if !validationResult.IsError() {
@@ -154,22 +156,21 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}, nil
 }
 
-func (r *WavefrontReconciler) preprocessAndValidate(wavefront *wf.Wavefront, ctx context.Context) validation.Result {
-	err := r.preprocess(wavefront, ctx)
-	if err != nil {
-		return validation.NewErrorResult(err)
-	}
-	r.createComponents(wavefront)
-
+func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront, ctx context.Context) validation.Result {
 	var result validation.Result
-	for component, enable := range r.AllComponents {
+	for component, enable := range r.components {
 		if enable {
-			result = component.PreprocessAndValidate()
+			result = component.Validate()
 			if result.IsError() {
 				break
 			}
 		}
 	}
+
+	if result.IsError() {
+		return result
+	}
+	//TODO - Component Refactor - move all non cross component validation to components
 	return validation.Validate(r.Client, wavefront)
 }
 
@@ -274,7 +275,7 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 	}
 	//TODO: Component Refactor - remove above templating code once everything has been moved to components ^^^
 
-	for component, enable := range r.AllComponents {
+	for component, enable := range r.components {
 		toApply, toDelete, _ := component.Resources()
 		resourcesToDelete = append(resourcesToDelete, toDelete...)
 		if enable {
@@ -427,7 +428,11 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		wavefront.Spec.Openshift = true
 	}
 
-	r.createComponents(wavefront)
+	err = r.createComponents(wavefront)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -513,9 +518,9 @@ func errorCRTLResult(err error) (ctrl.Result, error) {
 	return ctrl.Result{}, err
 }
 
-func (r *WavefrontReconciler) createComponents(wf *wf.Wavefront) {
+func (r *WavefrontReconciler) createComponents(wf *wf.Wavefront) error {
 	//TODO: Component Refactor - move to component factory
-	comps := make(map[components.Component]bool)
+	createdComponents := make(map[components.Component]bool)
 	config := components.LoggingComponentConfig{
 		ClusterName:     wf.Spec.ClusterName,
 		Namespace:       wf.Spec.Namespace,
@@ -534,8 +539,12 @@ func (r *WavefrontReconciler) createComponents(wf *wf.Wavefront) {
 		ControllerManagerUID: wf.Spec.ControllerManagerUID,
 	}
 
-	loggingComponent := components.NewLoggingComponent(config, os.DirFS(components.DeployDir))
+	loggingComponent, err := components.NewLoggingComponent(config, os.DirFS(components.DeployDir))
+	if err != nil {
+		return err
+	}
 
-	comps[&loggingComponent] = wf.Spec.CanExportData && wf.Spec.DataCollection.Logging.Enable
-	r.AllComponents = comps
+	createdComponents[&loggingComponent] = wf.Spec.CanExportData && wf.Spec.DataCollection.Logging.Enable
+	r.components = createdComponents
+	return nil
 }

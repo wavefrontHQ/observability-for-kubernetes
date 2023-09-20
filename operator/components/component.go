@@ -6,8 +6,7 @@ import (
 )
 
 type Component interface {
-	//TODO: Component Refactor -  break this into two functions, Preprocess and Validate both return a validation.Result
-	PreprocessAndValidate() validation.Result
+	Validate() validation.Result
 	Resources() (resourcesToApply []client.Object, resourcesToDelete []client.Object, error error)
 	Name() string
 }

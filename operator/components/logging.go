@@ -42,7 +42,7 @@ func (logging *LoggingComponent) Name() string {
 	return "logging"
 }
 
-func (logging *LoggingComponent) PreprocessAndValidate() validation.Result {
+func (logging *LoggingComponent) Validate() validation.Result {
 	if len(logging.Config.ClusterName) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing cluster name"))
 	}
@@ -63,21 +63,22 @@ func (logging *LoggingComponent) PreprocessAndValidate() validation.Result {
 		return validation.NewErrorResult(errors.New("logging: missing proxy address"))
 	}
 
-	configHashBytes, err := json.Marshal(logging.Config)
-	if err != nil {
-		return validation.NewErrorResult(errors.New("logging: problem calculating config hash"))
-	}
-	logging.Config.ConfigHash = hashValue(configHashBytes)
-
 	return validation.Result{}
 }
 
-func NewLoggingComponent(componentConfig LoggingComponentConfig, fs fs.FS) LoggingComponent {
+func NewLoggingComponent(componentConfig LoggingComponentConfig, fs fs.FS) (LoggingComponent, error) {
+
+	configHashBytes, err := json.Marshal(componentConfig)
+	if err != nil {
+		return LoggingComponent{}, errors.New("logging: problem calculating config hash")
+	}
+	componentConfig.ConfigHash = hashValue(configHashBytes)
+
 	return LoggingComponent{
 		Config:    componentConfig,
 		fs:        fs,
 		DeployDir: DeployDir + "/logging",
-	}
+	}, nil
 }
 
 func (logging *LoggingComponent) Resources() ([]client.Object, []client.Object, error) {
