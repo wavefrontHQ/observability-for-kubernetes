@@ -272,6 +272,8 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 			resourcesToDelete = append(resourcesToDelete, resource)
 		}
 	}
+	//TODO: Component Refactor - remove above templating code once everything has been moved to components ^^^
+
 	for component, enable := range r.AllComponents {
 		toApply, toDelete, _ := component.Resources()
 		resourcesToDelete = append(resourcesToDelete, toDelete...)
@@ -285,6 +287,7 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 }
 
 func enabledDirs(spec wf.WavefrontSpec) []string {
+	//TODO: Component Refactor - this should all be moved to component factor / components
 	dirsToInclude := []string{"internal"}
 	if spec.DataExport.WavefrontProxy.Enable {
 		dirsToInclude = append(dirsToInclude, "proxy")
@@ -293,10 +296,6 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 	if (spec.CanExportData && spec.DataCollection.Metrics.Enable) || spec.Experimental.KubernetesEvents.Enable {
 		dirsToInclude = append(dirsToInclude, "collector")
 	}
-
-	//if spec.CanExportData && spec.DataCollection.Logging.Enable {
-	//	dirsToInclude = append(dirsToInclude, "logging")
-	//}
 
 	if spec.Experimental.Autotracing.Enable || spec.Experimental.Hub.Pixie.Enable {
 		dirsToInclude = append(dirsToInclude, "pixie")
