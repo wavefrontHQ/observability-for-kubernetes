@@ -1,16 +1,9 @@
-.PHONY=dockerize-lemans
-.PHONY: tmp/dbconfig
+.PHONY=dockerize-lemans start-lemans clean stop-lemans tmp/dbconfig
 LM_VERSION=1.0.11-SNAPSHOT
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/
 
 tmp:
 	mkdir -p tmp
-
-clean:
-	cd le-mans; mvn clean
-
-start-echo-server:
-	python3 scripts/echo-server.py $(troll_server_port)
 
 start-lemans: tmp/csp_username tmp/csp_password dockerize-lemans stop-lemans tmp/dbconfig
 	@CSP_CLIENT_ID='$(shell cat tmp/csp_username)' CSP_CLIENT_SECRET='$(shell cat tmp/csp_password)' docker compose up --abort-on-container-exit
@@ -49,3 +42,9 @@ tmp/csp_password: | tmp
 
 le-mans:
 	git clone https://$(shell whoami)@bellevue-ci-gerrit.eng.vmware.com/le-mans
+
+create-buffered-stream:
+	./scripts/create-lemans-buffered-pipelines.sh
+
+post-to-stream:
+	./scripts/post-lemans-metric.sh
