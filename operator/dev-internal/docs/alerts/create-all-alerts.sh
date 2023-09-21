@@ -52,7 +52,7 @@ function create_alerts() {
     done
   popd >/dev/null
 
-  echo "Link to alerts just created: https://${wavefront_cluster}.wavefront.com/alerts?search=%7B%22searchTerms%22%3A%5B%7B%22type%22%3A%22tagpath%22%2C%22value%22%3A%22integration.kubernetes%22%2C%22negated%22%3Afalse%7D%2C%7B%22type%22%3A%22freetext%22%2C%22value%22%3A%22${k8s_cluster_name}%22%2C%22negated%22%3Afalse%7D%5D%2C%22sortOrder%22%3A%22ascending%22%2C%22sortField%22%3Anull%2C%22pageNum%22%3A1%7D&tagPathTree=%7B%22integration%22%3A%7B%22wf-value%22%3A%22integration%22%7D%7D"
+  echo "Link to alerts just created: https://${wavefront_cluster}.wavefront.com/alerts?search=%7B%22searchTerms%22%3A%5B%7B%22type%22%3A%22tagpath%22%2C%22value%22%3A%22integration.kubernetes%22%7D%2C%7B%22type%22%3A%22freetext%22%2C%22value%22%3A%22${k8s_cluster_name}%22%7D%5D%2C%22sortOrder%22%3A%22ascending%22%2C%22sortField%22%3Anull%2C%22pageNum%22%3A1%7D&tagPathTree=%7B%22integration%22%3A%7B%22wf-value%22%3A%22integration%22%7D%7D"
 
 }
 
