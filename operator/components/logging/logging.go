@@ -17,12 +17,12 @@ const DeployDir = "logging"
 
 type ComponentConfig struct {
 	// required
-	Enable         bool
-	ClusterName    string
-	LoggingVersion string
-	ImageRegistry  string
-	Namespace      string
-	ProxyAddress   string
+	Enable               bool
+	ClusterName          string
+	LoggingVersion       string
+	ImageRegistry        string
+	Namespace            string
+	ProxyAddress         string
 	ControllerManagerUID string
 
 	// optional
