@@ -1,0 +1,54 @@
+{
+  "name": "Node CPU Overutilization",
+  "alertType": "THRESHOLD",
+  "additionalInformation": "Alert reports when a node's cpu utilization percentage is constantly high.",
+  "alertChartUnits": "%",
+  "alertSources": [
+    {
+      "name": "A",
+      "query": "ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"K8S_CLUSTER_NAME\") * 100",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${A} >= 80, ${A})",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "warn": "${A} >= 80",
+    "severe": "${A} >= 90"
+  },
+  "conditionQBEnabled": false,
+  "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
+  "includeObsoleteMetrics": false,
+  "minutes": 5,
+  "resolveAfterMinutes": 5,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+     "dashboardId": "integration-kubernetes-workloads",
+     "parameters": {
+       "constants": {
+         "cluster": "K8S_CLUSTER_NAME"
+       }
+     }
+    }
+  ]
+}
