@@ -39,15 +39,15 @@ type ComponentConfig struct {
 }
 
 type Component struct {
-	fs     fs.FS
-	Config ComponentConfig
+	dir    fs.FS
+	config ComponentConfig
 }
 
 func (logging *Component) Name() string {
 	return "logging"
 }
 
-func NewComponent(componentConfig ComponentConfig, fs fs.FS) (Component, error) {
+func NewComponent(fs fs.FS, componentConfig ComponentConfig) (Component, error) {
 
 	configHashBytes, err := json.Marshal(componentConfig)
 	if err != nil {
@@ -56,40 +56,40 @@ func NewComponent(componentConfig ComponentConfig, fs fs.FS) (Component, error) 
 	componentConfig.ConfigHash = components.HashValue(configHashBytes)
 
 	return Component{
-		Config: componentConfig,
-		fs:     fs,
+		config: componentConfig,
+		dir:    fs,
 	}, nil
 }
 
 func (logging *Component) Validate() validation.Result {
-	if !logging.Config.Enable {
+	if !logging.config.Enable {
 		return validation.Result{}
 	}
-	if len(logging.Config.ClusterName) == 0 {
+	if len(logging.config.ClusterName) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing cluster name"))
 	}
 
-	if len(logging.Config.Namespace) == 0 {
+	if len(logging.config.Namespace) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing namespace"))
 	}
 
-	if len(logging.Config.LoggingVersion) == 0 {
+	if len(logging.config.LoggingVersion) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing log image version"))
 	}
 
-	if len(logging.Config.ImageRegistry) == 0 {
+	if len(logging.config.ImageRegistry) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing image registry"))
 	}
 
-	if len(logging.Config.ProxyAddress) == 0 {
+	if len(logging.config.ProxyAddress) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing proxy address"))
-	} else if !strings.HasPrefix(logging.Config.ProxyAddress, "http") {
-		return validation.NewErrorResult(fmt.Errorf("logging: proxy address (%s) must start with http", logging.Config.ProxyAddress))
+	} else if !strings.HasPrefix(logging.config.ProxyAddress, "http") {
+		return validation.NewErrorResult(fmt.Errorf("logging: proxy address (%s) must start with http", logging.config.ProxyAddress))
 	}
 
 	return validation.Result{}
 }
 
 func (logging *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(logging.fs, logging.Name(), logging.Config.Enable, logging.Config.ControllerManagerUID, logging.Config)
+	return components.BuildResources(logging.dir, logging.Name(), logging.config.Enable, logging.config.ControllerManagerUID, logging.config)
 }

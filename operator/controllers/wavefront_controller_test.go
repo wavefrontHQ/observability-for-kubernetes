@@ -1125,7 +1125,7 @@ func TestReconcileProxy(t *testing.T) {
 			&reconciledWFCR,
 		))
 
-		require.Contains(t, health.Unhealthy, reconciledWFCR.Status.Status)
+		require.Contains(t, reconciledWFCR.Status.Status, health.Unhealthy)
 		require.Equal(t, "Invalid rule configured in ConfigMap 'preprocessor-rules' on port '2878', overriding metric tag 'cluster' is disallowed", reconciledWFCR.Status.Message)
 	})
 
