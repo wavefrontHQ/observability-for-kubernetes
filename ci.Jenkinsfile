@@ -164,7 +164,6 @@ pipeline {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh 'make gke-connect-to-cluster'
 
               /* Collector Integration Tests */
@@ -193,7 +192,6 @@ pipeline {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh './ci/jenkins/get-or-create-cluster.sh'
 
               /* Operator Integration Tests */
@@ -222,7 +220,6 @@ pipeline {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh './ci/jenkins/get-or-create-cluster.sh'
 
               /* Operator Integration Tests */
@@ -251,7 +248,6 @@ pipeline {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh './ci/jenkins/get-or-create-cluster.sh'
 
               /* Operator Integration Tests */
@@ -281,7 +277,6 @@ pipeline {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh 'make target-eks'
 
               /* Collector Integration Tests */
@@ -315,7 +310,6 @@ pipeline {
                 /* Setup */
                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
                 sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-                sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
                 sh 'kubectl config use k8po-ci'
 
                 /* Collector Integration Tests */
