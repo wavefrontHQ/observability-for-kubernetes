@@ -130,108 +130,6 @@ pipeline {
             sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
           }
         }
-
-        stage("Prepare gke-worker for Integration Tests") {
-          agent {
-            label "gke-integration-worker"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
-          }
-          steps {
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-          }
-        }
-
-        stage("Prepare operator-worker-1") {
-          agent {
-            label "gke-operator-worker-1"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
-          }
-          steps {
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-          }
-        }
-
-        stage("Prepare operator-worker-2") {
-          agent {
-            label "gke-operator-worker-2"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
-          }
-          steps {
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-          }
-        }
-
-        stage("Prepare operator-worker-3") {
-          agent {
-            label "gke-operator-worker-3"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
-          }
-          steps {
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-          }
-        }
-
-        stage("Prepare eks-worker for Integration Tests") {
-          agent {
-            label "eks-integration-worker"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
-          }
-          steps {
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-          }
-        }
-
-        stage("Prepare aks-worker for Integration Tests") {
-          agent {
-            label "aks-integration-worker"
-          }
-          options {
-            timeout(time: 60, unit: 'MINUTES')
-          }
-          environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
-          }
-          steps {
-            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-            sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
-          }
-        }
       }
     }
 
@@ -264,6 +162,9 @@ pipeline {
           steps {
             lock("integration-test-gke") {
               /* Setup */
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh 'make gke-connect-to-cluster'
 
               /* Collector Integration Tests */
@@ -281,6 +182,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-1"
             GCP_ZONE="a"
@@ -289,6 +191,9 @@ pipeline {
           steps {
             lock("integration-test-gke") {
               /* Setup */
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh './ci/jenkins/get-or-create-cluster.sh'
 
               /* Operator Integration Tests */
@@ -306,6 +211,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-2"
             GCP_ZONE="a"
@@ -314,6 +220,9 @@ pipeline {
           steps {
             lock("integration-test-gke") {
               /* Setup */
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh './ci/jenkins/get-or-create-cluster.sh'
 
               /* Operator Integration Tests */
@@ -331,6 +240,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-3"
             GCP_ZONE="a"
@@ -339,6 +249,9 @@ pipeline {
           steps {
             lock("integration-test-gke") {
               /* Setup */
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh './ci/jenkins/get-or-create-cluster.sh'
 
               /* Operator Integration Tests */
@@ -356,6 +269,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
             DOCKER_IMAGE = "kubernetes-collector"
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
@@ -365,6 +279,9 @@ pipeline {
           steps {
             lock("integration-test-eks") {
               /* Setup */
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+              sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
               sh 'make target-eks'
 
               /* Collector Integration Tests */
@@ -386,6 +303,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
             AKS_CLUSTER_NAME = "k8po-ci"
             DOCKER_IMAGE = "kubernetes-collector"
             INTEGRATION_TEST_ARGS="all"
@@ -395,6 +313,9 @@ pipeline {
             lock("integration-test-aks") {
               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
                 /* Setup */
+                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+                sh 'cd operator && ./hack/jenkins/install_docker_buildx.sh'
                 sh 'kubectl config use k8po-ci'
 
                 /* Collector Integration Tests */
