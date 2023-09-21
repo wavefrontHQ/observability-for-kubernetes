@@ -37,7 +37,7 @@ func TestProcessAndValidate(t *testing.T) {
 		config := ComponentConfig{Enable: false}
 		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.True(t, result.IsValid())
 	})
 
@@ -45,7 +45,7 @@ func TestProcessAndValidate(t *testing.T) {
 		config := ComponentConfig{Enable: true}
 		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.False(t, result.IsValid())
 	})
 
@@ -54,7 +54,7 @@ func TestProcessAndValidate(t *testing.T) {
 		config.ClusterName = ""
 		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.False(t, result.IsValid())
 		require.Equal(t, "logging: missing cluster name", result.Message())
 	})
@@ -64,7 +64,7 @@ func TestProcessAndValidate(t *testing.T) {
 		config.Namespace = ""
 		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.False(t, result.IsValid())
 		require.Equal(t, "logging: missing namespace", result.Message())
 	})
@@ -74,7 +74,7 @@ func TestProcessAndValidate(t *testing.T) {
 		config.LoggingVersion = ""
 		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.False(t, result.IsValid())
 		require.Equal(t, "logging: missing log image version", result.Message())
 	})
@@ -84,7 +84,7 @@ func TestProcessAndValidate(t *testing.T) {
 		config.ImageRegistry = ""
 		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.False(t, result.IsValid())
 		require.Equal(t, "logging: missing image registry", result.Message())
 	})
@@ -94,7 +94,7 @@ func TestProcessAndValidate(t *testing.T) {
 		config.ProxyAddress = ""
 		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.False(t, result.IsValid())
 		require.Equal(t, "logging: missing proxy address", result.Message())
 	})
@@ -104,7 +104,7 @@ func TestProcessAndValidate(t *testing.T) {
 		config.ProxyAddress = wftest.DefaultProxyAddress
 		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.False(t, result.IsValid())
 		require.Equal(t, "logging: proxy address (wavefront-proxy:2878) must start with http", result.Message())
 	})
@@ -116,13 +116,13 @@ func TestResources(t *testing.T) {
 		loggingComponent, _ := NewComponent(validLoggingComponentConfig(), ComponentDir)
 		toApply, toDelete, err := loggingComponent.Resources()
 
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
 		require.Empty(t, toDelete)
 
 		// daemonSet
 		ds, err := test.GetAppliedDaemonSet(util.LoggingName, toApply)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, loggingComponent.Config.ConfigHash, ds.Spec.Template.GetObjectMeta().GetAnnotations()["configHash"])
 		require.Equal(t, util.LoggingName, ds.Spec.Template.GetLabels()["name"])
@@ -136,14 +136,14 @@ func TestResources(t *testing.T) {
 
 		// configMap
 		configMap, err := test.GetAppliedConfigMap("wavefront-logging-config", toApply)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, "wavefront", configMap.GetLabels()["app.kubernetes.io/name"])
 		require.Equal(t, "logging", configMap.GetLabels()["app.kubernetes.io/component"])
 		require.Equal(t, wftest.DefaultNamespace, configMap.Namespace)
 
 		fluentBitConfig := fluentBitConfiguration(err, toApply)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Contains(t, fluentBitConfig, fmt.Sprintf("Proxy             %s", loggingComponent.Config.ProxyAddress))
 	})
 
@@ -155,10 +155,10 @@ func TestResources(t *testing.T) {
 		loggingComponent, _ := NewComponent(config, ComponentDir)
 		toApply, _, err := loggingComponent.Resources()
 
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
 		ds, err := test.GetAppliedDaemonSet("wavefront-logging", toApply)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, "10Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
 		require.Equal(t, "200m", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
 		require.Equal(t, "256Mi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
@@ -170,11 +170,11 @@ func TestResources(t *testing.T) {
 		loggingComponent, _ := NewComponent(config, ComponentDir)
 		toApply, _, err := loggingComponent.Resources()
 
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
 
 		fluentBitConfig := fluentBitConfiguration(err, toApply)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Contains(t, fluentBitConfig, "Regex  namespace_name ^kube-sys$|^wavefront$")
 		require.Contains(t, fluentBitConfig, "Regex  pod_name ^pet-clinic$")
 	})
@@ -185,11 +185,11 @@ func TestResources(t *testing.T) {
 		loggingComponent, _ := NewComponent(config, ComponentDir)
 		toApply, _, err := loggingComponent.Resources()
 
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
 
 		fluentBitConfig := fluentBitConfiguration(err, toApply)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Contains(t, fluentBitConfig, "Record          key1 value1")
 		require.Contains(t, fluentBitConfig, "Record          key2 value2")
 	})
@@ -200,11 +200,11 @@ func TestResources(t *testing.T) {
 		loggingComponent, _ := NewComponent(config, ComponentDir)
 		toApply, _, err := loggingComponent.Resources()
 
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
 
 		fluentBitConfig := fluentBitConfiguration(err, toApply)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Contains(t, fluentBitConfig, "Proxy             http://my-proxy:8888")
 	})
 

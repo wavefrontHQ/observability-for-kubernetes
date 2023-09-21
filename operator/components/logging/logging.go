@@ -23,6 +23,7 @@ type ComponentConfig struct {
 	ImageRegistry  string
 	Namespace      string
 	ProxyAddress   string
+	ControllerManagerUID string
 
 	// optional
 	ProxyAvailableReplicas int
@@ -34,8 +35,7 @@ type ComponentConfig struct {
 	Resources              wf.Resources
 
 	// internal use only
-	ConfigHash           string
-	ControllerManagerUID string
+	ConfigHash string
 }
 
 type Component struct {
