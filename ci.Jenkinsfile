@@ -213,7 +213,7 @@ pipeline {
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-2"
             GCP_ZONE="a"
-            INTEGRATION_TEST_ARGS="-r common-metrics -r logging-integration -r allow-legacy-install"
+            INTEGRATION_TEST_ARGS="-r common-metrics -r proxy-preprocessor -r logging-integration -r allow-legacy-install"
           }
           steps {
             lock("integration-test-gke") {
