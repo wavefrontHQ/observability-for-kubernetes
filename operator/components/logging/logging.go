@@ -1,4 +1,4 @@
-package components
+package logging
 
 import (
 	"encoding/json"
@@ -8,11 +8,12 @@ import (
 	"strings"
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type LoggingComponentConfig struct {
+type ComponentConfig struct {
 	// required
 	ClusterName    string
 	LoggingVersion string
@@ -34,32 +35,32 @@ type LoggingComponentConfig struct {
 	ControllerManagerUID string `json:"-"`
 }
 
-type LoggingComponent struct {
+type Component struct {
 	fs        fs.FS
 	DeployDir string
-	Config    LoggingComponentConfig
+	Config    ComponentConfig
 }
 
-func (logging *LoggingComponent) Name() string {
+func (logging *Component) Name() string {
 	return "logging"
 }
 
-func NewLoggingComponent(componentConfig LoggingComponentConfig, fs fs.FS) (LoggingComponent, error) {
+func NewComponent(componentConfig ComponentConfig, fs fs.FS) (Component, error) {
 
 	configHashBytes, err := json.Marshal(componentConfig)
 	if err != nil {
-		return LoggingComponent{}, errors.New("logging: problem calculating config hash")
+		return Component{}, errors.New("logging: problem calculating config hash")
 	}
-	componentConfig.ConfigHash = hashValue(configHashBytes)
+	componentConfig.ConfigHash = components.HashValue(configHashBytes)
 
-	return LoggingComponent{
+	return Component{
 		Config:    componentConfig,
 		fs:        fs,
-		DeployDir: DeployDir + "/logging",
+		DeployDir: components.DeployDir,
 	}, nil
 }
 
-func (logging *LoggingComponent) Validate() validation.Result {
+func (logging *Component) Validate() validation.Result {
 	if len(logging.Config.ClusterName) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing cluster name"))
 	}
@@ -85,6 +86,6 @@ func (logging *LoggingComponent) Validate() validation.Result {
 	return validation.Result{}
 }
 
-func (logging *LoggingComponent) Resources() ([]client.Object, []client.Object, error) {
-	return BuildResources(logging.fs, logging.DeployDir, logging.Name(), logging.Config.ControllerManagerUID, logging.Config)
+func (logging *Component) Resources() ([]client.Object, []client.Object, error) {
+	return components.BuildResources(logging.fs, logging.DeployDir, logging.Name(), logging.Config.ControllerManagerUID, logging.Config)
 }

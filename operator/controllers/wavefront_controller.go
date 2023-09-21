@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components/factory"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -427,7 +428,7 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		wavefront.Spec.Openshift = true
 	}
 
-	r.components, err = components.BuildComponents(wavefront)
+	r.components, err = factory.BuildComponents(wavefront)
 	if err != nil {
 		return err
 	}

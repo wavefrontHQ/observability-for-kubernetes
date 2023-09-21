@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func hashValue(bytes []byte) string {
+func HashValue(bytes []byte) string {
 	h := sha1.New()
 	h.Write(bytes)
 
