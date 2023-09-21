@@ -14,7 +14,7 @@ func CR(options ...CROption) *wf.Wavefront {
 			Namespace: DefaultNamespace,
 		},
 		Spec: wf.WavefrontSpec{
-			ClusterName:          "testClusterName",
+			ClusterName:          DefaultClusterName,
 			WavefrontUrl:         "testWavefrontUrl",
 			WavefrontTokenSecret: "testToken",
 			Namespace:            DefaultNamespace,
@@ -26,7 +26,8 @@ func CR(options ...CROption) *wf.Wavefront {
 					},
 				},
 				Logging: wf.Logging{
-					Enable: true,
+					Enable:         true,
+					LoggingVersion: "2.1.6",
 				},
 			},
 			DataExport: wf.DataExport{

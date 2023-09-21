@@ -26,6 +26,7 @@ type rule struct {
 }
 
 func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
+	//TODO: Component Refactor - move all of this to components or the wavefront controller if is cross component specific
 	wfSpec := &wavefront.Spec
 	operator, err := deployment(client, util.OperatorName, wfSpec.Namespace)
 	if err != nil {
@@ -46,22 +47,6 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 		return err
 	}
 
-	err = preProcessLogging(wfSpec)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func preProcessLogging(wfSpec *wf.WavefrontSpec) error {
-	if wfSpec.DataCollection.Logging.Enable {
-		configHashBytes, err := json.Marshal(wfSpec.DataCollection.Logging)
-		if err != nil {
-			return err
-		}
-		wfSpec.DataCollection.Logging.ConfigHash = hashValue(configHashBytes)
-	}
 	return nil
 }
 

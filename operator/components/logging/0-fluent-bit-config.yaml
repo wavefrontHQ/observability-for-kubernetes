@@ -73,7 +73,7 @@ data:
         Record          source   ${K8S_NODE_NAME}
         Record          cluster  ${CLUSTER_NAME}
         Record          integration  Kubernetes 
-        {{- range $tagKey, $tagValue := .DataCollection.Logging.Tags }}
+        {{- range $tagKey, $tagValue := .Tags }}
         Record          {{ $tagKey }} {{ $tagValue }}
         {{- end }}
     
@@ -89,21 +89,21 @@ data:
         Condition  Key_Does_Not_Exist  application
         Set        application         none
 
-    {{- if .DataCollection.Logging.Filters.TagAllowList }}
+    {{- if .TagAllowList }}
     [FILTER]
         Name   grep
         Match  kube.*
-        {{- range $tagKey, $tagValues := .DataCollection.Logging.Filters.TagAllowList }}
+        {{- range $tagKey, $tagValues := .TagAllowList }}
         {{- $sep := "" }}
         Regex  {{ $tagKey }} ^{{- range $tagValue := $tagValues }}{{$sep}}{{$tagValue}}{{$sep = "$|^"}}{{end}}$
         {{- end }}
     {{- end }}
     
-    {{- if .DataCollection.Logging.Filters.TagDenyList }}
+    {{- if .TagDenyList }}
     [FILTER]
         Name     grep
         Match    kube.*
-        {{- range $tagKey, $tagValues := .DataCollection.Logging.Filters.TagDenyList }}
+        {{- range $tagKey, $tagValues := .TagDenyList }}
         {{- $sep := "" }}
         Exclude  {{ $tagKey }} ^{{- range $tagValue := $tagValues }}{{$sep}}{{$tagValue}}{{$sep = "$|^"}}{{end}}$
         {{- end }}
@@ -112,7 +112,7 @@ data:
     [OUTPUT]
         Name              http
         Match             kube.*
-        Proxy             {{.DataCollection.Logging.ProxyAddress}}
+        Proxy             {{  .ProxyAddress }}
         URI               /logs/json_lines?f=logs_json_lines
         Format            json_lines
         json_date_key     timestamp

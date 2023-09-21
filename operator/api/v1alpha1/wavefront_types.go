@@ -443,9 +443,7 @@ type Logging struct {
 	// Tags are a map of key value pairs that are added to all logging emitted.
 	Tags map[string]string `json:"tags,omitempty"`
 
-	// ConfigHash is for internal use only
-	ConfigHash string `json:"-"`
-
+	// TODO: Component Refactor  - remove the internal fields below
 	// ProxyAddress is for internal use only
 	ProxyAddress string `json:"-"`
 

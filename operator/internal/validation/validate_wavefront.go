@@ -87,6 +87,7 @@ func validateEnvironment(objClient client.Client, wavefront *wf.Wavefront) error
 
 func validateWavefrontSpec(wavefront *wf.Wavefront) error {
 	var errs []error
+	//TODO: Component Refactor - move all non cross component validation to individual components
 
 	if wavefront.Spec.DataExport.WavefrontProxy.Enable {
 		errs = append(errs, validateWavefrontProxyConfig(wavefront)...)
