@@ -21,12 +21,16 @@ We have alert templates on common Kubernetes issues.
 | [Detect pod backoff event](templates/pod-backoff-event.json.tmpl) | `pod-backoff-event.json.tmpl` |
 | [Detect workload with non-ready pods](templates/workload-not-ready.json.tmpl) | `workload-not-ready.json.tmpl` |
 | [Detect pod out-of-memory kills](templates/pod-out-of-memory-kills.json.tmpl) | `pod-out-of-memory-kills.json.tmpl` |
+| [Detect container cpu throttling](templates/container-cpu-throttling.json.tmpl) | `container-cpu-throttling.json.tmpl` |
+| [Detect container cpu overutilization](templates/container-cpu-overutilization.json.tmpl) | `container-cpu-overutilization.json.tmpl` |
+| [Detect persistent volumes with no claims](templates/persistent-volumes-no-claim.json.tmpl) | `persistent-volumes-no-claim.json.tmpl` |
+| [Detect persistent volumes with error](templates/persistent-volumes-error.json.tmpl) | `persistent-volumes-error.json.tmpl` |
 
 ## Creating Alerts
 
 1. Ensure that you have the information for the required fields:
     - **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
-    - **Wavefront instance**. For example, the value of `<your_instance>` from your wavefront url (`https://<your_instance>.wavefront.com`).
+    - **Wavefront instance**. For example, the value of `<YOUR_WAVEFRONT_INSTANCE>` from your wavefront url (`https://<YOUR_WAVEFRONT_INSTANCE>.wavefront.com`).
     - **Cluster name**. For example, the value of `clusterName` from your Wavefront Custom Resource configuration (ex: `mycluster-us-west-1`).
     - **(Optional) Alert template**. For example, the value of `<alert_template_file.json.tmpl>` from the list of alert templates (ex: `pod-backoff-event.json.tmpl`).
 
@@ -39,7 +43,7 @@ curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubern
   -n <YOUR_CLUSTER_NAME>
 ```
 
->**Note:** You will need to change YOUR_API_TOKEN, YOUR_WAVEFRONT_INSTANCE, and YOUR_CLUSTER_NAME in the above example.
+>**Note:** You will need to change <YOUR_API_TOKEN>, <YOUR_WAVEFRONT_INSTANCE>, and <YOUR_CLUSTER_NAME> in the above example.
 
 ### Example: Creating a Single Alert
 
@@ -51,11 +55,11 @@ curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubern
   -f <ALERT_TEMPLATE>
 ```
 
->**Note:** You will need to change YOUR_API_TOKEN, YOUR_WAVEFRONT_INSTANCE, YOUR_CLUSTER_NAME, and ALERT_TEMPLATE in the above example.
+>**Note:** You will need to change <YOUR_API_TOKEN>, <YOUR_WAVEFRONT_INSTANCE>, <YOUR_CLUSTER_NAME>, and <ALERT_TEMPLATE> in the above example.
 
 ## Customizing Alerts
 
-1. Log in to your service instance `https://<your_instance>.wavefront.com` as a user with the Alerts permission. Click **Alerting** > **All Alerts** from the toolbar to display the Alerts Browser.
+1. Log in to your service instance `https://<YOUR_WAVEFRONT_INSTANCE>.wavefront.com` as a user with the Alerts permission. Click **Alerting** > **All Alerts** from the toolbar to display the Alerts Browser.
 2. Click the alert name, or click the ellipsis icon next to the alert and select **Edit**.  You can search for the alert by typing the alert name in the search field.
 3. Change the alert properties when you edit the alert.
 4. Specify alert recipients to receive notifications when the alert changes state.

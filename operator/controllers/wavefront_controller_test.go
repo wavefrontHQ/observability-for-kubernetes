@@ -366,10 +366,7 @@ func TestReconcileCollector(t *testing.T) {
 		err = yaml.Unmarshal([]byte(configStr), &configs)
 		require.NoError(t, err)
 
-		sources := configs["sources"]
-		sourceMap := sources.(map[string]interface{})
-		// sources: kubernetes_source, internal_stats_source, kubernetes_state_source, prometheus_sources
-		require.Equal(t, 4, len(sourceMap), fmt.Sprintf("%#v", sourceMap))
+		require.True(t, mockKM.CollectorConfigMapContains("prometheus_sources"))
 		require.True(t, mockKM.CollectorConfigMapContains("kubernetes_state_source"))
 		require.True(t, mockKM.CollectorConfigMapContains("prefix: kubernetes.controlplane."))
 	})

@@ -131,7 +131,6 @@ See below for configuration options.
 We have templates for common scenarios. See the comments in each file for usage instructions.
 
  * [Using a custom private registry](deploy/scenarios/wavefront-custom-private-registry.yaml)
- * [Using an existing Collector ConfigMap](deploy/scenarios/wavefront-collector-existing-configmap.yaml)
  * [With plugin configuration in a secret](deploy/scenarios/wavefront-collector-with-plugin-secret.yaml)
  * [Filtering metrics upon collection](deploy/scenarios/wavefront-collector-filtering.yaml)
  * [Disabling control plane metrics](deploy/scenarios/wavefront-disable-control-plane-metrics.yaml)
@@ -152,7 +151,7 @@ You can see all configuration options in the [wavefront-full-config.yaml](deploy
 
 We have alerts on common Kubernetes issues. For details on creating alerts, see [alerts.md](docs/alerts/alerts.md).
 
-### Pod Failure
+### Pod Failures
 
 | Alert name | Description |
 |---|---|
@@ -161,6 +160,15 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Pod Backoff Event](docs/alerts/templates/pod-backoff-event.json.tmpl) | Workload has pod with container status `ImagePullBackOff` or `CrashLoopBackOff`. |
 | [Workload Not Ready](docs/alerts/templates/workload-not-ready.json.tmpl) | Workload has pods that are not ready. |
 | [Pod Out-of-memory Kills](docs/alerts/templates/pod-out-of-memory-kills.json.tmpl) | Workload has pod with container status `OOMKilled`. |
+| [Container CPU Throttling](docs/alerts/templates/container-cpu-throttling.json.tmpl) | Workload has a container with high CPU throttling. |
+| [Container CPU Overutilization](docs/alerts/templates/container-cpu-overutilization.json.tmpl) | Workload has a container with high CPU utilization. |
+
+### Persistent Volume Failures
+
+| Alert name | Description |
+|---|---|
+| [Persistent Volume no claim](docs/alerts/templates/persistent-volumes-no-claim.json.tmpl) | Persistent Volume has no claim. |
+| [Persistent Volume error](docs/alerts/templates/persistent-volumes-error.json.tmpl) | Persistent Volume has issues with provisioning. |
 
 ## Bring Your Own Logs Shipper
 

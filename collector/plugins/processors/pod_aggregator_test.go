@@ -97,44 +97,114 @@ func TestPodAggregator(t *testing.T) {
 					},
 				},
 			},
+			metrics.PodKey("ns1", "pod3"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePod,
+					metrics.LabelPodName.Key:       "pod2",
+					metrics.LabelNamespaceName.Key: "ns1",
+				},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  0,
+					},
+					"m3": {
+						ValueType:  metrics.ValueFloat,
+						FloatValue: 25,
+					},
+					"m4": {
+						ValueType:  metrics.ValueFloat,
+						FloatValue: 0,
+					},
+				},
+			},
+
+			metrics.PodContainerKey("ns1", "pod3", "c1"): {
+				Labels: map[string]string{
+					metrics.LabelMetricSetType.Key: metrics.MetricSetTypePodContainer,
+					metrics.LabelPodName.Key:       "pod3",
+					metrics.LabelNamespaceName.Key: "ns1",
+				},
+				Values: map[string]metrics.Value{
+					"m1": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  10,
+					},
+					"m2": {
+						ValueType: metrics.ValueInt64,
+						IntValue:  20,
+					},
+					"m3": {
+						ValueType:  metrics.ValueFloat,
+						FloatValue: 15,
+					},
+				},
+			},
 		},
 	}
 	processor := PodAggregator{}
 	result, err := processor.Process(&batch)
 	assert.NoError(t, err)
-	pod, found := result.Sets[metrics.PodKey("ns1", "pod1")]
-	assert.True(t, found)
 
-	m1, found := pod.Values["m1"]
-	assert.True(t, found)
-	assert.Equal(t, int64(110), m1.IntValue)
+	t.Run("aggregates container values when there are no pod values", func(t *testing.T) {
+		pod, found := result.Sets[metrics.PodKey("ns1", "pod1")]
+		assert.True(t, found)
 
-	m2, found := pod.Values["m2"]
-	assert.True(t, found)
-	assert.Equal(t, int64(222), m2.IntValue)
+		m1, found := pod.Values["m1"]
+		assert.True(t, found)
+		assert.Equal(t, int64(110), m1.IntValue)
 
-	m3, found := pod.Values["m3"]
-	assert.True(t, found)
-	assert.Equal(t, int64(30), m3.IntValue)
+		m2, found := pod.Values["m2"]
+		assert.True(t, found)
+		assert.Equal(t, int64(222), m2.IntValue)
 
-	labelPodName, found := pod.Labels[metrics.LabelPodName.Key]
-	assert.True(t, found)
-	assert.Equal(t, "pod1", labelPodName)
+		m3, found := pod.Values["m3"]
+		assert.True(t, found)
+		assert.Equal(t, int64(30), m3.IntValue)
 
-	labelNsName, found := pod.Labels[metrics.LabelNamespaceName.Key]
-	assert.True(t, found)
-	assert.Equal(t, "ns1", labelNsName)
+		labelPodName, found := pod.Labels[metrics.LabelPodName.Key]
+		assert.True(t, found)
+		assert.Equal(t, "pod1", labelPodName)
 
-	pod, found = result.Sets[metrics.PodKey("ns1", "pod2")]
-	assert.True(t, found)
+		labelNsName, found := pod.Labels[metrics.LabelNamespaceName.Key]
+		assert.True(t, found)
+		assert.Equal(t, "ns1", labelNsName)
 
-	m1, found = pod.Values["m1"]
-	assert.True(t, found)
-	assert.Equal(t, int64(100), m1.IntValue)
+	})
 
-	m2, found = pod.Values["m2"]
-	assert.True(t, found)
-	assert.Equal(t, int64(20), m2.IntValue)
+	t.Run("doesn't aggregate container values when there is a pod value", func(t *testing.T) {
+		pod, found := result.Sets[metrics.PodKey("ns1", "pod2")]
+		assert.True(t, found)
+
+		m1, found := pod.Values["m1"]
+		assert.True(t, found)
+		assert.Equal(t, int64(100), m1.IntValue)
+
+		m2, found := pod.Values["m2"]
+		assert.True(t, found)
+		assert.Equal(t, int64(20), m2.IntValue)
+	})
+
+	t.Run("aggregates container values when pod value is zero", func(t *testing.T) {
+		pod, found := result.Sets[metrics.PodKey("ns1", "pod3")]
+		assert.True(t, found)
+
+		m1, found := pod.Values["m1"]
+		assert.True(t, found)
+		assert.Equal(t, int64(10), m1.IntValue)
+
+		m2, found := pod.Values["m2"]
+		assert.True(t, found)
+		assert.Equal(t, int64(20), m2.IntValue)
+
+		m3, found := pod.Values["m3"]
+		assert.True(t, found)
+		assert.Equal(t, float64(25), m3.FloatValue)
+
+		m4, found := pod.Values["m4"]
+		assert.True(t, found)
+		assert.Equal(t, float64(0), m4.FloatValue)
+	})
 
 }
 
