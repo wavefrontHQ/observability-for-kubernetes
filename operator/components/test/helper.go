@@ -1,7 +1,6 @@
 package test
 
 import (
-	"errors"
 	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -21,7 +20,7 @@ func GetAppliedDaemonSet(metadataName string, toApply []client.Object) (appsv1.D
 	}
 
 	if found == nil {
-		return daemonSet, errors.New(fmt.Sprintf("DaemonSet with name:%s, not found", metadataName))
+		return daemonSet, fmt.Errorf("DaemonSet with name:%s, not found", metadataName)
 	}
 
 	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
@@ -45,7 +44,7 @@ func GetAppliedConfigMap(metadataName string, toApply []client.Object) (v1.Confi
 	}
 
 	if found == nil {
-		return configMap, errors.New(fmt.Sprintf("DaemonSet with name:%s, not found", metadataName))
+		return configMap, fmt.Errorf("DaemonSet with name:%s, not found", metadataName)
 	}
 
 	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)

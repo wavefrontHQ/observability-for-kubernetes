@@ -142,7 +142,7 @@ func TestResources(t *testing.T) {
 		require.Equal(t, "logging", configMap.GetLabels()["app.kubernetes.io/component"])
 		require.Equal(t, wftest.DefaultNamespace, configMap.Namespace)
 
-		fluentBitConfig := fluentBitConfiguration(err, toApply)
+		fluentBitConfig := fluentBitConfiguration(toApply)
 		require.NoError(t, err)
 		require.Contains(t, fluentBitConfig, fmt.Sprintf("Proxy             %s", loggingComponent.Config.ProxyAddress))
 	})
@@ -173,7 +173,7 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
 
-		fluentBitConfig := fluentBitConfiguration(err, toApply)
+		fluentBitConfig := fluentBitConfiguration(toApply)
 		require.NoError(t, err)
 		require.Contains(t, fluentBitConfig, "Regex  namespace_name ^kube-sys$|^wavefront$")
 		require.Contains(t, fluentBitConfig, "Regex  pod_name ^pet-clinic$")
@@ -188,7 +188,7 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
 
-		fluentBitConfig := fluentBitConfiguration(err, toApply)
+		fluentBitConfig := fluentBitConfiguration(toApply)
 		require.NoError(t, err)
 		require.Contains(t, fluentBitConfig, "Record          key1 value1")
 		require.Contains(t, fluentBitConfig, "Record          key2 value2")
@@ -203,7 +203,7 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
 
-		fluentBitConfig := fluentBitConfiguration(err, toApply)
+		fluentBitConfig := fluentBitConfiguration(toApply)
 		require.NoError(t, err)
 		require.Contains(t, fluentBitConfig, "Proxy             http://my-proxy:8888")
 	})
@@ -211,8 +211,8 @@ func TestResources(t *testing.T) {
 	//TODO - Component Refactor - move over most of the component level tests from wavefront_controller_test#TestReconcileLogging
 }
 
-func fluentBitConfiguration(err error, toApply []client.Object) string {
-	configMap, err := test.GetAppliedConfigMap("wavefront-logging-config", toApply)
+func fluentBitConfiguration(toApply []client.Object) string {
+	configMap, _ := test.GetAppliedConfigMap("wavefront-logging-config", toApply)
 	fluentBitConfig := configMap.Data["fluent-bit.conf"]
 	return fluentBitConfig
 }

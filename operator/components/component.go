@@ -118,13 +118,3 @@ func newTemplate(resourceFile string) *template.Template {
 
 	return template.New(resourceFile).Funcs(fMap)
 }
-
-func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-
-	return false
-}

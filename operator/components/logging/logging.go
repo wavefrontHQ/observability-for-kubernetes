@@ -84,7 +84,7 @@ func (logging *Component) Validate() validation.Result {
 	if len(logging.Config.ProxyAddress) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing proxy address"))
 	} else if !strings.HasPrefix(logging.Config.ProxyAddress, "http") {
-		return validation.NewErrorResult(errors.New(fmt.Sprintf("logging: proxy address (%s) must start with http", logging.Config.ProxyAddress)))
+		return validation.NewErrorResult(fmt.Errorf("logging: proxy address (%s) must start with http", logging.Config.ProxyAddress))
 	}
 
 	return validation.Result{}
