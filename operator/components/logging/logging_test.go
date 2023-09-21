@@ -3,20 +3,23 @@ package logging
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+var ComponentDir = os.DirFS(filepath.Join("..", DeployDir))
+
 func TestNewLoggingComponent(t *testing.T) {
 	t.Run("create config hash", func(t *testing.T) {
 		config := validLoggingComponentConfig()
-		loggingComponent, _ := NewComponent(config, os.DirFS(components.DeployDir))
+		t.Log(os.Getwd())
+		loggingComponent, _ := NewComponent(config, ComponentDir)
 		_ = loggingComponent.Validate()
 		require.NotEmpty(t, loggingComponent.Config.ConfigHash)
 	})
@@ -25,14 +28,22 @@ func TestNewLoggingComponent(t *testing.T) {
 func TestProcessAndValidate(t *testing.T) {
 	t.Run("valid component config", func(t *testing.T) {
 		config := validLoggingComponentConfig()
-		loggingComponent, _ := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, _ := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
 		require.True(t, result.IsValid())
 	})
 
-	t.Run("empty component config is not valid", func(t *testing.T) {
-		config := ComponentConfig{}
-		loggingComponent, err := NewComponent(config, os.DirFS(components.DeployDir))
+	t.Run("empty disabled component config is valid", func(t *testing.T) {
+		config := ComponentConfig{Enable: false}
+		loggingComponent, err := NewComponent(config, ComponentDir)
+		result := loggingComponent.Validate()
+		require.Nil(t, err)
+		require.True(t, result.IsValid())
+	})
+
+	t.Run("empty enabled component config is not valid", func(t *testing.T) {
+		config := ComponentConfig{Enable: true}
+		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
 		require.Nil(t, err)
 		require.False(t, result.IsValid())
@@ -41,7 +52,7 @@ func TestProcessAndValidate(t *testing.T) {
 	t.Run("empty cluster name is not valid", func(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.ClusterName = ""
-		loggingComponent, err := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
 		require.Nil(t, err)
 		require.False(t, result.IsValid())
@@ -51,7 +62,7 @@ func TestProcessAndValidate(t *testing.T) {
 	t.Run("empty namespace is not valid", func(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.Namespace = ""
-		loggingComponent, err := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
 		require.Nil(t, err)
 		require.False(t, result.IsValid())
@@ -61,7 +72,7 @@ func TestProcessAndValidate(t *testing.T) {
 	t.Run("empty logging version is not valid", func(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.LoggingVersion = ""
-		loggingComponent, err := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
 		require.Nil(t, err)
 		require.False(t, result.IsValid())
@@ -71,7 +82,7 @@ func TestProcessAndValidate(t *testing.T) {
 	t.Run("empty image registry is not valid", func(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.ImageRegistry = ""
-		loggingComponent, err := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
 		require.Nil(t, err)
 		require.False(t, result.IsValid())
@@ -81,7 +92,7 @@ func TestProcessAndValidate(t *testing.T) {
 	t.Run("empty proxy address is not valid", func(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.ProxyAddress = ""
-		loggingComponent, err := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
 		require.Nil(t, err)
 		require.False(t, result.IsValid())
@@ -91,7 +102,7 @@ func TestProcessAndValidate(t *testing.T) {
 	t.Run("proxy address without http is not valid", func(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.ProxyAddress = wftest.DefaultProxyAddress
-		loggingComponent, err := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, err := NewComponent(config, ComponentDir)
 		result := loggingComponent.Validate()
 		require.Nil(t, err)
 		require.False(t, result.IsValid())
@@ -102,7 +113,7 @@ func TestProcessAndValidate(t *testing.T) {
 
 func TestResources(t *testing.T) {
 	t.Run("default configuration", func(t *testing.T) {
-		loggingComponent, _ := NewComponent(validLoggingComponentConfig(), os.DirFS(components.DeployDir))
+		loggingComponent, _ := NewComponent(validLoggingComponentConfig(), ComponentDir)
 		toApply, toDelete, err := loggingComponent.Resources()
 
 		require.Nil(t, err)
@@ -141,7 +152,7 @@ func TestResources(t *testing.T) {
 		config.Resources.Requests.CPU = "200m"
 		config.Resources.Requests.Memory = "10Mi"
 		config.Resources.Limits.Memory = "256Mi"
-		loggingComponent, _ := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, _ := NewComponent(config, ComponentDir)
 		toApply, _, err := loggingComponent.Resources()
 
 		require.Nil(t, err)
@@ -156,7 +167,7 @@ func TestResources(t *testing.T) {
 	t.Run("tag allow list is set correctly", func(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.TagAllowList = map[string][]string{"namespace_name": {"kube-sys", "wavefront"}, "pod_name": {"pet-clinic"}}
-		loggingComponent, _ := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, _ := NewComponent(config, ComponentDir)
 		toApply, _, err := loggingComponent.Resources()
 
 		require.Nil(t, err)
@@ -171,7 +182,7 @@ func TestResources(t *testing.T) {
 	t.Run("tags are set correctly", func(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.Tags = map[string]string{"key1": "value1", "key2": "value2"}
-		loggingComponent, _ := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, _ := NewComponent(config, ComponentDir)
 		toApply, _, err := loggingComponent.Resources()
 
 		require.Nil(t, err)
@@ -186,7 +197,7 @@ func TestResources(t *testing.T) {
 	t.Run("external wavefront proxy url with http specified in URL is set correctly", func(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.ProxyAddress = "http://my-proxy:8888"
-		loggingComponent, _ := NewComponent(config, os.DirFS(components.DeployDir))
+		loggingComponent, _ := NewComponent(config, ComponentDir)
 		toApply, _, err := loggingComponent.Resources()
 
 		require.Nil(t, err)
@@ -208,6 +219,7 @@ func fluentBitConfiguration(err error, toApply []client.Object) string {
 
 func validLoggingComponentConfig() ComponentConfig {
 	return ComponentConfig{
+		Enable:                 true,
 		ClusterName:            wftest.DefaultClusterName,
 		Namespace:              wftest.DefaultNamespace,
 		LoggingVersion:         "2.1.2",

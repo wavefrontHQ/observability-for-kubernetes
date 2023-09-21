@@ -1,16 +1,17 @@
 package factory
 
 import (
-	"os"
+	"io/fs"
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/logging"
 )
 
-func BuildComponents(wf *wf.Wavefront) (map[components.Component]bool, error) {
-	createdComponents := make(map[components.Component]bool)
+func BuildComponents(componentsDir fs.FS, wf *wf.Wavefront) ([]components.Component, error) {
+	var created []components.Component
 	config := logging.ComponentConfig{
+		Enable:          wf.Spec.CanExportData && wf.Spec.DataCollection.Logging.Enable,
 		ClusterName:     wf.Spec.ClusterName,
 		Namespace:       wf.Spec.Namespace,
 		LoggingVersion:  wf.Spec.DataCollection.Logging.LoggingVersion,
@@ -28,11 +29,17 @@ func BuildComponents(wf *wf.Wavefront) (map[components.Component]bool, error) {
 		ControllerManagerUID: wf.Spec.ControllerManagerUID,
 	}
 
-	loggingComponent, err := logging.NewComponent(config, os.DirFS(components.DeployDir))
+	loggingDir, err := fs.Sub(componentsDir, logging.DeployDir)
 	if err != nil {
 		return nil, err
 	}
 
-	createdComponents[&loggingComponent] = wf.Spec.CanExportData && wf.Spec.DataCollection.Logging.Enable
-	return createdComponents, err
+	loggingComponent, err := logging.NewComponent(config, loggingDir)
+	if err != nil {
+		return nil, err
+	}
+
+	created = append(created, &loggingComponent)
+
+	return created, err
 }

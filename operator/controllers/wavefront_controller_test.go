@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
@@ -2094,11 +2097,12 @@ func emptyScenario(wfCR *wf.Wavefront, apiGroups []string, initObjs ...runtime.O
 			LoggingVersion:   "99.99.99",
 			OperatorVersion:  "99.99.99",
 		},
-		Client:            objClient,
-		FS:                os.DirFS(controllers.DeployDir),
-		KubernetesManager: mockKM,
-		DiscoveryClient:   mockDiscoveryClient,
-		MetricConnection:  metric.NewConnection(testhelper.StubSenderFactory(nil, nil)),
+		Client:              objClient,
+		LegacyDeployDir:     os.DirFS(filepath.Join("..", controllers.DeployDir)),
+		ComponentsDeployDir: os.DirFS(filepath.Join("..", components.DeployDir)),
+		KubernetesManager:   mockKM,
+		DiscoveryClient:     mockDiscoveryClient,
+		MetricConnection:    metric.NewConnection(testhelper.StubSenderFactory(nil, nil)),
 	}
 
 	return r, mockKM

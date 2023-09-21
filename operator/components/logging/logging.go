@@ -13,8 +13,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const DeployDir = "logging"
+
 type ComponentConfig struct {
 	// required
+	Enable         bool
 	ClusterName    string
 	LoggingVersion string
 	ImageRegistry  string
@@ -31,14 +34,13 @@ type ComponentConfig struct {
 	Resources              wf.Resources
 
 	// internal use only
-	ConfigHash           string `json:"-"`
-	ControllerManagerUID string `json:"-"`
+	ConfigHash           string
+	ControllerManagerUID string
 }
 
 type Component struct {
-	fs        fs.FS
-	DeployDir string
-	Config    ComponentConfig
+	fs     fs.FS
+	Config ComponentConfig
 }
 
 func (logging *Component) Name() string {
@@ -54,13 +56,15 @@ func NewComponent(componentConfig ComponentConfig, fs fs.FS) (Component, error) 
 	componentConfig.ConfigHash = components.HashValue(configHashBytes)
 
 	return Component{
-		Config:    componentConfig,
-		fs:        fs,
-		DeployDir: components.DeployDir,
+		Config: componentConfig,
+		fs:     fs,
 	}, nil
 }
 
 func (logging *Component) Validate() validation.Result {
+	if !logging.Config.Enable {
+		return validation.Result{}
+	}
 	if len(logging.Config.ClusterName) == 0 {
 		return validation.NewErrorResult(errors.New("logging: missing cluster name"))
 	}
@@ -87,5 +91,5 @@ func (logging *Component) Validate() validation.Result {
 }
 
 func (logging *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(logging.fs, logging.DeployDir, logging.Name(), logging.Config.ControllerManagerUID, logging.Config)
+	return components.BuildResources(logging.fs, logging.Name(), logging.Config.Enable, logging.Config.ControllerManagerUID, logging.Config)
 }

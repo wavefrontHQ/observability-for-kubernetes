@@ -23,17 +23,17 @@ type Component interface {
 	Name() string
 }
 
-const DeployDir = ".."
+const DeployDir = "components"
 
-func BuildResources(fs fs.FS, deployDir, componentName, managerUID string, data any) ([]client.Object, []client.Object, error) {
-	files, err := resourceFiles(deployDir, []string{componentName})
+func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID string, data any) ([]client.Object, []client.Object, error) {
+	files, err := resourceFiles(fs)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	var resourcesToApply, resourcesToDelete []client.Object
 	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-	for resourceFile, shouldApply := range files {
+	for _, resourceFile := range files {
 		templateName := filepath.Base(resourceFile)
 		resourceTemplate, err := newTemplate(templateName).ParseFS(fs, resourceFile)
 		if err != nil {
@@ -69,7 +69,7 @@ func BuildResources(fs fs.FS, deployDir, componentName, managerUID string, data 
 			UID:        types.UID(managerUID),
 		}})
 
-		if shouldApply && resource.GetAnnotations()["wavefront.com/conditionally-provision"] != "false" {
+		if enabled && resource.GetAnnotations()["wavefront.com/conditionally-provision"] != "false" {
 			resourcesToApply = append(resourcesToApply, resource)
 		} else {
 			resourcesToDelete = append(resourcesToDelete, resource)
@@ -78,26 +78,20 @@ func BuildResources(fs fs.FS, deployDir, componentName, managerUID string, data 
 	return resourcesToApply, resourcesToDelete, nil
 }
 
-func resourceFiles(deployDir string, dirsToApply []string) (map[string]bool, error) {
-	files := make(map[string]bool)
-	suffix := "yaml"
-	var currentDir string
-	err := filepath.WalkDir(deployDir, func(path string, entry fs.DirEntry, err error) error {
+func resourceFiles(dir fs.FS) ([]string, error) {
+	extension := ".yaml"
+	var files []string
+	err := fs.WalkDir(dir, ".", func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if entry.IsDir() {
-			currentDir = entry.Name()
+			return nil
 		}
 
-		if strings.HasSuffix(path, suffix) {
-			filePath := strings.Replace(path, deployDir+"/", "", 1)
-			if contains(dirsToApply, currentDir) {
-				files[filePath] = true
-			} else {
-				files[filePath] = false
-			}
+		if filepath.Ext(path) == extension {
+			files = append(files, path)
 		}
 
 		return nil

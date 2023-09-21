@@ -60,7 +60,7 @@ import (
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 )
 
-const DeployDir = "../deploy/internal"
+const DeployDir = "deploy/internal"
 
 type KubernetesManager interface {
 	ApplyResources(resourceYAMLs []client.Object) error
@@ -71,15 +71,16 @@ type KubernetesManager interface {
 type WavefrontReconciler struct {
 	client.Client
 
-	FS                fs.FS
-	KubernetesManager KubernetesManager
-	DiscoveryClient   discovery.ServerGroupsInterface
-	MetricConnection  *metric.Connection
-	Versions          Versions
-	namespace         string
-	ClusterUUID       string
+	LegacyDeployDir     fs.FS
+	ComponentsDeployDir fs.FS
+	KubernetesManager   KubernetesManager
+	DiscoveryClient     discovery.ServerGroupsInterface
+	MetricConnection    *metric.Connection
+	Versions            Versions
+	namespace           string
+	ClusterUUID         string
 
-	components map[components.Component]bool
+	components []components.Component
 }
 
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts,verbs=get;list;watch;create;update;patch;delete
@@ -158,12 +159,10 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront) validation.Result {
 	var result validation.Result
-	for component, enable := range r.components {
-		if enable {
-			result = component.Validate()
-			if result.IsError() {
-				break
-			}
+	for _, component := range r.components {
+		result = component.Validate()
+		if result.IsError() {
+			break
 		}
 	}
 
@@ -193,13 +192,14 @@ type Versions struct {
 
 func NewWavefrontReconciler(versions Versions, client client.Client, discoveryClient discovery.ServerGroupsInterface, clusterUUID string) (operator *WavefrontReconciler, err error) {
 	return &WavefrontReconciler{
-		Versions:          versions,
-		Client:            client,
-		FS:                os.DirFS(DeployDir),
-		KubernetesManager: kubernetes_manager.NewKubernetesManager(client),
-		DiscoveryClient:   discoveryClient,
-		MetricConnection:  metric.NewConnection(metric.WavefrontSenderFactory()),
-		ClusterUUID:       clusterUUID,
+		Versions:            versions,
+		Client:              client,
+		LegacyDeployDir:     os.DirFS(DeployDir),
+		ComponentsDeployDir: os.DirFS(components.DeployDir),
+		KubernetesManager:   kubernetes_manager.NewKubernetesManager(client),
+		DiscoveryClient:     discoveryClient,
+		MetricConnection:    metric.NewConnection(metric.WavefrontSenderFactory()),
+		ClusterUUID:         clusterUUID,
 	}, nil
 }
 
@@ -224,7 +224,7 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 }
 
 func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]client.Object, []client.Object, error) {
-	files, err := resourceFiles("yaml", spec)
+	files, err := resourceFiles(r.LegacyDeployDir, "yaml", spec)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -233,7 +233,7 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
 	for resourceFile, shouldApply := range files {
 		templateName := filepath.Base(resourceFile)
-		resourceTemplate, err := newTemplate(templateName).ParseFS(r.FS, resourceFile)
+		resourceTemplate, err := newTemplate(templateName).ParseFS(r.LegacyDeployDir, resourceFile)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -275,14 +275,10 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 	}
 	//TODO: Component Refactor - remove above templating code once everything has been moved to components ^^^
 
-	for component, enable := range r.components {
+	for _, component := range r.components {
 		toApply, toDelete, _ := component.Resources()
+		resourcesToApply = append(resourcesToApply, toApply...)
 		resourcesToDelete = append(resourcesToDelete, toDelete...)
-		if enable {
-			resourcesToApply = append(resourcesToApply, toApply...)
-		} else {
-			resourcesToDelete = append(resourcesToDelete, toApply...)
-		}
 	}
 	return resourcesToApply, resourcesToDelete, nil
 }
@@ -350,12 +346,12 @@ func contains(s []string, str string) bool {
 	return false
 }
 
-func resourceFiles(suffix string, spec wf.WavefrontSpec) (map[string]bool, error) {
+func resourceFiles(deployDir fs.FS, suffix string, spec wf.WavefrontSpec) (map[string]bool, error) {
 	files := make(map[string]bool)
 	dirsToApply := enabledDirs(spec)
 
 	var currentDir string
-	err := filepath.WalkDir(DeployDir, func(path string, entry fs.DirEntry, err error) error {
+	err := fs.WalkDir(deployDir, ".", func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -365,11 +361,10 @@ func resourceFiles(suffix string, spec wf.WavefrontSpec) (map[string]bool, error
 		}
 
 		if strings.HasSuffix(path, suffix) {
-			filePath := strings.Replace(path, DeployDir+"/", "", 1)
 			if contains(dirsToApply, currentDir) {
-				files[filePath] = true
+				files[path] = true
 			} else {
-				files[filePath] = false
+				files[path] = false
 			}
 		}
 
@@ -428,7 +423,7 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		wavefront.Spec.Openshift = true
 	}
 
-	r.components, err = factory.BuildComponents(wavefront)
+	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wavefront)
 	if err != nil {
 		return err
 	}
