@@ -18,7 +18,7 @@ dockerize-lemans: le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSIO
 	docker build -t lemans/lemans-gateway le-mans/docker/gateway
 
 start-wf-proxy: dockerize-wf-proxy tmp/wavefront_token tmp/lemans_token
-	docker run --publish 2878:2878 --interactive --expose 2878 --env WAVEFRONT_URL="https://nimba.wavefront.com/api" --env WAVEFRONT_TOKEN='$(shell cat tmp/wavefront_token)' --env WAVEFRONT_PROXY_ARGS="--le-mans-host http://gateway:8002 --le-mans-stream-name helios-test --le-mans-token $(shell cat tmp/lemans_token)" --network le-mans_default wf-proxy
+	docker run --tty --interactive --rm --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="https://nimba.wavefront.com/api" --env WAVEFRONT_TOKEN='$(shell cat tmp/wavefront_token)' --env WAVEFRONT_PROXY_ARGS="--le-mans-host http://gateway:8002 --le-mans-stream-name helios-test --le-mans-token $(shell cat tmp/lemans_token)" --network le-mans_default wf-proxy
 
 dockerize-wf-proxy: wavefront-proxy
 	docker build -t wf-proxy -f wavefront-proxy/docker/Dockerfile ./wavefront-proxy
