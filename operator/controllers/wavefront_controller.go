@@ -27,6 +27,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components/factory"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -58,7 +60,7 @@ import (
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 )
 
-const DeployDir = "../deploy/internal"
+const DeployDir = "deploy/internal"
 
 type KubernetesManager interface {
 	ApplyResources(resourceYAMLs []client.Object) error
@@ -69,13 +71,16 @@ type KubernetesManager interface {
 type WavefrontReconciler struct {
 	client.Client
 
-	FS                fs.FS
-	KubernetesManager KubernetesManager
-	DiscoveryClient   discovery.ServerGroupsInterface
-	MetricConnection  *metric.Connection
-	Versions          Versions
-	namespace         string
-	ClusterUUID       string
+	LegacyDeployDir     fs.FS
+	ComponentsDeployDir fs.FS
+	KubernetesManager   KubernetesManager
+	DiscoveryClient     discovery.ServerGroupsInterface
+	MetricConnection    *metric.Connection
+	Versions            Versions
+	namespace           string
+	ClusterUUID         string
+
+	components []components.Component
 }
 
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts,verbs=get;list;watch;create;update;patch;delete
@@ -119,7 +124,13 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	validationResult := r.preprocessAndValidate(wavefront, ctx)
+	var validationResult validation.Result
+	err = r.preprocess(wavefront, ctx)
+	if err != nil {
+		validationResult = validation.NewErrorResult(err)
+	} else {
+		validationResult = r.validate(wavefront)
+	}
 
 	if !validationResult.IsError() {
 		err = r.readAndCreateResources(wavefront.Spec)
@@ -146,12 +157,19 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}, nil
 }
 
-func (r *WavefrontReconciler) preprocessAndValidate(wavefront *wf.Wavefront, ctx context.Context) validation.Result {
-	err := r.preprocess(wavefront, ctx)
-	if err != nil {
-		return validation.NewErrorResult(err)
+func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront) validation.Result {
+	var result validation.Result
+	for _, component := range r.components {
+		result = component.Validate()
+		if result.IsError() {
+			break
+		}
 	}
 
+	if result.IsError() {
+		return result
+	}
+	//TODO - Component Refactor - move all non cross component validation to components
 	return validation.Validate(r.Client, wavefront)
 }
 
@@ -174,13 +192,14 @@ type Versions struct {
 
 func NewWavefrontReconciler(versions Versions, client client.Client, discoveryClient discovery.ServerGroupsInterface, clusterUUID string) (operator *WavefrontReconciler, err error) {
 	return &WavefrontReconciler{
-		Versions:          versions,
-		Client:            client,
-		FS:                os.DirFS(DeployDir),
-		KubernetesManager: kubernetes_manager.NewKubernetesManager(client),
-		DiscoveryClient:   discoveryClient,
-		MetricConnection:  metric.NewConnection(metric.WavefrontSenderFactory()),
-		ClusterUUID:       clusterUUID,
+		Versions:            versions,
+		Client:              client,
+		LegacyDeployDir:     os.DirFS(DeployDir),
+		ComponentsDeployDir: os.DirFS(components.DeployDir),
+		KubernetesManager:   kubernetes_manager.NewKubernetesManager(client),
+		DiscoveryClient:     discoveryClient,
+		MetricConnection:    metric.NewConnection(metric.WavefrontSenderFactory()),
+		ClusterUUID:         clusterUUID,
 	}, nil
 }
 
@@ -205,7 +224,7 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 }
 
 func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]client.Object, []client.Object, error) {
-	files, err := resourceFiles("yaml", spec)
+	files, err := resourceFiles(r.LegacyDeployDir, "yaml", spec)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -214,7 +233,7 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
 	for resourceFile, shouldApply := range files {
 		templateName := filepath.Base(resourceFile)
-		resourceTemplate, err := newTemplate(templateName).ParseFS(r.FS, resourceFile)
+		resourceTemplate, err := newTemplate(templateName).ParseFS(r.LegacyDeployDir, resourceFile)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -254,10 +273,18 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 			resourcesToDelete = append(resourcesToDelete, resource)
 		}
 	}
+	//TODO: Component Refactor - remove above templating code once everything has been moved to components ^^^
+
+	for _, component := range r.components {
+		toApply, toDelete, _ := component.Resources()
+		resourcesToApply = append(resourcesToApply, toApply...)
+		resourcesToDelete = append(resourcesToDelete, toDelete...)
+	}
 	return resourcesToApply, resourcesToDelete, nil
 }
 
 func enabledDirs(spec wf.WavefrontSpec) []string {
+	//TODO: Component Refactor - this should all be moved to component factor / components
 	dirsToInclude := []string{"internal"}
 	if spec.DataExport.WavefrontProxy.Enable {
 		dirsToInclude = append(dirsToInclude, "proxy")
@@ -265,10 +292,6 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 
 	if (spec.CanExportData && spec.DataCollection.Metrics.Enable) || spec.Experimental.KubernetesEvents.Enable {
 		dirsToInclude = append(dirsToInclude, "collector")
-	}
-
-	if spec.CanExportData && spec.DataCollection.Logging.Enable {
-		dirsToInclude = append(dirsToInclude, "logging")
 	}
 
 	if spec.Experimental.Autotracing.Enable || spec.Experimental.Hub.Pixie.Enable {
@@ -323,12 +346,12 @@ func contains(s []string, str string) bool {
 	return false
 }
 
-func resourceFiles(suffix string, spec wf.WavefrontSpec) (map[string]bool, error) {
+func resourceFiles(deployDir fs.FS, suffix string, spec wf.WavefrontSpec) (map[string]bool, error) {
 	files := make(map[string]bool)
 	dirsToApply := enabledDirs(spec)
 
 	var currentDir string
-	err := filepath.WalkDir(DeployDir, func(path string, entry fs.DirEntry, err error) error {
+	err := fs.WalkDir(deployDir, ".", func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -338,11 +361,10 @@ func resourceFiles(suffix string, spec wf.WavefrontSpec) (map[string]bool, error
 		}
 
 		if strings.HasSuffix(path, suffix) {
-			filePath := strings.Replace(path, DeployDir+"/", "", 1)
 			if contains(dirsToApply, currentDir) {
-				files[filePath] = true
+				files[path] = true
 			} else {
-				files[filePath] = false
+				files[path] = false
 			}
 		}
 
@@ -377,14 +399,14 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 	wavefront.Spec.Namespace = r.namespace
 	wavefront.Spec.ClusterUUID = r.ClusterUUID
 
+	wavefront.Spec.DataCollection.Metrics.CollectorVersion = r.Versions.CollectorVersion
+	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
+	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
+
 	err := preprocessor.PreProcess(r.Client, wavefront)
 	if err != nil {
 		return err
 	}
-
-	wavefront.Spec.DataCollection.Metrics.CollectorVersion = r.Versions.CollectorVersion
-	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
-	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
 
 	if wavefront.Spec.CanExportData {
 		err := r.MetricConnection.Connect(wavefront.Spec.DataCollection.Metrics.ProxyAddress)
@@ -399,6 +421,11 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 
 	if r.isAnOpenshiftEnvironment() {
 		wavefront.Spec.Openshift = true
+	}
+
+	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wavefront)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -438,6 +465,7 @@ func (r *WavefrontReconciler) shouldEnableEtcdCollection(wavefront *wf.Wavefront
 // Reporting Health Status
 func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, wavefront *wf.Wavefront, validationResult validation.Result) (wf.WavefrontStatus, error) {
 
+	// TODO: Component Refactor - use components to get which resources should be queried for status
 	wavefrontStatus := health.GenerateWavefrontStatus(r.Client, wavefront)
 
 	if !validationResult.IsValid() {

@@ -14,8 +14,8 @@ spec:
   template:
     metadata:
       annotations:
-        proxy-available-replicas: "{{ .DataExport.WavefrontProxy.AvailableReplicas }}"
-        configHash: "{{ .DataCollection.Logging.ConfigHash }}"
+        proxy-available-replicas: "{{ .ProxyAvailableReplicas }}"
+        configHash: "{{ .ConfigHash }}"
       labels:
         name: wavefront-logging
         app.kubernetes.io/name: wavefront
@@ -30,15 +30,15 @@ spec:
         - effect: NoSchedule
           key: kubernetes.io/arch
           value: arm64
-      {{- if .DataCollection.Tolerations }}
-{{ .DataCollection.Tolerations | toYaml | indent 8 }}
+      {{- if .Tolerations }}
+{{ .Tolerations | toYaml | indent 8 }}
       {{- end }}
       {{- if .ImagePullSecret }}
       imagePullSecrets:
         - name: {{ .ImagePullSecret }}
       {{- end }}
       containers:
-      - image: {{ .ImageRegistry }}/kubernetes-operator-fluentbit:{{ .DataCollection.Logging.LoggingVersion }}
+      - image: {{ .ImageRegistry }}/kubernetes-operator-fluentbit:{{ .LoggingVersion }}
         env:
           - name: K8S_NODE_NAME
             valueFrom:
@@ -71,7 +71,7 @@ spec:
           successThreshold: 1
           timeoutSeconds: 1
         resources:
-{{ .DataCollection.Logging.Resources | toYaml | indent 10 }}
+{{ .Resources | toYaml | indent 10 }}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
