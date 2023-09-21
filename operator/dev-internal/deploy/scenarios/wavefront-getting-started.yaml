@@ -5,8 +5,8 @@ metadata:
   name: wavefront
   namespace: observability-system
 spec:
-  clusterName: pselvaganesa-cluster
-  wavefrontUrl: https://nimba.wavefront.com
+  clusterName: YOUR_CLUSTER_NAME
+  wavefrontUrl: YOUR_WAVEFRONT_URL
   dataCollection:
     metrics:
       enable: true
