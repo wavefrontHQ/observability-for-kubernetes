@@ -3,22 +3,36 @@
   "alertType": "THRESHOLD",
   "alertSources": [
     {
+      "name": "A",
+      "query": "mcount(5m, ${B}) >= 2",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND (phase=\"Failed\" OR phase=\"Pending\")) by (sources, cluster, cluster_uuid, pv_name, phase))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
       "name": "Alert Condition",
-      "query": "(mcount(5m, count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND (phase=\"Failed\" OR phase=\"Pending\")), sources, cluster, cluster_uuid, pv_name, phase)) >= 2)",
+      "query": "${A}",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
     },
     {
       "name": "Display Condition",
-      "query": "if(${Alert Condition}, ${Alert Condition})",
+      "query": "if(${A} >= 1, ${A})",
       "queryType": "WQL",
-      "alertSourceType": ["VARIABLE","AUDIT"],
+      "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "warn": "(mcount(5m, count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND (phase=\"Failed\" OR phase=\"Pending\")), sources, cluster, cluster_uuid, pv_name, phase)) >= 2) >= 1"
+    "warn": "${A} >= 1"
   },
   "displayExpression": "${Display Condition}",
   "minutes": 10,
