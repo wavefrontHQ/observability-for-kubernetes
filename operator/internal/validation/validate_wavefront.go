@@ -69,6 +69,10 @@ func Validate(objClient client.Client, wavefront *wf.Wavefront) Result {
 func ValidateResources(resources wf.Resources) Result {
 	var errs []error
 
+	errs = append(errs, validateResourceValue("cpu", "request", resources.Requests.CPU))
+	errs = append(errs, validateResourceValue("cpu", "limit", resources.Limits.CPU))
+	errs = append(errs, validateResourceValue("memory", "request", resources.Requests.Memory))
+	errs = append(errs, validateResourceValue("memory", "limit", resources.Limits.Memory))
 	err := utilerrors.NewAggregate(errs)
 	if err != nil {
 		return Result{err, true}
@@ -76,8 +80,17 @@ func ValidateResources(resources wf.Resources) Result {
 	return Result{}
 }
 
-func validateResourceValue(resourceName, resourceValue string) error {
-	// TODO add in validation
+func validateResourceValue(resourceName, resourceType, resourceValue string) error {
+	if resourceType != "request" {
+		if len(resourceValue) == 0 {
+			return fmt.Errorf("missing %s %s", resourceName, resourceType)
+		}
+	}
+
+	if !resourceRegex.MatchString(resourceValue) {
+		return fmt.Errorf("invalid %s %s: '%s'", resourceName, resourceType, resourceValue)
+	}
+
 	return nil
 }
 

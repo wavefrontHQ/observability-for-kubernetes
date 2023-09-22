@@ -79,6 +79,17 @@ func TestProcess(t *testing.T) {
 		require.False(t, result.IsValid())
 		require.Equal(t, "pixie: missing cluster name", result.Message())
 	})
+
+	t.Run("no pem resources set is not valid", func(t *testing.T) {
+		config := validComponentConfig()
+		config.PemResources = wf.Resources{}
+		component, err := NewComponent(config, ComponentDir)
+		result := component.Validate()
+		require.NoError(t, err)
+		require.False(t, result.IsValid())
+		require.Equal(t, "pixie: missing pem resources", result.Message())
+	})
+
 }
 
 func TestResources(t *testing.T) {

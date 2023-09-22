@@ -351,6 +351,117 @@ func TestValidateEnvironment(t *testing.T) {
 
 }
 
+func TestValidateResources(t *testing.T) {
+	t.Run("valid resource limits", func(t *testing.T) {
+		resources := wf.Resources{
+			Requests: wf.Resource{
+				CPU: "10Mi",
+				Memory: "10Gi",
+			},
+			Limits:   wf.Resource{
+				CPU: "100Mi",
+				Memory: "100Gi",
+			},
+		}
+		result := ValidateResources(resources)
+		require.True(t, result.IsValid())
+	})
+
+	t.Run("missing cpu limit", func(t *testing.T) {
+		resources := wf.Resources{
+			Requests: wf.Resource{
+				CPU: "10Mi",
+				Memory: "10Gi",
+			},
+			Limits:   wf.Resource{
+				Memory: "100Gi",
+			},
+		}
+		result := ValidateResources(resources)
+		require.False(t, result.IsValid())
+		require.Equal(t, "missing cpu limit", result.Message())
+	})
+
+	t.Run("missing memory limit", func(t *testing.T) {
+		resources := wf.Resources{
+			Requests: wf.Resource{
+				CPU: "10Mi",
+				Memory: "10Gi",
+			},
+			Limits:   wf.Resource{
+				CPU: "100Mi",
+			},
+		}
+		result := ValidateResources(resources)
+		require.False(t, result.IsValid())
+		require.Equal(t, "missing memory limit", result.Message())
+	})
+
+	t.Run("invalid cpu request", func(t *testing.T) {
+		resources := wf.Resources{
+			Requests: wf.Resource{
+				CPU: "10MM",
+				Memory: "10Gi",
+			},
+			Limits:   wf.Resource{
+				CPU: "100Mi",
+				Memory: "100Gi",
+			},
+		}
+		result := ValidateResources(resources)
+		require.False(t, result.IsValid())
+		require.Equal(t, "invalid cpu request: '10MM'", result.Message())
+	})
+
+	t.Run("invalid cpu limit", func(t *testing.T) {
+		resources := wf.Resources{
+			Requests: wf.Resource{
+				CPU: "10Mi",
+				Memory: "10Gi",
+			},
+			Limits:   wf.Resource{
+				CPU: "100MM",
+				Memory: "100Gi",
+			},
+		}
+		result := ValidateResources(resources)
+		require.False(t, result.IsValid())
+		require.Equal(t, "invalid cpu limit: '100MM'", result.Message())
+	})
+
+	t.Run("invalid memory request", func(t *testing.T) {
+		resources := wf.Resources{
+			Requests: wf.Resource{
+				CPU: "10Mi",
+				Memory: "10GG",
+			},
+			Limits:   wf.Resource{
+				CPU: "100Mi",
+				Memory: "100Gi",
+			},
+		}
+		result := ValidateResources(resources)
+		require.False(t, result.IsValid())
+		require.Equal(t, "invalid memory request: '10GG'", result.Message())
+	})
+
+	t.Run("invalid memory limit", func(t *testing.T) {
+		resources := wf.Resources{
+			Requests: wf.Resource{
+				CPU: "10Mi",
+				Memory: "10Gi",
+			},
+			Limits:   wf.Resource{
+				CPU: "100Mi",
+				Memory: "100GG",
+			},
+		}
+		result := ValidateResources(resources)
+		require.False(t, result.IsValid())
+		require.Equal(t, "invalid memory limit: '100GG'", result.Message())
+	})
+}
+
 func requireValidationMessage(t *testing.T, validationError error, namespace string) {
 	require.Equal(t, legacyEnvironmentError(namespace).Error(), validationError.Error())
 }
