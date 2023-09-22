@@ -27,7 +27,7 @@ We have alert templates on common Kubernetes issues.
 | [Detect persistent volumes with error](templates/persistent-volumes-error.json.tmpl) | `persistent-volumes-error.json.tmpl` |
 | [Detect persistent volumes filling up](templates/persistent-volume-claim-overutilization.json.tmpl) | `persistent-volume-claim-overutilization.json.tmpl` |
 | [Detect node memory overutilization](templates/node-memory-overutilization.json.tmpl) | `node-memory-overutilization.json.tmpl` |
-
+| [Detect node cpu overutilization](templates/node-cpu-overutilization.json.tmpl) | `node-cpu-overutilization.json.tmpl` |
 
 ## Creating Alerts
 
