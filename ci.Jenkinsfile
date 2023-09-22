@@ -45,7 +45,7 @@ pipeline {
       }
     }
 
-    stage("Go Tests, Publish Images, and Prepare for Integration Tests") {
+    stage("Go Tests and Publish Images") {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
       parallel{
         stage("Publish Collector") {
