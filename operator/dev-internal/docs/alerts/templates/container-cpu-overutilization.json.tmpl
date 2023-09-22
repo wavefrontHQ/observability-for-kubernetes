@@ -1,6 +1,8 @@
 {
   "name": "Container CPU Overutilization",
   "alertType": "THRESHOLD",
+  "additionalInformation": "",
+  "alertChartUnits": "%",
   "alertSources": [
     {
       "name": "A",
@@ -41,7 +43,9 @@
   "conditions": {
     "info": "${A} >= 90"
   },
+  "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
   "minutes": 15,
   "resolveAfterMinutes": 2,
   "tags": {
@@ -51,12 +55,13 @@
   },
   "alertTriageDashboards": [
     {
-     "dashboardId": "integration-kubernetes-workloads",
-     "parameters": {
-       "constants": {
-         "cluster": "K8S_CLUSTER_NAME"
-       }
-     }
+      "dashboardId": "integration-kubernetes-workloads",
+      "parameters": {
+        "constants": {
+          "cluster": "K8S_CLUSTER_NAME"
+        }
+      }
     }
-  ]
+  ],
+  "includeObsoleteMetrics": false
 }

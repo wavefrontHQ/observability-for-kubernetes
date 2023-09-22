@@ -1,6 +1,8 @@
 {
   "name": "Pod Backoff Event",
   "alertType": "THRESHOLD",
+  "additionalInformation": "",
+  "alertChartUnits": "",
   "alertSources": [
     {
       "name": "A",
@@ -34,7 +36,9 @@
   "conditions": {
     "warn": "${A} >= 1"
   },
+  "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
   "minutes": 10,
   "resolveAfterMinutes": 2,
   "tags": {
@@ -44,12 +48,13 @@
   },
   "alertTriageDashboards": [
     {
-     "dashboardId": "integration-kubernetes-workloads",
-     "parameters": {
-       "constants": {
-         "cluster": "K8S_CLUSTER_NAME"
-       }
-     }
+      "dashboardId": "integration-kubernetes-workloads",
+      "parameters": {
+        "constants": {
+          "cluster": "K8S_CLUSTER_NAME"
+        }
+      }
     }
-  ]
+  ],
+  "includeObsoleteMetrics": false
 }
