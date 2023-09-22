@@ -4,8 +4,7 @@
   "alertSources": [
     {
       "name": "Alert Condition",
-      "query": "round(sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.memory.working_set\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) / sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.memory.limit\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) * 100)",
-      "query": "round(sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) / sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) * 100)",
+      "query": "round(ts(\"kubernetes.pod_container.memory.working_set\", cluster=\"K8S_CLUSTER_NAME\") / ts(\"kubernetes.pod_container.memory.limit\", cluster=\"K8S_CLUSTER_NAME\") * 100)",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
@@ -19,11 +18,10 @@
     }
   ],
   "conditions": {
-    "warn": "round(sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.memory.working_set\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) / sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.memory.limit\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) * 100) >= 70"
-    "info": "round(sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) / sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) * 100) >= 90"
+    "warn": "round(ts(\"kubernetes.pod_container.memory.working_set\", cluster=\"K8S_CLUSTER_NAME\") / ts(\"kubernetes.pod_container.memory.limit\", cluster=\"K8S_CLUSTER_NAME\") * 100) >= 70"
   },
   "displayExpression": "${Display Condition}",
-  "minutes": 15,
+  "minutes": 10,
   "resolveAfterMinutes": 2,
   "tags": {
     "customerTags": [

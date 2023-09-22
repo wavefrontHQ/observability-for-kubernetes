@@ -6,7 +6,7 @@ spec:
   containers:
   - name: memory-hog
     image: busybox
-    command: ["sh", "-c", "tail -f /dev/null"]
+    command: ["sh", "-c", "dd if=/dev/zero of=/dev/shm/memory-hog bs=1M count=40; tail -f /dev/null"]
     resources:
       limits:
         memory: "50Mi"
