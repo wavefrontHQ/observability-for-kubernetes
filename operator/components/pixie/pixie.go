@@ -6,6 +6,7 @@ import (
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -56,6 +57,10 @@ func (component *Component) Validate() validation.Result {
 
 	if len(component.config.ClusterName) == 0 {
 		return validation.NewErrorResult(fmt.Errorf("%s: missing cluster name", component.Name()))
+	}
+
+	if result := validation.ValidateResources(&component.config.PemResources, util.PixieVizierPEMName); result.IsError() {
+		return validation.NewErrorResult(fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 
 	return validation.Result{}

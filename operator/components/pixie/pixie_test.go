@@ -26,7 +26,7 @@ func TestNewPixieComponent(t *testing.T) {
 	})
 }
 
-func TestProcess(t *testing.T) {
+func TestValidate(t *testing.T) {
 	t.Run("valid component config", func(t *testing.T) {
 		config := validComponentConfig()
 		component, _ := NewComponent(config, ComponentDir)
@@ -87,7 +87,7 @@ func TestProcess(t *testing.T) {
 		result := component.Validate()
 		require.NoError(t, err)
 		require.False(t, result.IsValid())
-		require.Equal(t, "pixie: missing pem resources", result.Message())
+		require.Equal(t, "pixie: [invalid vizier-pem.resources.limits.memory must be set, invalid vizier-pem.resources.limits.cpu must be set]", result.Message())
 	})
 
 }
@@ -201,6 +201,9 @@ func validComponentConfig() ComponentConfig {
 		ClusterUUID:              "cluster-uuid",
 		ClusterName:              wftest.DefaultClusterName,
 		EnableOpAppsOptimization: true,
-		PemResources:             wf.Resources{},
+		PemResources: wf.Resources{Limits: wf.Resource{
+			CPU:    "100Mi",
+			Memory: "1Gi",
+		}},
 	}
 }
