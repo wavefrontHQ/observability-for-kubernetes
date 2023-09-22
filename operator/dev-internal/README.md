@@ -177,6 +177,12 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 |---|---|
 | [Node Memory Overutilization](docs/alerts/templates/node-memory-overutilization.json.tmpl) | Node has high memory utilization. |
 
+### Node Failures
+
+| Alert name | Description |
+|---|---|
+| [Node CPU Overutilization](docs/alerts/templates/node-cpu-overutilization.json.tmpl) | Node has high CPU utilization. |
+
 ## Bring Your Own Logs Shipper
 
 The operator deploys a data export component (wavefront-proxy) which can receive log data and forward it to the Operations for Applications service.

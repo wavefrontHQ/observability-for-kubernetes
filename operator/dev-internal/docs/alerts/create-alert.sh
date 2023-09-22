@@ -115,7 +115,7 @@ function print_usage() {
 function main() {
   # Required arguments
   local WF_CLUSTER=
-  local ALERT_FILE=
+  local ALERT_FILE_NAME=
   local K8S_CLUSTER_NAME=
 
   # Default arguments
@@ -123,28 +123,28 @@ function main() {
   local ALERTS_FOLDER='docs/alerts/templates'
   local GIT_BRANCH='main'
 
-  while getopts 'c:t:f:n:p:b:h' opt; do
+  while getopts ':t:c:f:n:p:b:h' opt; do
     case "${opt}" in
     t) WAVEFRONT_TOKEN="${OPTARG}" ;;
     c) WF_CLUSTER="${OPTARG}" ;;
-    f) ALERT_FILE="${OPTARG}" ;;
+    f) ALERT_FILE_NAME="${OPTARG}" ;;
     n) K8S_CLUSTER_NAME="${OPTARG}" ;;
     p) ALERTS_FOLDER="${OPTARG}" ;;
     b) GIT_BRANCH="${OPTARG}" ;;
     h) print_usage; exit 0 ;;
-    \?) print_usage_and_exit "Invalid option" ;;
+    \?) print_usage_and_exit "Invalid option: -${OPTARG}" ;;
     esac
   done
 
   # Checking for required arguments
   check_required_argument "${WAVEFRONT_TOKEN}" "-t <WAVEFRONT_TOKEN> is required"
   check_required_argument "${WF_CLUSTER}" "-c <WF_CLUSTER> is required"
-  check_required_argument "${ALERT_FILE}" "-f <ALERT_FILE> is required"
+  check_required_argument "${ALERT_FILE_NAME}" "-f <ALERT_FILE_NAME> is required"
   check_required_argument "${K8S_CLUSTER_NAME}" "-n <K8S_CLUSTER_NAME> is required"
 
   # Download and create the alert
   TEMP_FILE=$(mktemp)
-  download_alert "${GITHUB_REPO}" "${ALERTS_FOLDER}/${ALERT_FILE}" "${GIT_BRANCH}" "${TEMP_FILE}"
+  download_alert "${GITHUB_REPO}" "${ALERTS_FOLDER}/${ALERT_FILE_NAME}" "${GIT_BRANCH}" "${TEMP_FILE}"
   check_alert_file "${TEMP_FILE}"
   post_alert_to_wavefront "${WAVEFRONT_TOKEN}" "${WF_CLUSTER}" "${TEMP_FILE}" "${K8S_CLUSTER_NAME}"
   rm "${TEMP_FILE}"
