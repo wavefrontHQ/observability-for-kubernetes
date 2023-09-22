@@ -1,28 +1,52 @@
 {
   "name": "Persistent Volume Claim Overutilization",
-  "additionalInformation": "Alert reports when a Persistent Volume's available storage is below the required level specified.",
   "alertType": "THRESHOLD",
+  "additionalInformation": "Alert reports when a Persistent Volume's available storage is below the required level specified.",
+  "alertChartUnits": "%",
   "alertSources": [
     {
+      "name": "A",
+      "query": "round(sum(${B} by (sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, pvc_name)) / sum(${C} by (sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, pvc_name)) * 100)",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "mmin(5m, align(1m, ts(\"kubernetes.pod.filesystem.available\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\")))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "C",
+      "query": "mmax(5m, align(1m, ts(\"kubernetes.pod.filesystem.limit\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\")))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
       "name": "Alert Condition",
-      "query": "round(sum(mmin(5m, align(1m, ts(\"kubernetes.pod.filesystem.available\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\"))), sources, cluster, cluster_uuid, namespace_name, pod_name, pvc_name, workload_name, workload_kind) / sum(mmax(5m, align(1m, ts(\"kubernetes.pod.filesystem.limit\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\"))), sources, cluster, cluster_uuid, namespace_name, pod_name, pvc_name, workload_name, workload_kind) * 100)",
+      "query": "${A}",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
     },
     {
       "name": "Display Condition",
-      "query": "if(${Alert Condition} <= 15, ${Alert Condition})",
+      "query": "if(${A} <= 15, ${A})",
       "queryType": "WQL",
-      "alertSourceType": ["VARIABLE","AUDIT"],
+      "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "warn": "round(sum(mmin(5m, align(1m, ts(\"kubernetes.pod.filesystem.available\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\"))), sources, cluster, cluster_uuid, namespace_name, pod_name, pvc_name, workload_name, workload_kind) / sum(mmax(5m, align(1m, ts(\"kubernetes.pod.filesystem.limit\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\"))), sources, cluster, cluster_uuid, namespace_name, pod_name, pvc_name, workload_name, workload_kind) * 100) <= 15",
-    "severe": "round(sum(mmin(5m, align(1m, ts(\"kubernetes.pod.filesystem.available\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\"))), sources, cluster, cluster_uuid, namespace_name, pod_name, pvc_name, workload_name, workload_kind) / sum(mmax(5m, align(1m, ts(\"kubernetes.pod.filesystem.limit\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\"))), sources, cluster, cluster_uuid, namespace_name, pod_name, pvc_name, workload_name, workload_kind) * 100) <= 5"
+    "warn": "${A} <= 15",
+    "severe": "${A} <= 5"
   },
+  "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
   "minutes": 5,
   "resolveAfterMinutes": 5,
   "tags": {
@@ -32,12 +56,13 @@
   },
   "alertTriageDashboards": [
     {
-     "dashboardId": "integration-kubernetes-workloads",
-     "parameters": {
-       "constants": {
-         "cluster": "K8S_CLUSTER_NAME"
-       }
-     }
+      "dashboardId": "integration-kubernetes-workloads",
+      "parameters": {
+        "constants": {
+          "cluster": "K8S_CLUSTER_NAME"
+        }
+      }
     }
-  ]
+  ],
+  "includeObsoleteMetrics": false
 }
