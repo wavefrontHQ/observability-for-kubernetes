@@ -11,17 +11,17 @@
     },
     {
       "name": "Display Condition",
-      "query": "if(${Alert Condition} >= 70, ${Alert Condition})",
+      "query": "if(${Alert Condition} >= 90, ${Alert Condition})",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE","AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "warn": "round(ts(\"kubernetes.pod_container.memory.working_set\", cluster=\"K8S_CLUSTER_NAME\") / ts(\"kubernetes.pod_container.memory.limit\", cluster=\"K8S_CLUSTER_NAME\") * 100) >= 70"
+    "info": "round(ts(\"kubernetes.pod_container.memory.working_set\", cluster=\"K8S_CLUSTER_NAME\") / ts(\"kubernetes.pod_container.memory.limit\", cluster=\"K8S_CLUSTER_NAME\") * 100) >= 90"
   },
   "displayExpression": "${Display Condition}",
-  "minutes": 10,
+  "minutes": 15,
   "resolveAfterMinutes": 2,
   "tags": {
     "customerTags": [
