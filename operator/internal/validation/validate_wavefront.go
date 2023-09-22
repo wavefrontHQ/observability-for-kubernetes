@@ -3,6 +3,7 @@ package validation
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -21,6 +22,8 @@ var legacyComponentsToCheck = map[string]map[string]string{
 	"pks-system":               {"wavefront-collector": util.Deployment, "wavefront-proxy": util.Deployment},
 	"tanzu-observability-saas": {"wavefront-collector": util.DaemonSet, "wavefront-proxy": util.Deployment},
 }
+
+var resourceRegex = regexp.MustCompile("^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$")
 
 type Result struct {
 	error   error
@@ -61,6 +64,21 @@ func Validate(objClient client.Client, wavefront *wf.Wavefront) Result {
 		return Result{err, true}
 	}
 	return Result{}
+}
+
+func ValidateResources(resources wf.Resources) Result {
+	var errs []error
+
+	err := utilerrors.NewAggregate(errs)
+	if err != nil {
+		return Result{err, true}
+	}
+	return Result{}
+}
+
+func validateResourceValue(resourceName, resourceValue string) error {
+	// TODO add in validation
+	return nil
 }
 
 func validateEnvironment(objClient client.Client, wavefront *wf.Wavefront) error {

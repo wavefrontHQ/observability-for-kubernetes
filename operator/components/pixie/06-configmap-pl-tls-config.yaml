@@ -11,4 +11,4 @@ metadata:
     app: pl-monitoring
     component: vizier
   name: pl-tls-config
-  namespace: {{ .Namespace }}
+  namespace: observability-system

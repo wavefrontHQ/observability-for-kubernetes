@@ -5,7 +5,7 @@ metadata:
     app: pl-monitoring
     component: vizier
   name: kelvin-service
-  namespace: {{ .Namespace }}
+  namespace: observability-system
 spec:
   clusterIP: None
   ports:

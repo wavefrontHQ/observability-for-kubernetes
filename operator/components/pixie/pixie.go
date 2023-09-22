@@ -18,7 +18,6 @@ type ComponentConfig struct {
 	ControllerManagerUID string
 	ClusterUUID          string
 	ClusterName          string
-	Namespace            string
 
 	// optional
 	EnableOpAppsOptimization bool
@@ -57,10 +56,6 @@ func (component *Component) Validate() validation.Result {
 
 	if len(component.config.ClusterName) == 0 {
 		return validation.NewErrorResult(fmt.Errorf("%s: missing cluster name", component.Name()))
-	}
-
-	if len(component.config.Namespace) == 0 {
-		return validation.NewErrorResult(fmt.Errorf("%s: missing namespace", component.Name()))
 	}
 
 	return validation.Result{}

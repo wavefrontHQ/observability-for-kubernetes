@@ -26,7 +26,7 @@ func TestNewPixieComponent(t *testing.T) {
 	})
 }
 
-func TestProcessAndValidate(t *testing.T) {
+func TestProcess(t *testing.T) {
 	t.Run("valid component config", func(t *testing.T) {
 		config := validComponentConfig()
 		component, _ := NewComponent(config, ComponentDir)
@@ -79,27 +79,6 @@ func TestProcessAndValidate(t *testing.T) {
 		require.False(t, result.IsValid())
 		require.Equal(t, "pixie: missing cluster name", result.Message())
 	})
-
-	t.Run("empty namespace is not valid", func(t *testing.T) {
-		config := validComponentConfig()
-		config.Namespace = ""
-		component, err := NewComponent(config, ComponentDir)
-		result := component.Validate()
-		require.NoError(t, err)
-		require.False(t, result.IsValid())
-		require.Equal(t, "pixie: missing namespace", result.Message())
-	})
-
-	// TODO add in image registry
-	//t.Run("empty image registry is not valid", func(t *testing.T) {
-	//	config := validComponentConfig()
-	//	config.ImageRegistry = ""
-	//	component, err := NewComponent(config, ComponentDir)
-	//	result := component.Validate()
-	//	require.NoError(t, err)
-	//	require.False(t, result.IsValid())
-	//	require.Equal(t, "logging: missing image registry", result.Message())
-	//})
 }
 
 func TestResources(t *testing.T) {
@@ -121,7 +100,7 @@ func TestResources(t *testing.T) {
 		// TODO should template have these automatically created?
 		//require.Equal(t, "wavefront", ds.Spec.Template.GetLabels()["app.kubernetes.io/name"])
 		//require.Equal(t, "pixie", ds.Spec.Template.GetLabels()["app.kubernetes.io/component"])
-		require.Equal(t, wftest.DefaultNamespace, ds.Namespace)
+		require.Equal(t, util.Namespace, ds.Namespace)
 		//require.Equal(t, "1", ds.Spec.Template.GetAnnotations()["proxy-available-replicas"])
 		//require.NotEmpty(t, ds.Spec.Template.GetObjectMeta().GetAnnotations()["configHash"])
 		//require.Equal(t, wftest.DefaultImageRegistry+"/kubernetes-operator-fluentbit:"+component.config.LoggingVersion, ds.Spec.Template.Spec.Containers[0].Image)
@@ -210,7 +189,6 @@ func validComponentConfig() ComponentConfig {
 		ControllerManagerUID:     "controller-manager-uid",
 		ClusterUUID:              "cluster-uuid",
 		ClusterName:              wftest.DefaultClusterName,
-		Namespace:                wftest.DefaultNamespace,
 		EnableOpAppsOptimization: true,
 		PemResources:             wf.Resources{},
 	}

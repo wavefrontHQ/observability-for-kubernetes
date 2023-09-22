@@ -5,7 +5,7 @@ metadata:
     app: pl-monitoring
     name: pl-nats
   name: pl-nats
-  namespace: {{ .Namespace }}
+  namespace: observability-system
 spec:
   replicas: 1
   selector:
