@@ -75,7 +75,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED") // note: now using the compute service account with k8s admin access added; separate Jenkins cred
             RELEASE_TYPE = "alpha"
             COLLECTOR_PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
             TOKEN = credentials('GITHUB_TOKEN')
@@ -151,7 +151,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED") // note: now using the compute service account with k8s admin access added; separate Jenkins cred
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
             GCP_ZONE="a"
@@ -181,7 +181,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED") // note: now using the compute service account with k8s admin access added; separate Jenkins cred
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-1"
             GCP_ZONE="a"
@@ -209,7 +209,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED") // note: now using the compute service account with k8s admin access added; separate Jenkins cred
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-2"
             GCP_ZONE="a"
@@ -237,7 +237,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED") // note: now using the compute service account with k8s admin access added; separate Jenkins cred
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-3"
             GCP_ZONE="a"
@@ -265,7 +265,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED") // note: now using the compute service account with k8s admin access added; separate Jenkins cred
             DOCKER_IMAGE = "kubernetes-collector"
             AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
             AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
@@ -298,7 +298,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED") // note: now using the compute service account with k8s admin access added; separate Jenkins cred
             AKS_CLUSTER_NAME = "k8po-ci"
             DOCKER_IMAGE = "kubernetes-collector"
             INTEGRATION_TEST_ARGS="all"
