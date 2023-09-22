@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: high-memory-usage-pod
+spec:
+  containers:
+  - name: memory-hog
+    image: busybox
+    command: ["sh", "-c", "tail -f /dev/null"]
+    resources:
+      limits:
+        memory: "50Mi"
+      requests:
+        memory: "50Mi"
+  - name: normal-container
+    image: nginx
+    resources:
+      limits:
+        memory: "200Mi"
+      requests:
+        memory: "100Mi"
+
