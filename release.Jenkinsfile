@@ -12,11 +12,13 @@ pipeline {
     GITHUB_TOKEN = credentials('GITHUB_TOKEN')
     WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
     GKE_CLUSTER_NAME = "k8po-jenkins-ci-2"
-    GCP_ZONE="a"
+    GCP_ZONE = "a"
     GCP_CREDS = credentials("GCP_CREDS")
     GCP_PROJECT = "wavefront-gcp-dev"
     HARBOR_CREDS = credentials("projects-registry-vmware-tanzu_observability-robot")
     PREFIX = "projects.registry.vmware.com"
+    OPERATOR_VERSION = sh(script: 'cat operator/release/OPERATOR_VERSION', returnStdout: true).trim()
+    K8S_CLUSTER_NAME = sh(script: 'echo $(whoami)-$(date +%y%m%d)-release-test', returnStdout: true).trim()
   }
 
   stages {
@@ -25,25 +27,25 @@ pipeline {
         timeout(time: 40, unit: 'MINUTES')
       }
       steps {
-        sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-        sh 'cd operator && echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
+        sh './operator/hack/jenkins/setup-for-integration-test.sh'
+        sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
         sh './scripts/promote-release-images.sh'
         lock("integration-test-gke-2") {
-          sh 'cd operator && make gke-connect-to-cluster'
-          sh 'cd operator && NUMBER_OF_NODES=2 GKE_NODE_POOL=default-pool make resize-node-pool-gke-cluster'
-          sh 'cd operator && NUMBER_OF_NODES=1 GKE_NODE_POOL=arm-pool make resize-node-pool-gke-cluster'
-          sh 'cd operator && make clean-cluster'
-          sh 'cd operator && ./hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN'
-          sh 'cd operator && ./hack/test/run-e2e-tests.sh -t $WAVEFRONT_TOKEN -r advanced -v $(cat release/OPERATOR_VERSION)'
-          sh 'cd operator && make clean-cluster'
-          sh 'cd operator && NUMBER_OF_NODES=0 GKE_NODE_POOL=default-pool make resize-node-pool-gke-cluster'
-          sh 'cd operator && NUMBER_OF_NODES=0 GKE_NODE_POOL=arm-pool make resize-node-pool-gke-cluster'
+          sh 'make gke-connect-to-cluster'
+          sh 'NUMBER_OF_NODES=2 GKE_NODE_POOL=default-pool make resize-node-pool-gke-cluster'
+          sh 'NUMBER_OF_NODES=1 GKE_NODE_POOL=arm-pool make resize-node-pool-gke-cluster'
+          sh 'make clean-cluster'
+          sh './operator/hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN -n $K8S_CLUSTER_NAME'
+          sh './operator/hack/test/run-e2e-tests.sh -t $WAVEFRONT_TOKEN -r advanced -v $OPERATOR_VERSION -n $K8S_CLUSTER_NAME'
+          sh 'make clean-cluster'
+          sh 'NUMBER_OF_NODES=0 GKE_NODE_POOL=default-pool make resize-node-pool-gke-cluster'
+          sh 'NUMBER_OF_NODES=0 GKE_NODE_POOL=arm-pool make resize-node-pool-gke-cluster'
         }
         sh 'git config --global user.email "svc.wf-jenkins@vmware.com"'
         sh 'git config --global user.name "svc.wf-jenkins"'
         sh 'git remote set-url origin https://${GITHUB_TOKEN}@github.com/wavefronthq/observability-for-kubernetes.git'
-        sh 'cd operator && ./hack/jenkins/merge-version-bump.sh'
-        sh 'cd operator && ./hack/jenkins/generate-github-release.sh'
+        sh './operator/hack/jenkins/merge-version-bump.sh'
+        sh './operator/hack/jenkins/generate-github-release.sh'
       }
     }
   }
