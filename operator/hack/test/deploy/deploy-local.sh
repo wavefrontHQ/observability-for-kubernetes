@@ -4,40 +4,32 @@ set -eou pipefail
 REPO_ROOT=$(git rev-parse --show-toplevel)
 source "${REPO_ROOT}/scripts/k8s-utils.sh"
 
-OPERATOR_REPO_ROOT=${REPO_ROOT}/operator
-
-NS=observability-system
-
 function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: $0 [flags] [options]"
-  echo -e "\t-c wavefront instance name (default: 'nimba')"
+  echo -e "\t-u wavefront instance url (default: 'https://nimba.wavefront.com')"
   echo -e "\t-t wavefront token (required)"
-  echo -e "\t-l wavefront logging token (required)"
-  echo -e "\t-n config cluster name for metric grouping (default: \$(whoami)-<default version from file>-release-test)"
+  echo -e "\t-n k8s cluster name (default: '$(create_cluster_name)')"
   exit 1
 }
 
 function main() {
-
-  # REQUIRED
+  # Required
   local WAVEFRONT_TOKEN=
-  local WAVEFRONT_LOGGING_TOKEN=
-  local WAVEFRONT_URL="https://nimba.wavefront.com"
-  local WF_CLUSTER=nimba
+
+  # Default
+  local NS=observability-system
+  local WAVEFRONT_URL='https://nimba.wavefront.com'
   local CONFIG_CLUSTER_NAME
   CONFIG_CLUSTER_NAME=$(create_cluster_name)
 
-  while getopts ":c:t:l:n:p:" opt; do
+  while getopts ":u:t:n:" opt; do
     case $opt in
-    c)
-      WF_CLUSTER="$OPTARG"
+    u)
+      WAVEFRONT_URL="$OPTARG"
       ;;
     t)
       WAVEFRONT_TOKEN="$OPTARG"
-      ;;
-    l)
-      WAVEFRONT_LOGGING_TOKEN="$OPTARG"
       ;;
     n)
       CONFIG_CLUSTER_NAME="$OPTARG"
@@ -52,11 +44,9 @@ function main() {
     print_usage_and_exit "wavefront token required"
   fi
 
-
-  kubectl delete -f ${REPO_ROOT}/deploy/wavefront-operator.yaml || true
+  kubectl delete -f ${REPO_ROOT}/deploy/wavefront-operator.yaml 2>/dev/null || true
   kubectl apply -f ${REPO_ROOT}/deploy/wavefront-operator.yaml
   kubectl create -n ${NS} secret generic wavefront-secret --from-literal token=${WAVEFRONT_TOKEN} || true
-  kubectl create -n ${NS} secret generic wavefront-secret-logging --from-literal token=${WAVEFRONT_LOGGING_TOKEN} || true
 
   cat <<EOF | kubectl apply -f -
   apiVersion: wavefront.com/v1alpha1
