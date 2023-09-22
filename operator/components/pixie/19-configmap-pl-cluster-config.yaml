@@ -10,4 +10,4 @@ data:
 kind: ConfigMap
 metadata:
   name: pl-cluster-config
-  namespace: observability-system
+  namespace: {{ .Namespace }}

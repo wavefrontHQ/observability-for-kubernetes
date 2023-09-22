@@ -1,6 +1,7 @@
 package pixie
 
 import (
+	"fmt"
 	"io/fs"
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
@@ -12,15 +13,16 @@ import (
 const DeployDir = "pixie"
 
 type ComponentConfig struct {
-	// common
+	// required
 	Enable               bool
 	ControllerManagerUID string
+	ClusterUUID          string
+	ClusterName          string
+	Namespace            string
 
-	// required
-	ClusterUUID              string
-	ClusterName              string
+	// optional
 	EnableOpAppsOptimization bool
-	PemResources			 wf.Resources
+	PemResources             wf.Resources
 }
 
 type Component struct {
@@ -40,7 +42,27 @@ func NewComponent(componentConfig ComponentConfig, dir fs.FS) (Component, error)
 	}, nil
 }
 
-func (pixie *Component) Validate() validation.Result {
+func (component *Component) Validate() validation.Result {
+	if !component.config.Enable {
+		return validation.Result{}
+	}
+
+	if len(component.config.ControllerManagerUID) == 0 {
+		return validation.NewErrorResult(fmt.Errorf("%s: missing controller manager uid", component.Name()))
+	}
+
+	if len(component.config.ClusterUUID) == 0 {
+		return validation.NewErrorResult(fmt.Errorf("%s: missing cluster uuid", component.Name()))
+	}
+
+	if len(component.config.ClusterName) == 0 {
+		return validation.NewErrorResult(fmt.Errorf("%s: missing cluster name", component.Name()))
+	}
+
+	if len(component.config.Namespace) == 0 {
+		return validation.NewErrorResult(fmt.Errorf("%s: missing namespace", component.Name()))
+	}
+
 	return validation.Result{}
 }
 

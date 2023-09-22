@@ -6,7 +6,7 @@ metadata:
     component: vizier
     vizier-bootstrap: "true"
   name: cert-provisioner-job
-  namespace: observability-system
+  namespace: {{ .Namespace }}
 spec:
   backoffLimit: 1
   completions: 1

@@ -61,30 +61,30 @@ func NewComponent(fs fs.FS, componentConfig ComponentConfig) (Component, error) 
 	}, nil
 }
 
-func (logging *Component) Validate() validation.Result {
-	if !logging.config.Enable {
+func (component *Component) Validate() validation.Result {
+	if !component.config.Enable {
 		return validation.Result{}
 	}
-	if len(logging.config.ClusterName) == 0 {
-		return validation.NewErrorResult(errors.New("logging: missing cluster name"))
+	if len(component.config.ClusterName) == 0 {
+		return validation.NewErrorResult(fmt.Errorf("%s: missing cluster name", component.Name()))
 	}
 
-	if len(logging.config.Namespace) == 0 {
-		return validation.NewErrorResult(errors.New("logging: missing namespace"))
+	if len(component.config.Namespace) == 0 {
+		return validation.NewErrorResult(fmt.Errorf("%s: missing namespace", component.Name()))
 	}
 
-	if len(logging.config.LoggingVersion) == 0 {
-		return validation.NewErrorResult(errors.New("logging: missing log image version"))
+	if len(component.config.LoggingVersion) == 0 {
+		return validation.NewErrorResult(fmt.Errorf("%s: missing log image version", component.Name()))
 	}
 
-	if len(logging.config.ImageRegistry) == 0 {
-		return validation.NewErrorResult(errors.New("logging: missing image registry"))
+	if len(component.config.ImageRegistry) == 0 {
+		return validation.NewErrorResult(fmt.Errorf("%s: missing image registry", component.Name()))
 	}
 
-	if len(logging.config.ProxyAddress) == 0 {
-		return validation.NewErrorResult(errors.New("logging: missing proxy address"))
-	} else if !strings.HasPrefix(logging.config.ProxyAddress, "http") {
-		return validation.NewErrorResult(fmt.Errorf("logging: proxy address (%s) must start with http", logging.config.ProxyAddress))
+	if len(component.config.ProxyAddress) == 0 {
+		return validation.NewErrorResult(fmt.Errorf("%s: missing proxy address", component.Name()))
+	} else if !strings.HasPrefix(component.config.ProxyAddress, "http") {
+		return validation.NewErrorResult(fmt.Errorf("logging: proxy address (%s) must start with http", component.config.ProxyAddress))
 	}
 
 	return validation.Result{}

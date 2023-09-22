@@ -5,7 +5,7 @@ metadata:
     app: pl-monitoring
     name: pl-nats
   name: pl-nats-mgmt
-  namespace: observability-system
+  namespace: {{ .Namespace }}
 spec:
   clusterIP: None
   ports:

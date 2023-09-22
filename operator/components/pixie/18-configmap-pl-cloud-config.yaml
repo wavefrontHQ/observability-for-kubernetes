@@ -9,4 +9,4 @@ data:
 kind: ConfigMap
 metadata:
   name: pl-cloud-config
-  namespace: observability-system
+  namespace: {{ .Namespace }}
