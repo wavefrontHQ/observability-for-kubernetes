@@ -3,22 +3,43 @@
   "alertType": "THRESHOLD",
   "alertSources": [
     {
+      "name": "A",
+      "query": "round(sum(${B} by (sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name)) / sum(${C} by (sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name)) * 100)",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "C",
+      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
       "name": "Alert Condition",
-      "query": "round(sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) / sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) * 100)",
+      "query": "${A}",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
     },
     {
       "name": "Display Condition",
-      "query": "if(${Alert Condition} >= 90, ${Alert Condition})",
+      "query": "if(${A} >= 90, ${A})",
       "queryType": "WQL",
-      "alertSourceType": ["VARIABLE","AUDIT"],
+      "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "info": "round(sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) / sum(mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\"))) by (container_name, pod_name, namespace_name)) * 100) >= 90"
+    "info": "${A} >= 90"
   },
   "displayExpression": "${Display Condition}",
   "minutes": 15,
