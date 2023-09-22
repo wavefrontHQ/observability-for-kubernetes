@@ -143,7 +143,7 @@ function main() {
   local ALERTS_FOLDER='docs/alerts/templates'
   local GIT_BRANCH='main'
 
-  while getopts 'c:t:n:f:b:h' opt; do
+  while getopts ':c:t:n:f:b:h' opt; do
     case "${opt}" in
       t) WAVEFRONT_TOKEN="${OPTARG}" ;;
       c) WF_CLUSTER="${OPTARG}" ;;
@@ -151,7 +151,7 @@ function main() {
       f) ALERTS_FOLDER="${OPTARG}" ;;
       b) GIT_BRANCH="${OPTARG}" ;;
       h) print_usage; exit 0 ;;
-      \?) print_usage_and_exit "Invalid option" ;;
+      \?) print_usage_and_exit "Invalid option: -${OPTARG}" ;;
     esac
   done
 

@@ -147,7 +147,7 @@ We have templates for common scenarios. See the comments in each file for usage 
 
 You can see all configuration options in the [wavefront-full-config.yaml](deploy/scenarios/wavefront-full-config.yaml).
 
-# Creating Alerts
+## Creating Alerts
 
 We have alerts on common Kubernetes issues. For details on creating alerts, see [alerts.md](docs/alerts/alerts.md).
 
@@ -167,8 +167,21 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 
 | Alert name | Description |
 |---|---|
-| [Persistent Volume no claim](docs/alerts/templates/persistent-volumes-no-claim.json.tmpl) | Persistent Volume has no claim. |
-| [Persistent Volume error](docs/alerts/templates/persistent-volumes-error.json.tmpl) | Persistent Volume has issues with provisioning. |
+| [Persistent Volumes No Claim](docs/alerts/templates/persistent-volumes-no-claim.json.tmpl) | Persistent Volume has no claim. |
+| [Persistent Volumes Error](docs/alerts/templates/persistent-volumes-error.json.tmpl) | Persistent Volume has issues with provisioning. |
+| [Persistent Volume Claim Overutilization](docs/alerts/templates/persistent-volume-claim-overutilization.json.tmpl) | Workload has low available disk space for a claimed Persistent Volume. |
+
+### Node Failures
+
+| Alert name | Description |
+|---|---|
+| [Node Memory Overutilization](docs/alerts/templates/node-memory-overutilization.json.tmpl) | Node has high memory utilization. |
+
+### Node Failures
+
+| Alert name | Description |
+|---|---|
+| [Node CPU Overutilization](docs/alerts/templates/node-cpu-overutilization.json.tmpl) | Node has high CPU utilization. |
 
 ### Node Failures
 
