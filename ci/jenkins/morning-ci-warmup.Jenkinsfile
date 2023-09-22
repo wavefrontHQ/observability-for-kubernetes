@@ -7,7 +7,7 @@ pipeline {
 
   environment {
     PATH = "${env.WORKSPACE}/bin:${env.HOME}/go/bin:${env.HOME}/google-cloud-sdk/bin:${env.PATH}"
-    GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+    GCP_CREDS = credentials("GCP_CREDS")
     GITHUB_TOKEN = credentials("GITHUB_TOKEN")
     GKE_EXPIRES_IN_HOURS = "10" // Just in case the default changes
   }
@@ -89,7 +89,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS")
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
             GCP_ZONE="a"
@@ -115,7 +115,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS")
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-1"
             GCP_ZONE="a"
@@ -138,7 +138,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS")
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-2"
             GCP_ZONE="a"
@@ -161,7 +161,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS")
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-3"
             GCP_ZONE="a"
@@ -184,7 +184,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS")
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
@@ -201,7 +201,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           environment {
-            GCP_CREDS = credentials("GCP_CREDS_UNCHAINED")
+            GCP_CREDS = credentials("GCP_CREDS")
           }
           steps {
             sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
