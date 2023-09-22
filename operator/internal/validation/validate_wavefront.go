@@ -51,6 +51,14 @@ func NewErrorResult(err error) Result {
 	return Result{err, true}
 }
 
+func NewValidationResult(errs []error) Result {
+	if len(errs) == 0 {
+		return Result{}
+	}
+
+	return Result{utilerrors.NewAggregate(errs), true}
+}
+
 func Validate(objClient client.Client, wavefront *wf.Wavefront) Result {
 	err := validateEnvironment(objClient, wavefront)
 	if err != nil {

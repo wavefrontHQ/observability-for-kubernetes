@@ -207,8 +207,6 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, fluentBitConfig, "Proxy             http://my-proxy:8888")
 	})
-
-	//TODO - Component Refactor - move over most of the component level tests from wavefront_controller_test#TestReconcileLogging
 }
 
 func fluentBitConfiguration(toApply []client.Object) string {
@@ -221,6 +219,7 @@ func validLoggingComponentConfig() ComponentConfig {
 	return ComponentConfig{
 		Enable:                 true,
 		ClusterName:            wftest.DefaultClusterName,
+		ControllerManagerUID:   "asdfgh",
 		Namespace:              wftest.DefaultNamespace,
 		LoggingVersion:         "2.1.2",
 		ImageRegistry:          wftest.DefaultImageRegistry,

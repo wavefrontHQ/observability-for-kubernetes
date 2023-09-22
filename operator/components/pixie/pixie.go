@@ -43,27 +43,29 @@ func NewComponent(componentConfig ComponentConfig, dir fs.FS) (Component, error)
 }
 
 func (component *Component) Validate() validation.Result {
+	var errs []error
+
 	if !component.config.Enable {
 		return validation.Result{}
 	}
 
 	if len(component.config.ControllerManagerUID) == 0 {
-		return validation.NewErrorResult(fmt.Errorf("%s: missing controller manager uid", component.Name()))
+		errs = append(errs, fmt.Errorf("%s: missing controller manager uid", component.Name()))
 	}
 
 	if len(component.config.ClusterUUID) == 0 {
-		return validation.NewErrorResult(fmt.Errorf("%s: missing cluster uuid", component.Name()))
+		errs = append(errs, fmt.Errorf("%s: missing cluster uuid", component.Name()))
 	}
 
 	if len(component.config.ClusterName) == 0 {
-		return validation.NewErrorResult(fmt.Errorf("%s: missing cluster name", component.Name()))
+		errs = append(errs, fmt.Errorf("%s: missing cluster name", component.Name()))
 	}
 
 	if result := validation.ValidateResources(&component.config.PemResources, util.PixieVizierPEMName); result.IsError() {
-		return validation.NewErrorResult(fmt.Errorf("%s: %s", component.Name(), result.Message()))
+		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 
-	return validation.Result{}
+	return validation.NewValidationResult(errs)
 }
 
 func (pixie *Component) Resources() ([]client.Object, []client.Object, error) {

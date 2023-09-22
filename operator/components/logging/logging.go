@@ -62,32 +62,38 @@ func NewComponent(fs fs.FS, componentConfig ComponentConfig) (Component, error) 
 }
 
 func (component *Component) Validate() validation.Result {
+	var errs []error
+
 	if !component.config.Enable {
 		return validation.Result{}
 	}
+	if len(component.config.ControllerManagerUID) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing controller manager uid", component.Name()))
+	}
+
 	if len(component.config.ClusterName) == 0 {
-		return validation.NewErrorResult(fmt.Errorf("%s: missing cluster name", component.Name()))
+		errs = append(errs, fmt.Errorf("%s: missing cluster name", component.Name()))
 	}
 
 	if len(component.config.Namespace) == 0 {
-		return validation.NewErrorResult(fmt.Errorf("%s: missing namespace", component.Name()))
+		errs = append(errs, fmt.Errorf("%s: missing namespace", component.Name()))
 	}
 
 	if len(component.config.LoggingVersion) == 0 {
-		return validation.NewErrorResult(fmt.Errorf("%s: missing log image version", component.Name()))
+		errs = append(errs, fmt.Errorf("%s: missing log image version", component.Name()))
 	}
 
 	if len(component.config.ImageRegistry) == 0 {
-		return validation.NewErrorResult(fmt.Errorf("%s: missing image registry", component.Name()))
+		errs = append(errs, fmt.Errorf("%s: missing image registry", component.Name()))
 	}
 
 	if len(component.config.ProxyAddress) == 0 {
-		return validation.NewErrorResult(fmt.Errorf("%s: missing proxy address", component.Name()))
+		errs = append(errs, fmt.Errorf("%s: missing proxy address", component.Name()))
 	} else if !strings.HasPrefix(component.config.ProxyAddress, "http") {
-		return validation.NewErrorResult(fmt.Errorf("logging: proxy address (%s) must start with http", component.config.ProxyAddress))
+		errs = append(errs, fmt.Errorf("logging: proxy address (%s) must start with http", component.config.ProxyAddress))
 	}
 
-	return validation.Result{}
+	return validation.NewValidationResult(errs)
 }
 
 func (logging *Component) Resources() ([]client.Object, []client.Object, error) {
