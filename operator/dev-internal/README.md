@@ -170,6 +170,12 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Persistent Volume no claim](docs/alerts/templates/persistent-volumes-no-claim.json.tmpl) | Persistent Volume has no claim. |
 | [Persistent Volume error](docs/alerts/templates/persistent-volumes-error.json.tmpl) | Persistent Volume has issues with provisioning. |
 
+### Node Failures
+
+| Alert name | Description |
+|---|---|
+| [Node Filesystem Overutilization](docs/alerts/templates/node-filesystem-overutilization.json.tmpl) | Node storage is almost full. |
+
 ## Bring Your Own Logs Shipper
 
 The operator deploys a data export component (wavefront-proxy) which can receive log data and forward it to the Operations for Applications service.
