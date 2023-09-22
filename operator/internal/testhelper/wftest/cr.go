@@ -18,6 +18,8 @@ func CR(options ...CROption) *wf.Wavefront {
 			WavefrontUrl:         "testWavefrontUrl",
 			WavefrontTokenSecret: "testToken",
 			Namespace:            DefaultNamespace,
+			ControllerManagerUID: "controller-manager-uid",
+			ClusterUUID:          "cluster-uuid",
 			DataCollection: wf.DataCollection{
 				Metrics: wf.Metrics{
 					Enable: true,
@@ -51,7 +53,9 @@ func NothingEnabledCR(options ...CROption) *wf.Wavefront {
 			Namespace: DefaultNamespace,
 		},
 		Spec: wf.WavefrontSpec{
-			ClusterName: "testClusterName",
+			ClusterName:          "testClusterName",
+			ControllerManagerUID: "controller-manager-uid",
+			ClusterUUID:          "cluster-uuid",
 		},
 	}
 	for _, option := range options {

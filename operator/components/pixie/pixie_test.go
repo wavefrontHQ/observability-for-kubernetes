@@ -19,7 +19,7 @@ func TestNewPixieComponent(t *testing.T) {
 		config := validComponentConfig()
 		t.Log(os.Getwd())
 
-		component, err := NewComponent(config, ComponentDir)
+		component, err := NewComponent(ComponentDir, config)
 
 		require.NoError(t, err)
 		require.NotNil(t, component)
@@ -29,14 +29,14 @@ func TestNewPixieComponent(t *testing.T) {
 func TestValidate(t *testing.T) {
 	t.Run("valid component config", func(t *testing.T) {
 		config := validComponentConfig()
-		component, _ := NewComponent(config, ComponentDir)
+		component, _ := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.True(t, result.IsValid())
 	})
 
 	t.Run("empty disabled component config is valid", func(t *testing.T) {
 		config := ComponentConfig{Enable: false}
-		component, err := NewComponent(config, ComponentDir)
+		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
 		require.True(t, result.IsValid())
@@ -44,7 +44,7 @@ func TestValidate(t *testing.T) {
 
 	t.Run("empty enabled component config is not valid", func(t *testing.T) {
 		config := ComponentConfig{Enable: true}
-		component, err := NewComponent(config, ComponentDir)
+		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
 		require.False(t, result.IsValid())
@@ -53,7 +53,7 @@ func TestValidate(t *testing.T) {
 	t.Run("empty controller manager uid is not valid", func(t *testing.T) {
 		config := validComponentConfig()
 		config.ControllerManagerUID = ""
-		component, err := NewComponent(config, ComponentDir)
+		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
 		require.False(t, result.IsValid())
@@ -63,7 +63,7 @@ func TestValidate(t *testing.T) {
 	t.Run("empty cluster uuid is not valid", func(t *testing.T) {
 		config := validComponentConfig()
 		config.ClusterUUID = ""
-		component, err := NewComponent(config, ComponentDir)
+		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
 		require.False(t, result.IsValid())
@@ -73,7 +73,7 @@ func TestValidate(t *testing.T) {
 	t.Run("empty cluster name is not valid", func(t *testing.T) {
 		config := validComponentConfig()
 		config.ClusterName = ""
-		component, err := NewComponent(config, ComponentDir)
+		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
 		require.False(t, result.IsValid())
@@ -83,7 +83,7 @@ func TestValidate(t *testing.T) {
 	t.Run("no pem resources set is not valid", func(t *testing.T) {
 		config := validComponentConfig()
 		config.PemResources = wf.Resources{}
-		component, err := NewComponent(config, ComponentDir)
+		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
 		require.False(t, result.IsValid())
@@ -94,7 +94,7 @@ func TestValidate(t *testing.T) {
 
 func TestResources(t *testing.T) {
 	t.Run("default configuration", func(t *testing.T) {
-		component, _ := NewComponent(validComponentConfig(), ComponentDir)
+		component, _ := NewComponent(ComponentDir, validComponentConfig())
 		toApply, toDelete, err := component.Resources()
 
 		require.NoError(t, err)
@@ -135,7 +135,7 @@ func TestResources(t *testing.T) {
 	//	config.Resources.Requests.CPU = "200m"
 	//	config.Resources.Requests.Memory = "10Mi"
 	//	config.Resources.Limits.Memory = "256Mi"
-	//	component, _ := NewComponent(config, ComponentDir)
+	//	component, _ := NewComponent(ComponentDir, config)
 	//	toApply, _, err := component.Resources()
 	//
 	//	require.NoError(t, err)
@@ -150,7 +150,7 @@ func TestResources(t *testing.T) {
 	//t.Run("tag allow list is set correctly", func(t *testing.T) {
 	//	config := validComponentConfig()
 	//	config.TagAllowList = map[string][]string{"namespace_name": {"kube-sys", "wavefront"}, "pod_name": {"pet-clinic"}}
-	//	component, _ := NewComponent(config, ComponentDir)
+	//	component, _ := NewComponent(ComponentDir, config)
 	//	toApply, _, err := component.Resources()
 	//
 	//	require.NoError(t, err)
@@ -165,7 +165,7 @@ func TestResources(t *testing.T) {
 	//t.Run("tags are set correctly", func(t *testing.T) {
 	//	config := validComponentConfig()
 	//	config.Tags = map[string]string{"key1": "value1", "key2": "value2"}
-	//	component, _ := NewComponent(config, ComponentDir)
+	//	component, _ := NewComponent(ComponentDir, config)
 	//	toApply, _, err := component.Resources()
 	//
 	//	require.NoError(t, err)
@@ -180,7 +180,7 @@ func TestResources(t *testing.T) {
 	//t.Run("external wavefront proxy url with http specified in URL is set correctly", func(t *testing.T) {
 	//	config := validComponentConfig()
 	//	config.ProxyAddress = "http://my-proxy:8888"
-	//	component, _ := NewComponent(config, ComponentDir)
+	//	component, _ := NewComponent(ComponentDir, config)
 	//	toApply, _, err := component.Resources()
 	//
 	//	require.NoError(t, err)

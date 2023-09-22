@@ -68,6 +68,16 @@ func TestReconcileAll(t *testing.T) {
 	t.Run("does not create other services until the proxy is running", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
+				Requests: wf.Resource{
+					CPU:    "100m",
+					Memory: "600Mi",
+				},
+				Limits: wf.Resource{
+					CPU:    "1000m",
+					Memory: "600Mi",
+				},
+			}
 		}), nil, wftest.Proxy(wftest.WithReplicas(0, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -95,6 +105,16 @@ func TestReconcileAll(t *testing.T) {
 	t.Run("creates other components after the proxy is running", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
+				Requests: wf.Resource{
+					CPU:    "100m",
+					Memory: "600Mi",
+				},
+				Limits: wf.Resource{
+					CPU:    "1000m",
+					Memory: "600Mi",
+				},
+			}
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -1448,6 +1468,16 @@ func TestReconcileAutoTracing(t *testing.T) {
 		}
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
+			wavefront.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
+				Requests: wf.Resource{
+					CPU:    "100m",
+					Memory: "600Mi",
+				},
+				Limits: wf.Resource{
+					CPU:    "1000m",
+					Memory: "600Mi",
+				},
+			}
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)), daemonset)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -1471,6 +1501,16 @@ func TestReconcileHubPixie(t *testing.T) {
 			w.Spec.ClusterName = "test-clusterName"
 			w.Spec.Experimental.Hub.Enable = true
 			w.Spec.Experimental.Hub.Pixie.Enable = true
+			w.Spec.Experimental.Hub.Pixie.Pem.Resources = wf.Resources{
+				Requests: wf.Resource{
+					CPU:    "100m",
+					Memory: "600Mi",
+				},
+				Limits: wf.Resource{
+					CPU:    "1000m",
+					Memory: "600Mi",
+				},
+			}
 		})
 		r, mockKM := emptyScenario(wfCR, nil)
 
@@ -2103,6 +2143,7 @@ func emptyScenario(wfCR *wf.Wavefront, apiGroups []string, initObjs ...runtime.O
 		KubernetesManager:   mockKM,
 		DiscoveryClient:     mockDiscoveryClient,
 		MetricConnection:    metric.NewConnection(testhelper.StubSenderFactory(nil, nil)),
+		ClusterUUID:         "cluster-uuid",
 	}
 
 	return r, mockKM

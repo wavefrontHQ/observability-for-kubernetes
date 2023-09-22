@@ -34,7 +34,7 @@ func (pixie *Component) Name() string {
 	return "pixie"
 }
 
-func NewComponent(componentConfig ComponentConfig, dir fs.FS) (Component, error) {
+func NewComponent(dir fs.FS, componentConfig ComponentConfig) (Component, error) {
 
 	return Component{
 		config: componentConfig,
