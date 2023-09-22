@@ -183,6 +183,12 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 |---|---|
 | [Node CPU Overutilization](docs/alerts/templates/node-cpu-overutilization.json.tmpl) | Node has high CPU utilization. |
 
+### Node Failures
+
+| Alert name | Description |
+|---|---|
+| [Node Filesystem Overutilization](docs/alerts/templates/node-filesystem-overutilization.json.tmpl) | Node storage is almost full. |
+
 ## Bring Your Own Logs Shipper
 
 The operator deploys a data export component (wavefront-proxy) which can receive log data and forward it to the Operations for Applications service.
