@@ -105,3 +105,5 @@ curl --location --fail-with-body --request POST "http://$LEMANS_RESOURCE_SERVER/
   --header "x-xenon-auth-token: $CSP_AUTH_TOKEN" \
   --header 'Content-Type: application/json' \
   --data @"$stream_json_file"
+
+echo $STREAM_NAME > tmp/lemans_stream_name
