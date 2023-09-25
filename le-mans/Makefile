@@ -5,7 +5,7 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/
 tmp:
 	mkdir -p tmp
 
-start-lemans: tmp/csp_username tmp/csp_password dockerize-lemans stop-lemans tmp/dbconfig
+start-lemans: tmp/csp_username tmp/csp_password dockerize-lemans stop-lemans tmp/dbconfig cleanup-lemans
 	@CSP_CLIENT_ID='$(shell cat tmp/csp_username)' CSP_CLIENT_SECRET='$(shell cat tmp/csp_password)' docker compose up --abort-on-container-exit
 
 stop-lemans:
@@ -44,6 +44,13 @@ le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar: le-mans
 tmp/dbconfig: | tmp
 	./scripts/create-db-config.sh > $@
 
+tmp/lemans_token: | tmp tmp/csp_username tmp/csp_password
+	./scripts/create-lemans-api-token.sh > $@
+
+cleanup-lemans:
+	rm -f tmp/lemans_token
+	rm -f tmp/lemans_stream_name
+
 tmp/csp_username: | tmp
 	@echo "Please create a tmp/csp_username file populated with a valid CSP oauth app id"
 	@exit 1
@@ -54,10 +61,6 @@ tmp/csp_password: | tmp
 
 tmp/wavefront_token: | tmp
 	@echo "Please create a tmp/wavefront_token file populated with a valid Wavefront API Token"
-	@exit 1
-
-tmp/lemans_token: | tmp
-	@echo "Please create a tmp/lemans_token file populated with a valid Lemans Access Key"
 	@exit 1
 
 tmp/lemans_stream_name: | tmp
