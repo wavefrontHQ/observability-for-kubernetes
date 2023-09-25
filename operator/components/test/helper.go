@@ -33,6 +33,30 @@ func GetAppliedDaemonSet(metadataName string, toApply []client.Object) (appsv1.D
 	return daemonSet, nil
 }
 
+func GetAppliedDeployment(metadataName string, toApply []client.Object) (appsv1.Deployment, error) {
+	var deployment appsv1.Deployment
+	var found client.Object
+
+	for _, clientObject := range toApply {
+		if clientObject.GetObjectKind().GroupVersionKind().Kind == "Deployment" && clientObject.GetName() == metadataName {
+			found = clientObject
+		}
+	}
+
+	if found == nil {
+		return deployment, fmt.Errorf("Deployment with name:%s, not found", metadataName)
+	}
+
+	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
+
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &deployment)
+	if err != nil {
+		return deployment, err
+	}
+
+	return deployment, nil
+}
+
 func GetAppliedConfigMap(metadataName string, toApply []client.Object) (v1.ConfigMap, error) {
 	var configMap v1.ConfigMap
 	var found client.Object

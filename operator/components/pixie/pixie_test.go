@@ -108,26 +108,20 @@ func TestResources(t *testing.T) {
 		require.Equal(t, util.PixieVizierPEMName, ds.Spec.Template.GetLabels()["name"])
 		require.Equal(t, "wavefront", ds.GetLabels()["app.kubernetes.io/name"])
 		require.Equal(t, "pixie", ds.GetLabels()["app.kubernetes.io/component"])
-		// TODO should template have these automatically created?
-		//require.Equal(t, "wavefront", ds.Spec.Template.GetLabels()["app.kubernetes.io/name"])
-		//require.Equal(t, "pixie", ds.Spec.Template.GetLabels()["app.kubernetes.io/component"])
+		require.Equal(t, "wavefront", ds.Spec.Template.GetLabels()["app.kubernetes.io/name"])
+		require.Equal(t, "pixie", ds.Spec.Template.GetLabels()["app.kubernetes.io/component"])
 		require.Equal(t, util.Namespace, ds.Namespace)
-		//require.Equal(t, "1", ds.Spec.Template.GetAnnotations()["proxy-available-replicas"])
-		//require.NotEmpty(t, ds.Spec.Template.GetObjectMeta().GetAnnotations()["configHash"])
-		//require.Equal(t, wftest.DefaultImageRegistry+"/kubernetes-operator-fluentbit:"+component.config.LoggingVersion, ds.Spec.Template.Spec.Containers[0].Image)
-		//require.Equal(t, component.config.ClusterName, ds.Spec.Template.Spec.Containers[0].Env[1].Value)
-		//
-		//// configMap
-		//configMap, err := test.GetAppliedConfigMap("wavefront-logging-config", toApply)
-		//require.NoError(t, err)
-		//
-		//require.Equal(t, "wavefront", configMap.GetLabels()["app.kubernetes.io/name"])
-		//require.Equal(t, "logging", configMap.GetLabels()["app.kubernetes.io/component"])
-		//require.Equal(t, wftest.DefaultNamespace, configMap.Namespace)
-		//
-		//fluentBitConfig := fluentBitConfiguration(toApply)
-		//require.NoError(t, err)
-		//require.Contains(t, fluentBitConfig, fmt.Sprintf("Proxy             %s", component.config.ProxyAddress))
+
+		// deployment
+		deployment, err := test.GetAppliedDeployment(util.PixieKelvinName, toApply)
+		require.NoError(t, err)
+
+		require.Equal(t, util.PixieKelvinName, deployment.Spec.Template.GetLabels()["name"])
+		require.Equal(t, "wavefront", deployment.GetLabels()["app.kubernetes.io/name"])
+		require.Equal(t, "pixie", deployment.GetLabels()["app.kubernetes.io/component"])
+		require.Equal(t, "wavefront", deployment.Spec.Template.GetLabels()["app.kubernetes.io/name"])
+		require.Equal(t, "pixie", deployment.Spec.Template.GetLabels()["app.kubernetes.io/component"])
+		require.Equal(t, util.Namespace, deployment.Namespace)
 	})
 
 	//t.Run("k8s resources are set correctly", func(t *testing.T) {
