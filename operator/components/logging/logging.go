@@ -9,6 +9,7 @@ import (
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -39,15 +40,15 @@ type ComponentConfig struct {
 }
 
 type Component struct {
-	fs     fs.FS
-	Config ComponentConfig
+	dir    fs.FS
+	config ComponentConfig
 }
 
 func (logging *Component) Name() string {
 	return "logging"
 }
 
-func NewComponent(componentConfig ComponentConfig, fs fs.FS) (Component, error) {
+func NewComponent(fs fs.FS, componentConfig ComponentConfig) (Component, error) {
 
 	configHashBytes, err := json.Marshal(componentConfig)
 	if err != nil {
@@ -56,40 +57,50 @@ func NewComponent(componentConfig ComponentConfig, fs fs.FS) (Component, error) 
 	componentConfig.ConfigHash = components.HashValue(configHashBytes)
 
 	return Component{
-		Config: componentConfig,
-		fs:     fs,
+		config: componentConfig,
+		dir:    fs,
 	}, nil
 }
 
-func (logging *Component) Validate() validation.Result {
-	if !logging.Config.Enable {
+func (component *Component) Validate() validation.Result {
+	var errs []error
+
+	if !component.config.Enable {
 		return validation.Result{}
 	}
-	if len(logging.Config.ClusterName) == 0 {
-		return validation.NewErrorResult(errors.New("logging: missing cluster name"))
+	if len(component.config.ControllerManagerUID) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing controller manager uid", component.Name()))
 	}
 
-	if len(logging.Config.Namespace) == 0 {
-		return validation.NewErrorResult(errors.New("logging: missing namespace"))
+	if len(component.config.ClusterName) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing cluster name", component.Name()))
 	}
 
-	if len(logging.Config.LoggingVersion) == 0 {
-		return validation.NewErrorResult(errors.New("logging: missing log image version"))
+	if len(component.config.Namespace) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing namespace", component.Name()))
 	}
 
-	if len(logging.Config.ImageRegistry) == 0 {
-		return validation.NewErrorResult(errors.New("logging: missing image registry"))
+	if len(component.config.LoggingVersion) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing log image version", component.Name()))
 	}
 
-	if len(logging.Config.ProxyAddress) == 0 {
-		return validation.NewErrorResult(errors.New("logging: missing proxy address"))
-	} else if !strings.HasPrefix(logging.Config.ProxyAddress, "http") {
-		return validation.NewErrorResult(fmt.Errorf("logging: proxy address (%s) must start with http", logging.Config.ProxyAddress))
+	if len(component.config.ImageRegistry) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing image registry", component.Name()))
 	}
 
-	return validation.Result{}
+	if len(component.config.ProxyAddress) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing proxy address", component.Name()))
+	} else if !strings.HasPrefix(component.config.ProxyAddress, "http") {
+		errs = append(errs, fmt.Errorf("logging: proxy address (%s) must start with http", component.config.ProxyAddress))
+	}
+
+	if result := validation.ValidateResources(&component.config.Resources, util.LoggingName); result.IsError() {
+		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
+	}
+
+	return validation.NewValidationResult(errs)
 }
 
 func (logging *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(logging.fs, logging.Name(), logging.Config.Enable, logging.Config.ControllerManagerUID, logging.Config)
+	return components.BuildResources(logging.dir, logging.Name(), logging.config.Enable, logging.config.ControllerManagerUID, logging.config)
 }

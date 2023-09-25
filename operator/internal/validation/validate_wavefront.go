@@ -51,6 +51,14 @@ func NewErrorResult(err error) Result {
 	return Result{err, true}
 }
 
+func NewValidationResult(errs []error) Result {
+	if len(errs) == 0 {
+		return Result{}
+	}
+
+	return Result{utilerrors.NewAggregate(errs), true}
+}
+
 func Validate(objClient client.Client, wavefront *wf.Wavefront) Result {
 	err := validateEnvironment(objClient, wavefront)
 	if err != nil {
@@ -59,6 +67,27 @@ func Validate(objClient client.Client, wavefront *wf.Wavefront) Result {
 	err = validateWavefrontSpec(wavefront)
 	if err != nil {
 		return Result{err, true}
+	}
+	return Result{}
+}
+
+func ValidateResources(resources *wf.Resources, resourceName string) Result {
+	var errs []error
+	if len(resources.Limits.Memory) == 0 {
+		errs = append(errs, fmt.Errorf("invalid %s.resources.limits.memory must be set", resourceName))
+	}
+	if len(resources.Limits.CPU) == 0 {
+		errs = append(errs, fmt.Errorf("invalid %s.resources.limits.cpu must be set", resourceName))
+	}
+	if len(errs) > 0 {
+		return NewErrorResult(utilerrors.NewAggregate(errs))
+	}
+
+	errs = append(errs, validateResources(resources, resourceName)...)
+
+	err := utilerrors.NewAggregate(errs)
+	if err != nil {
+		return NewErrorResult(utilerrors.NewAggregate(errs))
 	}
 	return Result{}
 }
@@ -124,6 +153,34 @@ func validateWavefrontProxyConfig(wavefront *wf.Wavefront) []error {
 func validateResources(resources *wf.Resources, resourcePath string) []error {
 	var errs []error
 
+	if err := validateResourceQuantity(resources.Requests.CPU, resourcePath+".resources.requests.cpu"); err != nil {
+		errs = append(errs, err)
+	}
+
+	if err := validateResourceQuantity(resources.Requests.Memory, resourcePath+".resources.requests.memory"); err != nil {
+		errs = append(errs, err)
+	}
+
+	if err := validateResourceQuantity(resources.Requests.EphemeralStorage, resourcePath+".resources.requests.ephemeral-storage"); err != nil {
+		errs = append(errs, err)
+	}
+
+	if err := validateResourceQuantity(resources.Limits.CPU, resourcePath+".resources.limits.cpu"); err != nil {
+		errs = append(errs, err)
+	}
+
+	if err := validateResourceQuantity(resources.Limits.Memory, resourcePath+".resources.limits.memory"); err != nil {
+		errs = append(errs, err)
+	}
+
+	if err := validateResourceQuantity(resources.Limits.EphemeralStorage, resourcePath+".resources.limits.ephemeral-storage"); err != nil {
+		errs = append(errs, err)
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+
 	if compareQuantities(resources.Requests.CPU, resources.Limits.CPU) > 0 {
 		errs = append(errs, fmt.Errorf("invalid %s.resources.requests.cpu: %s must be less than or equal to cpu limit", resourcePath, resources.Requests.CPU))
 	}
@@ -134,6 +191,15 @@ func validateResources(resources *wf.Resources, resourcePath string) []error {
 		errs = append(errs, fmt.Errorf("invalid %s.resources.requests.ephemeral-storage: %s must be less than or equal to ephemeral-storage limit", resourcePath, resources.Requests.EphemeralStorage))
 	}
 	return errs
+}
+
+func validateResourceQuantity(quantity, resourcePath string) error {
+	if len(quantity) > 0 {
+		if _, err := resource.ParseQuantity(quantity); err != nil {
+			return fmt.Errorf("invalid %s: '%s'", resourcePath, quantity)
+		}
+	}
+	return nil
 }
 
 func compareQuantities(request string, limit string) int {
