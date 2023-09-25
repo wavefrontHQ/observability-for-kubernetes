@@ -10,6 +10,7 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
+	appsv1 "k8s.io/api/apps/v1"
 )
 
 var ComponentDir = os.DirFS(filepath.Join("..", DeployDir))
@@ -104,24 +105,12 @@ func TestResources(t *testing.T) {
 		// daemonSet
 		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
-
-		require.Equal(t, util.PixieVizierPEMName, ds.Spec.Template.GetLabels()["name"])
-		require.Equal(t, "wavefront", ds.GetLabels()["app.kubernetes.io/name"])
-		require.Equal(t, "pixie", ds.GetLabels()["app.kubernetes.io/component"])
-		require.Equal(t, "wavefront", ds.Spec.Template.GetLabels()["app.kubernetes.io/name"])
-		require.Equal(t, "pixie", ds.Spec.Template.GetLabels()["app.kubernetes.io/component"])
-		require.Equal(t, util.Namespace, ds.Namespace)
+		requireDaemonSetComponentLabels(t, util.PixieVizierPEMName, ds, "wavefront", "pixie")
 
 		// deployment
 		deployment, err := test.GetAppliedDeployment(util.PixieKelvinName, toApply)
 		require.NoError(t, err)
-
-		require.Equal(t, util.PixieKelvinName, deployment.Spec.Template.GetLabels()["name"])
-		require.Equal(t, "wavefront", deployment.GetLabels()["app.kubernetes.io/name"])
-		require.Equal(t, "pixie", deployment.GetLabels()["app.kubernetes.io/component"])
-		require.Equal(t, "wavefront", deployment.Spec.Template.GetLabels()["app.kubernetes.io/name"])
-		require.Equal(t, "pixie", deployment.Spec.Template.GetLabels()["app.kubernetes.io/component"])
-		require.Equal(t, util.Namespace, deployment.Namespace)
+		requireDeploymentComponentLabels(t, util.PixieKelvinName, deployment, "wavefront", "pixie")
 	})
 
 	//t.Run("k8s resources are set correctly", func(t *testing.T) {
@@ -186,6 +175,24 @@ func TestResources(t *testing.T) {
 	//})
 
 	//TODO - Component Refactor - move over most of the component level tests from wavefront_controller_test#TestReconcileLogging
+}
+
+func requireDaemonSetComponentLabels(t *testing.T, labelName string, daemonSet appsv1.DaemonSet, appName string, componentName string) {
+	require.Equal(t, labelName, daemonSet.Spec.Template.GetLabels()["name"])
+	require.Equal(t, appName, daemonSet.GetLabels()["app.kubernetes.io/name"])
+	require.Equal(t, componentName, daemonSet.GetLabels()["app.kubernetes.io/component"])
+	require.Equal(t, appName, daemonSet.Spec.Template.GetLabels()["app.kubernetes.io/name"])
+	require.Equal(t, componentName, daemonSet.Spec.Template.GetLabels()["app.kubernetes.io/component"])
+	require.Equal(t, util.Namespace, daemonSet.Namespace)
+}
+
+func requireDeploymentComponentLabels(t *testing.T, labelName string, deployment appsv1.Deployment, appName string, componentName string) {
+	require.Equal(t, labelName, deployment.Spec.Template.GetLabels()["name"])
+	require.Equal(t, appName, deployment.GetLabels()["app.kubernetes.io/name"])
+	require.Equal(t, componentName, deployment.GetLabels()["app.kubernetes.io/component"])
+	require.Equal(t, appName, deployment.Spec.Template.GetLabels()["app.kubernetes.io/name"])
+	require.Equal(t, componentName, deployment.Spec.Template.GetLabels()["app.kubernetes.io/component"])
+	require.Equal(t, util.Namespace, deployment.Namespace)
 }
 
 func validComponentConfig() ComponentConfig {
