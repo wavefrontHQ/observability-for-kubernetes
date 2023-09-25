@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
@@ -228,5 +229,9 @@ func validLoggingComponentConfig() ComponentConfig {
 		ImageRegistry:          wftest.DefaultImageRegistry,
 		ProxyAddress:           fmt.Sprintf("http://%s", wftest.DefaultProxyAddress),
 		ProxyAvailableReplicas: 1,
+		Resources: wf.Resources{Limits: wf.Resource{
+			CPU:    "100Mi",
+			Memory: "50Mi",
+		}},
 	}
 }

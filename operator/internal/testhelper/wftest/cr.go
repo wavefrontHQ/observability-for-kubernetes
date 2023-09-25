@@ -30,6 +30,13 @@ func CR(options ...CROption) *wf.Wavefront {
 				Logging: wf.Logging{
 					Enable:         true,
 					LoggingVersion: "2.1.6",
+					Resources: wf.Resources{
+						Requests: wf.Resource{},
+						Limits: wf.Resource{
+							CPU:    "100Mi",
+							Memory: "50Mi",
+						},
+					},
 				},
 			},
 			DataExport: wf.DataExport{

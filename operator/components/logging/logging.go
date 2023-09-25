@@ -9,6 +9,7 @@ import (
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -91,6 +92,10 @@ func (component *Component) Validate() validation.Result {
 		errs = append(errs, fmt.Errorf("%s: missing proxy address", component.Name()))
 	} else if !strings.HasPrefix(component.config.ProxyAddress, "http") {
 		errs = append(errs, fmt.Errorf("logging: proxy address (%s) must start with http", component.config.ProxyAddress))
+	}
+
+	if result := validation.ValidateResources(&component.config.Resources, util.LoggingName); result.IsError() {
+		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 
 	return validation.NewValidationResult(errs)
