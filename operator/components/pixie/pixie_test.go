@@ -102,15 +102,20 @@ func TestResources(t *testing.T) {
 		require.NotEmpty(t, toApply)
 		require.Empty(t, toDelete)
 
-		// daemonSet
+		// vizer pem daemon set
 		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
 		requireDaemonSetComponentLabels(t, util.PixieVizierPEMName, ds, "wavefront", "pixie")
 
-		// deployment
+		// kelvin deployment
 		deployment, err := test.GetAppliedDeployment(util.PixieKelvinName, toApply)
 		require.NoError(t, err)
 		requireDeploymentComponentLabels(t, util.PixieKelvinName, deployment, "wavefront", "pixie")
+
+		// nats stateful stet
+		statefulSet, err := test.GetAppliedStatefulSet(util.PixieNatsName, toApply)
+		require.NoError(t, err)
+		requireStatefulSetComponentLabels(t, util.PixieNatsName, statefulSet, "wavefront", "pixie")
 	})
 
 	//t.Run("k8s resources are set correctly", func(t *testing.T) {
@@ -193,6 +198,15 @@ func requireDeploymentComponentLabels(t *testing.T, labelName string, deployment
 	require.Equal(t, appName, deployment.Spec.Template.GetLabels()["app.kubernetes.io/name"])
 	require.Equal(t, componentName, deployment.Spec.Template.GetLabels()["app.kubernetes.io/component"])
 	require.Equal(t, util.Namespace, deployment.Namespace)
+}
+
+func requireStatefulSetComponentLabels(t *testing.T, labelName string, statefultSet appsv1.StatefulSet, appName string, componentName string) {
+	require.Equal(t, labelName, statefultSet.Spec.Template.GetLabels()["name"])
+	require.Equal(t, appName, statefultSet.GetLabels()["app.kubernetes.io/name"])
+	require.Equal(t, componentName, statefultSet.GetLabels()["app.kubernetes.io/component"])
+	require.Equal(t, appName, statefultSet.Spec.Template.GetLabels()["app.kubernetes.io/name"])
+	require.Equal(t, componentName, statefultSet.Spec.Template.GetLabels()["app.kubernetes.io/component"])
+	require.Equal(t, util.Namespace, statefultSet.Namespace)
 }
 
 func validComponentConfig() ComponentConfig {

@@ -57,6 +57,30 @@ func GetAppliedDeployment(metadataName string, toApply []client.Object) (appsv1.
 	return deployment, nil
 }
 
+func GetAppliedStatefulSet(metadataName string, toApply []client.Object) (appsv1.StatefulSet, error) {
+	var statefulSet appsv1.StatefulSet
+	var found client.Object
+
+	for _, clientObject := range toApply {
+		if clientObject.GetObjectKind().GroupVersionKind().Kind == "StatefulSet" && clientObject.GetName() == metadataName {
+			found = clientObject
+		}
+	}
+
+	if found == nil {
+		return statefulSet, fmt.Errorf("StatefulSet with name:%s, not found", metadataName)
+	}
+
+	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
+
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &statefulSet)
+	if err != nil {
+		return statefulSet, err
+	}
+
+	return statefulSet, nil
+}
+
 func GetAppliedConfigMap(metadataName string, toApply []client.Object) (v1.ConfigMap, error) {
 	var configMap v1.ConfigMap
 	var found client.Object
