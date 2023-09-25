@@ -165,4 +165,3 @@ func RequireCommonLabels(t *testing.T, objects []client.Object, appName, compone
 		}
 	}
 }
-

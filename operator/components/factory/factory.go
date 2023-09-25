@@ -23,19 +23,15 @@ func BuildComponents(componentsDir fs.FS, wf *wf.Wavefront) ([]components.Compon
 	}
 
 	loggingComponent, err := logging.NewComponent(loggingDir, logging.FromWavefront(wf))
-
 	if err != nil {
 		return nil, err
 	}
-
 	created = append(created, &loggingComponent)
 
 	pixieComponent, err := pixie.NewComponent(pixieDir, pixie.FromWavefront(wf))
-
 	if err != nil {
 		return nil, err
 	}
-
 	created = append(created, &pixieComponent)
 
 	return created, err

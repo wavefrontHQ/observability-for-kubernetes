@@ -120,6 +120,9 @@ func TestResources(t *testing.T) {
 		require.NotEmpty(t, toApply)
 		require.Empty(t, toDelete)
 
+		// check all resources for component labels
+		test.RequireCommonLabels(t, toApply, "wavefront", "logging", loggingComponent.config.Namespace)
+
 		// daemonSet
 		ds, err := test.GetAppliedDaemonSet(util.LoggingName, toApply)
 		require.NoError(t, err)
