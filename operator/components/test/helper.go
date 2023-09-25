@@ -92,7 +92,7 @@ func GetAppliedConfigMap(metadataName string, toApply []client.Object) (v1.Confi
 	}
 
 	if found == nil {
-		return configMap, fmt.Errorf("DaemonSet with name:%s, not found", metadataName)
+		return configMap, fmt.Errorf("ConfigMap with name:%s, not found", metadataName)
 	}
 
 	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
@@ -103,4 +103,45 @@ func GetAppliedConfigMap(metadataName string, toApply []client.Object) (v1.Confi
 	}
 
 	return configMap, nil
+}
+
+func GetAppliedSecret(metadataName string, toApply []client.Object) (v1.Secret, error) {
+	var secret v1.Secret
+	var found client.Object
+
+	for _, clientObject := range toApply {
+		if clientObject.GetObjectKind().GroupVersionKind().Kind == "Secret" && clientObject.GetName() == metadataName {
+			found = clientObject
+		}
+	}
+
+	if found == nil {
+		return secret, fmt.Errorf("Secret with name:%s, not found", metadataName)
+	}
+
+	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
+
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &secret)
+	if err != nil {
+		return secret, err
+	}
+
+	return secret, nil
+}
+
+func GetENVValue(name string, vars []v1.EnvVar) string {
+	for _, envVar := range vars {
+		if envVar.Name == name {
+			return envVar.Value
+		}
+	}
+	return ""
+}
+func ENVVarExists(name string, vars []v1.EnvVar) bool {
+	for _, envVar := range vars {
+		if envVar.Name == name {
+			return true
+		}
+	}
+	return false
 }

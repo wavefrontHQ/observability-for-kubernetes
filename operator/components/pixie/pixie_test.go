@@ -102,7 +102,7 @@ func TestResources(t *testing.T) {
 		require.NotEmpty(t, toApply)
 		require.Empty(t, toDelete)
 
-		// vizer pem daemon set
+		// vizier pem daemon set
 		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
 		requireDaemonSetComponentLabels(t, util.PixieVizierPEMName, ds, "wavefront", "pixie")
@@ -116,6 +116,69 @@ func TestResources(t *testing.T) {
 		statefulSet, err := test.GetAppliedStatefulSet(util.PixieNatsName, toApply)
 		require.NoError(t, err)
 		requireStatefulSetComponentLabels(t, util.PixieNatsName, statefulSet, "wavefront", "pixie")
+
+		// cluster name configmap
+		configmap, err := test.GetAppliedConfigMap("pl-cloud-config", toApply)
+		require.NoError(t, err)
+		require.Equal(t, component.config.ClusterName, configmap.Data["PL_CLUSTER_NAME"])
+
+		secret, err := test.GetAppliedSecret("pl-cluster-secrets", toApply)
+		require.NoError(t, err)
+		require.Equal(t, component.config.ClusterName, secret.StringData["cluster-name"])
+		require.Equal(t, component.config.ClusterUUID, secret.StringData["cluster-id"])
+	})
+
+	t.Run("OpAppsOptimization is enabled", func(t *testing.T) {
+		config := validComponentConfig()
+		config.EnableOpAppsOptimization = true
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources()
+
+		require.NoError(t, err)
+
+		// vizier pem daemon set
+		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		require.NoError(t, err)
+		require.Equal(t, "150", test.GetENVValue("PL_TABLE_STORE_DATA_LIMIT_MB", ds.Spec.Template.Spec.Containers[0].Env))
+		require.Equal(t, "90", test.GetENVValue("PL_TABLE_STORE_HTTP_EVENTS_PERCENT", ds.Spec.Template.Spec.Containers[0].Env))
+		require.Equal(t, "kTracers", test.GetENVValue("PL_STIRLING_SOURCES", ds.Spec.Template.Spec.Containers[0].Env))
+	})
+
+	t.Run("OpAppsOptimization is not enabled", func(t *testing.T) {
+		config := validComponentConfig()
+		config.EnableOpAppsOptimization = false
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources()
+
+		require.NoError(t, err)
+
+		// vizier pem daemon set
+		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		require.NoError(t, err)
+		require.False(t, test.ENVVarExists("PL_TABLE_STORE_DATA_LIMIT_MB", ds.Spec.Template.Spec.Containers[0].Env))
+		require.False(t, test.ENVVarExists("PL_TABLE_STORE_HTTP_EVENTS_PERCENT", ds.Spec.Template.Spec.Containers[0].Env))
+		require.False(t, test.ENVVarExists("PL_STIRLING_SOURCES", ds.Spec.Template.Spec.Containers[0].Env))
+	})
+
+	t.Run("PemResources are set correctly", func(t *testing.T) {
+		config := validComponentConfig()
+		config.PemResources.Requests.Memory = "500Mi"
+		config.PemResources.Requests.CPU = "50Mi"
+		config.PemResources.Limits.Memory = "1Gi"
+		config.PemResources.Limits.CPU = "100Mi"
+
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources()
+
+		require.NoError(t, err)
+
+		// vizier pem daemon set
+		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		require.NoError(t, err)
+		require.Equal(t, "500Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		require.Equal(t, "50Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "1Gi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		require.Equal(t, "100Mi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
 	})
 
 	//t.Run("k8s resources are set correctly", func(t *testing.T) {
