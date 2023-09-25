@@ -82,9 +82,6 @@ function post_alert_to_wavefront() {
     print_err_and_exit "Unable to create alert: $(cat "${response}")"
   fi
 
-  local alert_id
-  alert_id=$(sed -n 's/.*id":"\([0-9]*\).*/\1/p' "${response}")
-
   echo "Alert has been created."
 }
 
@@ -159,6 +156,8 @@ function main() {
   check_required_argument "${WAVEFRONT_TOKEN}" "-t <WAVEFRONT_TOKEN> is required"
   check_required_argument "${WF_CLUSTER}" "-c <WF_CLUSTER> is required"
   check_required_argument "${K8S_CLUSTER_NAME}" "-n <K8S_CLUSTER_NAME> is required"
+
+  #TODO: Get the CSP access token if necessary
 
   # Download and create all the alerts
   TEMP_DIR=$(mktemp -d)
