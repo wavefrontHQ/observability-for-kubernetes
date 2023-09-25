@@ -294,9 +294,6 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 		dirsToInclude = append(dirsToInclude, "collector")
 	}
 
-	if spec.CanExportData && spec.Experimental.Autotracing.Enable && spec.Experimental.Autotracing.CanExportAutotracingScripts {
-		dirsToInclude = append(dirsToInclude, "autotracing")
-	}
 	return dirsToInclude
 }
 
