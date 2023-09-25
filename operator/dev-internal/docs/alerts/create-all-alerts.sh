@@ -85,6 +85,57 @@ function post_alert_to_wavefront() {
   echo "Alert has been created."
 }
 
+function get_csp_access_token() {
+  local csp_endpoint="$1"
+  local csp_token_or_secret="$2"
+  local csp_app_id="$3"
+  local csp_org_id="$4"
+  local csp_access_token response res_code
+
+  printf "Retrieving the CSP access token ..."
+
+  response=$(mktemp)
+
+  if [[ -z "${csp_app_id}" ]]; then
+    local csp_api_token="${csp_token_or_secret}"
+    res_code=$(curl --silent --show-error --output "${response}" --write-out "%{http_code}" \
+      -X POST "https://${csp_endpoint}.cloud.vmware.com/csp/gateway/am/api/auth/api-tokens/authorize" \
+      -H "Accept: application/json" \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -d "api_token=${csp_api_token}")
+  else
+    local csp_credentials
+    csp_credentials=$(printf '%s:%s' "${csp_app_id}" "${csp_token_or_secret}" | base64)
+    res_code=$(curl --silent --show-error --output "${response}" --write-out "%{http_code}" \
+      -X POST "https://${csp_endpoint}.cloud.vmware.com/csp/gateway/am/api/auth/authorize" \
+      -H "Accept: application/json" \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -H "Authorization: Basic ${csp_credentials}" \
+      -d "grant_type=client_credentials&orgId=${csp_org_id}")
+  fi
+
+  if [ -x "$(command -v jq)" ]; then
+    if [[ ${res_code} -ne 200 ]]; then
+      print_err_and_exit "Unable to retrieve the CSP access token: $(jq -r '.message' "${response}")"
+    fi
+    csp_access_token=$(jq -r '.access_token' "${response}")
+  else
+    if [[ ${res_code} -ne 200 ]]; then
+      print_err_and_exit "Unable to retrieve the CSP access token: $(cat "${response}")"
+    fi
+    for item in $(tr '{,}' ' ' < "${response}"); do
+      if echo "${item}" | grep access_token >/dev/null; then
+        csp_access_token=$(echo "${item}" | tr '"' ' ' | awk '{print $3}')
+        break
+      fi
+    done
+  fi
+
+  WAVEFRONT_TOKEN="${csp_access_token}"
+
+  echo " done."
+}
+
 function check_alert_file() {
   local alert_file="$1"
 
@@ -123,10 +174,15 @@ function print_usage_and_exit() {
 }
 
 function print_usage() {
-  echo "Usage: create-all-alerts.sh -t <WAVEFRONT_TOKEN> -c <WF_CLUSTER> -n <K8S_CLUSTER_NAME> -h"
-  echo -e "\t-t wavefront token (required)"
+  echo "Usage: create-all-alerts [flags] [options]"
+  echo -e "\t-t wavefront api token (optional)"
   echo -e "\t-c wavefront instance name (required)"
   echo -e "\t-n kubernetes cluster name (required)"
+  echo -e "\t-e end-point for csp authentication (optional)"
+  echo -e "\t-a api token for csp authentication (optional)"
+  echo -e "\t-i oauth app id for csp authentication (optional)"
+  echo -e "\t-s oauth app secret for csp authentication (optional)"
+  echo -e "\t-o oauth org id for csp authentication (optional)"
   echo -e "\t-h print usage"
 }
 
@@ -135,29 +191,45 @@ function main() {
   local WF_CLUSTER=''
   local K8S_CLUSTER_NAME=''
 
+  # Optional arguments
+  local CSP_ENDPOINT='console'
+  local CSP_API_TOKEN=''
+  local CSP_APP_ID=''
+  local CSP_APP_SECRET=''
+
   # Default arguments
   local GITHUB_REPO='wavefrontHQ/observability-for-kubernetes'
   local ALERTS_FOLDER='docs/alerts/templates'
   local GIT_BRANCH='main'
 
-  while getopts ':c:t:n:f:b:h' opt; do
+  while getopts ':t:c:n:f:e:a:i:s:o:b:h' opt; do
     case "${opt}" in
       t) WAVEFRONT_TOKEN="${OPTARG}" ;;
       c) WF_CLUSTER="${OPTARG}" ;;
       n) K8S_CLUSTER_NAME="${OPTARG}" ;;
       f) ALERTS_FOLDER="${OPTARG}" ;;
+      e) CSP_ENDPOINT="${OPTARG}" ;;
+      a) CSP_API_TOKEN="${OPTARG}" ;;
+      i) CSP_APP_ID="${OPTARG}" ;;
+      s) CSP_APP_SECRET="${OPTARG}" ;;
+      o) CSP_ORG_ID="${OPTARG}" ;;
       b) GIT_BRANCH="${OPTARG}" ;;
       h) print_usage; exit 0 ;;
       \?) print_usage_and_exit "Invalid option: -${OPTARG}" ;;
     esac
   done
 
+  # Get the CSP access token if necessary
+  if [[ -n "${CSP_API_TOKEN}" ]]; then
+    get_csp_access_token "${CSP_ENDPOINT}" "${CSP_API_TOKEN}"
+  elif [[ -n "${CSP_APP_ID}" ]]; then
+    get_csp_access_token "${CSP_ENDPOINT}" "${CSP_APP_SECRET}" "${CSP_APP_ID}" "${CSP_ORG_ID}"
+  fi
+
   # Checking for required arguments
   check_required_argument "${WAVEFRONT_TOKEN}" "-t <WAVEFRONT_TOKEN> is required"
   check_required_argument "${WF_CLUSTER}" "-c <WF_CLUSTER> is required"
   check_required_argument "${K8S_CLUSTER_NAME}" "-n <K8S_CLUSTER_NAME> is required"
-
-  #TODO: Get the CSP access token if necessary
 
   # Download and create all the alerts
   TEMP_DIR=$(mktemp -d)

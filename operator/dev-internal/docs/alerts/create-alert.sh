@@ -156,7 +156,7 @@ function print_usage_and_exit() {
 
 function print_usage() {
   echo "Usage: create-alert [flags] [options]"
-  echo -e "\t-t wavefront api token (required)"
+  echo -e "\t-t wavefront api token (optional)"
   echo -e "\t-c wavefront instance name (required)"
   echo -e "\t-n kubernetes cluster name (required)"
   echo -e "\t-f alert template file name (required)"
@@ -213,8 +213,8 @@ function main() {
   # Checking for required arguments
   check_required_argument "${WAVEFRONT_TOKEN}" "-t <WAVEFRONT_TOKEN> is required"
   check_required_argument "${WF_CLUSTER}" "-c <WF_CLUSTER> is required"
-  check_required_argument "${ALERT_FILE_NAME}" "-f <ALERT_FILE_NAME> is required"
   check_required_argument "${K8S_CLUSTER_NAME}" "-n <K8S_CLUSTER_NAME> is required"
+  check_required_argument "${ALERT_FILE_NAME}" "-f <ALERT_FILE_NAME> is required"
 
   # Download and create the alert
   TEMP_FILE=$(mktemp)
