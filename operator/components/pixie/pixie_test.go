@@ -10,7 +10,6 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
-	appsv1 "k8s.io/api/apps/v1"
 )
 
 var ComponentDir = os.DirFS(filepath.Join("..", DeployDir))
@@ -102,20 +101,8 @@ func TestResources(t *testing.T) {
 		require.NotEmpty(t, toApply)
 		require.Empty(t, toDelete)
 
-		// vizier pem daemon set
-		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
-		require.NoError(t, err)
-		requireDaemonSetComponentLabels(t, util.PixieVizierPEMName, ds, "wavefront", "pixie")
-
-		// kelvin deployment
-		deployment, err := test.GetAppliedDeployment(util.PixieKelvinName, toApply)
-		require.NoError(t, err)
-		requireDeploymentComponentLabels(t, util.PixieKelvinName, deployment, "wavefront", "pixie")
-
-		// nats stateful stet
-		statefulSet, err := test.GetAppliedStatefulSet(util.PixieNatsName, toApply)
-		require.NoError(t, err)
-		requireStatefulSetComponentLabels(t, util.PixieNatsName, statefulSet, "wavefront", "pixie")
+		// check all resources for component labels
+		test.RequireCommonLabels(t, toApply, "wavefront", "pixie", util.Namespace)
 
 		// cluster name configmap
 		configmap, err := test.GetAppliedConfigMap("pl-cloud-config", toApply)
@@ -180,96 +167,6 @@ func TestResources(t *testing.T) {
 		require.Equal(t, "1Gi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
 		require.Equal(t, "100Mi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
 	})
-
-	//t.Run("k8s resources are set correctly", func(t *testing.T) {
-	//	config := validComponentConfig()
-	//	config.Resources.Requests.CPU = "200m"
-	//	config.Resources.Requests.Memory = "10Mi"
-	//	config.Resources.Limits.Memory = "256Mi"
-	//	component, _ := NewComponent(ComponentDir, config)
-	//	toApply, _, err := component.Resources()
-	//
-	//	require.NoError(t, err)
-	//	require.NotEmpty(t, toApply)
-	//	ds, err := test.GetAppliedDaemonSet("wavefront-logging", toApply)
-	//	require.NoError(t, err)
-	//	require.Equal(t, "10Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
-	//	require.Equal(t, "200m", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
-	//	require.Equal(t, "256Mi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
-	//})
-	//
-	//t.Run("tag allow list is set correctly", func(t *testing.T) {
-	//	config := validComponentConfig()
-	//	config.TagAllowList = map[string][]string{"namespace_name": {"kube-sys", "wavefront"}, "pod_name": {"pet-clinic"}}
-	//	component, _ := NewComponent(ComponentDir, config)
-	//	toApply, _, err := component.Resources()
-	//
-	//	require.NoError(t, err)
-	//	require.NotEmpty(t, toApply)
-	//
-	//	fluentBitConfig := fluentBitConfiguration(toApply)
-	//	require.NoError(t, err)
-	//	require.Contains(t, fluentBitConfig, "Regex  namespace_name ^kube-sys$|^wavefront$")
-	//	require.Contains(t, fluentBitConfig, "Regex  pod_name ^pet-clinic$")
-	//})
-	//
-	//t.Run("tags are set correctly", func(t *testing.T) {
-	//	config := validComponentConfig()
-	//	config.Tags = map[string]string{"key1": "value1", "key2": "value2"}
-	//	component, _ := NewComponent(ComponentDir, config)
-	//	toApply, _, err := component.Resources()
-	//
-	//	require.NoError(t, err)
-	//	require.NotEmpty(t, toApply)
-	//
-	//	fluentBitConfig := fluentBitConfiguration(toApply)
-	//	require.NoError(t, err)
-	//	require.Contains(t, fluentBitConfig, "Record          key1 value1")
-	//	require.Contains(t, fluentBitConfig, "Record          key2 value2")
-	//})
-	//
-	//t.Run("external wavefront proxy url with http specified in URL is set correctly", func(t *testing.T) {
-	//	config := validComponentConfig()
-	//	config.ProxyAddress = "http://my-proxy:8888"
-	//	component, _ := NewComponent(ComponentDir, config)
-	//	toApply, _, err := component.Resources()
-	//
-	//	require.NoError(t, err)
-	//	require.NotEmpty(t, toApply)
-	//
-	//	fluentBitConfig := fluentBitConfiguration(toApply)
-	//	require.NoError(t, err)
-	//	require.Contains(t, fluentBitConfig, "Proxy             http://my-proxy:8888")
-	//})
-
-	//TODO - Component Refactor - move over most of the component level tests from wavefront_controller_test#TestReconcileLogging
-}
-
-func requireDaemonSetComponentLabels(t *testing.T, labelName string, daemonSet appsv1.DaemonSet, appName string, componentName string) {
-	require.Equal(t, labelName, daemonSet.Spec.Template.GetLabels()["name"])
-	require.Equal(t, appName, daemonSet.GetLabels()["app.kubernetes.io/name"])
-	require.Equal(t, componentName, daemonSet.GetLabels()["app.kubernetes.io/component"])
-	require.Equal(t, appName, daemonSet.Spec.Template.GetLabels()["app.kubernetes.io/name"])
-	require.Equal(t, componentName, daemonSet.Spec.Template.GetLabels()["app.kubernetes.io/component"])
-	require.Equal(t, util.Namespace, daemonSet.Namespace)
-}
-
-func requireDeploymentComponentLabels(t *testing.T, labelName string, deployment appsv1.Deployment, appName string, componentName string) {
-	require.Equal(t, labelName, deployment.Spec.Template.GetLabels()["name"])
-	require.Equal(t, appName, deployment.GetLabels()["app.kubernetes.io/name"])
-	require.Equal(t, componentName, deployment.GetLabels()["app.kubernetes.io/component"])
-	require.Equal(t, appName, deployment.Spec.Template.GetLabels()["app.kubernetes.io/name"])
-	require.Equal(t, componentName, deployment.Spec.Template.GetLabels()["app.kubernetes.io/component"])
-	require.Equal(t, util.Namespace, deployment.Namespace)
-}
-
-func requireStatefulSetComponentLabels(t *testing.T, labelName string, statefultSet appsv1.StatefulSet, appName string, componentName string) {
-	require.Equal(t, labelName, statefultSet.Spec.Template.GetLabels()["name"])
-	require.Equal(t, appName, statefultSet.GetLabels()["app.kubernetes.io/name"])
-	require.Equal(t, componentName, statefultSet.GetLabels()["app.kubernetes.io/component"])
-	require.Equal(t, appName, statefultSet.Spec.Template.GetLabels()["app.kubernetes.io/name"])
-	require.Equal(t, componentName, statefultSet.Spec.Template.GetLabels()["app.kubernetes.io/component"])
-	require.Equal(t, util.Namespace, statefultSet.Namespace)
 }
 
 func validComponentConfig() ComponentConfig {

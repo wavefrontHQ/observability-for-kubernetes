@@ -2,9 +2,12 @@ package test
 
 import (
 	"fmt"
+	"testing"
 
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -145,3 +148,21 @@ func ENVVarExists(name string, vars []v1.EnvVar) bool {
 	}
 	return false
 }
+
+func RequireCommonLabels(t *testing.T, objects []client.Object, appName, componentName, ns string) {
+	for _, clientObject := range objects {
+		require.Equal(t, componentName, clientObject.GetLabels()["app.kubernetes.io/component"])
+		require.Equal(t, appName, clientObject.GetLabels()["app.kubernetes.io/name"])
+		require.Equal(t, ns, clientObject.GetNamespace())
+
+		kind := clientObject.GetObjectKind().GroupVersionKind().Kind
+		if kind == "DaemonSet" || kind == "Deployment" || kind == "StatefulSet" {
+			unstructuredObject := clientObject.(*unstructured.Unstructured)
+
+			templateLabels, _, _ := unstructured.NestedStringMap(unstructuredObject.Object, "spec", "template", "metadata", "labels")
+			require.Equal(t, componentName, templateLabels["app.kubernetes.io/component"])
+			require.Equal(t, appName, templateLabels["app.kubernetes.io/name"])
+		}
+	}
+}
+
