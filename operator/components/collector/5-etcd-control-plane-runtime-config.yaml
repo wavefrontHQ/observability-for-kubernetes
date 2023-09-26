@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Namespace }}
   annotations:
     wavefront.com/discovery-config: 'true'
-    wavefront.com/conditionally-provision: '{{ .DataCollection.Metrics.ControlPlane.EnableEtcd }}'
+    wavefront.com/conditionally-provision: '{{ .ControlPlane.EnableEtcd }}'
 data:
   collector.yaml: |
     plugins:

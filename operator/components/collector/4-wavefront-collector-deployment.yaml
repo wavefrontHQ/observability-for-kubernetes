@@ -1,42 +1,33 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
-  labels:
-    app.kubernetes.io/component: node-collector
-  name: wavefront-node-collector
+  name: wavefront-cluster-collector
   namespace: {{ .Namespace }}
-  annotations:
-    wavefront.com/conditionally-provision: '{{ .DataCollection.Metrics.Enable }}'
+  labels:
+    app.kubernetes.io/component: cluster-collector
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name : wavefront
-      app.kubernetes.io/component: node-collector
+      app.kubernetes.io/component: cluster-collector
   template:
     metadata:
       labels:
         app.kubernetes.io/name : wavefront
-        app.kubernetes.io/component: node-collector
+        app.kubernetes.io/component: cluster-collector
       annotations:
         installation-method: operator
-        proxy-available-replicas: "{{ .DataExport.WavefrontProxy.AvailableReplicas }}"
+        proxy-available-replicas: "{{ .AvailableReplicas }}"
     spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
         runAsGroup: 65534
       tolerations:
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
-        - key: node-role.kubernetes.io/control-plane
-          effect: NoSchedule
-          operator: Exists
         - effect: NoSchedule
           key: kubernetes.io/arch
           value: arm64
-      {{- if .DataCollection.Tolerations }}
-{{ .DataCollection.Tolerations | toYaml | indent 8 }}
-      {{- end }}
       serviceAccountName: wavefront-collector
       automountServiceAccountToken: true
       {{- if .ImagePullSecret }}
@@ -44,14 +35,14 @@ spec:
         - name: {{ .ImagePullSecret }}
       {{- end }}
       containers:
-        - name: wavefront-collector
+        - name: wavefront-cluster-collector
           securityContext:
             readOnlyRootFilesystem: true
-          image: {{ .ImageRegistry }}/kubernetes-collector:{{ .DataCollection.Metrics.CollectorVersion }}
+          image: {{ .ImageRegistry }}/kubernetes-collector:{{ .CollectorVersion }}
           imagePullPolicy: Always
           command:
             - /wavefront-collector
-            - --agent=node
+            - --agent=cluster
             - --config-file=/etc/collector/config.yaml
           env:
             - name: HOST_PROC
@@ -73,42 +64,29 @@ spec:
                   fieldPath: metadata.annotations['installation-method']
             - name: CLUSTER_UUID
               value: {{ .ClusterUUID }}
+          {{- if .KubernetesEvents.Enable }}
+            - name: K8S_EVENTS_ENDPOINT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .KubernetesEvents.SecretName }}
+                  key: k8s-events-endpoint-token
+          {{- end }}
           ports:
             - containerPort: 8088
               protocol: TCP
           resources:
-{{ .DataCollection.Metrics.NodeCollector.Resources | toYaml | indent 12 }}
+{{ .ClusterCollectorResources | toYaml | indent 12 }}
           volumeMounts:
             - name: procfs
               mountPath: /host/proc
               readOnly: true
-            {{- if .DataCollection.Metrics.ControlPlane.EnableEtcd }}
-            - name: etcd-certs
-              mountPath: /etc/etcd-certs/
-              readOnly: true
-            {{- end }}
             - name: config
               mountPath: /etc/collector/
               readOnly: true
-            {{- if and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}
-            - name: openshift-service-ca-bundle
-              mountPath: /etc/openshift-service-ca-bundle/
-              readOnly: true
-            {{- end }}
       volumes:
         - name: procfs
           hostPath:
             path: /proc
-        {{- if .DataCollection.Metrics.ControlPlane.EnableEtcd }}
-        - name: etcd-certs
-          secret:
-            secretName: etcd-certs
-        {{- end }}
         - name: config
           configMap:
-            name: {{ .DataCollection.Metrics.CollectorConfigName }}
-        {{- if and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}
-        - name: openshift-service-ca-bundle
-          configMap:
-            name: openshift-service-ca-bundle
-        {{- end }}
+            name: {{ .CollectorConfigName }}
