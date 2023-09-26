@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: wavefront-cluster-spans-script
-  namespace: observability-system
+  namespace: {{ .Namespace }}
   labels:
     purpose: cron-script
 data:
@@ -24,7 +24,7 @@ data:
         # It is not useful to see metrics related to the functioning of Kubernetes's system-components (such as the CNI,
         # core-dns, aws-node, etc)
         df = df[df.destination_namespace != 'kube-system']
-        df = df[df.destination_namespace != 'observability-system']
+        df = df[df.destination_namespace != '{{ .Namespace }}']
         df = df[df.destination_namespace != 'olm']
         df = df[df.destination_namespace != 'pl']
         df = df[df.destination_namespace != 'px-operator']
@@ -40,7 +40,7 @@ data:
         # It is not useful to see metrics related to the functioning of Kubernetes's system-components (such as the CNI,
         # core-dns, aws-node, etc)
         df = df[df.source_namespace != 'kube-system']
-        df = df[df.source_namespace != 'observability-system']
+        df = df[df.source_namespace != '{{ .Namespace }}']
         df = df[df.source_namespace != 'olm']
         df = df[df.source_namespace != 'pl']
         df = df[df.source_namespace != 'px-operator']
@@ -239,6 +239,6 @@ data:
   configs.yaml: |
     otelEndpointConfig:
       insecure: true
-      url: wavefront-proxy.observability-system.svc.cluster.local:4317
+      url: wavefront-proxy.{{ .Namespace }}.svc.cluster.local:4317
   cron.yaml: |
     frequency_s: 10
