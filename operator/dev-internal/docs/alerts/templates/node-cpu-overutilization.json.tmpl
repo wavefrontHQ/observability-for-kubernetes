@@ -6,7 +6,14 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "round(ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"K8S_CLUSTER_NAME\") * 100)",
+      "query": "round(sum(${B} by (sources, cluster, cluster_uuid, nodename, node_role)) * 100)",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"K8S_CLUSTER_NAME\")",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

@@ -6,7 +6,21 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "round(ts(\"kubernetes.node.filesystem.usage\", cluster=\"K8S_CLUSTER_NAME\") / ts(\"kubernetes.node.filesystem.limit\", cluster=\"K8S_CLUSTER_NAME\")  * 100)",
+      "query": "round(sum(${B} by (sources, cluster, cluster_uuid, nodename, node_role)) / sum(${C} by (sources, cluster, cluster_uuid, nodename, node_role))  * 100)",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "ts(\"kubernetes.node.filesystem.usage\", cluster=\"K8S_CLUSTER_NAME\")",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "C",
+      "query": "ts(\"kubernetes.node.filesystem.limit\", cluster=\"K8S_CLUSTER_NAME\")",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
