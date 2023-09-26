@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wavefront-proxy
+  namespace: {{ .Namespace }}
+spec:
+  ports:
+    - name: wavefront
+      port: {{ .MetricPort }}
+      protocol: TCP
+    {{if .DeltaCounterPort}}
+    - name: delta-counter
+      port: {{ .DeltaCounterPort }}
+      protocol: TCP
+    {{end}}
+    {{if .Tracing.Wavefront.Port}}
+    - name: wavefront-trace
+      port: {{ .Tracing.Wavefront.Port }}
+      protocol: TCP
+    {{end}}
+    {{if .Tracing.Jaeger.Port}}
+    - name: jaeger
+      port: {{ .Tracing.Jaeger.Port }}
+      protocol: TCP
+    {{end}}
+    {{if .Tracing.Jaeger.GrpcPort}}
+    - name: jaeger-grpc
+      port: {{ .Tracing.Jaeger.GrpcPort }}
+      protocol: TCP
+    {{end}}
+    {{if .Tracing.Jaeger.HttpPort}}
+    - name: jaeger-http
+      port: {{ .Tracing.Jaeger.HttpPort }}
+      protocol: TCP
+    {{end}}
+    {{if .Tracing.Zipkin.Port}}
+    - name: zipkin
+      port: {{ .Tracing.Zipkin.Port }}
+      protocol: TCP
+    {{end}}
+    {{if .Histogram.Port}}
+    - name: histogram
+      port: {{ .Histogram.Port }}
+      protocol: TCP
+    {{end}}
+    {{if .Histogram.MinutePort}}
+    - name: histogram-minute
+      port: {{ .Histogram.MinutePort }}
+      protocol: TCP
+    {{end}}
+    {{if .Histogram.HourPort}}
+    - name: histogram-hour
+      port: {{ .Histogram.HourPort }}
+      protocol: TCP
+    {{end}}
+    {{if .Histogram.DayPort}}
+    - name: histogram-day
+      port: {{ .Histogram.DayPort }}
+      protocol: TCP
+    {{end}}
+    {{if .OTLP.GrpcPort}}
+    - name: otlp-grpc
+      port: {{ .OTLP.GrpcPort }}
+      protocol: TCP
+    {{end}}
+    {{if .OTLP.HttpPort}}
+    - name: otlp-http
+      port: {{ .OTLP.HttpPort }}
+      protocol: TCP
+    {{end}}
+  selector:
+    app.kubernetes.io/name : wavefront
+    app.kubernetes.io/component: proxy
+  type: ClusterIP

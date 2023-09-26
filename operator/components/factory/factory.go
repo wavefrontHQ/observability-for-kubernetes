@@ -8,10 +8,22 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/autotracing"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/logging"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/pixie"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components/proxy"
 )
 
 func BuildComponents(componentsDir fs.FS, wf *wf.Wavefront) ([]components.Component, error) {
 	var created []components.Component
+
+	autotracingDir, err := fs.Sub(componentsDir, autotracing.DeployDir)
+	if err != nil {
+		return nil, err
+	}
+
+	autotracingComponent, err := autotracing.NewComponent(autotracingDir, autotracing.FromWavefront(wf))
+	if err != nil {
+		return nil, err
+	}
+	created = append(created, &autotracingComponent)
 
 	loggingDir, err := fs.Sub(componentsDir, logging.DeployDir)
 	if err != nil {
@@ -35,16 +47,16 @@ func BuildComponents(componentsDir fs.FS, wf *wf.Wavefront) ([]components.Compon
 	}
 	created = append(created, &pixieComponent)
 
-	autotracingDir, err := fs.Sub(componentsDir, autotracing.DeployDir)
+	proxyDir, err := fs.Sub(componentsDir, proxy.DeployDir)
 	if err != nil {
 		return nil, err
 	}
 
-	autotracingComponent, err := autotracing.NewComponent(autotracingDir, autotracing.FromWavefront(wf))
+	proxyComponent, err := proxy.NewComponent(proxyDir, proxy.FromWavefront(wf))
 	if err != nil {
 		return nil, err
 	}
-	created = append(created, &autotracingComponent)
+	created = append(created, &proxyComponent)
 
 	return created, err
 }
