@@ -160,7 +160,7 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            lock("integration-test-gke") {
+            lock("integration-test-gke-collector") {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -188,7 +188,7 @@ pipeline {
             INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
           }
           steps {
-            lock("integration-test-gke") {
+            lock("integration-test-gke-operator-1") {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -216,7 +216,7 @@ pipeline {
             INTEGRATION_TEST_ARGS="-r common-metrics -r proxy-preprocessor -r logging-integration -r allow-legacy-install"
           }
           steps {
-            lock("integration-test-gke") {
+            lock("integration-test-gke-operator-2") {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -244,7 +244,7 @@ pipeline {
             INTEGRATION_TEST_ARGS="-r advanced -r with-http-proxy -r control-plane"
           }
           steps {
-            lock("integration-test-gke") {
+            lock("integration-test-gke-operator-3") {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
