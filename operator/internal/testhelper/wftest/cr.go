@@ -20,6 +20,7 @@ func CR(options ...CROption) *wf.Wavefront {
 			Namespace:            DefaultNamespace,
 			ControllerManagerUID: "controller-manager-uid",
 			ClusterUUID:          "cluster-uuid",
+			ImageRegistry:        DefaultImageRegistry,
 			DataCollection: wf.DataCollection{
 				Metrics: wf.Metrics{
 					Enable: true,
@@ -43,6 +44,13 @@ func CR(options ...CROption) *wf.Wavefront {
 				WavefrontProxy: wf.WavefrontProxy{
 					Enable:     true,
 					MetricPort: 2878,
+					Resources: wf.Resources{
+						Requests: wf.Resource{},
+						Limits: wf.Resource{
+							CPU:    "100Mi",
+							Memory: "50Mi",
+						},
+					},
 				},
 			},
 		},

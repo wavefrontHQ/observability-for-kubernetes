@@ -5,6 +5,7 @@ import wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1al
 func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 	config := ComponentConfig{
 		// required
+		Enable:               cr.Spec.DataExport.WavefrontProxy.Enable,
 		ControllerManagerUID: cr.Spec.ControllerManagerUID,
 		Namespace:            cr.Spec.Namespace,
 		ClusterName:          cr.Spec.ClusterName,
@@ -12,7 +13,6 @@ func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 		ImageRegistry:        cr.Spec.ImageRegistry,
 		WavefrontTokenSecret: cr.Spec.WavefrontTokenSecret,
 		WavefrontUrl:         cr.Spec.WavefrontUrl,
-		Enable:               cr.Spec.DataExport.WavefrontProxy.Enable,
 		Resources:            cr.Spec.DataExport.WavefrontProxy.Resources,
 		MetricPort:           cr.Spec.DataExport.WavefrontProxy.MetricPort,
 		ProxyVersion:         cr.Spec.DataExport.WavefrontProxy.ProxyVersion,
