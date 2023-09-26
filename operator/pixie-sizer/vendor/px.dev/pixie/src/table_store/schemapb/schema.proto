@@ -1,0 +1,108 @@
+/*
+ * Copyright 2018- The Pixie Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+syntax = "proto3";
+
+package px.table_store.schemapb;
+
+option go_package = "schemapb";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "src/shared/types/typespb/types.proto";
+
+// PX_CARNOT_UPDATE_FOR_NEW_TYPES.
+
+// Boolean data column.
+message BooleanColumn {
+  repeated bool data = 1;
+}
+
+// Int64 column data.
+message Int64Column {
+  repeated int64 data = 1;
+}
+
+// Uint128 column data.
+message UInt128Column {
+  repeated types.UInt128 data = 1;
+}
+
+// Float64 column data.
+message Float64Column {
+  repeated double data = 1;
+}
+
+// Time64 column data.
+message Time64NSColumn {
+  repeated int64 data = 1;
+}
+
+// String data column.
+message StringColumn {
+  repeated bytes data = 1
+      [ (gogoproto.customtype) = "px.dev/pixie/src/table_store/schemapb/types.StringData" ];
+}
+
+// A single column of data.
+message Column {
+  oneof col_data {
+    BooleanColumn boolean_data = 1;
+    Int64Column int64_data = 2;
+    UInt128Column uint128_data = 3;
+    Time64NSColumn time64ns_data = 4;
+    Float64Column float64_data = 5;
+    StringColumn string_data = 6;
+  }
+}
+
+// RowBatchData is a temporary data type that will remove when proper serialization
+// is implemented.
+message RowBatchData {
+  repeated Column cols = 1;
+  int64 num_rows = 2;
+  bool eow = 3;
+  bool eos = 4;
+}
+
+message Relation {
+  message ColumnInfo {
+    string column_name = 1;
+    px.types.DataType column_type = 2;
+    string column_desc = 3;
+    px.types.SemanticType column_semantic_type = 4;
+    px.types.PatternType pattern_type = 5;
+  }
+  repeated ColumnInfo columns = 1;
+  // Description of the table.
+  string desc = 2;
+}
+
+// A table serialized as proto.
+message Table {
+  // Information about the relation in this table. All row batches *must* follow,
+  // this schema.
+  Relation relation = 4;
+  // A row batch of data.
+  repeated RowBatchData row_batches = 5;
+  // The table name. Empty if the table is not associated with a name.
+  string name = 6;
+}
+
+message Schema {
+  map<string, Relation> relation_map = 1;
+}

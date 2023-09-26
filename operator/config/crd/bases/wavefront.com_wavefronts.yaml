@@ -603,14 +603,17 @@ spec:
                           resources:
                             limits:
                               cpu: 1000m
-                              memory: 600Mi
+                              memory: 750Mi
                             requests:
                               cpu: 100m
-                              memory: 600Mi
+                              memory: 300Mi
+                          table_store_limits:
+                            http_events_percent: 20
+                            total_mib: 150
                         properties:
                           resources:
                             description: Resources Compute resources required by the
-                              Pem containers.
+                              PEM containers.
                             properties:
                               limits:
                                 description: Limits CPU and Memory requirements
@@ -645,6 +648,25 @@ spec:
                                     type: string
                                 type: object
                             type: object
+                          table_store_limits:
+                            default:
+                              http_events_percent: 20
+                              total_mib: 150
+                            description: TableStoreLimits Limits for queryable data
+                              for the PEM containers.
+                            properties:
+                              http_events_percent:
+                                description: HttpEventsPercent Percent of TotalMiB
+                                  allocated to the http_events table
+                                type: integer
+                              total_mib:
+                                description: TotalMiB Total MiB of memory allocated
+                                  to all tables
+                                type: integer
+                            required:
+                            - http_events_percent
+                            - total_mib
+                            type: object
                         type: object
                     type: object
                   hub:
@@ -663,14 +685,17 @@ spec:
                               resources:
                                 limits:
                                   cpu: 1000m
-                                  memory: 2Gi
+                                  memory: 750Mi
                                 requests:
                                   cpu: 100m
-                                  memory: 1Gi
+                                  memory: 300Mi
+                              table_store_limits:
+                                http_events_percent: 20
+                                total_mib: 150
                             properties:
                               resources:
                                 description: Resources Compute resources required
-                                  by the Pem containers.
+                                  by the PEM containers.
                                 properties:
                                   limits:
                                     description: Limits CPU and Memory requirements
@@ -708,6 +733,25 @@ spec:
                                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                         type: string
                                     type: object
+                                type: object
+                              table_store_limits:
+                                default:
+                                  http_events_percent: 20
+                                  total_mib: 150
+                                description: TableStoreLimits Limits for queryable
+                                  data for the PEM containers.
+                                properties:
+                                  http_events_percent:
+                                    description: HttpEventsPercent Percent of TotalMiB
+                                      allocated to the http_events table
+                                    type: integer
+                                  total_mib:
+                                    description: TotalMiB Total MiB of memory allocated
+                                      to all tables
+                                    type: integer
+                                required:
+                                - http_events_percent
+                                - total_mib
                                 type: object
                             type: object
                         type: object

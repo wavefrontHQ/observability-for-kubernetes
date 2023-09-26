@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stirling-wrapper
+  namespace: observability-system
+spec:
+  selector:
+    matchLabels:
+      name: stirling-wrapper
+  template:
+    metadata:
+      labels:
+        name: stirling-wrapper
+    spec:
+      containers:
+      - args: [ ]
+        env:
+        - name: TCMALLOC_SAMPLE_PARAMETER
+          value: "1048576"
+        - name: PL_CLIENT_TLS_CERT
+          value: /certs/client.crt
+        - name: PL_CLIENT_TLS_KEY
+          value: /certs/client.key
+        - name: PL_TLS_CA_CERT
+          value: /certs/ca.crt
+        - name: PL_DISABLE_SSL
+          value: "false"
+        - name: PL_HOST_PATH
+          value: /host
+        - name: PL_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: PL_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: PL_HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: PL_JWT_SIGNING_KEY
+          valueFrom:
+            secretKeyRef:
+              key: jwt-signing-key
+              name: pl-cluster-secrets
+        - name: PL_VIZIER_ID
+          valueFrom:
+            secretKeyRef:
+              key: cluster-id
+              name: pl-cluster-secrets
+              optional: true
+        - name: PL_VIZIER_NAME
+          valueFrom:
+            secretKeyRef:
+              key: cluster-name
+              name: pl-cluster-secrets
+              optional: true
+        - name: PL_CLOCK_CONVERTER
+          value: default
+        - name: PL_TABLE_STORE_STIRLING_ERROR_LIMIT_BYTES
+          value: "0"
+        - name: PL_TABLE_STORE_PROC_EXIT_EVENTS_LIMIT_BYTES
+          value: "0"
+        - name: PL_STIRLING_MAX_BODY_BYTES
+          value: "0"
+        - name: PL_TABLE_STORE_DATA_LIMIT_MB
+          value: "150"
+        - name: PL_STIRLING_SOURCES
+          value: "socket_tracer"
+        - name: HEAPPROFILE
+          value: "/heapprof"
+        image: "projects.registry.vmware.com/tanzu_observability_keights_saas/gcr_io_pixie-oss_pixie-dev_vizier_stirling_wrapper:2023-09-14_17-57-12.94_UTC"
+        name: pem
+        securityContext:
+          capabilities:
+            add:
+            - SYS_PTRACE
+            - SYS_ADMIN
+          privileged: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /host
+          name: host-root
+          readOnly: true
+        - mountPath: /sys
+          name: sys
+          readOnly: true
+        - mountPath: /certs
+          name: certs
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - hostPath:
+          path: /
+          type: Directory
+        name: host-root
+      - hostPath:
+          path: /sys
+          type: Directory
+        name: sys
+      - name: certs
+        secret:
+          secretName: service-tls-certs

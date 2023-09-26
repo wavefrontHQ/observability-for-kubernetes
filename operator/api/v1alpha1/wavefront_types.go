@@ -88,10 +88,7 @@ type Experimental struct {
 }
 
 type AutoTracingPixie struct {
-	// +kubebuilder:default:=true
-	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "600Mi"}, limits: {cpu: "1000m", memory: "600Mi"}}}
-	Pem Pem `json:"pem,omitempty"`
+	PixieShared `json:",inline"`
 
 	// CanExportAutotracingScripts is for internal use only
 	CanExportAutotracingScripts bool `json:"-"`
@@ -104,9 +101,13 @@ type Hub struct {
 }
 
 type HubPixie struct {
+	PixieShared `json:",inline"`
+}
+
+type PixieShared struct {
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "1Gi"}, limits: {cpu: "1000m", memory: "2Gi"}}}
+	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "750Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20}}
 	Pem Pem `json:"pem,omitempty"`
 }
 
@@ -424,8 +425,20 @@ type Collector struct {
 }
 
 type Pem struct {
-	// Resources Compute resources required by the Pem containers.
+	// Resources Compute resources required by the PEM containers.
 	Resources Resources `json:"resources,omitempty"`
+
+	// TableStoreLimits Limits for queryable data for the PEM containers.
+	// +kubebuilder:default:={total_mib: 150, http_events_percent: 20}
+	TableStoreLimits TableStoreLimits `json:"table_store_limits,omitempty"`
+}
+
+type TableStoreLimits struct {
+	// TotalMiB Total MiB of memory allocated to all tables
+	TotalMiB int `json:"total_mib"`
+
+	// HttpEventsPercent Percent of TotalMiB allocated to the http_events table
+	HttpEventsPercent int `json:"http_events_percent"`
 }
 
 type Logging struct {

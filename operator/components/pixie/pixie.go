@@ -3,6 +3,7 @@ package pixie
 import (
 	"fmt"
 	"io/fs"
+	"strings"
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
@@ -13,60 +14,66 @@ import (
 
 const DeployDir = "pixie"
 
-type ComponentConfig struct {
-	// required
+type Config struct {
 	Enable               bool
 	ControllerManagerUID string
 	ClusterUUID          string
 	ClusterName          string
+	// StirlingSources list of sources to enable on the PEM containers.
+	// Specify a source group (kAll, kProd, kMetrics, kTracers, kProfiler, kTCPStats) or individual sources.
+	// You can find the names of sources at https://github.com/pixie-io/pixie/blob/release/vizier/v0.14.2/src/stirling/stirling.cc
+	StirlingSources  []string
+	PemResources     wf.Resources
+	TableStoreLimits wf.TableStoreLimits
+	MaxHTTPBodyBytes int
+}
 
-	// optional
-	EnableOpAppsOptimization bool
-	PemResources             wf.Resources
+func (c Config) StirlingSourcesEnv() string {
+	return strings.Join(c.StirlingSources, ",")
 }
 
 type Component struct {
 	dir    fs.FS
-	config ComponentConfig
+	config Config
 }
 
-func (pixie *Component) Name() string {
-	return "pixie"
-}
-
-func NewComponent(dir fs.FS, componentConfig ComponentConfig) (Component, error) {
+func NewComponent(dir fs.FS, config Config) (Component, error) {
 	return Component{
-		config: componentConfig,
+		config: config,
 		dir:    dir,
 	}, nil
 }
 
-func (component *Component) Validate() validation.Result {
+func (pc *Component) Name() string {
+	return "pixie"
+}
+
+func (pc *Component) Validate() validation.Result {
 	var errs []error
 
-	if !component.config.Enable {
+	if !pc.config.Enable {
 		return validation.Result{}
 	}
 
-	if len(component.config.ControllerManagerUID) == 0 {
-		errs = append(errs, fmt.Errorf("%s: missing controller manager uid", component.Name()))
+	if len(pc.config.ControllerManagerUID) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing controller manager uid", pc.Name()))
 	}
 
-	if len(component.config.ClusterUUID) == 0 {
-		errs = append(errs, fmt.Errorf("%s: missing cluster uuid", component.Name()))
+	if len(pc.config.ClusterUUID) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing cluster uuid", pc.Name()))
 	}
 
-	if len(component.config.ClusterName) == 0 {
-		errs = append(errs, fmt.Errorf("%s: missing cluster name", component.Name()))
+	if len(pc.config.ClusterName) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing cluster name", pc.Name()))
 	}
 
-	if result := validation.ValidateResources(&component.config.PemResources, util.PixieVizierPEMName); result.IsError() {
-		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
+	if result := validation.ValidateResources(&pc.config.PemResources, util.PixieVizierPEMName); result.IsError() {
+		errs = append(errs, fmt.Errorf("%s: %s", pc.Name(), result.Message()))
 	}
 
 	return validation.NewValidationResult(errs)
 }
 
-func (pixie *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(pixie.dir, pixie.Name(), pixie.config.Enable, pixie.config.ControllerManagerUID, pixie.config)
+func (pc *Component) Resources() ([]client.Object, []client.Object, error) {
+	return components.BuildResources(pc.dir, pc.Name(), pc.config.Enable, pc.config.ControllerManagerUID, pc.config)
 }

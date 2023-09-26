@@ -1,0 +1,941 @@
+/*
+ * Copyright 2018- The Pixie Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+syntax = "proto3";
+
+package px.shared.k8s.metadatapb;
+
+option go_package = "metadatapb";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "src/shared/types/typespb/types.proto";
+
+// This file is mostly copied from
+// github.com/kubernetes/api/blob/e480447a07fd8adfbff8abea81c1d2dcd6af906e/core/v1/generated.proto,
+// github.com/kubernetes/apimachinery/blob/bca0c154df821d07920394c2d6831112dc1bcdec/pkg/apis/meta/v1/generated.proto
+// and
+// github.com/kubernetes/api/blob/f6f0d0e54216133456777fa675f58cf10cf79330/apps/v1/generated.proto
+// with some modifications, such as deletion of unnecessary fields and field re-naming.
+
+message MetadataObject {
+  oneof object {
+    Pod pod = 1;
+    Endpoints endpoints = 2;
+    Service service = 3;
+    Namespace namespace = 4;
+    Node node = 5;
+    ReplicaSet replicaSet = 6;
+  }
+}
+
+message ObjectMetadata {
+  // Name of the resource.
+  string name = 1;
+  // Namespace defines the space within each name must be unique. An empty namespace is
+  // equivalent to the "default" namespace.
+  string namespace = 2;
+  // UID is an identifier that is unique in time and space value for this object.
+  string uid = 3 [ (gogoproto.customname) = "UID" ];
+  // An opaque value that represents the internal version of this object that can
+  // be used by clients to determine when objects have changed. May be used for optimistic
+  // concurrency, change detection, and the watch operation on a resource or set of resources.
+  string resource_version = 4;
+  // The server time in nanoseconds when this object was created.
+  int64 creation_timestamp_ns = 5 [ (gogoproto.customname) = "CreationTimestampNS" ];
+  // The time in nanoseconds at which this resource will be deleted.
+  int64 deletion_timestamp_ns = 6 [ (gogoproto.customname) = "DeletionTimestampNS" ];
+  // Map of string keys and values that can be used to organize and categorize
+  // (scope and select) objects.
+  map<string, string> labels = 7;
+  // List of objects depended by this object.
+  repeated OwnerReference owner_references = 8;
+  // Annotations is an unstructured key value map stored with a resource that may be
+  // set by external tools to store and retrieve arbitrary metadata.
+  map<string, string> annotations = 10;
+
+  reserved 9;
+}
+
+message OwnerReference {
+  // Kind of the referent.
+  string kind = 1;
+  // Name of the referent.
+  string name = 3;
+  // UID of the referent.
+  string uid = 4 [ (gogoproto.customname) = "UID" ];
+}
+
+message Namespace {
+  ObjectMetadata metadata = 1;
+}
+
+// Pod is a collection of containers that can run on a host. This resource is created
+// by clients and scheduled onto hosts.
+message Pod {
+  // Standard object's metadata.
+  ObjectMetadata metadata = 1;
+  // Specification of the desired behavior of the pod.
+  PodSpec spec = 2;
+  // Most recently observed status of the pod.
+  PodStatus status = 3;
+}
+
+enum DNSPolicy {
+  DEFAULT = 0;
+  NONE = 1;
+  CLUSTER_FIRST = 2;
+  CLUSTER_FIRST_WITH_HOST_NET = 3;
+}
+
+// PodSpec is a description of a pod.
+message PodSpec {
+  // The DNS policy for the pod.
+  DNSPolicy dns_policy = 1 [ (gogoproto.customname) = "DNSPolicy" ];
+  // A selector which must be true for the pod to fit on a node.
+  map<string, string> node_selector = 2;
+  // A request to schedule this pod onto a specific node.
+  string node_name = 3;
+  // Specifies the hostname of the Pod.
+  string hostname = 4;
+  // If specified, the fully qualified Pod hostname will be
+  // "<hostname>.<subdomain>.<pod namespace>.svc.<cluster domain>".
+  string subdomain = 5;
+  // If specified, indicates the pod's priority.
+  string priority_class_name = 6;
+  // The priority value.
+  int32 priority = 7;
+}
+
+// There are six possible pod phase values:
+//
+// Pending: The pod has been accepted by the Kubernetes system, but one or more of the
+// container images has not been created. This includes time before being scheduled as
+// well as time spent downloading images over the network, which could take a while.
+// Running: The pod has been bound to a node, and all of the containers have been created.
+// At least one container is still running, or is in the process of starting or restarting.
+// Succeeded: All containers in the pod have terminated in success, and will not be restarted.
+// Failed: All containers in the pod have terminated, and at least one container has
+// terminated in failure. The container either exited with non-zero status or was terminated
+// by the system.
+// Terminated: The pod has been terminated by the system (rather than run to completion)
+// without failure. Unlike the other phases, this is not an official Kubernetes pod phase.
+// Unknown: For some reason the state of the pod could not be obtained, typically due to an
+// error in communicating with the host of the pod.
+enum PodPhase {
+  PHASE_UNKNOWN = 0;
+  PENDING = 1;
+  RUNNING = 2;
+  SUCCEEDED = 3;
+  FAILED = 4;
+  TERMINATED = 5;
+}
+
+enum PodQOSClass {
+  QOS_CLASS_UNKNOWN = 0;
+  QOS_CLASS_GUARANTEED = 1;
+  QOS_CLASS_BURSTABLE = 2;
+  QOS_CLASS_BEST_EFFORT = 3;
+}
+
+enum ContainerState {
+  CONTAINER_STATE_UNKNOWN = 0;
+  CONTAINER_STATE_RUNNING = 1;
+  CONTAINER_STATE_TERMINATED = 2;
+  CONTAINER_STATE_WAITING = 3;
+}
+
+message ContainerStatus {
+  string name = 1;
+  string container_id = 2 [ (gogoproto.customname) = "ContainerID" ];
+  ContainerState container_state = 3;
+  // The server time in nanoseconds when the container started.
+  int64 start_timestamp_ns = 4 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The time in nanoseconds at which the container finished.
+  int64 stop_timestamp_ns = 5 [ (gogoproto.customname) = "StopTimestampNS" ];
+  // The message for why the container is in its current status.
+  string message = 6;
+  // A brief CamelCase message indicating details about why the container is in this state.
+  string reason = 7;
+  // The number of restarts for this container.
+  int64 restart_count = 8;
+}
+
+// K8sEvent represents a K8s event belonging to a pod.
+message K8sEvent {
+  // The string describing the event itself.
+  string message = 1;
+  // The first time at which the event occurred.
+  google.protobuf.Timestamp first_time = 2;
+  // The last time at which the event occurred. Using the first_time, we can
+  // determine how long this evenet has been occurring.
+  google.protobuf.Timestamp last_time = 3;
+}
+
+// PodStatus represents information about the status of a pod.
+message PodStatus {
+  // The phase of a Pod is a simple, high-level summary of where the Pod is in its lifecycle.
+  PodPhase phase = 1;
+  // Current service state of pod.
+  repeated PodCondition conditions = 9;
+  // A human readable message indicating details about why the pod is in this condition.
+  string message = 3;
+  // A brief CamelCase message indicating details about why the pod is in this state.
+  // e.g. 'Evicted'
+  string reason = 4;
+  // IP address of the host to which the pod is assigned. Empty if not yet scheduled.
+  string host_ip = 5 [ (gogoproto.customname) = "HostIP" ];
+  // IP address allocated to the pod. Routable at least within the cluster.
+  string pod_ip = 6 [ (gogoproto.customname) = "PodIP" ];
+  PodQOSClass qos_class = 7 [ (gogoproto.customname) = "QOSClass" ];
+  repeated ContainerStatus container_statuses = 8;
+  // The start time of the pod.
+  google.protobuf.Timestamp created_at = 11;
+  // The K8s events associated with the pod.
+  repeated K8sEvent events = 12;
+  // Deprecated.
+  reserved 2;
+  // The number of restarts for this pod.
+  int64 restart_count = 13;
+}
+
+message PodCondition {
+  PodConditionType type = 1;
+  ConditionStatus status = 2;
+}
+
+enum PodConditionType {
+  TYPE_UNKNOWN = 0;
+  POD_SCHEDULED = 1;
+  READY = 2;
+  INITIALIZED = 3;
+  UNSCHEDULABLE = 4;
+  CONTAINERS_READY = 5;
+}
+
+message Endpoints {
+  // Standard object's metadata.
+  ObjectMetadata metadata = 1;
+  // Sets of addresses and ports that comprise a service.
+  repeated EndpointSubset subsets = 2;
+}
+
+message EndpointSubset {
+  // Pod IP addresses which offer the related ports that are marked as ready.
+  repeated EndpointAddress addresses = 1;
+  // Pod IP addresses which offer the related ports but are not currently marked as ready.
+  repeated EndpointAddress not_ready_addresses = 2;
+  // Port numbers available on the related Pod IP addresses.
+  repeated EndpointPort ports = 3;
+}
+
+// EndpointAddress is a tuple that describes single Pod IP address.
+message EndpointAddress {
+  // The Pod IP of this endpoint.
+  string ip = 1 [ (gogoproto.customname) = "IP" ];
+  // The hostname of this endpoint
+  string hostname = 2;
+  // Node hosting this endpoint. This can be used to determine endpoints local to a node.
+  string node_name = 3;
+  // Reference to object providing the endpoint.
+  ObjectReference target_ref = 4;
+}
+
+enum IPProtocol {
+  IP_PROTOCOL_UNKNOWN = 0;
+  TCP = 1;
+  UDP = 2;
+  SCTP = 3;
+}
+
+// EndpointPort is a tuple that describes a single port.
+message EndpointPort {
+  // The name of this port (corresponds to ServicePort.Name).
+  string name = 1;
+  // The port number of the endpoint.
+  int32 port = 2;
+  // The IP protocol for this port.
+  IPProtocol protocol = 3;
+}
+
+// ObjectReference contains enough information to let you inspect or modify the referred object.
+message ObjectReference {
+  // Kind of the referent.
+  string kind = 1;
+  // Namespace of the referent.
+  string namespace = 2;
+  // Name of the referent.
+  string name = 3;
+  // UID of the referent.
+  string uid = 4 [ (gogoproto.customname) = "UID" ];
+  // Specific resource version to which this reference is made, if any.
+  string resourceVersion = 6;
+}
+
+// Service is a named abstraction of software service (for example, mysql) consisting of local port
+// (for example 3306) that the proxy listens on.
+message Service {
+  // Standard object's metadata.
+  ObjectMetadata metadata = 1;
+  // Spec defines the behavior of a service.
+  ServiceSpec spec = 2;
+}
+
+enum ServiceType {
+  SERVICE_TYPE_UNKNOWN = 0;
+  EXTERNAL_NAME = 1;
+  CLUSTER_IP = 2;
+  NODE_PORT = 3;
+  LOAD_BALANCER = 4;
+}
+
+enum ExternalTrafficPolicyType {
+  TRAFFIC_POLICY_TYPE_UNKNOWN = 0;
+  TRAFFIC_LOCAL = 1;
+  TRAFFIC_CLUSTER = 2;
+}
+
+// ServiceSpec describes the attributes that a user creates on a service.
+message ServiceSpec {
+  // The list of ports that are exposed by this service.
+  repeated ServicePort ports = 1;
+  // The IP address of the service.
+  string cluster_ip = 2 [ (gogoproto.customname) = "ClusterIP" ];
+  // The type which determines how the Service is exposed.
+  ServiceType type = 3;
+  // List of IP addresses for which nodes in the cluster
+  // will also accept traffic for this service.
+  repeated string external_ips = 4 [ (gogoproto.customname) = "ExternalIPs" ];
+  // Only applies to Service Type: LoadBalancer
+  // LoadBalancer will get created with the IP specified in this field.
+  string load_balancer_ip = 5 [ (gogoproto.customname) = "LoadBalancerIP" ];
+  // The external reference that kubedns or equivalent will
+  // return as a CNAME record for this service.
+  string external_name = 6;
+  // Policy that denotes if this Service desires to route external
+  // traffic to node-local or cluster-wide endpoints.
+  ExternalTrafficPolicyType external_traffic_policy = 7;
+}
+
+// ServicePort contains information on service's port.
+message ServicePort {
+  // The name of this port within the service.
+  string name = 1;
+  // The IP protocol for this port.
+  IPProtocol protocol = 2;
+  // The port that will be exposed by this service.
+  int32 port = 3;
+  // The port on each node on which this service is exposed when type=NodePort or LoadBalancer.
+  int32 node_port = 4;
+}
+
+// ContainerInfo contains info for a container running on a pod.
+message ContainerInfo {
+  // Name of the container.
+  string name = 1;
+  // UID is an identifier that is unique in time and space value for the container.
+  string uid = 2 [ (gogoproto.customname) = "UID" ];
+  // The server time in nanoseconds when the container started.
+  int64 start_timestamp_ns = 3 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The time in nanoseconds when the container stopped.
+  int64 stop_timestamp_ns = 4 [ (gogoproto.customname) = "StopTimestampNS" ];
+  // The identifier of the pod that the container belongs to.
+  string pod_uid = 5 [ (gogoproto.customname) = "PodUID" ];
+  // The namespace of the pod that the container is running in.
+  string namespace = 6;
+  // The processes running on the container.
+  repeated ProcessInfo processes = 7;
+}
+
+// ProcessInfo contains info for a process running in a container.
+message ProcessInfo {
+  // Name of the process.
+  string name = 1;
+  px.types.UInt128 upid = 2 [ (gogoproto.customname) = "UPID" ];
+  // The server time in nanoseconds when the process started.
+  int64 start_timestamp_ns = 4 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The time in nanoseconds when the process stopped.
+  int64 stop_timestamp_ns = 5 [ (gogoproto.customname) = "StopTimestampNS" ];
+  string process_args = 6;
+  string cid = 7 [ (gogoproto.customname) = "CID" ];
+  // DEPRECATED: This was PID, which can be derived from UPID.
+  reserved 3;
+}
+
+// PodUpdate contains updated information about a Pod on K8s.
+message PodUpdate {
+  // The UID is a unique identifier in both space and time.
+  string uid = 1 [ (gogoproto.customname) = "UID" ];
+  // Name is a unique identifier in space but not time.
+  string name = 2;
+  // The namespace that this POD belongs to.
+  string namespace = 3;
+  // The unix time in nanoseconds when the this pod was created.
+  int64 start_timestamp_ns = 4 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The unix time in nanoseconds when the this pod was deleted. Still active if 0.
+  int64 stop_timestamp_ns = 5 [ (gogoproto.customname) = "StopTimestampNS" ];
+  // List of container ids that this Pod has.
+  repeated string container_ids = 6 [ (gogoproto.customname) = "ContainerIDs" ];
+  // List of container names that this pod has, in the same order as the containerIDs.
+  repeated string container_names = 11;
+  // The QoS class that this pod runs as.
+  PodQOSClass qos_class = 7 [ (gogoproto.customname) = "QOSClass" ];
+  // The pod's current phase.
+  PodPhase phase = 8;
+  repeated PodCondition conditions = 16;
+  // According to https://godoc.org/k8s.io/api/core/v1#PodSpec,
+  // "NodeName is a request to schedule this pod onto a specific node."
+  // It is used by K8s clients to get the name of the node the pod is meant to be scheduled on,
+  // however note that if the node doesn't have the resources the pod may be in an unscheduled
+  // state.
+  string node_name = 9;
+  string hostname = 10;
+  string pod_ip = 12 [ (gogoproto.customname) = "PodIP" ];
+  string host_ip = 13 [ (gogoproto.customname) = "HostIP" ];
+  // The message for why the pod is in its current status.
+  string message = 14;
+  // A brief CamelCase message indicating details about why the pod is in this state.
+  string reason = 15;
+  // A json object containing pod label keys and values
+  string labels = 17;
+  repeated OwnerReference owner_references = 18;
+}
+
+enum ContainerType {
+  CONTAINER_TYPE_UNKNOWN = 0;
+  CONTAINER_TYPE_DOCKER = 1;
+  CONTAINER_TYPE_CRIO = 2;
+  CONTAINER_TYPE_CONTAINERD = 3;
+}
+
+// ContainerUpdate contains information about running containers.
+message ContainerUpdate {
+  // CID is the unique container ID.
+  string cid = 1 [ (gogoproto.customname) = "CID" ];
+  // The name of the container.
+  string name = 2;
+  // The unix time in nanoseconds when the this container was created.
+  int64 start_timestamp_ns = 3 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The unix time in nanoseconds when the this container was deleted. Still active if 0.
+  int64 stop_timestamp_ns = 4 [ (gogoproto.customname) = "StopTimestampNS" ];
+  string namespace = 5;
+  string pod_id = 6 [ (gogoproto.customname) = "PodID" ];
+  string pod_name = 7;
+  ContainerState container_state = 8;
+  // The message for why the container is in its current status.
+  string message = 9;
+  // A brief CamelCase message indicating details about why the container is in this state.
+  string reason = 10;
+  // The type of the container.
+  ContainerType container_type = 11;
+}
+
+// ServiceUpdate contains information about running services.
+message ServiceUpdate {
+  // UID is the unique ID of this service in both space and time.
+  string uid = 1 [ (gogoproto.customname) = "UID" ];
+  // Name of the service, unique in space, but not time.
+  string name = 2;
+  // The namespace that this Service belongs to.
+  string namespace = 3;
+  // The unix time in nanoseconds when the this service was created.
+  int64 start_timestamp_ns = 4 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The unix time in nanoseconds when the this service was deleted. Still active if 0.
+  int64 stop_timestamp_ns = 5 [ (gogoproto.customname) = "StopTimestampNS" ];
+  // A list of Pods that are service this service.
+  repeated string pod_ids = 6 [ (gogoproto.customname) = "PodIDs" ];
+  repeated string pod_names = 7;
+  // The External IPs for this service.
+  repeated string external_ips = 8 [ (gogoproto.customname) = "ExternalIPs" ];
+  // The Cluster IP for this service.
+  string cluster_ip = 9 [ (gogoproto.customname) = "ClusterIP" ];
+}
+
+message NamespaceUpdate {
+  // UID is the unique ID of this namespace in both space and time.
+  string uid = 1 [ (gogoproto.customname) = "UID" ];
+  // Name of the namespace, unique in space, but not time.
+  string name = 2;
+  // The unix time in nanoseconds when the this namespace was created.
+  int64 start_timestamp_ns = 3 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The unix time in nanoseconds when the this namespace was deleted. Still active if 0.
+  int64 stop_timestamp_ns = 4 [ (gogoproto.customname) = "StopTimestampNS" ];
+}
+
+message ProcessCreated {
+  // The unique PID for this process. This PID is cluster unique in both space and time.
+  px.types.UInt128 upid = 1 [ (gogoproto.customname) = "UPID" ];
+  // DEPRECATED: This was PID, which can be derived from UPID.
+  reserved 2;
+  // The server time in nanoseconds when the process started.
+  int64 start_timestamp_ns = 3 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The command line that this process is running.
+  string cmdline = 4;
+  // The container ID where under for container where this process is running.
+  string cid = 5 [ (gogoproto.customname) = "CID" ];
+}
+
+message ProcessTerminated {
+  // The unique PID for this process. This PID is cluster unique in both space and time.
+  px.types.UInt128 upid = 1 [ (gogoproto.customname) = "UPID" ];
+  // The time in nanoseconds when the process stopped.
+  int64 stop_timestamp_ns = 2 [ (gogoproto.customname) = "StopTimestampNS" ];
+}
+
+// Node is a worker node in Kubernetes.
+message Node {
+  // Standard object's metadata.
+  ObjectMetadata metadata = 1;
+  NodeSpec spec = 2;
+  NodeStatus status = 3;
+}
+
+// NodeSpec describes the attributes that a node is created with.
+message NodeSpec {
+  // podCIDRs represents the IP ranges assigned to the node for usage by Pods on that node. If this
+  // field is specified, the 0th entry must match the podCIDR field. It may contain at most 1 value
+  // for each of IPv4 and IPv6.
+  repeated string pod_cidrs = 1 [ (gogoproto.customname) = "PodCIDRs" ];
+  // PodCIDR represents the pod IP range assigned to the node.
+  string pod_cidr = 2 [ (gogoproto.customname) = "PodCIDR" ];
+}
+
+// These are the valid phases of node.
+enum NodePhase {
+  NODE_PHASE_UNKNOWN = 0;
+  NODE_PHASE_PENDING = 1;
+  NODE_PHASE_RUNNING = 2;
+  NODE_PHASE_TERMINATED = 3;
+}
+
+// These are valid address type of node.
+enum NodeAddressType {
+  NODE_ADDR_TYPE_UNKNOWN = 0;
+  NODE_ADDR_TYPE_HOSTNAME = 1;
+  NODE_ADDR_TYPE_EXTERNAL_IP = 2;
+  NODE_ADDR_TYPE_INTERNAL_IP = 3;
+  NODE_ADDR_TYPE_EXTERNAL_DNS = 4;
+  NODE_ADDR_TYPE_INTERNAL_DNS = 5;
+}
+
+// ConditionStatus describes the possible status for a condition.
+enum ConditionStatus {
+  CONDITION_STATUS_UNKNOWN = 0;
+  CONDITION_STATUS_TRUE = 1;
+  CONDITION_STATUS_FALSE = 2;
+}
+
+// NodeConditionType describes the types of conditions a node can be in.
+enum NodeConditionType {
+  NODE_CONDITION_UNKNOWN = 0;
+  NODE_CONDITION_READY = 1;
+  NODE_CONDITION_MEMORY_PRESSURE = 2;
+  NODE_CONDITION_DISK_PRESSURE = 3;
+  NODE_CONDITION_PID_PRESSURE = 4;
+  NODE_CONDITION_NETWORK_UNAVAILABLE = 5;
+}
+
+// NodeAddress contains information for the node's address.
+message NodeAddress {
+  NodeAddressType type = 1;
+  string address = 2;
+}
+
+// NodeCondition is the condition that a node can be in.
+message NodeCondition {
+  // NodeConditionType is the type of the node condition.
+  NodeConditionType type = 1;
+  // ConditionStatus is the status of the condition.
+  ConditionStatus status = 2;
+}
+
+// NodeStatus is information about the current status of a node.
+message NodeStatus {
+  NodePhase phase = 1;
+  // List of addresses reachable to the node.
+  repeated NodeAddress addresses = 2;
+  // Conditions is an array of current observed node conditions.
+  repeated NodeCondition conditions = 3;
+}
+
+// NodeUpdate is the update that is sent to the agents when there are any node changes.
+// This should contain information important for our agents to know.
+message NodeUpdate {
+  // UID is the unique ID of this node in both space and time.
+  string uid = 1 [ (gogoproto.customname) = "UID" ];
+  // Name of the node, unique in space, but not time.
+  string name = 2;
+  // The unix time in nanoseconds when the this node was created.
+  int64 start_timestamp_ns = 3 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The unix time in nanoseconds when the this node was deleted. Still active if 0.
+  int64 stop_timestamp_ns = 4 [ (gogoproto.customname) = "StopTimestampNS" ];
+  // The current phase of the node.
+  NodePhase phase = 5;
+  // PodCIDR represents the pod IP range assigned to the node.
+  string pod_cidr = 6 [ (gogoproto.customname) = "PodCIDR" ];
+  // podCIDRs represents the IP ranges assigned to the node for usage by Pods on that node. If this
+  // field is specified, the 0th entry must match the podCIDR field. It may contain at most 1 value
+  // for each of IPv4 and IPv6.
+  repeated string pod_cidrs = 7 [ (gogoproto.customname) = "PodCIDRs" ];
+  // Conditions is an array of current observed node conditions.
+  repeated NodeCondition conditions = 8;
+}
+
+// ReplicaSet ensures that a specified number of pod replicas are running at any given time.
+message ReplicaSet {
+  // Standard object's metadata.
+  ObjectMetadata metadata = 1;
+  // Spec defines the specification of the desired behavior of the ReplicaSet.
+  ReplicaSetSpec spec = 2;
+  // Status is the most recently observed status of the ReplicaSet.
+  // This data may be out of date by some window of time.
+  // Populated by the system.
+  ReplicaSetStatus status = 3;
+}
+
+// ReplicaSetCondition describes the state of a replica set at a certain point.
+message ReplicaSetCondition {
+  // Type of replica set condition.
+  string type = 1;
+  // Status of the condition, one of True, False, Unknown.
+  ConditionStatus status = 2;
+}
+
+// A label selector requirement is a selector that contains values, a key, and an operator that
+// relates the key and values.
+message LabelSelectorRequirement {
+  // key is the label key that the selector applies to.
+  string key = 1;
+
+  // operator represents a key's relationship to a set of values.
+  // Valid operators are In, NotIn, Exists and DoesNotExist.
+  string operator = 2;
+
+  // values is an array of string values. If the operator is In or NotIn,
+  // the values array must be non-empty. If the operator is Exists or DoesNotExist,
+  // the values array must be empty. This array is replaced during a strategic
+  // merge patch.
+  repeated string values = 3;
+}
+
+// LabelSelector describes the label selectors definitions
+message LabelSelector {
+  // matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+  // map is equivalent to an element of matchExpressions, whose key field is "key", the
+  // operator is "In", and the values array contains only "value".
+  map<string, string> match_labels = 1;
+
+  // matchExpressions is a list of label selector requirements. The requirements are ANDed.
+  repeated LabelSelectorRequirement match_expressions = 2;
+}
+
+// PodTemplateSpec describes the data a pod should have when created from a template
+message PodTemplateSpec {
+  // Standard object's metadata.
+  ObjectMetadata metadata = 1;
+  // Specification of the desired behavior of the pod.
+  PodSpec spec = 2;
+}
+
+// ReplicaSetSpec is the specification of a ReplicaSet.
+message ReplicaSetSpec {
+  // Replicas is the number of desired replicas.
+  int32 replicas = 1;
+
+  // Minimum number of seconds for which a newly created pod should be ready
+  // without any of its container crashing, for it to be considered available.
+  // Defaults to 0 (pod will be considered available as soon as it is ready)
+  int32 min_ready_seconds = 4;
+
+  // Selector is a label query over pods that should match the replica count.
+  // Label keys and values that must match in order to be controlled by this replica set.
+  // It must match the pod template's labels.
+  LabelSelector selector = 2;
+
+  // Template is the object that describes the pod that will be created if
+  // insufficient replicas are detected.
+  PodTemplateSpec template = 3;
+}
+
+// ReplicaSetStatus represents the current status of a ReplicaSet.
+message ReplicaSetStatus {
+  // Replicas is the most recently oberved number of replicas.
+  int32 replicas = 1;
+  // The number of pods that have labels matching the labels of the pod template of the replicaset.
+  int32 fully_labeled_replicas = 2;
+  // readyReplicas is the number of pods targeted by this ReplicaSet with a Ready Condition.
+  int32 ready_replicas = 4;
+  // The number of available replicas (ready for at least minReadySeconds) for this replica set.
+  int32 available_replicas = 5;
+  // ObservedGeneration reflects the generation of the most recently observed ReplicaSet.
+  int64 observed_generation = 3;
+  // Represents the latest available observations of a replica set's current state.
+  repeated ReplicaSetCondition conditions = 6;
+}
+
+// ReplicaSetUpdate is the update that is sent to the agents when there are any replica set changes.
+// This should contain information important for our agents to know.
+message ReplicaSetUpdate {
+  // UID is the unique ID of this replicaset in both space and time.
+  string uid = 1 [ (gogoproto.customname) = "UID" ];
+  // Name of the replicaSet, unique in space, but not time.
+  string name = 2;
+  // The unix time in nanoseconds when the this replicaset was created.
+  int64 start_timestamp_ns = 3 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The unix time in nanoseconds when the this replicaset was deleted. Still active if 0.
+  int64 stop_timestamp_ns = 4 [ (gogoproto.customname) = "StopTimestampNS" ];
+  string namespace = 12;
+  int32 replicas = 5;
+  int32 fully_labeled_replicas = 6;
+  int32 ready_replicas = 7;
+  int32 available_replicas = 8;
+  int32 observed_generation = 9;
+  int32 requested_replicas = 13;
+  repeated ReplicaSetCondition conditions = 10;
+  repeated OwnerReference owner_references = 11;
+}
+
+// Deployment enables declarative updates for Pods and ReplicaSets.
+message Deployment {
+  // Standard object's metadata.
+  ObjectMetadata metadata = 1;
+
+  // Specification of the desired behavior of the Deployment.
+  DeploymentSpec spec = 2;
+
+  // Most recently observed status of the Deployment.
+  DeploymentStatus status = 3;
+}
+
+enum DeploymentConditionType {
+  DEPLOYMENT_CONDITION_TYPE_UNKNOWN = 0;
+  DEPLOYMENT_CONDITION_AVAILABLE = 1;
+  DEPLOYMENT_CONDITION_PROGRESSING = 2;
+  DEPLOYMENT_CONDITION_REPLICA_FAILURE = 3;
+}
+
+// DeploymentCondition describes the state of a deployment at a certain point.
+message DeploymentCondition {
+  // Type of deployment condition.
+  DeploymentConditionType type = 1;
+
+  // Status of the condition, one of True, False, Unknown.
+  ConditionStatus status = 2;
+
+  // The last time this condition was updated.
+  int64 last_update_time_ns = 3 [ (gogoproto.customname) = "LastUpdateTimeNS" ];
+
+  // Last time the condition transitioned from one status to another.
+  int64 last_transition_time_ns = 4 [ (gogoproto.customname) = "LastTransitionTimeNS" ];
+
+  // The reason for the condition's last transition.
+  string reason = 5;
+
+  // A human readable message indicating details about the transition.
+  string message = 6;
+}
+
+// DeploymentStatus is the most recently observed status of the Deployment.
+message DeploymentStatus {
+  // The generation observed by the deployment controller.
+  int64 observed_generation = 1;
+
+  // Total number of non-terminated pods targeted by this deployment (their labels match the
+  // selector).
+  int32 replicas = 2;
+
+  // Total number of non-terminated pods targeted by this deployment that have the desired template
+  // spec.
+  int32 updated_replicas = 3;
+
+  // readyReplicas is the number of pods targeted by this Deployment with a Ready Condition.
+  int32 ready_replicas = 4;
+
+  // Total number of available pods (ready for at least minReadySeconds) targeted by this
+  // deployment.
+  int32 available_replicas = 5;
+
+  // Total number of unavailable pods targeted by this deployment. This is the total number of
+  // pods that are still required for the deployment to have 100% available capacity. They may
+  // either be pods that are running but not yet available or pods that still have not been created.
+  int32 unavailable_replicas = 6;
+
+  // Represents the latest available observations of a deployment's current state.
+  repeated DeploymentCondition conditions = 7;
+
+  // Count of hash collisions for the Deployment object. The Deployment controller uses this
+  // field as a collision avoidance mechanism when it needs to create the name for the
+  // newest ReplicaSet.
+  int32 collision_count = 8;
+}
+
+// DeploymentSpec is the specification of the desired behavior of the Deployment.
+message DeploymentSpec {
+  // Number of desired pods. This is a pointer to distinguish between explicit
+  // zero and not specified. Defaults to 1.
+  int32 replicas = 1;
+
+  // Label selector for pods. Existing ReplicaSets whose pods are
+  // selected by this will be the ones affected by this deployment.
+  // It must match the pod template's labels.
+  LabelSelector selector = 2;
+
+  // Template describes the pods that will be created.
+  PodTemplateSpec template = 3;
+
+  // The deployment strategy to use to replace existing pods with new ones.
+  DeploymentStrategy strategy = 4;
+
+  // Minimum number of seconds for which a newly created pod should be ready
+  // without any of its container crashing, for it to be considered available.
+  // Defaults to 0 (pod will be considered available as soon as it is ready)
+  int32 min_ready_seconds = 5;
+
+  // The number of old ReplicaSets to retain to allow rollback.
+  // This is a pointer to distinguish between explicit zero and not specified.
+  // Defaults to 10.
+  int32 revision_history_limit = 6;
+
+  // Indicates that the deployment is paused.
+  bool paused = 7;
+
+  // The maximum time in seconds for a deployment to make progress before it
+  // is considered to be failed. The deployment controller will continue to
+  // process failed deployments and a condition with a ProgressDeadlineExceeded
+  // reason will be surfaced in the deployment status. Note that progress will
+  // not be estimated during the time a deployment is paused. Defaults to 600s.
+  int32 progress_deadline_seconds = 9;
+}
+
+enum DeploymentStrategyType {
+  DEPLOYMENT_STRATEGY_UNKNOWN = 0;
+  DEPLOYMENT_STRATEGY_RECREATE = 1;
+  DEPLOYMENT_STRATEGY_ROLLING_UPDATE = 2;
+}
+
+// DeploymentStrategy describes how to replace existing pods with new ones.
+message DeploymentStrategy {
+  // Type of deployment. Can be "Recreate" or "RollingUpdate". Default is RollingUpdate.
+  DeploymentStrategyType type = 1;
+
+  // Rolling update config params. Present only if DeploymentStrategyType =
+  // RollingUpdate.
+  RollingUpdateDeployment rolling_update = 2;
+}
+
+// Spec to control the desired behavior of rolling update.
+message RollingUpdateDeployment {
+  // The maximum number of pods that can be unavailable during the update.
+  // Value can be an absolute number (ex: 5) or a percentage of desired pods (ex: 10%).
+  // Absolute number is calculated from percentage by rounding down.
+  // This can not be 0 if MaxSurge is 0.
+  // Defaults to 25%.
+  string max_unavailable = 1;
+
+  // The maximum number of pods that can be scheduled above the desired number of
+  // pods.
+  // Value can be an absolute number (ex: 5) or a percentage of desired pods (ex: 10%).
+  // This can not be 0 if MaxUnavailable is 0.
+  // Absolute number is calculated from percentage by rounding up.
+  // Defaults to 25%.
+  string max_surge = 2;
+}
+
+// DeploymentUpdate is the update that is sent to the agents when there are any deployment changes.
+// This should contain information important for our agents to know.
+message DeploymentUpdate {
+  // UID is the unique ID of this deployment in both space and time.
+  string uid = 1 [ (gogoproto.customname) = "UID" ];
+  // Name of the deployment, unique in space, but not time.
+  string name = 2;
+  // The unix time in nanoseconds when the this deployment was created.
+  int64 start_timestamp_ns = 3 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The unix time in nanoseconds when the this deployment was deleted. Still active if 0.
+  int64 stop_timestamp_ns = 4 [ (gogoproto.customname) = "StopTimestampNS" ];
+  // Namespace of this deployment
+  string namespace = 5;
+  int32 observed_generation = 6;
+  int32 replicas = 7;
+  int32 updated_replicas = 8;
+  int32 ready_replicas = 9;
+  int32 available_replicas = 10;
+  int32 unavailable_replicas = 11;
+  int32 requested_replicas = 13;
+  repeated DeploymentCondition conditions = 12;
+}
+
+// Resource update is the message we send to the agent/compute nodes
+// from the metadata service (MDS).
+// These updates can contain cross references to other objects (ie. pods can refer to containers).
+// The MDS guarantees that updates from children will be send before the parent. For example,
+// MDS will always send a ContainerUpdate before sending the Pods that depend on that Container.
+message ResourceUpdate {
+  oneof update {
+    PodUpdate pod_update = 1;
+    ContainerUpdate container_update = 2;
+    ServiceUpdate service_update = 3;
+    NamespaceUpdate namespace_update = 6;
+    NodeUpdate node_update = 7;
+    ReplicaSetUpdate replica_set_update = 10;
+    DeploymentUpdate deployment_update = 11;
+  }
+  int64 update_version = 8;
+  int64 prev_update_version = 9;
+  reserved 4, 5;
+}
+
+// A request for all k8s updates relevant to the given IP, starting with the "from" update version,
+// to the "to" update version.
+message MissingK8sMetadataRequest {
+  // The selector to use to filter K8s updates to the subset needed by this agent.
+  // For PEMs, this will be their IP address, for Kelvin, it will be "all".
+  // If no selector is provided (or it is set to "all"), all updates will be returned.
+  string selector = 1;
+  // The starting range of the update versions to fetch. Inclusive.
+  // If not specified, start fetching from the earliest known update version.
+  int64 from_update_version = 3;
+  // The ending range of the update versions to fetch. Exclusive.
+  int64 to_update_version = 2;
+  // An optional custom topic to use when responding to the missing request.
+  // This is currently only respected by the vizier<->cloud communication and
+  // not used for vizier<->agent communication.
+  string custom_topic = 4;
+}
+
+// The response to a request for missing k8s updates. The response to a single
+// MissingK8sMetadataRequest may be batched into multiple MissingK8sMetadataResponses.
+message MissingK8sMetadataResponse {
+  // The k8s updates with update versions that fall within the "from" and "to" range specified in
+  // the MissingK8sMetadataRequest. The updates within the update array are guaranteed to be in
+  // order.
+  repeated ResourceUpdate updates = 1;
+  // The update version of the first available update from the requested range.
+  // For example, when requesting updates 1-20, where updates 1-5 and 15-20 may be missing, the
+  // responses could look like: First Response: { FirstUpdateAvailable: 6, LastUpdateAvailable: 14,
+  // Updates: [update 6 ... update 10] } Second Response: { FirstUpdateAvailable: 6,
+  // LastUpdateAvailable: 14, Updates: [update 11 ... update 14] } In this case, the agent would
+  // know to stop listening for more responses, since the LastUpdateAvailable is 14 and they have
+  // received update 14.
+  // If the first response were to be dropped and the agent only received:
+  // { FirstUpdateAvailable: 6, LastUpdateAvailable: 14, Updates: [update 11 ... update 14] }
+  // It would know that it missed a response, since they never got the first available update. At
+  // this point, the agent should rerequest the missing data.
+  int64 first_update_available = 2;
+  // The update version of the last available update from the requested range.
+  int64 last_update_available = 3;
+}
