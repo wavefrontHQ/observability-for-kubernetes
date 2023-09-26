@@ -50,7 +50,7 @@ pipeline {
       parallel{
         stage("Publish Collector") {
           agent {
-            label "worker-1" // TODO move test and publish to separate workers for parallel locks
+            label "worker-1"
           }
           options {
             timeout(time: 60, unit: 'MINUTES')
