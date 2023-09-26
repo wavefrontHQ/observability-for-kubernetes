@@ -298,6 +298,7 @@ func enabledDirs(spec wf.WavefrontSpec) []string {
 }
 
 func (r *WavefrontReconciler) readAndDeleteResources() error {
+	var err error
 	r.MetricConnection.Close()
 	specToDelete := wf.WavefrontSpec{
 		Namespace: r.namespace,
@@ -316,6 +317,11 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 		},
 	}
 
+	wavefront := &wf.Wavefront{Spec: specToDelete}
+	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wavefront)
+	if err != nil {
+		return err
+	}
 	resourcesToApply, resourcesToDelete, err := r.readAndInterpolateResources(specToDelete)
 	if err != nil {
 		return err
