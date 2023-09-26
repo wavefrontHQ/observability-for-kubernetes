@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pixie-sizer
+  namespace: observability-system
+spec:
+  selector:
+    matchLabels:
+      app: wavefront
+      component: pixie
+      name: pixie-sizer
+  template:
+    metadata:
+      labels:
+        app: wavefront
+        component: pixie
+        name: pixie-sizer
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: pl-tls-config
+        image: projects.registry.vmware.com/tanzu_observability/pixie-sizer:VERSION
+        name: app
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /certs
+          name: certs
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - set -xe; URL="${PROTOCOL}://${SERVICE_NAME}:${SERVICE_PORT}${HEALTH_PATH}"; until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do echo "waiting for ${URL}"; sleep 2; done;
+        env:
+        - name: SERVICE_NAME
+          value: pl-nats-mgmt
+        - name: SERVICE_PORT
+          value: "8222"
+        - name: HEALTH_PATH
+          value: ""
+        - name: PROTOCOL
+          value: http
+        image: projects.registry.vmware.com/tanzu_observability/bitnami/os-shell:11
+        name: nats-wait
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      securityContext:
+        fsGroup: 10100
+        runAsGroup: 10100
+        runAsNonRoot: true
+        runAsUser: 10100
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: certs
+        secret:
+          secretName: service-tls-certs
+      - hostPath:
+          path: /sys
+          type: Directory
+        name: sys
