@@ -540,12 +540,9 @@ func TestReconcileCollector(t *testing.T) {
 
 	t.Run("Values from metrics.filters is propagated to default collector configmap", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
-			w.Spec.DataCollection.Metrics = wf.Metrics{
-				Enable: true,
-				Filters: wf.Filters{
-					DenyList:  []string{"first_deny", "second_deny"},
-					AllowList: []string{"first_allow", "second_allow"},
-				},
+			w.Spec.DataCollection.Metrics.Filters = wf.Filters{
+				DenyList:  []string{"first_deny", "second_deny"},
+				AllowList: []string{"first_allow", "second_allow"},
 			}
 		}), nil)
 
@@ -713,7 +710,7 @@ func TestReconcileProxy(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
-		require.True(t, mockKM.ProxyDeploymentContains("value: testWavefrontUrl/api/", "name: testToken", "name: WAVEFRONT_TOKEN", "containerPort: 2878", "configHash: \"\""))
+		require.True(t, mockKM.ProxyDeploymentContains("value: testWavefrontUrl/api/", "name: testToken", "name: WAVEFRONT_TOKEN", "containerPort: 2878"))
 
 		require.True(t, mockKM.ProxyServiceContains("port: 2878"))
 	})
@@ -1611,7 +1608,15 @@ func TestReconcileKubernetesEventsByRuntimeSecret(t *testing.T) {
 				Name:      "wavefront",
 				Namespace: wftest.DefaultNamespace,
 			},
-			Spec: wf.WavefrontSpec{ClusterName: "a-cluster"},
+			Spec: wf.WavefrontSpec{ClusterName: "a-cluster",
+				DataCollection: wf.DataCollection{
+					Metrics: wf.Metrics{
+						ClusterCollector: wf.Collector{
+							Resources: wf.Resources{
+								Limits: wf.Resource{
+									CPU:    "100Mi",
+									Memory: "50Mi",
+								}}}}}},
 		}
 
 		secret := &v1.Secret{
@@ -2063,7 +2068,6 @@ func emptyScenario(wfCR *wf.Wavefront, apiGroups []string, initObjs ...runtime.O
 			OperatorVersion:  "99.99.99",
 		},
 		Client:              objClient,
-		LegacyDeployDir:     os.DirFS(filepath.Join("..", controllers.DeployDir)),
 		ComponentsDeployDir: os.DirFS(filepath.Join("..", components.DeployDir)),
 		KubernetesManager:   mockKM,
 		DiscoveryClient:     mockDiscoveryClient,

@@ -2,6 +2,7 @@ package util
 
 const OperatorName = "wavefront-controller-manager"
 const ProxyName = "wavefront-proxy"
+const CollectorName = "wavefront-collector"
 const ClusterCollectorName = "wavefront-cluster-collector"
 const NodeCollectorName = "wavefront-node-collector"
 const LoggingName = "wavefront-logging"

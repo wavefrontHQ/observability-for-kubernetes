@@ -40,7 +40,7 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 		return err
 	}
 
-	preProcessDataCollection(wfSpec)
+	preProcessDataCollection(client, wfSpec)
 
 	err = preProcessDataExport(client, wfSpec)
 	if err != nil {
@@ -77,7 +77,7 @@ func preProcessDataExport(client crClient.Client, wfSpec *wf.WavefrontSpec) erro
 	return nil
 }
 
-func preProcessDataCollection(wfSpec *wf.WavefrontSpec) {
+func preProcessDataCollection(client crClient.Client, wfSpec *wf.WavefrontSpec) {
 	if wfSpec.DataCollection.Metrics.Enable {
 		if len(wfSpec.DataCollection.Metrics.CustomConfig) == 0 {
 			wfSpec.DataCollection.Metrics.CollectorConfigName = "default-wavefront-collector-config"
@@ -87,6 +87,25 @@ func preProcessDataCollection(wfSpec *wf.WavefrontSpec) {
 	} else if wfSpec.Experimental.KubernetesEvents.Enable {
 		wfSpec.DataCollection.Metrics.CollectorConfigName = "k8s-events-only-wavefront-collector-config"
 	}
+	if shouldEnableEtcdCollection(client, wfSpec) {
+		wfSpec.DataCollection.Metrics.ControlPlane.EnableEtcd = true
+	}
+}
+
+func shouldEnableEtcdCollection(client crClient.Client, wfSpec *wf.WavefrontSpec) bool {
+	// never collect etcd if control plane metrics are disabled
+	if !wfSpec.DataCollection.Metrics.ControlPlane.Enable {
+		return false
+	}
+
+	// only enable collection from etcd if the certs are supplied as a Secret
+	key := crClient.ObjectKey{
+		Namespace: wfSpec.Namespace,
+		Name:      "etcd-certs",
+	}
+	err := client.Get(context.Background(), key, &corev1.Secret{})
+
+	return err == nil
 }
 
 func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
@@ -95,7 +114,6 @@ func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) err
 		wfSpec.DataExport.WavefrontProxy.AvailableReplicas = int(deployment.Status.AvailableReplicas)
 		wfSpec.CanExportData = true
 	}
-	wfSpec.DataExport.WavefrontProxy.ConfigHash = ""
 	wfSpec.DataCollection.Metrics.ProxyAddress = fmt.Sprintf("%s:%d", util.ProxyName, wfSpec.DataExport.WavefrontProxy.MetricPort)
 
 	// The endpoint for logging requires the "http://" prefix
@@ -149,6 +167,20 @@ func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		wfSpec.Experimental.KubernetesEvents.ExternalEndpointURL = string(secret.Data["k8s-events-endpoint-url"])
 		wfSpec.Experimental.KubernetesEvents.Enable = true
 		wfSpec.Experimental.KubernetesEvents.SecretName = secret.Name
+	}
+	if wfSpec.Experimental.KubernetesEvents.Enable && !wfSpec.DataCollection.Metrics.Enable && len(wfSpec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU) == 0 {
+		wfSpec.DataCollection.Metrics.ClusterCollector.Resources = wf.Resources{
+			Requests: wf.Resource{
+				CPU:              "200m",
+				Memory:           "10Mi",
+				EphemeralStorage: "20Mi",
+			},
+			Limits: wf.Resource{
+				CPU:              "2000m",
+				Memory:           "512Mi",
+				EphemeralStorage: "1Gi",
+			},
+		}
 	}
 	if wfSpec.Experimental.Autotracing.Enable {
 		daemonset, err := daemonset(client, util.PixieVizierPEMName, wfSpec.Namespace)
@@ -371,17 +403,10 @@ func setHttpProxyConfigs(httpProxySecret *corev1.Secret, wavefront *wf.Wavefront
 	wavefront.DataExport.WavefrontProxy.HttpProxy.HttpProxyUser = httpProxySecretData["basic-auth-username"]
 	wavefront.DataExport.WavefrontProxy.HttpProxy.HttpProxyPassword = httpProxySecretData["basic-auth-password"]
 
-	configHashBytes, err := json.Marshal(wavefront.DataExport.WavefrontProxy.HttpProxy)
-	if err != nil {
-		return err
-	}
-
 	if len(httpProxySecretData["tls-root-ca-bundle"]) != 0 {
 		wavefront.DataExport.WavefrontProxy.HttpProxy.UseHttpProxyCAcert = true
-		configHashBytes = append(configHashBytes, httpProxySecret.Data["tls-root-ca-bundle"]...)
+		wavefront.DataExport.WavefrontProxy.ConfigHash = hashValue(httpProxySecret.Data["tls-root-ca-bundle"])
 	}
-
-	wavefront.DataExport.WavefrontProxy.ConfigHash = hashValue(configHashBytes)
 
 	return nil
 }
