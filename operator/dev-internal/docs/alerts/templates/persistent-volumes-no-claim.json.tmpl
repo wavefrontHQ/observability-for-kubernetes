@@ -13,14 +13,7 @@
       "name": "Alert Condition",
       "query": "${A}",
       "queryType": "WQL",
-      "alertSourceType": ["AUDIT"],
-      "hidden": false
-    },
-    {
-      "name": "Display Condition",
-      "query": "if(${Alert Condition}, ${Alert Condition})",
-      "queryType": "WQL",
-      "alertSourceType": ["CONDITION"],
+      "alertSourceType": ["CONDITION", "AUDIT"],
       "hidden": false
     }
   ],
