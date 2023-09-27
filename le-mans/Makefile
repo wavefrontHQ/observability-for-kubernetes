@@ -5,7 +5,7 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/
 tmp:
 	mkdir -p tmp
 
-start-lemans: tmp/wavefront_csp_client_id tmp/wavefront_csp_client_secret dockerize-lemans stop-lemans tmp/dbconfig cleanup-lemans
+start-lemans: tmp/le_mans_csp_client_id tmp/le_mans_csp_client_secret dockerize-lemans stop-lemans tmp/dbconfig cleanup-lemans
 	@CSP_CLIENT_ID='$(shell cat tmp/le_mans_csp_client_id)' CSP_CLIENT_SECRET='$(shell cat tmp/le_mans_csp_client_secret)' docker compose up --abort-on-container-exit
 
 stop-lemans:
@@ -17,14 +17,14 @@ dockerize-lemans: le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSIO
 	cp le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar le-mans/docker/gateway/base/lib/le-mans-gateway.jar
 	docker build -t lemans/lemans-gateway le-mans/docker/gateway
 
-start-wf-proxy: dockerize-wf-proxy tmp/lemans_stream_name
+start-wf-proxy: tmp/wavefront_csp_client_id tmp/wavefront_csp_client_secret dockerize-wf-proxy tmp/lemans_stream_name
 	docker run --tty --interactive --rm --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="https://nimba.wavefront.com/api" --env CSP_APP_ID="$(shell cat tmp/wavefront_csp_client_id)" --env CSP_APP_SECRET="$(shell cat tmp/wavefront_csp_client_secret)" --env WAVEFRONT_PROXY_ARGS="--le-mans-host http://gateway:8002 --le-mans-stream-name $(shell cat tmp/lemans_stream_name) --cspBaseUrl https://console-stg.cloud.vmware.com" --network le-mans_default wf-proxy
 
 dockerize-wf-proxy: wavefront-proxy
 	docker build -t wf-proxy -f wavefront-proxy/docker/Dockerfile ./wavefront-proxy
 
 wavefront-proxy:
-	git clone git@gitlab.eng.vmware.com:cpo-team-troll/wavefront-proxy.git
+	git clone --branch k8ssaas-2475-push-metrics-to-le-mans git@github.com:wavefrontHQ/wavefront-proxy.git
 
 test-proxy: wavefront-proxy
 	mvn -f wavefront-proxy/proxy test
