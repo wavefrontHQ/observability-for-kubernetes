@@ -165,7 +165,7 @@ spec:
                         default:
                           resources:
                             limits:
-                              cpu: 400m
+                              cpu: 2000m
                               ephemeral-storage: 1Gi
                               memory: 512Mi
                             requests:
@@ -304,7 +304,7 @@ spec:
                         default:
                           resources:
                             limits:
-                              cpu: 200m
+                              cpu: 1000m
                               ephemeral-storage: 512Mi
                               memory: 256Mi
                             requests:
@@ -1441,7 +1441,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.26.0-alpha-8ee911bd
+  collector: 1.26.0-alpha-66fc5832
   logging: 2.1.9
   proxy: "13.1"
 kind: ConfigMap
@@ -1513,7 +1513,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.14.0-alpha-8ee911bd
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.14.0-alpha-66fc5832
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
