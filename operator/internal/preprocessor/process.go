@@ -114,7 +114,6 @@ func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) err
 		wfSpec.DataExport.WavefrontProxy.AvailableReplicas = int(deployment.Status.AvailableReplicas)
 		wfSpec.CanExportData = true
 	}
-	wfSpec.DataExport.WavefrontProxy.ConfigHash = ""
 	wfSpec.DataCollection.Metrics.ProxyAddress = fmt.Sprintf("%s:%d", util.ProxyName, wfSpec.DataExport.WavefrontProxy.MetricPort)
 
 	// The endpoint for logging requires the "http://" prefix
@@ -390,17 +389,10 @@ func setHttpProxyConfigs(httpProxySecret *corev1.Secret, wavefront *wf.Wavefront
 	wavefront.DataExport.WavefrontProxy.HttpProxy.HttpProxyUser = httpProxySecretData["basic-auth-username"]
 	wavefront.DataExport.WavefrontProxy.HttpProxy.HttpProxyPassword = httpProxySecretData["basic-auth-password"]
 
-	configHashBytes, err := json.Marshal(wavefront.DataExport.WavefrontProxy.HttpProxy)
-	if err != nil {
-		return err
-	}
-
 	if len(httpProxySecretData["tls-root-ca-bundle"]) != 0 {
 		wavefront.DataExport.WavefrontProxy.HttpProxy.UseHttpProxyCAcert = true
-		configHashBytes = append(configHashBytes, httpProxySecret.Data["tls-root-ca-bundle"]...)
+		wavefront.DataExport.WavefrontProxy.ConfigHash = hashValue(httpProxySecret.Data["tls-root-ca-bundle"])
 	}
-
-	wavefront.DataExport.WavefrontProxy.ConfigHash = hashValue(configHashBytes)
 
 	return nil
 }

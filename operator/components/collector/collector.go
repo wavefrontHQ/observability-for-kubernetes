@@ -83,8 +83,10 @@ func (component *Component) Validate() validation.Result {
 	if result := validation.ValidateResources(&component.config.ClusterCollectorResources, util.ClusterCollectorName); result.IsError() {
 		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
-	if result := validation.ValidateResources(&component.config.NodeCollectorResources, util.NodeCollectorName); result.IsError() {
-		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
+	if component.config.MetricsEnable {
+		if result := validation.ValidateResources(&component.config.NodeCollectorResources, util.NodeCollectorName); result.IsError() {
+			errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
+		}
 	}
 
 	return validation.NewValidationResult(errs)

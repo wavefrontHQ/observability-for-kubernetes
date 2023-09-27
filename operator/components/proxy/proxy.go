@@ -1,6 +1,8 @@
 package proxy
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 
@@ -55,6 +57,12 @@ func (proxy *Component) Name() string {
 
 func NewComponent(dir fs.FS, componentConfig ComponentConfig) (Component, error) {
 
+	configHashBytes, err := json.Marshal(componentConfig)
+	if err != nil {
+		return Component{}, errors.New("proxy: problem calculating config hash")
+	}
+	componentConfig.ConfigHash = components.HashValue(append([]byte(componentConfig.ConfigHash), configHashBytes...))
+
 	return Component{
 		config: componentConfig,
 		dir:    dir,
@@ -104,14 +112,14 @@ func (component *Component) Validate() validation.Result {
 		errs = append(errs, fmt.Errorf("%s: missing metric port", component.Name()))
 	}
 
-	//if len(component.config.ProxyVersion) == 0 {
-	//	errs = append(errs, fmt.Errorf("%s: missing proxy version", component.Name()))
-	//}
-	//
-	//if len(component.config.ConfigHash) == 0 {
-	//	errs = append(errs, fmt.Errorf("%s: missing config hash", component.Name()))
-	//}
-	//
+	if len(component.config.ProxyVersion) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing proxy version", component.Name()))
+	}
+
+	if len(component.config.ConfigHash) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing config hash", component.Name()))
+	}
+
 	//if len(component.config.SecretHash) == 0 {
 	//	errs = append(errs, fmt.Errorf("%s: missing secret hash", component.Name()))
 	//}

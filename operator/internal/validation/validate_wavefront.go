@@ -142,8 +142,6 @@ func validateWavefrontProxyConfig(wavefront *wf.Wavefront) []error {
 	if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
 		errs = append(errs, fmt.Errorf("'externalWavefrontProxy.url' and 'wavefrontProxy.enable' should not be set at the same time"))
 	}
-	errs = append(errs, validateResources(&wavefront.Spec.DataExport.WavefrontProxy.Resources, "spec.dataExport.wavefrontProxy")...)
-
 	return errs
 }
 

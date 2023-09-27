@@ -27,6 +27,15 @@ func CR(options ...CROption) *wf.Wavefront {
 					ControlPlane: wf.ControlPlane{
 						Enable: true,
 					},
+					ClusterCollector: wf.Collector{Resources: wf.Resources{Limits: wf.Resource{
+						CPU:    "100Mi",
+						Memory: "50Mi",
+					}}},
+					NodeCollector: wf.Collector{Resources: wf.Resources{Limits: wf.Resource{
+						CPU:    "100Mi",
+						Memory: "50Mi",
+					}}},
+					CollectorVersion: "1.28.0",
 				},
 				Logging: wf.Logging{
 					Enable:         true,
@@ -51,6 +60,7 @@ func CR(options ...CROption) *wf.Wavefront {
 							Memory: "50Mi",
 						},
 					},
+					ProxyVersion: "13.1",
 				},
 			},
 		},

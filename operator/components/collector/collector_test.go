@@ -43,6 +43,17 @@ func TestValidate(t *testing.T) {
 		require.Equal(t, "collector: invalid wavefront-node-collector.resources.requests.cpu: 500m must be less than or equal to cpu limit", result.Message())
 	})
 
+	t.Run("Does not validates node collector resources when metrics is not enabled", func(t *testing.T) {
+		config := validCollectorComponentConfig()
+		config.MetricsEnable = false
+		config.NodeCollectorResources = wf.Resources{}
+
+		component, _ := NewComponent(ComponentDir, config)
+		result := component.Validate()
+
+		require.True(t, result.IsValid())
+	})
+
 	t.Run("Validation error when cluster collector memory request is greater than CPU limit", func(t *testing.T) {
 		config := validCollectorComponentConfig()
 		config.ClusterCollectorResources.Requests.Memory = "500Mi"

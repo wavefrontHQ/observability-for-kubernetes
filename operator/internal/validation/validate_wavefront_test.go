@@ -172,38 +172,6 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled.", validateWavefrontSpec(wfCR).Error())
 	})
 
-	t.Run("Validation error when CPU request is greater than CPU limit", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Requests.CPU = "500m"
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Limits.CPU = "200m"
-		require.Equal(t, "invalid spec.dataExport.wavefrontProxy.resources.requests.cpu: 500m must be less than or equal to cpu limit", validateWavefrontSpec(wfCR).Error())
-	})
-
-	t.Run("CPU expressed differently should not be an error", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Requests.CPU = "500m"
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Limits.CPU = "0.5"
-		require.Nilf(t, validateWavefrontSpec(wfCR), "did not expect validation error")
-	})
-
-	t.Run("Validation error when Memory request is greater than Memory limit", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Requests.Memory = "500Mi"
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Limits.Memory = "200Mi"
-		validationError := validateWavefrontSpec(wfCR)
-		require.NotNilf(t, validationError, "expected validation error")
-		require.Equal(t, "invalid spec.dataExport.wavefrontProxy.resources.requests.memory: 500Mi must be less than or equal to memory limit", validationError.Error())
-	})
-
-	t.Run("Validation error when EphemeralStorage request is greater than limit", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Requests.EphemeralStorage = "1Gi"
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Limits.EphemeralStorage = "500Mi"
-		validationError := validateWavefrontSpec(wfCR)
-		require.NotNilf(t, validationError, "expected validation error")
-		require.Equal(t, "invalid spec.dataExport.wavefrontProxy.resources.requests.ephemeral-storage: 1Gi must be less than or equal to ephemeral-storage limit", validationError.Error())
-	})
-
 	t.Run("Test multiple errors", func(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.Experimental.Autotracing.Enable = true

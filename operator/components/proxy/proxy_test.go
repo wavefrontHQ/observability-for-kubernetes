@@ -21,6 +21,7 @@ func TestNewProxyComponent(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, component)
+		require.NotEmpty(t, component.config.ConfigHash)
 	})
 }
 
@@ -138,26 +139,16 @@ func TestValidate(t *testing.T) {
 		require.Equal(t, "proxy: missing metric port", result.Message())
 	})
 
-	//t.Run("empty proxy version is not valid", func(t *testing.T) {
-	//	config := validComponentConfig()
-	//	config.ProxyVersion = ""
-	//	component, err := NewComponent(ComponentDir, config)
-	//	result := component.Validate()
-	//	require.NoError(t, err)
-	//	require.False(t, result.IsValid())
-	//	require.Equal(t, "proxy: missing proxy version", result.Message())
-	//})
-	//
-	//t.Run("empty config hash is not valid", func(t *testing.T) {
-	//	config := validComponentConfig()
-	//	config.ConfigHash = ""
-	//	component, err := NewComponent(ComponentDir, config)
-	//	result := component.Validate()
-	//	require.NoError(t, err)
-	//	require.False(t, result.IsValid())
-	//	require.Equal(t, "proxy: missing config hash", result.Message())
-	//})
-	//
+	t.Run("empty proxy version is not valid", func(t *testing.T) {
+		config := validComponentConfig()
+		config.ProxyVersion = ""
+		component, err := NewComponent(ComponentDir, config)
+		result := component.Validate()
+		require.NoError(t, err)
+		require.False(t, result.IsValid())
+		require.Equal(t, "proxy: missing proxy version", result.Message())
+	})
+
 	//t.Run("empty secret hash is not valid", func(t *testing.T) {
 	//	config := validComponentConfig()
 	//	config.SecretHash = ""
@@ -211,8 +202,6 @@ func validComponentConfig() ComponentConfig {
 		},
 		MetricPort:   2878,
 		ProxyVersion: "2.0.0",
-		ConfigHash:   "config-hash",
-		SecretHash:   "secret-hash",
 		Replicas:     1,
 	}
 }
