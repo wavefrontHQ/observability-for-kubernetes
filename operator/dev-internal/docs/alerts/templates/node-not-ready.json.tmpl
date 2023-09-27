@@ -6,7 +6,7 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND condition=\"Ready\" OR status!=\"True\"))",
+      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND condition=\"Ready\" AND status!=\"True\"))",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

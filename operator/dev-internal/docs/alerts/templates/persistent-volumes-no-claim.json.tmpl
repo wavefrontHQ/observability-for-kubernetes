@@ -1,44 +1,26 @@
 {
   "name": "Persistent Volumes No Claim",
   "alertType": "THRESHOLD",
-  "additionalInformation": "",
-  "alertChartUnits": "",
   "alertSources": [
     {
-      "name": "A",
-      "query": "mcount(5m, ${B}) >= 2",
-      "queryType": "WQL",
-      "alertSourceType": ["VARIABLE"],
-      "hidden": true
-    },
-    {
-      "name": "B",
-      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Available\") by (sources, cluster, cluster_uuid, pv_name, phase))",
-      "queryType": "WQL",
-      "alertSourceType": ["VARIABLE"],
-      "hidden": true
-    },
-    {
       "name": "Alert Condition",
-      "query": "${A}",
+      "query": "(mcount(5m, count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Available\"), sources, cluster, cluster_uuid, pv_name, phase)) >= 2)",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
     },
     {
       "name": "Display Condition",
-      "query": "if(${A} >= 1, ${A})",
+      "query": "if(${Alert Condition}, ${Alert Condition})",
       "queryType": "WQL",
-      "alertSourceType": ["AUDIT"],
+      "alertSourceType": ["VARIABLE","AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "info": "${A} >= 1"
+    "info": "${Alert Condition}"
   },
-  "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
-  "displayExpressionQBEnabled": false,
   "minutes": 10,
   "resolveAfterMinutes": 2,
   "tags": {
@@ -48,13 +30,12 @@
   },
   "alertTriageDashboards": [
     {
-      "dashboardId": "integration-kubernetes-workloads",
-      "parameters": {
-        "constants": {
-          "cluster": "K8S_CLUSTER_NAME"
-        }
-      }
+     "dashboardId": "integration-kubernetes-workloads",
+     "parameters": {
+       "constants": {
+         "cluster": "K8S_CLUSTER_NAME"
+       }
+     }
     }
-  ],
-  "includeObsoleteMetrics": false
+  ]
 }
