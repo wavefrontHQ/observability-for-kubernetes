@@ -168,6 +168,20 @@ func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		wfSpec.Experimental.KubernetesEvents.Enable = true
 		wfSpec.Experimental.KubernetesEvents.SecretName = secret.Name
 	}
+	if wfSpec.Experimental.KubernetesEvents.Enable && !wfSpec.DataCollection.Metrics.Enable && len(wfSpec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU) == 0 {
+		wfSpec.DataCollection.Metrics.ClusterCollector.Resources = wf.Resources{
+			Requests: wf.Resource{
+				CPU:              "200m",
+				Memory:           "10Mi",
+				EphemeralStorage: "20Mi",
+			},
+			Limits: wf.Resource{
+				CPU:              "2000m",
+				Memory:           "512Mi",
+				EphemeralStorage: "1Gi",
+			},
+		}
+	}
 	if wfSpec.Experimental.Autotracing.Enable {
 		daemonset, err := daemonset(client, util.PixieVizierPEMName, wfSpec.Namespace)
 		if err == nil && daemonset.Status.NumberReady > 0 {
