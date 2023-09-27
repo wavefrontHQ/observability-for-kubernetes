@@ -3,10 +3,17 @@
   "alertType": "THRESHOLD",
   "alertSources": [
     {
-      "name": "Alert Condition",
+      "name": "A",
       "query": "(mcount(5m, count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Available\"), sources, cluster, cluster_uuid, pv_name, phase)) >= 2)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
       "hidden": true
     },
     {
@@ -18,7 +25,7 @@
     }
   ],
   "conditions": {
-    "info": "${Alert Condition} >= 1"
+    "info": "${A} >= 1"
   },
   "displayExpression": "${Display Condition}",
   "minutes": 10,
