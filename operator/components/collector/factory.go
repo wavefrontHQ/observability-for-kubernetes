@@ -17,7 +17,7 @@ func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 		DefaultCollectionInterval: cr.Spec.DataCollection.Metrics.DefaultCollectionInterval,
 		ProxyAddress:              cr.Spec.DataCollection.Metrics.ProxyAddress,
 		Namespace:                 cr.Spec.Namespace,
-		AvailableReplicas:         cr.Spec.DataExport.WavefrontProxy.AvailableReplicas,
+		ProxyAvailableReplicas:    cr.Spec.DataExport.WavefrontProxy.AvailableReplicas,
 		ImageRegistry:             cr.Spec.ImageRegistry,
 		CollectorVersion:          cr.Spec.DataCollection.Metrics.CollectorVersion,
 		ClusterCollectorResources: cr.Spec.DataCollection.Metrics.ClusterCollector.Resources,

@@ -6,6 +6,7 @@ import (
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -16,15 +17,13 @@ type ComponentConfig struct {
 	// required
 	Enable                    bool
 	MetricsEnable             bool
-	CustomConfig              string
 	ControllerManagerUID      string
 	ClusterName               string
 	ClusterUUID               string
-	EnableDiscovery           bool
 	DefaultCollectionInterval string
 	ProxyAddress              string
 	Namespace                 string
-	AvailableReplicas         int
+	ProxyAvailableReplicas    int
 	ImageRegistry             string
 	CollectorVersion          string
 	ClusterCollectorResources wf.Resources
@@ -32,7 +31,9 @@ type ComponentConfig struct {
 	CollectorConfigName       string
 
 	// optional
+	CustomConfig     string
 	Filters          wf.Filters
+	EnableDiscovery  bool
 	Tags             map[string]string
 	KubernetesEvents KubernetesEvents
 	ControlPlane     wf.ControlPlane
@@ -77,6 +78,13 @@ func (component *Component) Validate() validation.Result {
 
 	if len(component.config.Namespace) == 0 {
 		errs = append(errs, fmt.Errorf("%s: missing namespace", component.Name()))
+	}
+
+	if result := validation.ValidateResources(&component.config.ClusterCollectorResources, util.ClusterCollectorName); result.IsError() {
+		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
+	}
+	if result := validation.ValidateResources(&component.config.NodeCollectorResources, util.NodeCollectorName); result.IsError() {
+		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 
 	return validation.NewValidationResult(errs)

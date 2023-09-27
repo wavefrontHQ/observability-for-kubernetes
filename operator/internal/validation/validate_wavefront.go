@@ -127,12 +127,9 @@ func validateWavefrontSpec(wavefront *wf.Wavefront) error {
 		errs = append(errs, fmt.Errorf("'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled."))
 	}
 	if wavefront.Spec.DataCollection.Metrics.Enable {
-		errs = append(errs, validateResources(&wavefront.Spec.DataCollection.Metrics.NodeCollector.Resources, "spec.dataCollection.metrics.nodeCollector")...)
-		errs = append(errs, validateResources(&wavefront.Spec.DataCollection.Metrics.ClusterCollector.Resources, "spec.dataCollection.metrics.clusterCollector")...)
 		if wavefront.Spec.Experimental.KubernetesEvents.Enable && len(wavefront.Spec.DataCollection.Metrics.CustomConfig) > 0 {
 			errs = append(errs, fmt.Errorf("'metrics.customConfig' must not be set when the 'experimental.kubernetesEvents.enable' is enabled."))
 		}
-
 	}
 	return utilerrors.NewAggregate(errs)
 }
