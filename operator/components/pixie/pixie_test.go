@@ -15,7 +15,7 @@ import (
 var ComponentDir = os.DirFS(filepath.Join("..", DeployDir))
 
 func TestNewPixieComponent(t *testing.T) {
-	t.Run("create config hash", func(t *testing.T) {
+	t.Run("valid component", func(t *testing.T) {
 		config := validComponentConfig()
 		t.Log(os.Getwd())
 

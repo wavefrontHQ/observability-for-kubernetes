@@ -7,13 +7,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 )
 
 var ComponentDir = os.DirFS(filepath.Join("..", DeployDir))
 
 func TestNewProxyComponent(t *testing.T) {
-	t.Run("create config hash", func(t *testing.T) {
+	t.Run("valid component", func(t *testing.T) {
 		config := validComponentConfig()
 		t.Log(os.Getwd())
 
@@ -22,6 +24,15 @@ func TestNewProxyComponent(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, component)
 		require.NotEmpty(t, component.config.ConfigHash)
+	})
+
+	t.Run("updates config hash if set", func(t *testing.T) {
+		config := validComponentConfig()
+		config.ConfigHash = "some value"
+
+		component, err := NewComponent(ComponentDir, config)
+		require.NoError(t, err)
+		require.NotEqual(t, "some value", component.config.ConfigHash)
 	})
 }
 
@@ -148,40 +159,38 @@ func TestValidate(t *testing.T) {
 		require.False(t, result.IsValid())
 		require.Equal(t, "proxy: missing proxy version", result.Message())
 	})
-
-	//t.Run("empty secret hash is not valid", func(t *testing.T) {
-	//	config := validComponentConfig()
-	//	config.SecretHash = ""
-	//	component, err := NewComponent(ComponentDir, config)
-	//	result := component.Validate()
-	//	require.NoError(t, err)
-	//	require.False(t, result.IsValid())
-	//	require.Equal(t, "proxy: missing secret hash", result.Message())
-	//})
 }
 
 func TestResources(t *testing.T) {
-	//t.Run("default configuration", func(t *testing.T) {
-	//	component, _ := NewComponent(ComponentDir, validComponentConfig())
-	//	toApply, toDelete, err := component.Resources()
-	//
-	//	require.NoError(t, err)
-	//	require.NotEmpty(t, toApply)
-	//	require.Empty(t, toDelete)
-	//
-	//	// check all resources for component labels
-	//	test.RequireCommonLabels(t, toApply, "wavefront", "proxy", util.Namespace)
-	//
-	//	// cluster name configmap
-	//	configmap, err := test.GetAppliedConfigMap("pl-cloud-config", toApply)
-	//	require.NoError(t, err)
-	//	require.Equal(t, component.config.ClusterName, configmap.Data["PL_CLUSTER_NAME"])
-	//
-	//	secret, err := test.GetAppliedSecret("pl-cluster-secrets", toApply)
-	//	require.NoError(t, err)
-	//	require.Equal(t, component.config.ClusterName, secret.StringData["cluster-name"])
-	//	require.Equal(t, component.config.ClusterUUID, secret.StringData["cluster-id"])
-	//})
+	t.Run("default configuration", func(t *testing.T) {
+		component, _ := NewComponent(ComponentDir, validComponentConfig())
+		toApply, toDelete, err := component.Resources()
+
+		require.NoError(t, err)
+		require.Equal(t, 4, len(toApply))
+		require.Equal(t, 1, len(toDelete))
+
+		// check all resources for component labels
+		test.RequireCommonLabels(t, toApply, "wavefront", "proxy", wftest.DefaultNamespace)
+
+		configmap, err := test.GetAppliedConfigMap("operator-proxy-preprocessor-rules-config", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, configmap)
+
+		deployment, err := test.GetAppliedDeployment(util.ProxyName, toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, deployment)
+
+		service, err := test.GetAppliedService(util.ProxyName, toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		serviceAccount, err := test.GetAppliedServiceAccount(util.ProxyName, toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, serviceAccount)
+	})
+
+	// TODO: Component Refactor - move proxy wavefront controller test here
 }
 
 func validComponentConfig() ComponentConfig {

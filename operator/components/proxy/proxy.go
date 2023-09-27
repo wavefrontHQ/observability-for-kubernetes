@@ -29,11 +29,11 @@ type ComponentConfig struct {
 	MetricPort           int
 	ProxyVersion         string
 	ConfigHash           string
-	SecretHash           string
 	Replicas             int
 
 	// optional
 	Openshift         bool
+	SecretHash        string
 	ImagePullSecret   string
 	LoggingEnable     bool
 	DeltaCounterPort  int
@@ -61,7 +61,7 @@ func NewComponent(dir fs.FS, componentConfig ComponentConfig) (Component, error)
 	if err != nil {
 		return Component{}, errors.New("proxy: problem calculating config hash")
 	}
-	componentConfig.ConfigHash = components.HashValue(append([]byte(componentConfig.ConfigHash), configHashBytes...))
+	componentConfig.ConfigHash = components.HashValue(configHashBytes)
 
 	return Component{
 		config: componentConfig,
@@ -119,10 +119,6 @@ func (component *Component) Validate() validation.Result {
 	if len(component.config.ConfigHash) == 0 {
 		errs = append(errs, fmt.Errorf("%s: missing config hash", component.Name()))
 	}
-
-	//if len(component.config.SecretHash) == 0 {
-	//	errs = append(errs, fmt.Errorf("%s: missing secret hash", component.Name()))
-	//}
 
 	return validation.NewValidationResult(errs)
 }
