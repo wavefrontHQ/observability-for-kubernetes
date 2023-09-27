@@ -30,7 +30,7 @@ deploy: build-deployment
 	kubectl apply -f build/job.yaml
 
 
-build/$(GOOS)/$(GOARCH)/pixie-sizer: main.go
+build/$(GOOS)/$(GOARCH)/pixie-sizer: $(shell go list -deps -f '{{ $$dir := .Dir }}{{ range .GoFiles }}{{ $$dir }}/{{.}}{{"\n"}}{{ end }}' ./...)
 	CGO_ENABLED=0 go build -o build/$(GOOS)/$(GOARCH)/pixie-sizer ./...
 
 build/$(GOOS)/$(GOARCH)/open_source_licenses.txt: open_source_licenses.txt
