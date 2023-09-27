@@ -6,13 +6,20 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "count(${B} by (sources, cluster, cluster_uuid, nodename, node_role, status, condition))",
+      "query": "mcount(5m, ${B}) >= 2",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "B",
+      "query": "count(${C} by (sources, cluster, cluster_uuid, nodename, node_role, status, condition))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "C",
       "query": "ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND (condition=\"DiskPressure\" AND status=\"True\"))",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
@@ -41,7 +48,7 @@
   "displayExpressionQBEnabled": false,
   "includeObsoleteMetrics": false,
   "minutes": 5,
-  "resolveAfterMinutes": 5,
+  "resolveAfterMinutes": 2,
   "tags": {
     "customerTags": [
       "integration.kubernetes"
