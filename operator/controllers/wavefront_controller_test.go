@@ -1570,7 +1570,7 @@ func TestReconcileHubPixie(t *testing.T) {
 	})
 }
 
-func TestReconcileKubernetesEventsByRuntimeSecret(t *testing.T) {
+func TestReconcileInsightsByRuntimeSecret(t *testing.T) {
 	t.Run("can enable external K8s events and WF metrics", func(t *testing.T) {
 		cr := wftest.CR()
 		secret := &v1.Secret{
@@ -1708,10 +1708,11 @@ func TestReconcileKubernetesEventsByRuntimeSecret(t *testing.T) {
 		require.False(t, mockKM.ProxyDeploymentContains())
 	})
 
-	t.Run("aria insights secret overrides deprecated wavefront CR config", func(t *testing.T) {
+	// TODO: move over tests to collector component test
+	t.Run("wavefront CR config overrides aria insights secret", func(t *testing.T) {
 		cr := wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.KubernetesEvents.Enable = true
-			wavefront.Spec.Experimental.KubernetesEvents.ExternalEndpointURL = "https://example.com"
+			wavefront.Spec.Experimental.Insights.Enable = true
+			wavefront.Spec.Experimental.Insights.ExternalEndpointURL = "https://example.com"
 			wavefront.Spec.DataExport.WavefrontProxy.Enable = false
 			wavefront.Spec.DataCollection.Metrics.Enable = false
 			wavefront.Spec.DataCollection.Logging.Enable = false
@@ -1742,17 +1743,17 @@ func TestReconcileKubernetesEventsByRuntimeSecret(t *testing.T) {
 
 		require.True(t, mockKM.ConfigMapContains(
 			"k8s-events-only-wavefront-collector-config",
-			fmt.Sprintf("externalEndpointURL: \"%s\"", string(ariaInsightsSecret.Data["k8s-events-endpoint-url"])),
+			fmt.Sprintf("externalEndpointURL: \"%s\"", cr.Spec.Experimental.Insights.ExternalEndpointURL),
 		))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: "+ariaInsightsSecret.Name))
 	})
 }
 
-func TestReconcileKubernetesEventsDeprecatedCR(t *testing.T) {
+func TestReconcileInsightsCR(t *testing.T) {
 	t.Run("can enable K8s events only", func(t *testing.T) {
 		cr := wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.KubernetesEvents.Enable = true
-			wavefront.Spec.Experimental.KubernetesEvents.ExternalEndpointURL = "https://example.com"
+			wavefront.Spec.Experimental.Insights.Enable = true
+			wavefront.Spec.Experimental.Insights.ExternalEndpointURL = "https://example.com"
 			wavefront.Spec.DataExport.WavefrontProxy.Enable = false
 			wavefront.Spec.DataCollection.Metrics.Enable = false
 			wavefront.Spec.DataCollection.Logging.Enable = false
@@ -1789,8 +1790,8 @@ func TestReconcileKubernetesEventsDeprecatedCR(t *testing.T) {
 
 	t.Run("can enable external K8s events and WF metrics with yaml spec", func(t *testing.T) {
 		cr := wftest.CR(func(w *wf.Wavefront) {
-			w.Spec.Experimental.KubernetesEvents.Enable = true
-			w.Spec.Experimental.KubernetesEvents.ExternalEndpointURL = "https://example.com"
+			w.Spec.Experimental.Insights.Enable = true
+			w.Spec.Experimental.Insights.ExternalEndpointURL = "https://example.com"
 		})
 		r, mockKM := componentScenario(cr, nil, &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{

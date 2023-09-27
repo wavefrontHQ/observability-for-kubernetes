@@ -81,8 +81,8 @@ type WavefrontSpec struct {
 type Experimental struct {
 	Autotracing AutoTracingPixie `json:"autotracing,omitempty"`
 
-	// KubernetesEvents is deprecated, please use aria-insights-secret instead
-	KubernetesEvents KubernetesEvents `json:"kubernetesEvents,omitempty"`
+	// Insights
+	Insights Insights `json:"insights,omitempty"`
 
 	Hub Hub `json:"hub,omitempty"`
 }
@@ -451,7 +451,7 @@ type Logging struct {
 	LoggingVersion string `json:"-"`
 }
 
-type KubernetesEvents struct {
+type Insights struct {
 	// Enable is whether to enable events. Defaults to false.
 	// +kubebuilder:default:=false
 	Enable bool `json:"enable,omitempty"`

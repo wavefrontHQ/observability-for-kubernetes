@@ -84,7 +84,7 @@ func preProcessDataCollection(client crClient.Client, wfSpec *wf.WavefrontSpec) 
 		} else {
 			wfSpec.DataCollection.Metrics.CollectorConfigName = wfSpec.DataCollection.Metrics.CustomConfig
 		}
-	} else if wfSpec.Experimental.KubernetesEvents.Enable {
+	} else if wfSpec.Experimental.Insights.Enable {
 		wfSpec.DataCollection.Metrics.CollectorConfigName = "k8s-events-only-wavefront-collector-config"
 	}
 	if shouldEnableEtcdCollection(client, wfSpec) {
@@ -146,7 +146,7 @@ func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) err
 }
 
 func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
-	if wfSpec.Experimental.KubernetesEvents.Enable {
+	if wfSpec.Experimental.Insights.Enable {
 		secret, err := findSecret(client, wfSpec.WavefrontTokenSecret, wfSpec.Namespace)
 		if err != nil {
 			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' was not found", wfSpec.WavefrontTokenSecret)
@@ -155,20 +155,19 @@ func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		if _, ok := secret.Data["k8s-events-endpoint-token"]; !ok {
 			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' is missing Data 'k8s-events-endpoint-token'", wfSpec.WavefrontTokenSecret)
 		}
-		wfSpec.Experimental.KubernetesEvents.SecretName = wfSpec.WavefrontTokenSecret
+		wfSpec.Experimental.Insights.SecretName = wfSpec.WavefrontTokenSecret
 	}
 	if secret, err := findSecret(client, util.AriaInsightsSecret, wfSpec.Namespace); err == nil {
-		if len(secret.Data["k8s-events-endpoint-url"]) == 0 {
-			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' is missing Data 'k8s-events-endpoint-url'", secret.Name)
-		}
 		if len(secret.Data["k8s-events-endpoint-token"]) == 0 {
 			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' is missing Data 'k8s-events-endpoint-token'", secret.Name)
 		}
-		wfSpec.Experimental.KubernetesEvents.ExternalEndpointURL = string(secret.Data["k8s-events-endpoint-url"])
-		wfSpec.Experimental.KubernetesEvents.Enable = true
-		wfSpec.Experimental.KubernetesEvents.SecretName = secret.Name
+		if len(wfSpec.Experimental.Insights.ExternalEndpointURL) == 0 {
+			wfSpec.Experimental.Insights.ExternalEndpointURL = string(secret.Data["k8s-events-endpoint-url"])
+		}
+		wfSpec.Experimental.Insights.Enable = true
+		wfSpec.Experimental.Insights.SecretName = secret.Name
 	}
-	if wfSpec.Experimental.KubernetesEvents.Enable && !wfSpec.DataCollection.Metrics.Enable && len(wfSpec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU) == 0 {
+	if wfSpec.Experimental.Insights.Enable && !wfSpec.DataCollection.Metrics.Enable && len(wfSpec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU) == 0 {
 		wfSpec.DataCollection.Metrics.ClusterCollector.Resources = wf.Resources{
 			Requests: wf.Resource{
 				CPU:              "200m",
