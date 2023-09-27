@@ -62,7 +62,7 @@ function post_alert_to_wavefront() {
   fi
 
   local alert_id
-  alert_id=$(sed -n 's/.*id":"\([0-9]*\).*/\1/p' "${response}")
+  alert_id=$(sed -n 's/.*"id":"\{0,1\}\([0-9][^,"]*\)"\{0,1\}.*/\1/p' "${response}")
 
   echo "Alert has been created at: https://${wavefront_cluster}.wavefront.com/alerts/${alert_id}"
 }
