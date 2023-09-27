@@ -61,7 +61,9 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 			labels["app.kubernetes.io/component"] = componentName
 		}
 		resource.SetLabels(labels)
-
+		if resource.GetKind() == "DaemonSet" || resource.GetKind() == "Deployment" || resource.GetKind() == "StatefulSet" {
+			setTemplateComponentLabels(resource, componentName)
+		}
 		resource.SetOwnerReferences([]v1.OwnerReference{{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
@@ -76,6 +78,20 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 		}
 	}
 	return resourcesToApply, resourcesToDelete, nil
+}
+
+func setTemplateComponentLabels(resource *unstructured.Unstructured, componentName string) {
+	labels, _, _ := unstructured.NestedStringMap(resource.Object, "spec", "template", "metadata", "labels")
+	if labels == nil {
+		labels = map[string]string{}
+	}
+
+	labels["app.kubernetes.io/name"] = "wavefront"
+	if labels["app.kubernetes.io/component"] == "" {
+		labels["app.kubernetes.io/component"] = componentName
+	}
+
+	_ = unstructured.SetNestedStringMap(resource.Object, labels, "spec", "template", "metadata", "labels")
 }
 
 func resourceFiles(dir fs.FS) ([]string, error) {
