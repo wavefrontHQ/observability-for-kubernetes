@@ -29,6 +29,7 @@ We have alert templates on common Kubernetes issues.
 | [Detect node memory overutilization](templates/node-memory-overutilization.json.tmpl) | `node-memory-overutilization.json.tmpl` |
 | [Detect node cpu overutilization](templates/node-cpu-overutilization.json.tmpl) | `node-cpu-overutilization.json.tmpl` |
 | [Detect node filesystem overutilization](templates/node-filesystem-overutilization.json.tmpl) | `node-filesystem-overutilization.json.tmpl` |
+| [Detect etcd has no leader](templates/etcd-no-leader.json.tmpl) | `etcd-no-leader.json.tmpl` |
 
 ## Creating Alerts
 

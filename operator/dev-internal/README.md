@@ -162,6 +162,7 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Pod Out-of-memory Kills](docs/alerts/templates/pod-out-of-memory-kills.json.tmpl) | Workload has pod with container status `OOMKilled`. |
 | [Container CPU Throttling](docs/alerts/templates/container-cpu-throttling.json.tmpl) | Workload has a container with high CPU throttling. |
 | [Container CPU Overutilization](docs/alerts/templates/container-cpu-overutilization.json.tmpl) | Workload has a container with high CPU utilization. |
+| [Missing etcd leader](templates/etcd-no-leader.json.tmpl) | etcd cannot elect a leader. |
 
 ### Persistent Volume Failures
 
