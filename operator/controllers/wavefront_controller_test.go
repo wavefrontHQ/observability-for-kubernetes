@@ -2068,7 +2068,6 @@ func emptyScenario(wfCR *wf.Wavefront, apiGroups []string, initObjs ...runtime.O
 			OperatorVersion:  "99.99.99",
 		},
 		Client:              objClient,
-		LegacyDeployDir:     os.DirFS(filepath.Join("..", controllers.DeployDir)),
 		ComponentsDeployDir: os.DirFS(filepath.Join("..", components.DeployDir)),
 		KubernetesManager:   mockKM,
 		DiscoveryClient:     mockDiscoveryClient,

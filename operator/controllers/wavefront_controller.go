@@ -49,8 +49,6 @@ import (
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 )
 
-const DeployDir = "deploy/internal"
-
 type KubernetesManager interface {
 	ApplyResources(resourceYAMLs []client.Object) error
 	DeleteResources(resourceYAMLs []client.Object) error
@@ -60,7 +58,6 @@ type KubernetesManager interface {
 type WavefrontReconciler struct {
 	client.Client
 
-	LegacyDeployDir     fs.FS
 	ComponentsDeployDir fs.FS
 	KubernetesManager   KubernetesManager
 	DiscoveryClient     discovery.ServerGroupsInterface
@@ -83,7 +80,6 @@ func NewWavefrontReconciler(versions Versions, client client.Client, discoveryCl
 	return &WavefrontReconciler{
 		Versions:            versions,
 		Client:              client,
-		LegacyDeployDir:     os.DirFS(DeployDir),
 		ComponentsDeployDir: os.DirFS(components.DeployDir),
 		KubernetesManager:   kubernetes_manager.NewKubernetesManager(client),
 		DiscoveryClient:     discoveryClient,
