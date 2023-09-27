@@ -181,6 +181,7 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Node CPU-request Saturation](docs/alerts/templates/node-cpu-request-saturation.json.tmpl) | Node has overcommitted cpu resource requests. |
 | [Node Memory-request Saturation](docs/alerts/templates/node-memory-request-saturation.json.tmpl) | Node has overcommitted memory resource requests. |
 | [Node Disk Pressure](docs/alerts/templates/node-disk-pressure.json.tmpl) | Node has problematic `DiskPressure` condition. |
+| [Node Memory Pressure](docs/alerts/templates/node-memory-pressure.json.tmpl) | Node has problematic `MemoryPressure` condition. |
 
 ## Bring Your Own Logs Shipper
 
