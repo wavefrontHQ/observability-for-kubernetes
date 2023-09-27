@@ -17,25 +17,17 @@ limitations under the License.
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/factory"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
-
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
@@ -47,11 +39,8 @@ import (
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 
-	baseYaml "gopkg.in/yaml.v2"
-
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -81,6 +70,36 @@ type WavefrontReconciler struct {
 	ClusterUUID         string
 
 	components []components.Component
+}
+
+type Versions struct {
+	OperatorVersion  string
+	CollectorVersion string
+	ProxyVersion     string
+	LoggingVersion   string
+}
+
+func NewWavefrontReconciler(versions Versions, client client.Client, discoveryClient discovery.ServerGroupsInterface, clusterUUID string) (operator *WavefrontReconciler, err error) {
+	return &WavefrontReconciler{
+		Versions:            versions,
+		Client:              client,
+		LegacyDeployDir:     os.DirFS(DeployDir),
+		ComponentsDeployDir: os.DirFS(components.DeployDir),
+		KubernetesManager:   kubernetes_manager.NewKubernetesManager(client),
+		DiscoveryClient:     discoveryClient,
+		MetricConnection:    metric.NewConnection(metric.WavefrontSenderFactory()),
+		ClusterUUID:         clusterUUID,
+	}, nil
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&wf.Wavefront{}).
+		WithOptions(controller.Options{
+			RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(1*time.Second, maxReconcileInterval),
+		}).
+		Complete(r)
 }
 
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts,verbs=get;list;watch;create;update;patch;delete
@@ -157,6 +176,7 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}, nil
 }
 
+// Validating Wavefront CR
 func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront) validation.Result {
 	var result validation.Result
 	for _, component := range r.components {
@@ -173,39 +193,9 @@ func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront) validation.Resul
 	return validation.Validate(r.Client, wavefront)
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&wf.Wavefront{}).
-		WithOptions(controller.Options{
-			RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(1*time.Second, maxReconcileInterval),
-		}).
-		Complete(r)
-}
-
-type Versions struct {
-	OperatorVersion  string
-	CollectorVersion string
-	ProxyVersion     string
-	LoggingVersion   string
-}
-
-func NewWavefrontReconciler(versions Versions, client client.Client, discoveryClient discovery.ServerGroupsInterface, clusterUUID string) (operator *WavefrontReconciler, err error) {
-	return &WavefrontReconciler{
-		Versions:            versions,
-		Client:              client,
-		LegacyDeployDir:     os.DirFS(DeployDir),
-		ComponentsDeployDir: os.DirFS(components.DeployDir),
-		KubernetesManager:   kubernetes_manager.NewKubernetesManager(client),
-		DiscoveryClient:     discoveryClient,
-		MetricConnection:    metric.NewConnection(metric.WavefrontSenderFactory()),
-		ClusterUUID:         clusterUUID,
-	}, nil
-}
-
 // Read, Create, Update and Delete Resources.
 func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) error {
-	toApply, toDelete, err := r.readAndInterpolateResources(spec)
+	toApply, toDelete, err := r.readAndInterpolateResources()
 	if err != nil {
 		return err
 	}
@@ -223,58 +213,8 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 	return nil
 }
 
-func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]client.Object, []client.Object, error) {
-	files, err := resourceFiles(r.LegacyDeployDir, "yaml", spec)
-	if err != nil {
-		return nil, nil, err
-	}
-
+func (r *WavefrontReconciler) readAndInterpolateResources() ([]client.Object, []client.Object, error) {
 	var resourcesToApply, resourcesToDelete []client.Object
-	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-	for resourceFile, shouldApply := range files {
-		templateName := filepath.Base(resourceFile)
-		resourceTemplate, err := newTemplate(templateName).ParseFS(r.LegacyDeployDir, resourceFile)
-		if err != nil {
-			return nil, nil, err
-		}
-		buffer := bytes.NewBuffer(nil)
-		err = resourceTemplate.Execute(buffer, spec)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		resourceYAML := buffer.String()
-		resource := &unstructured.Unstructured{}
-		_, _, err = resourceDecoder.Decode([]byte(resourceYAML), nil, resource)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		labels := resource.GetLabels()
-		if labels == nil {
-			labels = map[string]string{}
-		}
-		labels["app.kubernetes.io/name"] = "wavefront"
-		if labels["app.kubernetes.io/component"] == "" {
-			labels["app.kubernetes.io/component"] = filepath.Base(filepath.Dir(resourceFile))
-		}
-		resource.SetLabels(labels)
-
-		resource.SetOwnerReferences([]v1.OwnerReference{{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "wavefront-controller-manager",
-			UID:        types.UID(spec.ControllerManagerUID),
-		}})
-
-		if shouldApply && resource.GetAnnotations()["wavefront.com/conditionally-provision"] != "false" {
-			resourcesToApply = append(resourcesToApply, resource)
-		} else {
-			resourcesToDelete = append(resourcesToDelete, resource)
-		}
-	}
-	//TODO: Component Refactor - remove above templating code once everything has been moved to components ^^^
-
 	for _, component := range r.components {
 		toApply, toDelete, _ := component.Resources()
 		resourcesToApply = append(resourcesToApply, toApply...)
@@ -283,46 +223,33 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 	return resourcesToApply, resourcesToDelete, nil
 }
 
-func enabledDirs(spec wf.WavefrontSpec) []string {
-	//TODO: Component Refactor - this should all be moved to component factor / components
-	dirsToInclude := []string{"internal"}
-	if spec.DataExport.WavefrontProxy.Enable {
-		dirsToInclude = append(dirsToInclude, "proxy")
-	}
-
-	if (spec.CanExportData && spec.DataCollection.Metrics.Enable) || spec.Experimental.KubernetesEvents.Enable {
-		dirsToInclude = append(dirsToInclude, "collector")
-	}
-
-	return dirsToInclude
-}
-
 func (r *WavefrontReconciler) readAndDeleteResources() error {
 	var err error
 	r.MetricConnection.Close()
-	specToDelete := wf.WavefrontSpec{
-		Namespace: r.namespace,
-		DataCollection: wf.DataCollection{
-			Metrics: wf.Metrics{
-				CollectorVersion: "none",
+	wfToDelete := &wf.Wavefront{
+		Spec: wf.WavefrontSpec{
+			Namespace: r.namespace,
+			DataCollection: wf.DataCollection{
+				Metrics: wf.Metrics{
+					CollectorVersion: "none",
+				},
+				Logging: wf.Logging{
+					LoggingVersion: "none",
+				},
 			},
-			Logging: wf.Logging{
-				LoggingVersion: "none",
-			},
-		},
-		DataExport: wf.DataExport{
-			WavefrontProxy: wf.WavefrontProxy{
-				ProxyVersion: "none",
+			DataExport: wf.DataExport{
+				WavefrontProxy: wf.WavefrontProxy{
+					ProxyVersion: "none",
+				},
 			},
 		},
 	}
 
-	wavefront := &wf.Wavefront{Spec: specToDelete}
-	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wavefront)
+	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wfToDelete)
 	if err != nil {
 		return err
 	}
-	resourcesToApply, resourcesToDelete, err := r.readAndInterpolateResources(specToDelete)
+	resourcesToApply, resourcesToDelete, err := r.readAndInterpolateResources()
 	if err != nil {
 		return err
 	}
@@ -333,63 +260,6 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 	}
 
 	return nil
-}
-
-func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-
-	return false
-}
-
-func resourceFiles(deployDir fs.FS, suffix string, spec wf.WavefrontSpec) (map[string]bool, error) {
-	files := make(map[string]bool)
-	dirsToApply := enabledDirs(spec)
-
-	var currentDir string
-	err := fs.WalkDir(deployDir, ".", func(path string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if entry.IsDir() {
-			currentDir = entry.Name()
-		}
-
-		if strings.HasSuffix(path, suffix) {
-			if contains(dirsToApply, currentDir) {
-				files[path] = true
-			} else {
-				files[path] = false
-			}
-		}
-
-		return nil
-	})
-
-	return files, err
-}
-
-func newTemplate(resourceFile string) *template.Template {
-	fMap := template.FuncMap{
-		"toYaml": func(v interface{}) string {
-			data, err := baseYaml.Marshal(v)
-			if err != nil {
-				log.Log.Error(err, "error in toYaml")
-				return ""
-			}
-			return strings.TrimSuffix(string(data), "\n")
-		},
-		"indent": func(spaces int, v string) string {
-			pad := strings.Repeat(" ", spaces)
-			return pad + strings.Replace(v, "\n", "\n"+pad, -1)
-		},
-	}
-
-	return template.New(resourceFile).Funcs(fMap)
 }
 
 // Preprocessing Wavefront Spec
@@ -412,10 +282,6 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		if err != nil {
 			return fmt.Errorf("error setting up proxy connection: %s", err.Error())
 		}
-	}
-
-	if r.shouldEnableEtcdCollection(wavefront, ctx) {
-		wavefront.Spec.DataCollection.Metrics.ControlPlane.EnableEtcd = true
 	}
 
 	if r.isAnOpenshiftEnvironment() {
@@ -445,22 +311,6 @@ func (r *WavefrontReconciler) isAnOpenshiftEnvironment() bool {
 	return false
 }
 
-func (r *WavefrontReconciler) shouldEnableEtcdCollection(wavefront *wf.Wavefront, ctx context.Context) bool {
-	// never collect etcd if control plane metrics are disabled
-	if !wavefront.Spec.DataCollection.Metrics.ControlPlane.Enable {
-		return false
-	}
-
-	// only enable collection from etcd if the certs are supplied as a Secret
-	key := client.ObjectKey{
-		Namespace: r.namespace,
-		Name:      "etcd-certs",
-	}
-	err := r.Client.Get(ctx, key, &corev1.Secret{})
-
-	return err == nil
-}
-
 // Reporting Health Status
 func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, wavefront *wf.Wavefront, validationResult validation.Result) (wf.WavefrontStatus, error) {
 
@@ -486,6 +336,7 @@ func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, wavefront 
 	return wavefrontStatus, r.Status().Patch(ctx, &newWavefront, client.MergeFrom(wavefront))
 }
 
+// Reporting Metrics
 func (r *WavefrontReconciler) reportMetrics(sendStatusMetrics bool, clusterName string, wavefrontStatus wf.WavefrontStatus) {
 	var metrics []metric.Metric
 

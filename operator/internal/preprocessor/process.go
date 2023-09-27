@@ -40,7 +40,7 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 		return err
 	}
 
-	preProcessDataCollection(wfSpec)
+	preProcessDataCollection(client, wfSpec)
 
 	err = preProcessDataExport(client, wfSpec)
 	if err != nil {
@@ -77,7 +77,7 @@ func preProcessDataExport(client crClient.Client, wfSpec *wf.WavefrontSpec) erro
 	return nil
 }
 
-func preProcessDataCollection(wfSpec *wf.WavefrontSpec) {
+func preProcessDataCollection(client crClient.Client, wfSpec *wf.WavefrontSpec) {
 	if wfSpec.DataCollection.Metrics.Enable {
 		if len(wfSpec.DataCollection.Metrics.CustomConfig) == 0 {
 			wfSpec.DataCollection.Metrics.CollectorConfigName = "default-wavefront-collector-config"
@@ -87,6 +87,25 @@ func preProcessDataCollection(wfSpec *wf.WavefrontSpec) {
 	} else if wfSpec.Experimental.KubernetesEvents.Enable {
 		wfSpec.DataCollection.Metrics.CollectorConfigName = "k8s-events-only-wavefront-collector-config"
 	}
+	if shouldEnableEtcdCollection(client, wfSpec) {
+		wfSpec.DataCollection.Metrics.ControlPlane.EnableEtcd = true
+	}
+}
+
+func shouldEnableEtcdCollection(client crClient.Client, wfSpec *wf.WavefrontSpec) bool {
+	// never collect etcd if control plane metrics are disabled
+	if !wfSpec.DataCollection.Metrics.ControlPlane.Enable {
+		return false
+	}
+
+	// only enable collection from etcd if the certs are supplied as a Secret
+	key := crClient.ObjectKey{
+		Namespace: wfSpec.Namespace,
+		Name:      "etcd-certs",
+	}
+	err := client.Get(context.Background(), key, &corev1.Secret{})
+
+	return err == nil
 }
 
 func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
