@@ -6,7 +6,7 @@ if [ -z "$STREAM_NAME" ]; then
   exit 1
 fi
 LEMANS_GATEWAY_SERVER="localhost:8002"
-CSP_SECRET="$(echo -n "$(cat tmp/csp_username):$(cat tmp/csp_password)" | base64)"
+CSP_SECRET="$(echo -n "$(cat tmp/wavefront_csp_client_id):$(cat tmp/wavefront_csp_client_secret)" | base64)"
 
 token_file=$(mktemp)
 

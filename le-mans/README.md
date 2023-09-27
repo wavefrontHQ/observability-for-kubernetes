@@ -1,5 +1,9 @@
 Overview
 
+Prerequisites:
+- Docker should be installed and up to date
+- Java 11 should be available at /Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/
+
 Troubleshooting
 
 Startup steps

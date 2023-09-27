@@ -2,7 +2,7 @@
 set -euo pipefail
 
 LEMANS_RESOURCE_SERVER="localhost:8001"
-CSP_SECRET="$(echo -n "$(cat tmp/csp_username):$(cat tmp/csp_password)" | base64)"
+CSP_SECRET="$(echo -n "$(cat tmp/le_mans_csp_client_id):$(cat tmp/le_mans_csp_client_secret)" | base64)"
 
 token_file=$(mktemp)
 lemans_token_file=$(mktemp)
