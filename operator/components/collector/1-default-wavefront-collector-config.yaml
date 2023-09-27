@@ -4,43 +4,43 @@ metadata:
   name: default-wavefront-collector-config
   namespace: {{ .Namespace }}
   annotations:
-    wavefront.com/conditionally-provision: '{{and (not .DataCollection.Metrics.CustomConfig) .DataCollection.Metrics.Enable }}'
+    wavefront.com/conditionally-provision: '{{and (not .CustomConfig) .MetricsEnable }}'
 data:
   config.yaml: |
-    clusterName: {{.ClusterName}}
-    enableDiscovery: {{.DataCollection.Metrics.EnableDiscovery}}
+    clusterName: {{ .ClusterName }}
+    enableDiscovery: {{ .EnableDiscovery }}
     enableEvents: false
-    defaultCollectionInterval: {{.DataCollection.Metrics.DefaultCollectionInterval}}
+    defaultCollectionInterval: {{ .DefaultCollectionInterval }}
     flushInterval: 10s
     sinkExportDataTimeout: 20s
 
     sinks:
-    - proxyAddress: {{.DataCollection.Metrics.ProxyAddress}}
-      {{- if .DataCollection.Metrics.Tags }}
+    - proxyAddress: {{ .ProxyAddress }}
+      {{- if .Tags }}
       tags:
-{{ .DataCollection.Metrics.Tags | toYaml | indent 8 }}
+{{ .Tags | toYaml | indent 8 }}
       {{- end }}
       filters:
-        {{- if .DataCollection.Metrics.Filters.DenyList }}
+        {{- if .Filters.DenyList }}
         metricDenyList:
-{{ .DataCollection.Metrics.Filters.DenyList | toYaml | indent 8 }}
+{{ .Filters.DenyList | toYaml | indent 8 }}
         {{- end }}
-        {{- if .DataCollection.Metrics.Filters.AllowList }}
+        {{- if .Filters.AllowList }}
         metricAllowList:
-{{ .DataCollection.Metrics.Filters.AllowList | toYaml | indent 8 }}
+{{ .Filters.AllowList | toYaml | indent 8 }}
         {{- end }}
-        {{- if .DataCollection.Metrics.Filters.TagGuaranteeList }}
+        {{- if .Filters.TagGuaranteeList }}
         tagGuaranteeList:
-{{ .DataCollection.Metrics.Filters.TagGuaranteeList | toYaml | indent 8 }}
+{{ .Filters.TagGuaranteeList | toYaml | indent 8 }}
         {{- end }}
         tagExclude:
         - label?controller?revision*
         - label?pod?template*
         - annotation_kubectl_kubernetes_io_last_applied_configuration
-    {{- if .Experimental.KubernetesEvents.Enable }}
+    {{- if .KubernetesEvents.Enable }}
     - type: "external"
       enableEvents: true
-      externalEndpointURL: "{{ .Experimental.KubernetesEvents.ExternalEndpointURL }}"
+      externalEndpointURL: "{{ .KubernetesEvents.ExternalEndpointURL }}"
     events:
       filters:
         tagAllowListSets:
@@ -82,7 +82,7 @@ data:
           metricTagAllowList:
             container:
             - '*'
-      {{- if .DataCollection.Metrics.ControlPlane.Enable }}
+      {{- if .ControlPlane.Enable }}
       prometheus_sources:
        - url: 'https://kubernetes.default.svc:443/metrics'
          name: 'etcd-workqueue'

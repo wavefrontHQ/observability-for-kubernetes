@@ -16,19 +16,12 @@ func GetAppliedDaemonSet(metadataName string, toApply []client.Object) (appsv1.D
 	var daemonSet appsv1.DaemonSet
 	var found client.Object
 
-	for _, clientObject := range toApply {
-		if clientObject.GetObjectKind().GroupVersionKind().Kind == "DaemonSet" && clientObject.GetName() == metadataName {
-			found = clientObject
-		}
+	unstructuredObj, err := findUnstructured("DaemonSet", metadataName, toApply, found)
+	if err != nil {
+		return daemonSet, err
 	}
 
-	if found == nil {
-		return daemonSet, fmt.Errorf("DaemonSet with name:%s, not found", metadataName)
-	}
-
-	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
-
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &daemonSet)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &daemonSet)
 	if err != nil {
 		return daemonSet, err
 	}
@@ -40,19 +33,12 @@ func GetAppliedDeployment(metadataName string, toApply []client.Object) (appsv1.
 	var deployment appsv1.Deployment
 	var found client.Object
 
-	for _, clientObject := range toApply {
-		if clientObject.GetObjectKind().GroupVersionKind().Kind == "Deployment" && clientObject.GetName() == metadataName {
-			found = clientObject
-		}
+	unstructuredObj, err := findUnstructured("Deployment", metadataName, toApply, found)
+	if err != nil {
+		return deployment, err
 	}
 
-	if found == nil {
-		return deployment, fmt.Errorf("Deployment with name:%s, not found", metadataName)
-	}
-
-	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
-
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &deployment)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &deployment)
 	if err != nil {
 		return deployment, err
 	}
@@ -60,23 +46,50 @@ func GetAppliedDeployment(metadataName string, toApply []client.Object) (appsv1.
 	return deployment, nil
 }
 
+func GetAppliedService(metadataName string, toApply []client.Object) (v1.Service, error) {
+	var service v1.Service
+	var found client.Object
+
+	unstructuredObj, err := findUnstructured("Service", metadataName, toApply, found)
+	if err != nil {
+		return service, err
+	}
+
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &service)
+	if err != nil {
+		return service, err
+	}
+
+	return service, nil
+}
+
+func GetAppliedServiceAccount(metadataName string, toApply []client.Object) (v1.ServiceAccount, error) {
+	var serviceAccount v1.ServiceAccount
+	var found client.Object
+
+	unstructuredObj, err := findUnstructured("ServiceAccount", metadataName, toApply, found)
+	if err != nil {
+		return serviceAccount, err
+	}
+
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &serviceAccount)
+	if err != nil {
+		return serviceAccount, err
+	}
+
+	return serviceAccount, nil
+}
+
 func GetAppliedStatefulSet(metadataName string, toApply []client.Object) (appsv1.StatefulSet, error) {
 	var statefulSet appsv1.StatefulSet
 	var found client.Object
 
-	for _, clientObject := range toApply {
-		if clientObject.GetObjectKind().GroupVersionKind().Kind == "StatefulSet" && clientObject.GetName() == metadataName {
-			found = clientObject
-		}
+	unstructuredObj, err := findUnstructured("StatefulSet", metadataName, toApply, found)
+	if err != nil {
+		return statefulSet, err
 	}
 
-	if found == nil {
-		return statefulSet, fmt.Errorf("StatefulSet with name:%s, not found", metadataName)
-	}
-
-	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
-
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &statefulSet)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &statefulSet)
 	if err != nil {
 		return statefulSet, err
 	}
@@ -88,19 +101,12 @@ func GetAppliedConfigMap(metadataName string, toApply []client.Object) (v1.Confi
 	var configMap v1.ConfigMap
 	var found client.Object
 
-	for _, clientObject := range toApply {
-		if clientObject.GetObjectKind().GroupVersionKind().Kind == "ConfigMap" && clientObject.GetName() == metadataName {
-			found = clientObject
-		}
+	unstructuredObj, err := findUnstructured("ConfigMap", metadataName, toApply, found)
+	if err != nil {
+		return configMap, err
 	}
 
-	if found == nil {
-		return configMap, fmt.Errorf("ConfigMap with name:%s, not found", metadataName)
-	}
-
-	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
-
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &configMap)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &configMap)
 	if err != nil {
 		return configMap, err
 	}
@@ -112,24 +118,32 @@ func GetAppliedSecret(metadataName string, toApply []client.Object) (v1.Secret, 
 	var secret v1.Secret
 	var found client.Object
 
-	for _, clientObject := range toApply {
-		if clientObject.GetObjectKind().GroupVersionKind().Kind == "Secret" && clientObject.GetName() == metadataName {
-			found = clientObject
-		}
+	unstructuredObj, err := findUnstructured("Secret", metadataName, toApply, found)
+	if err != nil {
+		return secret, err
 	}
 
-	if found == nil {
-		return secret, fmt.Errorf("Secret with name:%s, not found", metadataName)
-	}
-
-	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
-
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &secret)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &secret)
 	if err != nil {
 		return secret, err
 	}
 
 	return secret, nil
+}
+
+func findUnstructured(kind, metadataName string, toApply []client.Object, found client.Object) (map[string]interface{}, error) {
+	for _, clientObject := range toApply {
+		if clientObject.GetObjectKind().GroupVersionKind().Kind == kind && clientObject.GetName() == metadataName {
+			found = clientObject
+		}
+	}
+
+	if found == nil {
+		return nil, fmt.Errorf("%s with name:%s, not found", kind, metadataName)
+	}
+
+	unstructuredObj, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(found)
+	return unstructuredObj, nil
 }
 
 func GetENVValue(name string, vars []v1.EnvVar) string {

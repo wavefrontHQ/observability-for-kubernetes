@@ -4,10 +4,10 @@ metadata:
   name: k8s-events-only-wavefront-collector-config
   namespace: {{ .Namespace }}
   annotations:
-    wavefront.com/conditionally-provision: '{{and (not .DataCollection.Metrics.Enable) .Experimental.KubernetesEvents.Enable }}'
+    wavefront.com/conditionally-provision: '{{ and (not .MetricsEnable) .KubernetesEvents.Enable }}'
 data:
   config.yaml: |
-    clusterName: {{.ClusterName}}
+    clusterName: {{ .ClusterName }}
     enableDiscovery: false
     defaultCollectionInterval: 10s
     flushInterval: 10s
@@ -16,7 +16,7 @@ data:
     sinks:
     - type: "external"
       enableEvents: true
-      externalEndpointURL: "{{ .Experimental.KubernetesEvents.ExternalEndpointURL }}"
+      externalEndpointURL: "{{ .KubernetesEvents.ExternalEndpointURL }}"
     events:
       filters:
         tagAllowListSets:

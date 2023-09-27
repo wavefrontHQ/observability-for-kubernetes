@@ -1,19 +1,26 @@
 {
-  "name": "Node CPU Overutilization",
+  "name": "Node Memory-request Saturation",
   "alertType": "THRESHOLD",
-  "additionalInformation": "Alert reports when a node's cpu utilization percentage is constantly high.",
+  "additionalInformation": "Alert reports when a node's memory-request saturation exceeds the specified threshold.",
   "alertChartUnits": "%",
   "alertSources": [
     {
       "name": "A",
-      "query": "round(sum(${B} by (sources, cluster, cluster_uuid, nodename, node_role)) * 100)",
+      "query": "round(sum(${B} by (sources, cluster, cluster_uuid, nodename, node_role)) / sum(${C} by (sources, cluster, cluster_uuid, nodename, node_role))  * 100)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "B",
-      "query": "ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"K8S_CLUSTER_NAME\")",
+      "query": "ts(\"kubernetes.node.memory.request\", cluster=\"K8S_CLUSTER_NAME\")",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "C",
+      "query": "ts(\"kubernetes.node.memory.node_allocatable\", cluster=\"K8S_CLUSTER_NAME\")",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -27,15 +34,14 @@
     },
     {
       "name": "Display Condition",
-      "query": "if(${A} >= 80, ${A})",
+      "query": "if(${A} >= 90, ${A})",
       "queryType": "WQL",
       "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "warn": "${A} >= 80",
-    "severe": "${A} >= 90"
+    "warn": "${A} >= 90"
   },
   "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
