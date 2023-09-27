@@ -1,20 +1,67 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
 metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
+  creationTimestamp: null
   name: pixie-sizer
   namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/log
+  verbs:
+  - list
+  - get
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
+  name: pixie-sizer
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie
+  name: pixie-sizer
+  namespace: observability-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pixie-sizer
+subjects:
+- kind: ServiceAccount
+  name: pixie-sizer
+  namespace: observability-system
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pixie-sizer-job
+  namespace: observability-system
+  labels:
+    app: wavefront
+    component: pixie
+    name: pixie-sizer-job
 spec:
-  selector:
-    matchLabels:
-      app: wavefront
-      component: pixie
-      name: pixie-sizer
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
   template:
     metadata:
       labels:
         app: wavefront
         component: pixie
-        name: pixie-sizer
+        name: pixie-sizer-job
     spec:
       containers:
       - envFrom:
@@ -62,6 +109,8 @@ spec:
             - ALL
           seccompProfile:
             type: RuntimeDefault
+      restartPolicy: OnFailure
+      serviceAccountName: pixie-sizer
       securityContext:
         fsGroup: 10100
         runAsGroup: 10100

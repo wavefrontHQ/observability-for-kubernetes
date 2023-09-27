@@ -11,7 +11,7 @@ IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 
 
 .PHONY: build
-build: build/pixie-sizer build/open_source_licenses.txt
+build: build/$(GOOS)/$(GOARCH)/pixie-sizer build/$(GOOS)/$(GOARCH)/open_source_licenses.txt
 
 .PHONY: build-image
 build-image:
@@ -20,22 +20,19 @@ build-image:
 	docker buildx create --use --node wavefront_pixie_sizer_builder
 	docker buildx build --platform linux/amd64,linux/arm64 --push --pull -t $(IMG) -f Dockerfile build
 
-.PHONY: deploy
-deploy: build-image
-
-
 .PHONY: build-deployment
 build-deployment: build-image
-	sed 's%image: projects.registry.vmware.com/tanzu_observability/pixie-sizer:VERSION%image: $(IMG)%g' deployment.yaml > build/deployment.yaml
+	sed 's%image: projects.registry.vmware.com/tanzu_observability/pixie-sizer:VERSION%image: $(IMG)%g' job.yaml > build/job.yaml
 
 .PHONY: deploy
 deploy: build-deployment
-	kubectl apply -f build/deployment.yaml
+	kubectl delete -f build/job.yaml || true
+	kubectl apply -f build/job.yaml
 
 
-build/pixie-sizer: main.go
+build/$(GOOS)/$(GOARCH)/pixie-sizer: main.go
 	CGO_ENABLED=0 go build -o build/$(GOOS)/$(GOARCH)/pixie-sizer ./...
 
-build/open_source_licenses.txt: open_source_licenses.txt
+build/$(GOOS)/$(GOARCH)/open_source_licenses.txt: open_source_licenses.txt
 	mkdir -p build/$(GOOS)/$(GOARCH)
 	cp open_source_licenses.txt build/$(GOOS)/$(GOARCH)

@@ -1527,12 +1527,6 @@ func TestReconcileHubPixie(t *testing.T) {
 
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "StatefulSet", "pl-nats"))
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
-		require.False(t, mockKM.PixieComponentContains(
-			"apps/v1", "DaemonSet", "vizier-pem",
-			"name: PL_TABLE_STORE_DATA_LIMIT_MB",
-			"name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT",
-			"name: PL_STIRLING_SOURCES",
-		))
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "kelvin"))
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "vizier-query-broker"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets"))

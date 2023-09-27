@@ -9,7 +9,6 @@ import (
 )
 
 func TestFromWavefront(t *testing.T) {
-
 	t.Run("valid wavefront spec config for hub enabled", func(t *testing.T) {
 		cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Hub.Enable = true
@@ -24,15 +23,20 @@ func TestFromWavefront(t *testing.T) {
 					Memory: "600Mi",
 				},
 			}
+			w.Spec.Experimental.Hub.Pixie.Pem.TableStoreLimits = wf.TableStoreLimits{
+				TotalMiB:          1,
+				HttpEventsPercent: 2,
+			}
 		})
 		config := FromWavefront(cr)
 		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
-		require.False(t, config.EnableOpAppsOptimization)
 		require.Equal(t, "", component.Validate().Message())
 		require.True(t, component.Validate().IsValid())
+		require.Equal(t, HubSources, config.StirlingSources)
 		require.Equal(t, cr.Spec.Experimental.Hub.Pixie.Pem.Resources, config.PemResources)
+		require.Equal(t, cr.Spec.Experimental.Hub.Pixie.Pem.TableStoreLimits, config.TableStoreLimits)
 	})
 
 	t.Run("component config enable should be set to false", func(t *testing.T) {
@@ -56,15 +60,20 @@ func TestFromWavefront(t *testing.T) {
 					Memory: "600Mi",
 				},
 			}
+			w.Spec.Experimental.Autotracing.Pem.TableStoreLimits = wf.TableStoreLimits{
+				TotalMiB:          1,
+				HttpEventsPercent: 2,
+			}
 		})
 		config := FromWavefront(cr)
 		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
-		require.True(t, config.EnableOpAppsOptimization)
 		require.Equal(t, "", component.Validate().Message())
 		require.True(t, component.Validate().IsValid())
+		require.Equal(t, AutoTracingSources, config.StirlingSources)
 		require.Equal(t, cr.Spec.Experimental.Autotracing.Pem.Resources, config.PemResources)
+		require.Equal(t, cr.Spec.Experimental.Autotracing.Pem.TableStoreLimits, config.TableStoreLimits)
 	})
 
 	t.Run("wavefront spec with autotracing and hub enabled", func(t *testing.T) {
@@ -81,6 +90,10 @@ func TestFromWavefront(t *testing.T) {
 					Memory: "600Mi",
 				},
 			}
+			w.Spec.Experimental.Autotracing.Pem.TableStoreLimits = wf.TableStoreLimits{
+				TotalMiB:          1,
+				HttpEventsPercent: 2,
+			}
 			w.Spec.Experimental.Hub.Enable = true
 			w.Spec.Experimental.Hub.Pixie.Enable = true
 			w.Spec.Experimental.Hub.Pixie.Pem.Resources = wf.Resources{
@@ -93,14 +106,20 @@ func TestFromWavefront(t *testing.T) {
 					Memory: "900Mi",
 				},
 			}
+			w.Spec.Experimental.Hub.Pixie.Pem.TableStoreLimits = wf.TableStoreLimits{
+				TotalMiB:          4,
+				HttpEventsPercent: 3,
+			}
 		})
 		config := FromWavefront(cr)
 		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
-		require.False(t, config.EnableOpAppsOptimization)
 		require.Equal(t, "", component.Validate().Message())
 		require.True(t, component.Validate().IsValid())
+		require.Equal(t, HubSources, config.StirlingSources)
 		require.Equal(t, cr.Spec.Experimental.Hub.Pixie.Pem.Resources, config.PemResources)
+		require.Equal(t, cr.Spec.Experimental.Hub.Pixie.Pem.TableStoreLimits, config.TableStoreLimits)
+		require.Equal(t, 0, config.MaxHTTPBodyBytes)
 	})
 }

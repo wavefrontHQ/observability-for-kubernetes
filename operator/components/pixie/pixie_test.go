@@ -17,12 +17,33 @@ var ComponentDir = os.DirFS(filepath.Join("..", DeployDir))
 func TestNewPixieComponent(t *testing.T) {
 	t.Run("create config hash", func(t *testing.T) {
 		config := validComponentConfig()
-		t.Log(os.Getwd())
 
 		component, err := NewComponent(ComponentDir, config)
 
 		require.NoError(t, err)
 		require.NotNil(t, component)
+	})
+
+	t.Run("default configuration", func(t *testing.T) {
+		component, _ := NewComponent(ComponentDir, validComponentConfig())
+		toApply, toDelete, err := component.Resources()
+
+		require.NoError(t, err)
+		require.NotEmpty(t, toApply)
+		require.Empty(t, toDelete)
+
+		// check all resources for component labels
+		test.RequireCommonLabels(t, toApply, "wavefront", "pixie", util.Namespace)
+
+		// cluster name configmap
+		configmap, err := test.GetAppliedConfigMap("pl-cloud-config", toApply)
+		require.NoError(t, err)
+		require.Equal(t, component.config.ClusterName, configmap.Data["PL_CLUSTER_NAME"])
+
+		secret, err := test.GetAppliedSecret("pl-cluster-secrets", toApply)
+		require.NoError(t, err)
+		require.Equal(t, component.config.ClusterName, secret.StringData["cluster-name"])
+		require.Equal(t, component.config.ClusterUUID, secret.StringData["cluster-id"])
 	})
 }
 
@@ -35,7 +56,7 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("empty disabled component config is valid", func(t *testing.T) {
-		config := ComponentConfig{Enable: false}
+		config := Config{Enable: false}
 		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
@@ -43,7 +64,7 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("empty enabled component config is not valid", func(t *testing.T) {
-		config := ComponentConfig{Enable: true}
+		config := Config{Enable: true}
 		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
@@ -89,65 +110,10 @@ func TestValidate(t *testing.T) {
 		require.False(t, result.IsValid())
 		require.Equal(t, "pixie: [invalid vizier-pem.resources.limits.memory must be set, invalid vizier-pem.resources.limits.cpu must be set]", result.Message())
 	})
-
 }
 
 func TestResources(t *testing.T) {
-	t.Run("default configuration", func(t *testing.T) {
-		component, _ := NewComponent(ComponentDir, validComponentConfig())
-		toApply, toDelete, err := component.Resources()
-
-		require.NoError(t, err)
-		require.NotEmpty(t, toApply)
-		require.Empty(t, toDelete)
-
-		// check all resources for component labels
-		test.RequireCommonLabels(t, toApply, "wavefront", "pixie", util.Namespace)
-
-		// cluster name configmap
-		configmap, err := test.GetAppliedConfigMap("pl-cloud-config", toApply)
-		require.NoError(t, err)
-		require.Equal(t, component.config.ClusterName, configmap.Data["PL_CLUSTER_NAME"])
-
-		secret, err := test.GetAppliedSecret("pl-cluster-secrets", toApply)
-		require.NoError(t, err)
-		require.Equal(t, component.config.ClusterName, secret.StringData["cluster-name"])
-		require.Equal(t, component.config.ClusterUUID, secret.StringData["cluster-id"])
-	})
-
-	t.Run("OpAppsOptimization is enabled", func(t *testing.T) {
-		config := validComponentConfig()
-		config.EnableOpAppsOptimization = true
-		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
-
-		require.NoError(t, err)
-
-		// vizier pem daemon set
-		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
-		require.NoError(t, err)
-		require.Equal(t, "150", test.GetENVValue("PL_TABLE_STORE_DATA_LIMIT_MB", ds.Spec.Template.Spec.Containers[0].Env))
-		require.Equal(t, "90", test.GetENVValue("PL_TABLE_STORE_HTTP_EVENTS_PERCENT", ds.Spec.Template.Spec.Containers[0].Env))
-		require.Equal(t, "kTracers", test.GetENVValue("PL_STIRLING_SOURCES", ds.Spec.Template.Spec.Containers[0].Env))
-	})
-
-	t.Run("OpAppsOptimization is not enabled", func(t *testing.T) {
-		config := validComponentConfig()
-		config.EnableOpAppsOptimization = false
-		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
-
-		require.NoError(t, err)
-
-		// vizier pem daemon set
-		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
-		require.NoError(t, err)
-		require.False(t, test.ENVVarExists("PL_TABLE_STORE_DATA_LIMIT_MB", ds.Spec.Template.Spec.Containers[0].Env))
-		require.False(t, test.ENVVarExists("PL_TABLE_STORE_HTTP_EVENTS_PERCENT", ds.Spec.Template.Spec.Containers[0].Env))
-		require.False(t, test.ENVVarExists("PL_STIRLING_SOURCES", ds.Spec.Template.Spec.Containers[0].Env))
-	})
-
-	t.Run("PemResources are set correctly", func(t *testing.T) {
+	t.Run("pem resources are configurable", func(t *testing.T) {
 		config := validComponentConfig()
 		config.PemResources.Requests.Memory = "500Mi"
 		config.PemResources.Requests.CPU = "50Mi"
@@ -167,18 +133,57 @@ func TestResources(t *testing.T) {
 		require.Equal(t, "1Gi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
 		require.Equal(t, "100Mi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
 	})
+
+	t.Run("table store limits are configurable", func(t *testing.T) {
+		config := validComponentConfig()
+		config.StirlingSources = []string{"a", "b", "c"}
+
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources()
+
+		require.NoError(t, err)
+
+		// vizier pem daemon set
+		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		require.NoError(t, err)
+		pemContainer := test.GetContainer("pem", ds.Spec.Template.Spec.Containers)
+		test.RequireEnv(t, "a,b,c", "PL_STIRLING_SOURCES", pemContainer)
+		test.RequireEnv(t, "1", "PL_TABLE_STORE_HTTP_EVENTS_PERCENT", pemContainer)
+		test.RequireEnv(t, "2", "PL_TABLE_STORE_DATA_LIMIT_MB", pemContainer)
+	})
+
+	t.Run("http limits are configurable", func(t *testing.T) {
+		config := validComponentConfig()
+		config.MaxHTTPBodyBytes = 128
+
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources()
+
+		require.NoError(t, err)
+
+		// vizier pem daemon set
+		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		require.NoError(t, err)
+		pemContainer := test.GetContainer("pem", ds.Spec.Template.Spec.Containers)
+		test.RequireEnv(t, "128", "PX_STIRLING_HTTP_BODY_LIMIT_BYTES", pemContainer)
+		test.RequireEnv(t, "128", "PL_STIRLING_MAX_BODY_BYTES", pemContainer)
+	})
 }
 
-func validComponentConfig() ComponentConfig {
-	return ComponentConfig{
-		Enable:                   true,
-		ControllerManagerUID:     "controller-manager-uid",
-		ClusterUUID:              "cluster-uuid",
-		ClusterName:              wftest.DefaultClusterName,
-		EnableOpAppsOptimization: true,
+func validComponentConfig() Config {
+	return Config{
+		Enable:               true,
+		ControllerManagerUID: "controller-manager-uid",
+		ClusterUUID:          "cluster-uuid",
+		ClusterName:          wftest.DefaultClusterName,
 		PemResources: wf.Resources{Limits: wf.Resource{
 			CPU:    "100Mi",
 			Memory: "1Gi",
 		}},
+		TableStoreLimits: wf.TableStoreLimits{
+			TotalMiB:          2,
+			HttpEventsPercent: 1,
+		},
+		StirlingSources: []string{"a", "b", "c"},
 	}
 }
