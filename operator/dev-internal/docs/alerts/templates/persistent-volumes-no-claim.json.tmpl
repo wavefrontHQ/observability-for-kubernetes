@@ -6,7 +6,7 @@
       "name": "Alert Condition",
       "query": "(mcount(5m, count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Available\"), sources, cluster, cluster_uuid, pv_name, phase)) >= 2)",
       "queryType": "WQL",
-      "alertSourceType": ["CONDITION"],
+      "alertSourceType": ["CONDITION", "VARIABLE"],
       "hidden": true
     },
     {
