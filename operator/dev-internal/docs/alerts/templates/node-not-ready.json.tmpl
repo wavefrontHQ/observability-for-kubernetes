@@ -6,6 +6,13 @@
   "alertSources": [
     {
       "name": "A",
+      "query": "msum(10m, ${B}) >= 10",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
       "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND condition=\"Ready\" AND status!=\"True\") by (sources, cluster, cluster_uuid, nodename, node_role))",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
