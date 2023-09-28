@@ -36,8 +36,7 @@ var natsServer = "pl-nats"
 var clientTLSCertFile = ""
 var clientTLSKeyFile = ""
 var tlsCAFile = ""
-var targetMinRetentionTime = 90 * time.Second
-var targetMaxRetentionTime = 180 * time.Second
+var trafficScaleFactor = 2.0
 var measureMinutes = 5
 
 func init() {
@@ -46,21 +45,27 @@ func init() {
 	RequireFromEnv("PL_CLIENT_TLS_CERT", ParseString, &clientTLSCertFile)
 	RequireFromEnv("PL_CLIENT_TLS_KEY", ParseString, &clientTLSKeyFile)
 	RequireFromEnv("PL_TLS_CA_CERT", ParseString, &tlsCAFile)
-	OptionalFromEnv("PS_TARGET_MIN_RETENTION_TIME", time.ParseDuration, &targetMinRetentionTime)
-	OptionalFromEnv("PS_TARGET_MAX_RETENTION_TIME", time.ParseDuration, &targetMaxRetentionTime)
+	OptionalFromEnv("PS_TRAFFIC_SCALE_FACTOR", ParseFloat64, &trafficScaleFactor)
 	OptionalFromEnv("PS_MEASURE_MINUTES", ParseInt, &measureMinutes)
 }
 
 func main() {
-	client, err := getClient()
+	log.Printf("traffic scale factor: %f", trafficScaleFactor)
+	client, err := GetClient()
 	if err != nil {
 		log.Fatalf("error getting kuberntes client: %s", err.Error())
 	}
+	cronScripts, err := GetConfigMapsByLabel(client, namespace, "purpose=cron-script")
+	if err != nil {
+		log.Fatalf("error fetching cron scripts: %s", err.Error())
+	}
+	targetRetentionTime := GetMaxFrequencyFromCronScripts(cronScripts)
 	natsConn, err := nats.Connect(natsServer, nats.ClientCert(clientTLSCertFile, clientTLSKeyFile), nats.RootCAs(tlsCAFile))
 	if err != nil {
 		log.Fatalf("error creating nats connection: %s", err)
 	}
-	natsMsgs := make(chan *nats.Msg)
+	log.Printf("minimum target retention time: %s", targetRetentionTime.String())
+	natsMsgs := make(chan *nats.Msg, 1024)
 	subscription, err := natsConn.ChanSubscribe(NatsMetricsChannel, natsMsgs)
 	if err != nil {
 		log.Fatalf("error creating nats subscriptions to Metrics topic: %s", err)
@@ -69,79 +74,78 @@ func main() {
 	httpTableSizeStore := NewValueStore[BytesPerSecond](measureMinutes)
 	otherTableSizeStore := NewValueStore[BytesPerSecond](measureMinutes)
 	tableCountStore := NewValueStore[int](measureMinutes)
-	timer := time.NewTimer(time.Duration(measureMinutes) * time.Minute)
-MainLoop:
-	for {
-		select {
-		case <-timer.C:
-			break MainLoop
-		case natsMsg := <-natsMsgs:
-			var metricsMsg messagespb.MetricsMessage
-			err := proto.Unmarshal(natsMsg.Data, &metricsMsg)
+	go func() {
+		for {
+			time.Sleep(time.Duration(measureMinutes) * time.Minute / 2)
+			pemPods, err := GetPodsByLabel(client, namespace, "name=vizier-pem")
 			if err != nil {
-				log.Fatalf("invalid metrics message: %s", err)
+				log.Fatalf("error listing PEMs: %s", err.Error())
 			}
-			if !strings.HasPrefix(metricsMsg.GetPodName(), "vizier-pem") {
+			maxMissedRowBatchSize := GetMaxMissedRowBatchSize(pemPods, client)
+			log.Printf("max missed row batch size: %d", maxMissedRowBatchSize)
+			scaledRetentionTime := ScaleDuration(trafficScaleFactor, targetRetentionTime)
+			tableCount := tableCountStore.MaxValue()
+			tableStoreLimit := CalculatePEMTableStoreLimit(
+				tableCount,
+				MaxNumber(maxMissedRowBatchSize, CalculatePerTableSize(otherTableSizeStore.MaxValue(), scaledRetentionTime)),
+				0,
+				0,
+				MaxNumber(maxMissedRowBatchSize, CalculatePerTableSize(httpTableSizeStore.MaxValue(), scaledRetentionTime)),
+			)
+			log.Printf("recommended table store size for %d tables: %s", tableCount, tableStoreLimit)
+		}
+	}()
+	for natsMsg := range natsMsgs {
+		var metricsMsg messagespb.MetricsMessage
+		err := proto.Unmarshal(natsMsg.Data, &metricsMsg)
+		if err != nil {
+			log.Fatalf("invalid metrics message: %s", err)
+		}
+		if !strings.HasPrefix(metricsMsg.GetPodName(), "vizier-pem") {
+			continue
+		}
+		//log.Println("received metrics from pod", metricsMsg.GetPodName())
+		buf := bytes.NewReader([]byte(metricsMsg.GetPromMetricsText()))
+		metricsFamilies, err := (&expfmt.TextParser{}).TextToMetricFamilies(buf)
+		if err != nil {
+			log.Fatalf("invalid prometheus metrics: %s", err)
+		}
+		metricFamily := metricsFamilies[retentionTimeNsMetricName]
+		now := time.Now()
+		tableCountStore.Record(now, len(metricFamily.GetMetric()))
+		for _, retentionNs := range metricFamily.GetMetric() {
+			tableName := LabelValue(retentionNs, "name")
+			retention := retentionNs.GetGauge().GetValue() / float64(time.Second)
+			if retention == 0.0 {
 				continue
 			}
-			log.Println("received metrics from pod", metricsMsg.GetPodName())
-			buf := bytes.NewReader([]byte(metricsMsg.GetPromMetricsText()))
-			metricsFamilies, err := (&expfmt.TextParser{}).TextToMetricFamilies(buf)
-			if err != nil {
-				log.Fatalf("invalid prometheus metrics: %s", err)
-			}
-			metricFamily := metricsFamilies[retentionTimeNsMetricName]
-			now := time.Now()
-			tableCountStore.Record(now, len(metricFamily.GetMetric()))
-			for _, retentionNs := range metricFamily.GetMetric() {
-				tableName := LabelValue(retentionNs, "name")
-				retention := retentionNs.GetGauge().GetValue() / float64(time.Second)
-				if retention == 0.0 {
-					continue
-				}
-				coldBytes := FindMetricByTableName(metricsFamilies[colBytesMetricName].GetMetric(), tableName).GetGauge().GetValue()
-				hotBytes := FindMetricByTableName(metricsFamilies[hotBytesMetricName].GetMetric(), tableName).GetGauge().GetValue()
-				bytesPerSecond := (hotBytes + coldBytes) / retention
-				if tableName == "http_events" {
-					httpTableSizeStore.Record(now, bytesPerSecond)
-				} else {
-					otherTableSizeStore.Record(now, bytesPerSecond)
-				}
+			coldBytes := FindMetricByTableName(metricsFamilies[colBytesMetricName].GetMetric(), tableName).GetGauge().GetValue()
+			hotBytes := FindMetricByTableName(metricsFamilies[hotBytesMetricName].GetMetric(), tableName).GetGauge().GetValue()
+			bytesPerSecond := (hotBytes + coldBytes) / retention
+			if tableName == "http_events" {
+				httpTableSizeStore.Record(now, bytesPerSecond)
+			} else {
+				otherTableSizeStore.Record(now, bytesPerSecond)
 			}
 		}
 	}
-	pemPods, err := getPodsByLabel(client, namespace, "name=vizier-pem")
-	if err != nil {
-		log.Fatalf("error listing PEMs: %s", err.Error())
-	}
+}
+
+func GetMaxMissedRowBatchSize(pemPods []corev1.Pod, client kubernetes.Interface) Bytes {
 	var maxMissedRowBatchSize Bytes
 	for _, pemPod := range pemPods {
-		rowBatchSizeErrors, err := extractFromPodLogs(client, pemPod, ExtractRowBatchSizeError)
+		rowBatchSizeErrors, err := ExtractFromPodLogs(client, pemPod, ExtractRowBatchSizeError)
 		if err != nil {
 			log.Fatalf("error extracting row batch size errors: %s", err.Error())
 		}
-		for _, rowBatchSizeError := range rowBatchSizeErrors {
+		if len(rowBatchSizeErrors) <= 1 { // you get one missed row batch at startup, but nothing else
+			continue
+		}
+		for _, rowBatchSizeError := range rowBatchSizeErrors[1:] {
 			maxMissedRowBatchSize = MaxNumber(rowBatchSizeError.RowBatchSize, maxMissedRowBatchSize)
 		}
 	}
-	log.Printf("max missed row batch size: %d", maxMissedRowBatchSize)
-	tableCount := tableCountStore.MaxValue()
-	tableStoreLimitMin := CalculatePEMTableStoreLimit(
-		tableCount,
-		MaxNumber(maxMissedRowBatchSize, CalculatePerTableSize(otherTableSizeStore.MaxValue(), targetMinRetentionTime)),
-		0,
-		0,
-		MaxNumber(maxMissedRowBatchSize, CalculatePerTableSize(httpTableSizeStore.MaxValue(), targetMinRetentionTime)),
-	)
-	tableStoreLimitMax := CalculatePEMTableStoreLimit(
-		tableCount,
-		MaxNumber(maxMissedRowBatchSize, CalculatePerTableSize(otherTableSizeStore.MaxValue(), targetMaxRetentionTime)),
-		0,
-		0,
-		MaxNumber(maxMissedRowBatchSize, CalculatePerTableSize(httpTableSizeStore.MaxValue(), targetMaxRetentionTime)),
-	)
-	log.Printf("smallest recommended table store size for %d tables: %s", tableCount, tableStoreLimitMin)
-	log.Printf("largest recommended table store size for %d tables: %s", tableCount, tableStoreLimitMax)
+	return maxMissedRowBatchSize
 }
 
 func RequireFromEnv[T any](envName string, parse func(string) (T, error), value *T) {
@@ -174,6 +178,10 @@ func ParseInt(s string) (int, error) {
 		return 0, err
 	}
 	return int(i), nil
+}
+
+func ParseFloat64(s string) (float64, error) {
+	return strconv.ParseFloat(s, 64)
 }
 
 func ParseString(s string) (string, error) {
@@ -226,10 +234,10 @@ func CalculatePEMTableStoreLimit(numTables int, otherTableSize Bytes, stirlingEr
 	memoryLimit := MiB(math.Ceil(
 		float64(otherTableSize*(numTables-4)+httpSize+stirlingErrorsSize+procExitEventsSize) / (1024.0 * 1024.0),
 	))
-	memoryLimit = MiB(math.Ceil(float64(memoryLimit)/10.0) * 10.0)
+	//memoryLimit = MiB(math.Ceil(float64(memoryLimit)/10.0) * 10.0)
 	return PEMTableStoreLimit{
 		Total: memoryLimit,
-		HTTP:  Percent(5.0 * math.Ceil(float64(httpSize)/float64(memoryLimit*1024.0*1024.0)*100/5.0)),
+		HTTP:  Percent(math.Ceil(float64(httpSize) / float64(memoryLimit*1024.0*1024.0) * 100)),
 	}
 }
 
@@ -319,7 +327,7 @@ func (s *NumberStore[V]) PercentileValue(percentile float64) V {
 	return (values[low] + values[high]) / V(2)
 }
 
-func getClient() (kubernetes.Interface, error) {
+func GetClient() (kubernetes.Interface, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("error in getting config: %s", err.Error())
@@ -331,7 +339,7 @@ func getClient() (kubernetes.Interface, error) {
 	return clientset, nil
 }
 
-func getPodsByLabel(client kubernetes.Interface, namespace string, labelSelector string) ([]corev1.Pod, error) {
+func GetPodsByLabel(client kubernetes.Interface, namespace string, labelSelector string) ([]corev1.Pod, error) {
 	podList, err := client.CoreV1().Pods(namespace).List(context.Background(), v1.ListOptions{
 		LabelSelector: labelSelector,
 	})
@@ -341,7 +349,36 @@ func getPodsByLabel(client kubernetes.Interface, namespace string, labelSelector
 	return podList.Items, nil
 }
 
-func extractFromPodLogs[T any](client kubernetes.Interface, pod corev1.Pod, extract func(string) (T, bool)) ([]T, error) {
+func GetConfigMapsByLabel(client kubernetes.Interface, namespace string, labelSelector string) ([]corev1.ConfigMap, error) {
+	cmList, err := client.CoreV1().ConfigMaps(namespace).List(context.Background(), v1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetching pods by label (%s) in ns %s: %s", labelSelector, namespace, err.Error())
+	}
+	return cmList.Items, nil
+}
+
+var cronYAMLFrequencyRegex = regexp.MustCompile(`(?m)frequency_s:\s*(\d+)$`)
+
+func GetMaxFrequencyFromCronScripts(configMaps []corev1.ConfigMap) time.Duration {
+	maxFrequencyS := 0
+	for _, configMap := range configMaps {
+		cronYAML := configMap.Data["cron.yaml"]
+		match := cronYAMLFrequencyRegex.FindStringSubmatch(cronYAML)
+		if len(match) == 0 {
+			continue
+		}
+		cronFrequencyS, err := ParseInt(match[1])
+		if err != nil {
+			panic(err)
+		}
+		maxFrequencyS = MaxNumber(maxFrequencyS, cronFrequencyS)
+	}
+	return time.Duration(maxFrequencyS) * time.Second
+}
+
+func ExtractFromPodLogs[T any](client kubernetes.Interface, pod corev1.Pod, extract func(string) (T, bool)) ([]T, error) {
 	podLogOpts := corev1.PodLogOptions{}
 	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
 	podLogs, err := req.Stream(context.Background())
@@ -392,4 +429,8 @@ func MaxNumber[T Number](a, b T) T {
 		return b
 	}
 	return a
+}
+
+func ScaleDuration(s float64, d time.Duration) time.Duration {
+	return time.Duration(s * float64(d))
 }

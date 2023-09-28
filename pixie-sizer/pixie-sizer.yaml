@@ -16,6 +16,12 @@ rules:
   verbs:
   - list
   - get
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - list
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -43,28 +49,40 @@ subjects:
   name: pixie-sizer
   namespace: observability-system
 ---
-apiVersion: batch/v1
-kind: Job
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: pixie-sizer-job
+  name: pixie-sizer
   namespace: observability-system
   labels:
     app: wavefront
     component: pixie
     name: pixie-sizer-job
 spec:
-  backoffLimit: 1
-  completions: 1
-  parallelism: 1
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wavefront
+      component: pixie
+      name: pixie-sizer
   template:
     metadata:
       labels:
         app: wavefront
         component: pixie
-        name: pixie-sizer-job
+        name: pixie-sizer
     spec:
       containers:
-      - envFrom:
+      - env:
+        - name: PS_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: PS_TRAFFIC_SCALE_FACTOR # the factor by which network traffic throughput will scale from its min to its max (i.e. 2.0 means that the max is twice as much as the min)
+          value: "1.0"
+        - name: PS_MEASURE_MINUTES
+          value: "60"
+        envFrom:
         - configMapRef:
             name: pl-tls-config
         image: projects.registry.vmware.com/tanzu_observability/pixie-sizer:VERSION
@@ -109,7 +127,6 @@ spec:
             - ALL
           seccompProfile:
             type: RuntimeDefault
-      restartPolicy: OnFailure
       serviceAccountName: pixie-sizer
       securityContext:
         fsGroup: 10100

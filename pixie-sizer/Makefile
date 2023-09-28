@@ -22,15 +22,16 @@ build-image:
 
 .PHONY: build-deployment
 build-deployment: build-image
-	sed 's%image: projects.registry.vmware.com/tanzu_observability/pixie-sizer:VERSION%image: $(IMG)%g' job.yaml > build/job.yaml
+	sed 's%image: projects.registry.vmware.com/tanzu_observability/pixie-sizer:VERSION%image: $(IMG)%g' pixie-sizer.yaml > build/pixie-sizer.yaml
 
 .PHONY: deploy
 deploy: build-deployment
-	kubectl delete -f build/job.yaml || true
-	kubectl apply -f build/job.yaml
+	kubectl delete -f build/pixie-sizer.yaml || true
+	kubectl apply -f build/pixie-sizer.yaml
 
 
-build/$(GOOS)/$(GOARCH)/pixie-sizer: $(shell go list -deps -f '{{ $$dir := .Dir }}{{ range .GoFiles }}{{ $$dir }}/{{.}}{{"\n"}}{{ end }}' ./...)
+.PHONY: build/$(GOOS)/$(GOARCH)/pixie-sizer
+build/$(GOOS)/$(GOARCH)/pixie-sizer:
 	CGO_ENABLED=0 go build -o build/$(GOOS)/$(GOARCH)/pixie-sizer ./...
 
 build/$(GOOS)/$(GOARCH)/open_source_licenses.txt: open_source_licenses.txt
