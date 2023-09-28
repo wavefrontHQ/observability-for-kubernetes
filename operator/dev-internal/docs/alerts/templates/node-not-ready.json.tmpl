@@ -1,19 +1,19 @@
 {
-  "name": "Node Not Ready",
+  "name": "Node Condition Not Ready",
   "alertType": "THRESHOLD",
   "additionalInformation": "",
   "alertChartUnits": "",
   "alertSources": [
     {
       "name": "A",
-      "query": "mcount(10m, ${B}) >= 10",
+      "query": "mcount(5m, ${B}) >= 2",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "B",
-      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND condition=\"Ready\" AND status!=\"True\") by (sources, cluster, cluster_uuid, nodename, node_role))",
+      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND condition=\"Ready\" AND status!=\"True\") by (sources, cluster, cluster_uuid, nodename, node_role, condition, status))",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
