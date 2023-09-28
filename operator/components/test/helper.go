@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -44,6 +45,40 @@ func GetAppliedDeployment(metadataName string, toApply []client.Object) (appsv1.
 	}
 
 	return deployment, nil
+}
+
+func GetAppliedJob(metadataName string, toApply []client.Object) (batchv1.Job, error) {
+	var job batchv1.Job
+	var found client.Object
+
+	unstructuredObj, err := findUnstructured("Job", metadataName, toApply, found)
+	if err != nil {
+		return job, err
+	}
+
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &job)
+	if err != nil {
+		return job, err
+	}
+
+	return job, nil
+}
+
+func GetAppliedPVC(metadataName string, toApply []client.Object) (v1.PersistentVolumeClaim, error) {
+	var pvc v1.PersistentVolumeClaim
+	var found client.Object
+
+	unstructuredObj, err := findUnstructured("PersistentVolumeClaim", metadataName, toApply, found)
+	if err != nil {
+		return pvc, err
+	}
+
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &pvc)
+	if err != nil {
+		return pvc, err
+	}
+
+	return pvc, nil
 }
 
 func GetAppliedService(metadataName string, toApply []client.Object) (v1.Service, error) {

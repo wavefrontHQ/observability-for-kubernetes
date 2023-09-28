@@ -109,12 +109,81 @@ func TestResources(t *testing.T) {
 		require.Equal(t, component.config.ClusterName, secret.StringData["cluster-name"])
 		require.Equal(t, component.config.ClusterUUID, secret.StringData["cluster-id"])
 
-		configmap, err := test.GetAppliedConfigMap("pl-cloud-config", toApply)
+		serviceAccount, err := test.GetAppliedServiceAccount("metadata-service-account", toApply)
 		require.NoError(t, err)
-		require.Equal(t, component.config.ClusterName, configmap.Data["PL_CLUSTER_NAME"])
+		require.NotEmpty(t, serviceAccount)
 
+		serviceAccount, err = test.GetAppliedServiceAccount("pl-cert-provisioner-service-account", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, serviceAccount)
 
-		// TODO: test for all 20 resources?
+		serviceAccount, err = test.GetAppliedServiceAccount("query-broker-service-account", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, serviceAccount)
+
+		configMap, err := test.GetAppliedConfigMap("pl-tls-config", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, configMap)
+
+		service, err := test.GetAppliedService("kelvin-service", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		service, err = test.GetAppliedService("vizier-metadata-svc", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		service, err = test.GetAppliedService("vizier-query-broker-svc", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		pvc, err := test.GetAppliedPVC("metadata-pv-claim", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, pvc)
+
+		deployment, err := test.GetAppliedDeployment("kelvin", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, deployment)
+
+		deployment, err = test.GetAppliedDeployment("vizier-query-broker", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, deployment)
+
+		statefulSet, err := test.GetAppliedStatefulSet("vizier-metadata", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, statefulSet)
+
+		daemonSet, err := test.GetAppliedDaemonSet("vizier-pem", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, daemonSet)
+
+		job, err := test.GetAppliedJob("cert-provisioner-job", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, job)
+
+		configMap, err = test.GetAppliedConfigMap("pl-cloud-config", toApply)
+		require.NoError(t, err)
+		require.Equal(t, component.config.ClusterName, configMap.Data["PL_CLUSTER_NAME"])
+
+		configMap, err = test.GetAppliedConfigMap("pl-cluster-config", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, configMap)
+
+		configMap, err = test.GetAppliedConfigMap("nats-config", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, configMap)
+
+		service, err = test.GetAppliedService("pl-nats", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		service, err = test.GetAppliedService("pl-nats-mgmt", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		statefulSet, err = test.GetAppliedStatefulSet("pl-nats", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, statefulSet)
 	})
 
 	t.Run("OpAppsOptimization is enabled", func(t *testing.T) {
