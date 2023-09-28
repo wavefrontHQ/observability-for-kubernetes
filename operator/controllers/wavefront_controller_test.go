@@ -1708,7 +1708,6 @@ func TestReconcileInsightsByRuntimeSecret(t *testing.T) {
 		require.False(t, mockKM.ProxyDeploymentContains())
 	})
 
-	// TODO: move over tests to collector component test
 	t.Run("wavefront CR config overrides aria insights secret", func(t *testing.T) {
 		cr := wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Insights.Enable = true

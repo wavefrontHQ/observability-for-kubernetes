@@ -98,21 +98,23 @@ func TestResources(t *testing.T) {
 		toApply, toDelete, err := component.Resources()
 
 		require.NoError(t, err)
-		require.NotEmpty(t, toApply)
+		require.Equal(t, 20, len(toApply))
 		require.Empty(t, toDelete)
 
 		// check all resources for component labels
 		test.RequireCommonLabels(t, toApply, "wavefront", "pixie", util.Namespace)
 
-		// cluster name configmap
-		configmap, err := test.GetAppliedConfigMap("pl-cloud-config", toApply)
-		require.NoError(t, err)
-		require.Equal(t, component.config.ClusterName, configmap.Data["PL_CLUSTER_NAME"])
-
 		secret, err := test.GetAppliedSecret("pl-cluster-secrets", toApply)
 		require.NoError(t, err)
 		require.Equal(t, component.config.ClusterName, secret.StringData["cluster-name"])
 		require.Equal(t, component.config.ClusterUUID, secret.StringData["cluster-id"])
+
+		configmap, err := test.GetAppliedConfigMap("pl-cloud-config", toApply)
+		require.NoError(t, err)
+		require.Equal(t, component.config.ClusterName, configmap.Data["PL_CLUSTER_NAME"])
+
+
+		// TODO: test for all 20 resources?
 	})
 
 	t.Run("OpAppsOptimization is enabled", func(t *testing.T) {
