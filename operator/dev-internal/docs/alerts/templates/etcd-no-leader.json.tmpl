@@ -12,29 +12,22 @@
       "hidden": true
     },
     {
-      "name": "B",
-      "query": "count(${A}) - sum(${A})",
-      "queryType": "WQL",
-      "alertSourceType": ["VARIABLE"],
-      "hidden": true
-    },
-    {
       "name": "Alert Condition",
-      "query": "${B}",
+      "query": "${A}",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
     },
     {
       "name": "Display Condition",
-      "query": "if(${B} > 0, ${B})",
+      "query": "if(${A} < 1, ${A})",
       "queryType": "WQL",
       "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "info": "${B} > 0"
+    "severe": "${A} < 1"
   },
   "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
