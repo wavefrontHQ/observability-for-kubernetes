@@ -474,7 +474,7 @@ func defaultWFCR() *wf.Wavefront {
 		Spec: wf.WavefrontSpec{
 			ClusterName:          "testClusterName",
 			WavefrontTokenSecret: "testWavefrontSecret",
-			WavefrontUrl:         "testWavefrontUrl",
+			WavefrontURL:         "testWavefrontUrl",
 			Namespace:            testNamespace,
 			DataExport: wf.DataExport{
 				WavefrontProxy: wf.WavefrontProxy{

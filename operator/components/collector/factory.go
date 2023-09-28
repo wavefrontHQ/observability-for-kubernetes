@@ -29,7 +29,7 @@ func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 		Tags:    cr.Spec.DataCollection.Metrics.Tags,
 		KubernetesEvents: KubernetesEvents{
 			Enable:              cr.Spec.Experimental.Insights.Enable,
-			ExternalEndpointURL: cr.Spec.Experimental.Insights.ExternalEndpointURL,
+			ExternalEndpointURL: cr.Spec.Experimental.Insights.IngestionURL,
 			SecretName:          cr.Spec.Experimental.Insights.SecretName,
 		},
 		ControlPlane:    cr.Spec.DataCollection.Metrics.ControlPlane,

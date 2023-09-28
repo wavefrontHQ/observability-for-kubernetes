@@ -57,17 +57,17 @@ func preProcessDataExport(client crClient.Client, wfSpec *wf.WavefrontSpec) erro
 		if err != nil {
 			return err
 		}
-	} else if len(wfSpec.DataExport.ExternalWavefrontProxy.Url) != 0 {
+	} else if len(wfSpec.DataExport.ExternalWavefrontProxy.URL) != 0 {
 		wfSpec.CanExportData = true
-		wfSpec.DataCollection.Metrics.ProxyAddress = wfSpec.DataExport.ExternalWavefrontProxy.Url
+		wfSpec.DataCollection.Metrics.ProxyAddress = wfSpec.DataExport.ExternalWavefrontProxy.URL
 
-		if strings.HasPrefix(wfSpec.DataExport.ExternalWavefrontProxy.Url, "http") {
-			wfSpec.DataCollection.Logging.ProxyAddress = wfSpec.DataExport.ExternalWavefrontProxy.Url
+		if strings.HasPrefix(wfSpec.DataExport.ExternalWavefrontProxy.URL, "http") {
+			wfSpec.DataCollection.Logging.ProxyAddress = wfSpec.DataExport.ExternalWavefrontProxy.URL
 			// The endpoint for collector requires it to be in the hostname:port format
 			wfSpec.DataCollection.Metrics.ProxyAddress = strings.TrimPrefix(wfSpec.DataCollection.Metrics.ProxyAddress, "http://")
 		} else {
 			// The endpoint for logging requires the http:// prefix
-			wfSpec.DataCollection.Logging.ProxyAddress = fmt.Sprintf("http://%s", wfSpec.DataExport.ExternalWavefrontProxy.Url)
+			wfSpec.DataCollection.Logging.ProxyAddress = fmt.Sprintf("http://%s", wfSpec.DataExport.ExternalWavefrontProxy.URL)
 		}
 	}
 
@@ -161,8 +161,8 @@ func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		if len(secret.Data["k8s-events-endpoint-token"]) == 0 {
 			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' is missing Data 'k8s-events-endpoint-token'", secret.Name)
 		}
-		if len(wfSpec.Experimental.Insights.ExternalEndpointURL) == 0 {
-			wfSpec.Experimental.Insights.ExternalEndpointURL = string(secret.Data["k8s-events-endpoint-url"])
+		if len(wfSpec.Experimental.Insights.IngestionURL) == 0 {
+			wfSpec.Experimental.Insights.IngestionURL = string(secret.Data["k8s-events-endpoint-url"])
 		}
 		wfSpec.Experimental.Insights.Enable = true
 		wfSpec.Experimental.Insights.SecretName = secret.Name

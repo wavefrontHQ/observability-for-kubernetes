@@ -168,7 +168,7 @@ func TestReconcileAll(t *testing.T) {
 	t.Run("doesn't create any resources if wavefront spec is invalid", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Enable = true
-			w.Spec.DataExport.ExternalWavefrontProxy.Url = "http://some_url.com"
+			w.Spec.DataExport.ExternalWavefrontProxy.URL = "http://some_url.com"
 		}), nil)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -778,7 +778,7 @@ func TestReconcileProxy(t *testing.T) {
 	t.Run("does not create proxy when it is configured to use an external proxy", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Enable = false
-			w.Spec.DataExport.ExternalWavefrontProxy.Url = "https://example.com"
+			w.Spec.DataExport.ExternalWavefrontProxy.URL = "https://example.com"
 		}), nil, wftest.Proxy(wftest.WithReplicas(0, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -796,7 +796,7 @@ func TestReconcileProxy(t *testing.T) {
 	t.Run("updates proxy and service", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.WavefrontTokenSecret = "updatedToken"
-			w.Spec.WavefrontUrl = "updatedUrl"
+			w.Spec.WavefrontURL = "updatedUrl"
 		}), nil)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
@@ -1337,7 +1337,7 @@ func TestReconcileLogging(t *testing.T) {
 	t.Run("Verify external wavefront proxy url without http specified in URL", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Enable = false
-			w.Spec.DataExport.ExternalWavefrontProxy.Url = "my-proxy:8888"
+			w.Spec.DataExport.ExternalWavefrontProxy.URL = "my-proxy:8888"
 		}), nil)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
@@ -1712,7 +1712,7 @@ func TestReconcileInsightsByRuntimeSecret(t *testing.T) {
 	t.Run("wavefront CR config overrides aria insights secret", func(t *testing.T) {
 		cr := wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Insights.Enable = true
-			wavefront.Spec.Experimental.Insights.ExternalEndpointURL = "https://example.com"
+			wavefront.Spec.Experimental.Insights.IngestionURL = "https://example.com"
 			wavefront.Spec.DataExport.WavefrontProxy.Enable = false
 			wavefront.Spec.DataCollection.Metrics.Enable = false
 			wavefront.Spec.DataCollection.Logging.Enable = false
@@ -1743,7 +1743,7 @@ func TestReconcileInsightsByRuntimeSecret(t *testing.T) {
 
 		require.True(t, mockKM.ConfigMapContains(
 			"k8s-events-only-wavefront-collector-config",
-			fmt.Sprintf("externalEndpointURL: \"%s\"", cr.Spec.Experimental.Insights.ExternalEndpointURL),
+			fmt.Sprintf("externalEndpointURL: \"%s\"", cr.Spec.Experimental.Insights.IngestionURL),
 		))
 		require.True(t, mockKM.ClusterCollectorDeploymentContains("name: "+ariaInsightsSecret.Name))
 	})
@@ -1753,7 +1753,7 @@ func TestReconcileInsightsCR(t *testing.T) {
 	t.Run("can enable K8s events only", func(t *testing.T) {
 		cr := wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Insights.Enable = true
-			wavefront.Spec.Experimental.Insights.ExternalEndpointURL = "https://example.com"
+			wavefront.Spec.Experimental.Insights.IngestionURL = "https://example.com"
 			wavefront.Spec.DataExport.WavefrontProxy.Enable = false
 			wavefront.Spec.DataCollection.Metrics.Enable = false
 			wavefront.Spec.DataCollection.Logging.Enable = false
@@ -1791,7 +1791,7 @@ func TestReconcileInsightsCR(t *testing.T) {
 	t.Run("can enable external K8s events and WF metrics with yaml spec", func(t *testing.T) {
 		cr := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Insights.Enable = true
-			w.Spec.Experimental.Insights.ExternalEndpointURL = "https://example.com"
+			w.Spec.Experimental.Insights.IngestionURL = "https://example.com"
 		})
 		r, mockKM := componentScenario(cr, nil, &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{

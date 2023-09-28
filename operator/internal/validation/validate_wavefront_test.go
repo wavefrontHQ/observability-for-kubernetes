@@ -25,7 +25,7 @@ func TestValidate(t *testing.T) {
 
 	t.Run("wf spec is invalid", func(t *testing.T) {
 		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
+		wfCR.Spec.DataExport.ExternalWavefrontProxy.URL = "https://testproxy.com"
 		appsV1 := setup()
 		result := Validate(appsV1, wfCR)
 		require.False(t, result.IsValid())
@@ -95,7 +95,7 @@ func TestValidate(t *testing.T) {
 	t.Run("legacy install if only metrics is enabled", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
 		wfCR := wftest.CR(func(w *wf.Wavefront) {
-			w.Spec.DataExport.ExternalWavefrontProxy.Url = "myproxy.com"
+			w.Spec.DataExport.ExternalWavefrontProxy.URL = "myproxy.com"
 			w.Spec.DataExport.WavefrontProxy.Enable = false
 			w.Spec.DataCollection.Logging.Enable = false
 		})
@@ -118,7 +118,7 @@ func TestValidate(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
 		wfCR := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Insights.Enable = true
-			w.Spec.Experimental.Insights.ExternalEndpointURL = "my.endpoint.com"
+			w.Spec.Experimental.Insights.IngestionURL = "my.endpoint.com"
 		})
 		result := Validate(appsV1, wfCR)
 		require.True(t, result.IsValid())
@@ -143,13 +143,13 @@ func TestValidateWavefrontSpec(t *testing.T) {
 
 	t.Run("Validation error when both wavefront proxy and external proxy are defined", func(t *testing.T) {
 		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
+		wfCR.Spec.DataExport.ExternalWavefrontProxy.URL = "https://testproxy.com"
 		require.Equal(t, "'externalWavefrontProxy.url' and 'wavefrontProxy.enable' should not be set at the same time", validateWavefrontSpec(wfCR).Error())
 	})
 
 	t.Run("Validation error wavefront url is required", func(t *testing.T) {
 		wfCR := defaultWFCR()
-		wfCR.Spec.WavefrontUrl = ""
+		wfCR.Spec.WavefrontURL = ""
 		validationError := validateWavefrontSpec(wfCR)
 		require.NotNilf(t, validationError, "expected validation error")
 		require.Equal(t, "'wavefrontUrl' should be set", validationError.Error())
@@ -157,7 +157,7 @@ func TestValidateWavefrontSpec(t *testing.T) {
 
 	t.Run("Validation error wavefront url is not required when proxy is not enabled", func(t *testing.T) {
 		wfCR := defaultWFCR()
-		wfCR.Spec.WavefrontUrl = ""
+		wfCR.Spec.WavefrontURL = ""
 		wfCR.Spec.DataCollection.Metrics.Enable = false
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
 		validationError := validateWavefrontSpec(wfCR)
@@ -167,7 +167,7 @@ func TestValidateWavefrontSpec(t *testing.T) {
 	t.Run("Validation error when auto instrumentation in enabled and an external proxy is configured", func(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
-		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
+		wfCR.Spec.DataExport.ExternalWavefrontProxy.URL = "https://testproxy.com"
 		wfCR.Spec.Experimental.Autotracing.Enable = true
 		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled.", validateWavefrontSpec(wfCR).Error())
 	})
@@ -211,7 +211,7 @@ func TestValidateWavefrontSpec(t *testing.T) {
 	t.Run("Test No Proxy configuration with kubernetes events and metrics enabled", func(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
-		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = ""
+		wfCR.Spec.DataExport.ExternalWavefrontProxy.URL = ""
 		wfCR.Spec.Experimental.Insights.Enable = true
 		wfCR.Spec.DataCollection.Metrics.Enable = true
 		validationError := validateWavefrontSpec(wfCR)
@@ -221,7 +221,7 @@ func TestValidateWavefrontSpec(t *testing.T) {
 	t.Run("Test External Proxy configuration", func(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
-		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://external-wf-proxy"
+		wfCR.Spec.DataExport.ExternalWavefrontProxy.URL = "https://external-wf-proxy"
 		require.Empty(t, validateWavefrontSpec(wfCR))
 	})
 }
@@ -506,7 +506,7 @@ func defaultWFCR() *wf.Wavefront {
 		},
 		Spec: wf.WavefrontSpec{
 			ClusterName:  "testClusterName",
-			WavefrontUrl: "testWavefrontUrl",
+			WavefrontURL: "testWavefrontUrl",
 			DataExport: wf.DataExport{
 				WavefrontProxy: wf.WavefrontProxy{
 					Enable: true,
