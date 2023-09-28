@@ -26,7 +26,7 @@ func TestNewLoggingComponent(t *testing.T) {
 	})
 }
 
-func TestProcessAndValidate(t *testing.T) {
+func TestValidate(t *testing.T) {
 	t.Run("valid component config", func(t *testing.T) {
 		config := validLoggingComponentConfig()
 		loggingComponent, _ := NewComponent(ComponentDir, config)

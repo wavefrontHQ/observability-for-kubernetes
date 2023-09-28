@@ -172,63 +172,16 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled.", validateWavefrontSpec(wfCR).Error())
 	})
 
-	t.Run("Validation error when CPU request is greater than CPU limit", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Requests.CPU = "500m"
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Limits.CPU = "200m"
-		require.Equal(t, "invalid spec.dataExport.wavefrontProxy.resources.requests.cpu: 500m must be less than or equal to cpu limit", validateWavefrontSpec(wfCR).Error())
-	})
-
-	t.Run("CPU expressed differently should not be an error", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Requests.CPU = "500m"
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Limits.CPU = "0.5"
-		require.Nilf(t, validateWavefrontSpec(wfCR), "did not expect validation error")
-	})
-
-	t.Run("Validation error when Memory request is greater than Memory limit", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Requests.Memory = "500Mi"
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Limits.Memory = "200Mi"
-		validationError := validateWavefrontSpec(wfCR)
-		require.NotNilf(t, validationError, "expected validation error")
-		require.Equal(t, "invalid spec.dataExport.wavefrontProxy.resources.requests.memory: 500Mi must be less than or equal to memory limit", validationError.Error())
-	})
-
-	t.Run("Validation error when EphemeralStorage request is greater than limit", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Requests.EphemeralStorage = "1Gi"
-		wfCR.Spec.DataExport.WavefrontProxy.Resources.Limits.EphemeralStorage = "500Mi"
-		validationError := validateWavefrontSpec(wfCR)
-		require.NotNilf(t, validationError, "expected validation error")
-		require.Equal(t, "invalid spec.dataExport.wavefrontProxy.resources.requests.ephemeral-storage: 1Gi must be less than or equal to ephemeral-storage limit", validationError.Error())
-	})
-
-	t.Run("Validation error om node collector resources", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataCollection.Metrics.NodeCollector.Resources.Requests.CPU = "500m"
-		wfCR.Spec.DataCollection.Metrics.NodeCollector.Resources.Limits.CPU = "200m"
-		require.Equal(t, "invalid spec.dataCollection.metrics.nodeCollector.resources.requests.cpu: 500m must be less than or equal to cpu limit", validateWavefrontSpec(wfCR).Error())
-	})
-
-	t.Run("Validation error on cluster collector resources", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataCollection.Metrics.ClusterCollector.Resources.Requests.Memory = "500Mi"
-		wfCR.Spec.DataCollection.Metrics.ClusterCollector.Resources.Limits.Memory = "200Mi"
-		validationError := validateWavefrontSpec(wfCR)
-		require.NotNilf(t, validationError, "expected validation error")
-		require.Equal(t, "invalid spec.dataCollection.metrics.clusterCollector.resources.requests.memory: 500Mi must be less than or equal to memory limit", validationError.Error())
-	})
-
 	t.Run("Test multiple errors", func(t *testing.T) {
 		wfCR := defaultWFCR()
-		wfCR.Spec.DataCollection.Metrics.ClusterCollector.Resources.Requests.Memory = "500Mi"
-		wfCR.Spec.DataCollection.Metrics.ClusterCollector.Resources.Limits.Memory = "200Mi"
-		wfCR.Spec.DataCollection.Metrics.ClusterCollector.Resources.Requests.CPU = "500m"
-		wfCR.Spec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU = "200m"
+		wfCR.Spec.Experimental.Autotracing.Enable = true
+		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
+		wfCR.Spec.DataCollection.Metrics.Enable = true
+		wfCR.Spec.Experimental.KubernetesEvents.Enable = true
+		wfCR.Spec.DataCollection.Metrics.CustomConfig = "fake custom config"
 		validationError := validateWavefrontSpec(wfCR)
 		require.NotNilf(t, validationError, "expected validation error")
-		require.Equal(t, "[invalid spec.dataCollection.metrics.clusterCollector.resources.requests.cpu: 500m must be less than or equal to cpu limit, invalid spec.dataCollection.metrics.clusterCollector.resources.requests.memory: 500Mi must be less than or equal to memory limit]", validationError.Error())
+		require.Equal(t, "[invalid proxy configuration: either set dataExport.proxy.enable to true or configure dataExport.externalWavefrontProxy.url, 'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled., 'metrics.customConfig' must not be set when the 'experimental.kubernetesEvents.enable' is enabled.]", validationError.Error())
 	})
 
 	t.Run("Test No Proxy configuration", func(t *testing.T) {

@@ -102,14 +102,9 @@ test: manifests generate fmt vet ## Run tests.
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
 	go build -ldflags "$(LDFLAGS)" -o build/$(GOOS)/$(GOARCH)/manager main.go
-	rm -rf build/$(GOOS)/$(GOARCH)/deploy
-	cp -r deploy build/$(GOOS)/$(GOARCH)
 	rm -rf build/$(GOOS)/$(GOARCH)/components
 	find components -type f -name "*.yaml" | xargs dirname | uniq | xargs -I{} mkdir -p build/$(GOOS)/$(GOARCH)/{}
 	find components -type f -name "*.yaml" | xargs -I{} /bin/bash -c 'cp {} build/$(GOOS)/$(GOARCH)/$$(dirname {})'
-	@if [ ${ALLOW_AUTO_INSTRUMENTATION} != true ]; then \
-    	rm -rf build/$(GOOS)/$(GOARCH)/deploy/internal/pixie; \
-	fi
 	cp open_source_licenses.txt build/
 
 .PHONY: clean

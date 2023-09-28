@@ -5,4 +5,4 @@ metadata:
   namespace: {{ .Namespace }}
   annotations:
     service.beta.openshift.io/inject-cabundle: "true"
-    wavefront.com/conditionally-provision: '{{ and .DataCollection.Metrics.ControlPlane.Enable .Openshift }}'
+    wavefront.com/conditionally-provision: '{{ and .ControlPlane.Enable .Openshift }}'

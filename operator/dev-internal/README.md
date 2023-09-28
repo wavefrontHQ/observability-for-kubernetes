@@ -179,6 +179,8 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Node CPU Overutilization](docs/alerts/templates/node-cpu-overutilization.json.tmpl)               | Node has high CPU utilization. |
 | [Node Filesystem Overutilization](docs/alerts/templates/node-filesystem-overutilization.json.tmpl) | Node storage is almost full. |
 | [Node Not Ready](docs/alerts/templates/node-not-ready.json.tmpl)                                   | Node Condition not in Ready state. |
+| [Node CPU-request Saturation](docs/alerts/templates/node-cpu-request-saturation.json.tmpl) | Node has overcommitted cpu resource requests. |
+| [Node Memory-request Saturation](docs/alerts/templates/node-memory-request-saturation.json.tmpl) | Node has overcommitted memory resource requests. |
 
 ## Bring Your Own Logs Shipper
 

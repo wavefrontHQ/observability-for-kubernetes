@@ -158,7 +158,7 @@ spec:
                         default:
                           resources:
                             limits:
-                              cpu: 400m
+                              cpu: 2000m
                               ephemeral-storage: 1Gi
                               memory: 512Mi
                             requests:
@@ -297,7 +297,7 @@ spec:
                         default:
                           resources:
                             limits:
-                              cpu: 200m
+                              cpu: 1000m
                               ephemeral-storage: 512Mi
                               memory: 256Mi
                             requests:
