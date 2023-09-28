@@ -80,3 +80,11 @@ services:
     command: "python3 /opt/le-mans/scripts/echo-server.py 8000"
     volumes:
     - "./scripts:/opt/le-mans/scripts"
+  fdb:
+    image: foundationdb/foundationdb:7.1.37
+    ports:
+    - $FDB_PORT:$FDB_PORT/tcp
+    environment:
+      FDB_NETWORKING_MODE: host
+      FDB_COORDINATOR_PORT: $FDB_PORT
+      FDB_PORT: $FDB_PORT

@@ -1,5 +1,6 @@
 .PHONY=dockerize-lemans start-lemans clean stop-lemans tmp/dbconfig
 LM_VERSION=1.0.11-SNAPSHOT
+FDB_PORT=4550
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/
 
 tmp:
@@ -9,7 +10,7 @@ start-lemans: tmp/le_mans_csp_client_id tmp/le_mans_csp_client_secret dockerize-
 	@CSP_CLIENT_ID='$(shell cat tmp/le_mans_csp_client_id)' CSP_CLIENT_SECRET='$(shell cat tmp/le_mans_csp_client_secret)' docker compose up --abort-on-container-exit
 
 stop-lemans:
-	@CSP_CLIENT_ID="" CSP_CLIENT_SECRET="" docker compose down
+	@CSP_CLIENT_ID="" CSP_CLIENT_SECRET="" FDB_PORT="${FDB_PORT}" docker compose down
 
 dockerize-lemans: le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar le-mans/docker/resources/base/lib le-mans/docker/gateway/base/lib
 	cp le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar le-mans/docker/resources/base/lib/le-mans-resources.jar
@@ -25,6 +26,11 @@ dockerize-wf-proxy: wavefront-proxy
 
 wavefront-proxy:
 	git clone --branch k8ssaas-2475-push-metrics-to-le-mans git@github.com:wavefrontHQ/wavefront-proxy.git
+
+start-fdb:
+	echo "docker:docker@127.0.0.1:${FDB_PORT}" > tmp/fdb.cluster
+	FDB_PORT="${FDB_PORT}" docker-compose up -d fdb
+	fdbcli -C tmp/fdb.cluster --exec "configure new single memory"
 
 test-proxy: wavefront-proxy
 	mvn -f wavefront-proxy/proxy test
