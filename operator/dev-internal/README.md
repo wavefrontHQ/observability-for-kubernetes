@@ -173,11 +173,12 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 
 ### Node Failures
 
-| Alert name | Description |
-|---|---|
-| [Node Memory Overutilization](docs/alerts/templates/node-memory-overutilization.json.tmpl) | Node has high memory utilization. |
-| [Node CPU Overutilization](docs/alerts/templates/node-cpu-overutilization.json.tmpl) | Node has high CPU utilization. |
+| Alert name                                                                                         | Description |
+|----------------------------------------------------------------------------------------------------|---|
+| [Node Memory Overutilization](docs/alerts/templates/node-memory-overutilization.json.tmpl)         | Node has high memory utilization. |
+| [Node CPU Overutilization](docs/alerts/templates/node-cpu-overutilization.json.tmpl)               | Node has high CPU utilization. |
 | [Node Filesystem Overutilization](docs/alerts/templates/node-filesystem-overutilization.json.tmpl) | Node storage is almost full. |
+| [Node Not Ready](docs/alerts/templates/node-not-ready.json.tmpl)                                   | Node storage is almost full. |
 
 ## Bring Your Own Logs Shipper
 

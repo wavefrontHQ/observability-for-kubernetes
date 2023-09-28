@@ -6,7 +6,7 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "msum(10m, ${B}) >= 10",
+      "query": "mcount(10m, ${B}) >= 10",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
