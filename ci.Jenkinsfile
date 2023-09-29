@@ -135,6 +135,9 @@ pipeline {
 
     stage('Run Integration Tests') {
       when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
+      options {
+        lock resource: 'shared_resource_lock'
+      }
       environment {
         OPERATOR_YAML_TYPE="rc"
         TOKEN = credentials('GITHUB_TOKEN')
@@ -160,16 +163,14 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            lock("integration-test-gke-collector") {
-              /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'make gke-connect-to-cluster'
+            /* Setup */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'make gke-connect-to-cluster'
 
-              /* Collector Integration Tests */
-              sh 'make clean-cluster'
-              sh 'make -C collector integration-test'
-            }
+            /* Collector Integration Tests */
+            sh 'make clean-cluster'
+            sh 'make -C collector integration-test'
           }
         }
 
@@ -188,16 +189,14 @@ pipeline {
             INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
           }
           steps {
-            lock("integration-test-gke-operator-1") {
-              /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh './ci/jenkins/get-or-create-cluster.sh'
+            /* Setup */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh './ci/jenkins/get-or-create-cluster.sh'
 
-              /* Operator Integration Tests */
-              sh 'make clean-cluster'
-              sh 'make -C operator integration-test'
-            }
+            /* Operator Integration Tests */
+            sh 'make clean-cluster'
+            sh 'make -C operator integration-test'
           }
         }
 
@@ -216,16 +215,14 @@ pipeline {
             INTEGRATION_TEST_ARGS="-r common-metrics -r proxy-preprocessor -r logging-integration -r allow-legacy-install"
           }
           steps {
-            lock("integration-test-gke-operator-2") {
-              /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh './ci/jenkins/get-or-create-cluster.sh'
+            /* Setup */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh './ci/jenkins/get-or-create-cluster.sh'
 
-              /* Operator Integration Tests */
-              sh 'make clean-cluster'
-              sh 'make -C operator integration-test'
-            }
+            /* Operator Integration Tests */
+            sh 'make clean-cluster'
+            sh 'make -C operator integration-test'
           }
         }
 
@@ -244,16 +241,14 @@ pipeline {
             INTEGRATION_TEST_ARGS="-r advanced -r with-http-proxy -r control-plane"
           }
           steps {
-            lock("integration-test-gke-operator-3") {
-              /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh './ci/jenkins/get-or-create-cluster.sh'
+            /* Setup */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh './ci/jenkins/get-or-create-cluster.sh'
 
-              /* Operator Integration Tests */
-              sh 'make clean-cluster'
-              sh 'make -C operator integration-test'
-            }
+            /* Operator Integration Tests */
+            sh 'make clean-cluster'
+            sh 'make -C operator integration-test'
           }
         }
 
@@ -273,20 +268,18 @@ pipeline {
             INTEGRATION_TEST_BUILD = "ci"
           }
           steps {
-            lock("integration-test-eks") {
-              /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'make target-eks'
+            /* Setup */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'make target-eks'
 
-              /* Collector Integration Tests */
-              sh 'make clean-cluster'
-              sh 'make -C collector integration-test'
+            /* Collector Integration Tests */
+            sh 'make clean-cluster'
+            sh 'make -C collector integration-test'
 
-              /* Operator Integration Tests */
-              sh 'make clean-cluster'
-              sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"'
-            }
+            /* Operator Integration Tests */
+            sh 'make clean-cluster'
+            sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"'
           }
         }
 
@@ -305,21 +298,19 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            lock("integration-test-aks") {
-              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                /* Setup */
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-                sh 'kubectl config use k8po-ci'
+            withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+              /* Setup */
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+              sh 'kubectl config use k8po-ci'
 
-                /* Collector Integration Tests */
-                sh 'make clean-cluster'
-                sh 'make -C collector integration-test'
+              /* Collector Integration Tests */
+              sh 'make clean-cluster'
+              sh 'make -C collector integration-test'
 
-                /* Operator Integration Tests */
-                sh 'make clean-cluster'
-                sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics"'
-              }
+              /* Operator Integration Tests */
+              sh 'make clean-cluster'
+              sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics"'
             }
           }
         }
