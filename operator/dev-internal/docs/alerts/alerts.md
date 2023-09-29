@@ -16,6 +16,7 @@ We have alert templates on common Kubernetes issues.
 
 | Alert | Template |
 |---|---|
+| [Detect if observability status is unhealthy](templates/observability-status-unhealthy.json.tmpl) | `observability-status-unhealthy.json.tmpl` |
 | [Detect pod stuck in pending](templates/pod-stuck-in-pending.json.tmpl) | `pod-stuck-in-pending.json.tmpl` |
 | [Detect pod stuck in terminating](templates/pod-stuck-in-terminating.json.tmpl) | `pod-stuck-in-terminating.json.tmpl` |
 | [Detect pod backoff event](templates/pod-backoff-event.json.tmpl) | `pod-backoff-event.json.tmpl` |
