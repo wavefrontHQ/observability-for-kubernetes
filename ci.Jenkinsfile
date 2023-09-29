@@ -134,33 +134,33 @@ pipeline {
     }
 
     stage('Run Integration Tests') {
-      lock("integration-tests") {
-        when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
-        environment {
-          OPERATOR_YAML_TYPE="rc"
-          TOKEN = credentials('GITHUB_TOKEN')
-          METRICS_RETRY_COUNT = "${params.METRICS_RETRY_COUNT}"
-        }
-        // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
-        // But we want to make sure that the combined and default integration tests are run on both
-        parallel {
-          stage("GKE Collector") {
-            agent {
-              label "gke-integration-worker"
-            }
-            options {
-              timeout(time: 60, unit: 'MINUTES')
-            }
-            environment {
-              GCP_CREDS = credentials("GCP_CREDS")
-              GCP_PROJECT = "wavefront-gcp-dev"
-              GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
-              GCP_ZONE="a"
-              DOCKER_IMAGE = "kubernetes-collector"
-              INTEGRATION_TEST_ARGS="all"
-              INTEGRATION_TEST_BUILD="ci"
-            }
-            steps {
+      when { beforeAgent true; expression { return env.RUN_CI == 'true' } }
+      environment {
+        OPERATOR_YAML_TYPE="rc"
+        TOKEN = credentials('GITHUB_TOKEN')
+        METRICS_RETRY_COUNT = "${params.METRICS_RETRY_COUNT}"
+      }
+      // To save time, the integration tests and wavefront-metrics tests are split up between gke and eks
+      // But we want to make sure that the combined and default integration tests are run on both
+      parallel {
+        stage("GKE Collector") {
+          agent {
+            label "gke-integration-worker"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_PROJECT = "wavefront-gcp-dev"
+            GKE_CLUSTER_NAME = "k8po-jenkins-ci-zone-a"
+            GCP_ZONE="a"
+            DOCKER_IMAGE = "kubernetes-collector"
+            INTEGRATION_TEST_ARGS="all"
+            INTEGRATION_TEST_BUILD="ci"
+          }
+          steps {
+            lock("integration-test-gke-collector") {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -171,22 +171,24 @@ pipeline {
               sh 'make -C collector integration-test'
             }
           }
+        }
 
-          stage("GKE Operator 1") {
-            agent {
-              label "gke-operator-worker-1"
-            }
-            options {
-              timeout(time: 60, unit: 'MINUTES')
-            }
-            environment {
-              GCP_CREDS = credentials("GCP_CREDS")
-              GCP_PROJECT = "wavefront-gcp-dev"
-              GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-1"
-              GCP_ZONE="a"
-              INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
-            }
-            steps {
+        stage("GKE Operator 1") {
+          agent {
+            label "gke-operator-worker-1"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_PROJECT = "wavefront-gcp-dev"
+            GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-1"
+            GCP_ZONE="a"
+            INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
+          }
+          steps {
+            lock("integration-test-gke-operator-1") {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -197,22 +199,24 @@ pipeline {
               sh 'make -C operator integration-test'
             }
           }
+        }
 
-          stage("GKE Operator 2") {
-            agent {
-              label "gke-operator-worker-2"
-            }
-            options {
-              timeout(time: 60, unit: 'MINUTES')
-            }
-            environment {
-              GCP_CREDS = credentials("GCP_CREDS")
-              GCP_PROJECT = "wavefront-gcp-dev"
-              GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-2"
-              GCP_ZONE="a"
-              INTEGRATION_TEST_ARGS="-r common-metrics -r proxy-preprocessor -r logging-integration -r allow-legacy-install"
-            }
-            steps {
+        stage("GKE Operator 2") {
+          agent {
+            label "gke-operator-worker-2"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_PROJECT = "wavefront-gcp-dev"
+            GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-2"
+            GCP_ZONE="a"
+            INTEGRATION_TEST_ARGS="-r common-metrics -r proxy-preprocessor -r logging-integration -r allow-legacy-install"
+          }
+          steps {
+            lock("integration-test-gke-operator-2") {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -223,22 +227,24 @@ pipeline {
               sh 'make -C operator integration-test'
             }
           }
+        }
 
-          stage("GKE Operator 3") {
-            agent {
-              label "gke-operator-worker-3"
-            }
-            options {
-              timeout(time: 60, unit: 'MINUTES')
-            }
-            environment {
-              GCP_CREDS = credentials("GCP_CREDS")
-              GCP_PROJECT = "wavefront-gcp-dev"
-              GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-3"
-              GCP_ZONE="a"
-              INTEGRATION_TEST_ARGS="-r advanced -r with-http-proxy -r control-plane"
-            }
-            steps {
+        stage("GKE Operator 3") {
+          agent {
+            label "gke-operator-worker-3"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            GCP_PROJECT = "wavefront-gcp-dev"
+            GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-3"
+            GCP_ZONE="a"
+            INTEGRATION_TEST_ARGS="-r advanced -r with-http-proxy -r control-plane"
+          }
+          steps {
+            lock("integration-test-gke-operator-3") {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -249,23 +255,25 @@ pipeline {
               sh 'make -C operator integration-test'
             }
           }
+        }
 
-          stage("EKS") {
-            agent {
-              label "eks-integration-worker"
-            }
-            options {
-              timeout(time: 60, unit: 'MINUTES')
-            }
-            environment {
-              GCP_CREDS = credentials("GCP_CREDS")
-              DOCKER_IMAGE = "kubernetes-collector"
-              AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
-              AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
-              INTEGRATION_TEST_ARGS = "all"
-              INTEGRATION_TEST_BUILD = "ci"
-            }
-            steps {
+        stage("EKS") {
+          agent {
+            label "eks-integration-worker"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            DOCKER_IMAGE = "kubernetes-collector"
+            AWS_SHARED_CREDENTIALS_FILE = credentials("k8po-ci-aws-creds")
+            AWS_CONFIG_FILE = credentials("k8po-ci-aws-profile")
+            INTEGRATION_TEST_ARGS = "all"
+            INTEGRATION_TEST_BUILD = "ci"
+          }
+          steps {
+            lock("integration-test-eks") {
               /* Setup */
               sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
               sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
@@ -280,22 +288,24 @@ pipeline {
               sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"'
             }
           }
+        }
 
-          stage("AKS") {
-            agent {
-              label "aks-integration-worker"
-            }
-            options {
-              timeout(time: 60, unit: 'MINUTES')
-            }
-            environment {
-              GCP_CREDS = credentials("GCP_CREDS")
-              AKS_CLUSTER_NAME = "k8po-ci"
-              DOCKER_IMAGE = "kubernetes-collector"
-              INTEGRATION_TEST_ARGS="all"
-              INTEGRATION_TEST_BUILD="ci"
-            }
-            steps {
+        stage("AKS") {
+          agent {
+            label "aks-integration-worker"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          environment {
+            GCP_CREDS = credentials("GCP_CREDS")
+            AKS_CLUSTER_NAME = "k8po-ci"
+            DOCKER_IMAGE = "kubernetes-collector"
+            INTEGRATION_TEST_ARGS="all"
+            INTEGRATION_TEST_BUILD="ci"
+          }
+          steps {
+            lock("integration-test-aks") {
               withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
                 /* Setup */
                 sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
