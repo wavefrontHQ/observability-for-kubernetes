@@ -104,7 +104,6 @@ func main() {
 		if !strings.HasPrefix(metricsMsg.GetPodName(), "vizier-pem") {
 			continue
 		}
-		//log.Println("received metrics from pod", metricsMsg.GetPodName())
 		buf := bytes.NewReader([]byte(metricsMsg.GetPromMetricsText()))
 		metricsFamilies, err := (&expfmt.TextParser{}).TextToMetricFamilies(buf)
 		if err != nil {
@@ -215,8 +214,8 @@ type Bytes = int
 
 type Percent = int
 
-func CalculatePerTableSize(maxBytesPerSecond BytesPerSecond, targetRetention time.Duration) Bytes {
-	return Bytes(math.Ceil(maxBytesPerSecond * targetRetention.Seconds()))
+func CalculatePerTableSize(maxBytesPerSecond BytesPerSecond, targetRetention time.Duration) MiB {
+	return MiB(math.Ceil(maxBytesPerSecond * targetRetention.Seconds() / (1024.0 * 1024.0)))
 }
 
 type PEMTableStoreLimit struct {
@@ -228,16 +227,16 @@ func (l PEMTableStoreLimit) String() string {
 	return fmt.Sprintf("http=%d%%, total=%d MiB", l.HTTP, l.Total)
 }
 
-func CalculatePEMTableStoreLimit(numTables int, otherTableSize Bytes, stirlingErrorsSize Bytes, procExitEventsSize Bytes, httpSize Bytes) PEMTableStoreLimit {
+func CalculatePEMTableStoreLimit(numTables int, otherTableSize MiB, stirlingErrorsSize Bytes, procExitEventsSize Bytes, httpSize MiB) PEMTableStoreLimit {
 	// from pem_manager.cc:101
 	// GIVEN: otherTableSize = (memoryLimit - httpSize - stirlingErrorsSize - procExitEventsSize) / (numTables - 4)
 	memoryLimit := MiB(math.Ceil(
-		float64(otherTableSize*(numTables-4)+httpSize+stirlingErrorsSize+procExitEventsSize) / (1024.0 * 1024.0),
+		float64(otherTableSize)*float64(numTables-4) + float64(httpSize) + float64(stirlingErrorsSize+procExitEventsSize)/(1024.0*1024.0),
 	))
 	//memoryLimit = MiB(math.Ceil(float64(memoryLimit)/10.0) * 10.0)
 	return PEMTableStoreLimit{
 		Total: memoryLimit,
-		HTTP:  Percent(math.Ceil(float64(httpSize) / float64(memoryLimit*1024.0*1024.0) * 100)),
+		HTTP:  Percent(math.Ceil(float64(httpSize) / float64(memoryLimit) * 100.0)),
 	}
 }
 
