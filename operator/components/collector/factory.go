@@ -7,7 +7,7 @@ import (
 func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 	config := ComponentConfig{
 		// required
-		Enable:                    (cr.Spec.CanExportData && cr.Spec.DataCollection.Metrics.Enable || cr.Spec.Experimental.KubernetesEvents.Enable),
+		Enable:                    (cr.Spec.CanExportData && cr.Spec.DataCollection.Metrics.Enable || cr.Spec.Experimental.Insights.Enable),
 		MetricsEnable:             cr.Spec.CanExportData && cr.Spec.DataCollection.Metrics.Enable,
 		CustomConfig:              cr.Spec.DataCollection.Metrics.CustomConfig,
 		ControllerManagerUID:      cr.Spec.ControllerManagerUID,
@@ -28,9 +28,9 @@ func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 		Filters: cr.Spec.DataCollection.Metrics.Filters,
 		Tags:    cr.Spec.DataCollection.Metrics.Tags,
 		KubernetesEvents: KubernetesEvents{
-			Enable:              cr.Spec.Experimental.KubernetesEvents.Enable,
-			ExternalEndpointURL: cr.Spec.Experimental.KubernetesEvents.ExternalEndpointURL,
-			SecretName:          cr.Spec.Experimental.KubernetesEvents.SecretName,
+			Enable:       cr.Spec.Experimental.Insights.Enable,
+			IngestionUrl: cr.Spec.Experimental.Insights.IngestionUrl,
+			SecretName:   cr.Spec.Experimental.Insights.SecretName,
 		},
 		ControlPlane:    cr.Spec.DataCollection.Metrics.ControlPlane,
 		Openshift:       cr.Spec.Openshift,

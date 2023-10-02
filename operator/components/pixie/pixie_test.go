@@ -98,21 +98,92 @@ func TestResources(t *testing.T) {
 		toApply, toDelete, err := component.Resources()
 
 		require.NoError(t, err)
-		require.NotEmpty(t, toApply)
+		require.Equal(t, 20, len(toApply))
 		require.Empty(t, toDelete)
 
 		// check all resources for component labels
 		test.RequireCommonLabels(t, toApply, "wavefront", "pixie", util.Namespace)
 
-		// cluster name configmap
-		configmap, err := test.GetAppliedConfigMap("pl-cloud-config", toApply)
-		require.NoError(t, err)
-		require.Equal(t, component.config.ClusterName, configmap.Data["PL_CLUSTER_NAME"])
-
-		secret, err := test.GetAppliedSecret("pl-cluster-secrets", toApply)
+		secret, err := test.GetSecret("pl-cluster-secrets", toApply)
 		require.NoError(t, err)
 		require.Equal(t, component.config.ClusterName, secret.StringData["cluster-name"])
 		require.Equal(t, component.config.ClusterUUID, secret.StringData["cluster-id"])
+
+		serviceAccount, err := test.GetServiceAccount("metadata-service-account", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, serviceAccount)
+
+		serviceAccount, err = test.GetServiceAccount("pl-cert-provisioner-service-account", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, serviceAccount)
+
+		serviceAccount, err = test.GetServiceAccount("query-broker-service-account", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, serviceAccount)
+
+		configMap, err := test.GetConfigMap("pl-tls-config", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, configMap)
+
+		service, err := test.GetService("kelvin-service", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		service, err = test.GetService("vizier-metadata-svc", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		service, err = test.GetService("vizier-query-broker-svc", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		pvc, err := test.GetPersistentVolumeClaim("metadata-pv-claim", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, pvc)
+
+		deployment, err := test.GetDeployment("kelvin", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, deployment)
+
+		deployment, err = test.GetDeployment("vizier-query-broker", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, deployment)
+
+		statefulSet, err := test.GetStatefulSet("vizier-metadata", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, statefulSet)
+
+		daemonSet, err := test.GetDaemonSet("vizier-pem", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, daemonSet)
+
+		job, err := test.GetJob("cert-provisioner-job", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, job)
+
+		configMap, err = test.GetConfigMap("pl-cloud-config", toApply)
+		require.NoError(t, err)
+		require.Equal(t, component.config.ClusterName, configMap.Data["PL_CLUSTER_NAME"])
+
+		configMap, err = test.GetConfigMap("pl-cluster-config", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, configMap)
+
+		configMap, err = test.GetConfigMap("nats-config", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, configMap)
+
+		service, err = test.GetService("pl-nats", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		service, err = test.GetService("pl-nats-mgmt", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		statefulSet, err = test.GetStatefulSet("pl-nats", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, statefulSet)
 	})
 
 	t.Run("OpAppsOptimization is enabled", func(t *testing.T) {
@@ -124,7 +195,7 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 
 		// vizier pem daemon set
-		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		ds, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
 		require.Equal(t, "150", test.GetENVValue("PL_TABLE_STORE_DATA_LIMIT_MB", ds.Spec.Template.Spec.Containers[0].Env))
 		require.Equal(t, "90", test.GetENVValue("PL_TABLE_STORE_HTTP_EVENTS_PERCENT", ds.Spec.Template.Spec.Containers[0].Env))
@@ -140,7 +211,7 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 
 		// vizier pem daemon set
-		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		ds, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
 		require.False(t, test.ENVVarExists("PL_TABLE_STORE_DATA_LIMIT_MB", ds.Spec.Template.Spec.Containers[0].Env))
 		require.False(t, test.ENVVarExists("PL_TABLE_STORE_HTTP_EVENTS_PERCENT", ds.Spec.Template.Spec.Containers[0].Env))
@@ -160,7 +231,7 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 
 		// vizier pem daemon set
-		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		ds, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
 		require.Equal(t, "500Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
 		require.Equal(t, "50Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
