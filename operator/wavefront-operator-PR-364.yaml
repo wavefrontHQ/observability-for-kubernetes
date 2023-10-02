@@ -165,7 +165,7 @@ spec:
                         default:
                           resources:
                             limits:
-                              cpu: 400m
+                              cpu: 2000m
                               ephemeral-storage: 1Gi
                               memory: 512Mi
                             requests:
@@ -304,7 +304,7 @@ spec:
                         default:
                           resources:
                             limits:
-                              cpu: 200m
+                              cpu: 1000m
                               ephemeral-storage: 512Mi
                               memory: 256Mi
                             requests:
@@ -719,19 +719,18 @@ spec:
                             type: object
                         type: object
                     type: object
-                  kubernetesEvents:
-                    description: KubernetesEvents is deprecated, please use aria-insights-secret
-                      instead
+                  insights:
+                    description: Insights
                     properties:
                       enable:
                         default: false
                         description: Enable is whether to enable events. Defaults
                           to false.
                         type: boolean
-                      externalEndpointURL:
+                      ingestionUrl:
                         type: string
                     required:
-                    - externalEndpointURL
+                    - ingestionUrl
                     type: object
                 type: object
               imagePullSecret:
@@ -1441,9 +1440,9 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.26.0-alpha-1ac49a23
+  collector: 1.26.0-alpha-439196e6
   logging: 2.1.9
-  proxy: "13.1"
+  proxy: "13.2"
 kind: ConfigMap
 metadata:
   labels:
@@ -1513,7 +1512,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.14.0-alpha-1ac49a23
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.14.0-alpha-439196e6
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
