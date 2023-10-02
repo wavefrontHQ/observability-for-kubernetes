@@ -104,84 +104,84 @@ func TestResources(t *testing.T) {
 		// check all resources for component labels
 		test.RequireCommonLabels(t, toApply, "wavefront", "pixie", util.Namespace)
 
-		secret, err := test.GetAppliedSecret("pl-cluster-secrets", toApply)
+		secret, err := test.GetSecret("pl-cluster-secrets", toApply)
 		require.NoError(t, err)
 		require.Equal(t, component.config.ClusterName, secret.StringData["cluster-name"])
 		require.Equal(t, component.config.ClusterUUID, secret.StringData["cluster-id"])
 
-		serviceAccount, err := test.GetAppliedServiceAccount("metadata-service-account", toApply)
+		serviceAccount, err := test.GetServiceAccount("metadata-service-account", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, serviceAccount)
 
-		serviceAccount, err = test.GetAppliedServiceAccount("pl-cert-provisioner-service-account", toApply)
+		serviceAccount, err = test.GetServiceAccount("pl-cert-provisioner-service-account", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, serviceAccount)
 
-		serviceAccount, err = test.GetAppliedServiceAccount("query-broker-service-account", toApply)
+		serviceAccount, err = test.GetServiceAccount("query-broker-service-account", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, serviceAccount)
 
-		configMap, err := test.GetAppliedConfigMap("pl-tls-config", toApply)
+		configMap, err := test.GetConfigMap("pl-tls-config", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, configMap)
 
-		service, err := test.GetAppliedService("kelvin-service", toApply)
+		service, err := test.GetService("kelvin-service", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, service)
 
-		service, err = test.GetAppliedService("vizier-metadata-svc", toApply)
+		service, err = test.GetService("vizier-metadata-svc", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, service)
 
-		service, err = test.GetAppliedService("vizier-query-broker-svc", toApply)
+		service, err = test.GetService("vizier-query-broker-svc", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, service)
 
-		pvc, err := test.GetAppliedPVC("metadata-pv-claim", toApply)
+		pvc, err := test.GetPersistentVolumeClaim("metadata-pv-claim", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, pvc)
 
-		deployment, err := test.GetAppliedDeployment("kelvin", toApply)
+		deployment, err := test.GetDeployment("kelvin", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, deployment)
 
-		deployment, err = test.GetAppliedDeployment("vizier-query-broker", toApply)
+		deployment, err = test.GetDeployment("vizier-query-broker", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, deployment)
 
-		statefulSet, err := test.GetAppliedStatefulSet("vizier-metadata", toApply)
+		statefulSet, err := test.GetStatefulSet("vizier-metadata", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, statefulSet)
 
-		daemonSet, err := test.GetAppliedDaemonSet("vizier-pem", toApply)
+		daemonSet, err := test.GetDaemonSet("vizier-pem", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, daemonSet)
 
-		job, err := test.GetAppliedJob("cert-provisioner-job", toApply)
+		job, err := test.GetJob("cert-provisioner-job", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, job)
 
-		configMap, err = test.GetAppliedConfigMap("pl-cloud-config", toApply)
+		configMap, err = test.GetConfigMap("pl-cloud-config", toApply)
 		require.NoError(t, err)
 		require.Equal(t, component.config.ClusterName, configMap.Data["PL_CLUSTER_NAME"])
 
-		configMap, err = test.GetAppliedConfigMap("pl-cluster-config", toApply)
+		configMap, err = test.GetConfigMap("pl-cluster-config", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, configMap)
 
-		configMap, err = test.GetAppliedConfigMap("nats-config", toApply)
+		configMap, err = test.GetConfigMap("nats-config", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, configMap)
 
-		service, err = test.GetAppliedService("pl-nats", toApply)
+		service, err = test.GetService("pl-nats", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, service)
 
-		service, err = test.GetAppliedService("pl-nats-mgmt", toApply)
+		service, err = test.GetService("pl-nats-mgmt", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, service)
 
-		statefulSet, err = test.GetAppliedStatefulSet("pl-nats", toApply)
+		statefulSet, err = test.GetStatefulSet("pl-nats", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, statefulSet)
 	})
@@ -195,7 +195,7 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 
 		// vizier pem daemon set
-		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		ds, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
 		require.Equal(t, "150", test.GetENVValue("PL_TABLE_STORE_DATA_LIMIT_MB", ds.Spec.Template.Spec.Containers[0].Env))
 		require.Equal(t, "90", test.GetENVValue("PL_TABLE_STORE_HTTP_EVENTS_PERCENT", ds.Spec.Template.Spec.Containers[0].Env))
@@ -211,7 +211,7 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 
 		// vizier pem daemon set
-		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		ds, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
 		require.False(t, test.ENVVarExists("PL_TABLE_STORE_DATA_LIMIT_MB", ds.Spec.Template.Spec.Containers[0].Env))
 		require.False(t, test.ENVVarExists("PL_TABLE_STORE_HTTP_EVENTS_PERCENT", ds.Spec.Template.Spec.Containers[0].Env))
@@ -231,7 +231,7 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 
 		// vizier pem daemon set
-		ds, err := test.GetAppliedDaemonSet(util.PixieVizierPEMName, toApply)
+		ds, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
 		require.Equal(t, "500Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
 		require.Equal(t, "50Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())

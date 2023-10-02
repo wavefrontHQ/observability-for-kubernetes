@@ -106,19 +106,19 @@ func TestResources(t *testing.T) {
 		test.RequireCommonLabels(t, clusterCollectors, "wavefront", "cluster-collector", wftest.DefaultNamespace)
 		test.RequireCommonLabels(t, others, "wavefront", "collector", wftest.DefaultNamespace)
 
-		serviceAccount, err := test.GetAppliedServiceAccount(util.CollectorName, toApply)
+		serviceAccount, err := test.GetServiceAccount(util.CollectorName, toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, serviceAccount)
 
-		configMap, err := test.GetAppliedConfigMap("default-wavefront-collector-config", toApply)
+		configMap, err := test.GetConfigMap("default-wavefront-collector-config", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, configMap)
 
-		daemonSet, err := test.GetAppliedDaemonSet(util.NodeCollectorName, toApply)
+		daemonSet, err := test.GetDaemonSet(util.NodeCollectorName, toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, daemonSet)
 
-		deployment, err := test.GetAppliedDeployment(util.ClusterCollectorName, toApply)
+		deployment, err := test.GetDeployment(util.ClusterCollectorName, toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, deployment)
 	})

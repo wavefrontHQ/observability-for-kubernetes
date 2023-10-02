@@ -85,17 +85,17 @@ func TestResources(t *testing.T) {
 		// check all resources for component labels
 		test.RequireCommonLabels(t, toApply, "wavefront", "autotracing", component.config.Namespace)
 
-		clusterSpansConfigMap, err := test.GetAppliedConfigMap("wavefront-cluster-spans-script", toApply)
+		clusterSpansConfigMap, err := test.GetConfigMap("wavefront-cluster-spans-script", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, clusterSpansConfigMap)
 		checkConfigMapNamespace(t, clusterSpansConfigMap)
 
-		egressSpansConfigMap, err := test.GetAppliedConfigMap("wavefront-egress-spans-script", toApply)
+		egressSpansConfigMap, err := test.GetConfigMap("wavefront-egress-spans-script", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, egressSpansConfigMap)
 		checkConfigMapNamespace(t, egressSpansConfigMap)
 
-		ingressSpansConfigMap, err := test.GetAppliedConfigMap("wavefront-ingress-spans-script", toApply)
+		ingressSpansConfigMap, err := test.GetConfigMap("wavefront-ingress-spans-script", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, ingressSpansConfigMap)
 		checkConfigMapNamespace(t, ingressSpansConfigMap)
@@ -128,7 +128,7 @@ func checkConfigMapNamespace(t *testing.T, configMap v1.ConfigMap) {
 }
 
 func checkConfigMapNamespaceChanges(t *testing.T, metadataName string, toApply []client.Object) {
-	configmap, err := test.GetAppliedConfigMap(metadataName, toApply)
+	configmap, err := test.GetConfigMap(metadataName, toApply)
 	require.NoError(t, err)
 	require.Equal(t, wftest.DefaultNamespace, configmap.Namespace)
 

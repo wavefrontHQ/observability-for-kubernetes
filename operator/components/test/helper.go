@@ -13,11 +13,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func GetAppliedDaemonSet(metadataName string, toApply []client.Object) (appsv1.DaemonSet, error) {
+func GetDaemonSet(metadataName string, objects []client.Object) (appsv1.DaemonSet, error) {
 	var daemonSet appsv1.DaemonSet
 	var found client.Object
 
-	unstructuredObj, err := findUnstructured("DaemonSet", metadataName, toApply, found)
+	unstructuredObj, err := findUnstructured("DaemonSet", metadataName, objects, found)
 	if err != nil {
 		return daemonSet, err
 	}
@@ -30,11 +30,11 @@ func GetAppliedDaemonSet(metadataName string, toApply []client.Object) (appsv1.D
 	return daemonSet, nil
 }
 
-func GetAppliedDeployment(metadataName string, toApply []client.Object) (appsv1.Deployment, error) {
+func GetDeployment(metadataName string, objects []client.Object) (appsv1.Deployment, error) {
 	var deployment appsv1.Deployment
 	var found client.Object
 
-	unstructuredObj, err := findUnstructured("Deployment", metadataName, toApply, found)
+	unstructuredObj, err := findUnstructured("Deployment", metadataName, objects, found)
 	if err != nil {
 		return deployment, err
 	}
@@ -47,11 +47,11 @@ func GetAppliedDeployment(metadataName string, toApply []client.Object) (appsv1.
 	return deployment, nil
 }
 
-func GetAppliedJob(metadataName string, toApply []client.Object) (batchv1.Job, error) {
+func GetJob(metadataName string, objects []client.Object) (batchv1.Job, error) {
 	var job batchv1.Job
 	var found client.Object
 
-	unstructuredObj, err := findUnstructured("Job", metadataName, toApply, found)
+	unstructuredObj, err := findUnstructured("Job", metadataName, objects, found)
 	if err != nil {
 		return job, err
 	}
@@ -64,11 +64,11 @@ func GetAppliedJob(metadataName string, toApply []client.Object) (batchv1.Job, e
 	return job, nil
 }
 
-func GetAppliedPVC(metadataName string, toApply []client.Object) (v1.PersistentVolumeClaim, error) {
+func GetPersistentVolumeClaim(metadataName string, objects []client.Object) (v1.PersistentVolumeClaim, error) {
 	var pvc v1.PersistentVolumeClaim
 	var found client.Object
 
-	unstructuredObj, err := findUnstructured("PersistentVolumeClaim", metadataName, toApply, found)
+	unstructuredObj, err := findUnstructured("PersistentVolumeClaim", metadataName, objects, found)
 	if err != nil {
 		return pvc, err
 	}
@@ -81,11 +81,11 @@ func GetAppliedPVC(metadataName string, toApply []client.Object) (v1.PersistentV
 	return pvc, nil
 }
 
-func GetAppliedService(metadataName string, toApply []client.Object) (v1.Service, error) {
+func GetService(metadataName string, objects []client.Object) (v1.Service, error) {
 	var service v1.Service
 	var found client.Object
 
-	unstructuredObj, err := findUnstructured("Service", metadataName, toApply, found)
+	unstructuredObj, err := findUnstructured("Service", metadataName, objects, found)
 	if err != nil {
 		return service, err
 	}
@@ -98,11 +98,11 @@ func GetAppliedService(metadataName string, toApply []client.Object) (v1.Service
 	return service, nil
 }
 
-func GetAppliedServiceAccount(metadataName string, toApply []client.Object) (v1.ServiceAccount, error) {
+func GetServiceAccount(metadataName string, objects []client.Object) (v1.ServiceAccount, error) {
 	var serviceAccount v1.ServiceAccount
 	var found client.Object
 
-	unstructuredObj, err := findUnstructured("ServiceAccount", metadataName, toApply, found)
+	unstructuredObj, err := findUnstructured("ServiceAccount", metadataName, objects, found)
 	if err != nil {
 		return serviceAccount, err
 	}
@@ -115,11 +115,11 @@ func GetAppliedServiceAccount(metadataName string, toApply []client.Object) (v1.
 	return serviceAccount, nil
 }
 
-func GetAppliedStatefulSet(metadataName string, toApply []client.Object) (appsv1.StatefulSet, error) {
+func GetStatefulSet(metadataName string, objects []client.Object) (appsv1.StatefulSet, error) {
 	var statefulSet appsv1.StatefulSet
 	var found client.Object
 
-	unstructuredObj, err := findUnstructured("StatefulSet", metadataName, toApply, found)
+	unstructuredObj, err := findUnstructured("StatefulSet", metadataName, objects, found)
 	if err != nil {
 		return statefulSet, err
 	}
@@ -132,11 +132,11 @@ func GetAppliedStatefulSet(metadataName string, toApply []client.Object) (appsv1
 	return statefulSet, nil
 }
 
-func GetAppliedConfigMap(metadataName string, toApply []client.Object) (v1.ConfigMap, error) {
+func GetConfigMap(metadataName string, objects []client.Object) (v1.ConfigMap, error) {
 	var configMap v1.ConfigMap
 	var found client.Object
 
-	unstructuredObj, err := findUnstructured("ConfigMap", metadataName, toApply, found)
+	unstructuredObj, err := findUnstructured("ConfigMap", metadataName, objects, found)
 	if err != nil {
 		return configMap, err
 	}
@@ -149,11 +149,11 @@ func GetAppliedConfigMap(metadataName string, toApply []client.Object) (v1.Confi
 	return configMap, nil
 }
 
-func GetAppliedSecret(metadataName string, toApply []client.Object) (v1.Secret, error) {
+func GetSecret(metadataName string, objects []client.Object) (v1.Secret, error) {
 	var secret v1.Secret
 	var found client.Object
 
-	unstructuredObj, err := findUnstructured("Secret", metadataName, toApply, found)
+	unstructuredObj, err := findUnstructured("Secret", metadataName, objects, found)
 	if err != nil {
 		return secret, err
 	}
@@ -166,8 +166,8 @@ func GetAppliedSecret(metadataName string, toApply []client.Object) (v1.Secret, 
 	return secret, nil
 }
 
-func findUnstructured(kind, metadataName string, toApply []client.Object, found client.Object) (map[string]interface{}, error) {
-	for _, clientObject := range toApply {
+func findUnstructured(kind, metadataName string, objects []client.Object, found client.Object) (map[string]interface{}, error) {
+	for _, clientObject := range objects {
 		if clientObject.GetObjectKind().GroupVersionKind().Kind == kind && clientObject.GetName() == metadataName {
 			found = clientObject
 		}
