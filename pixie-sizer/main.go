@@ -30,6 +30,7 @@ const NatsMetricsChannel = "Metrics"
 const retentionTimeNsMetricName = "min_time"
 const colBytesMetricName = "table_cold_bytes"
 const hotBytesMetricName = "table_hot_bytes"
+const tableNumBatchesMetricName = "table_num_batches"
 
 var namespace = "observability-system"
 var natsServer = "pl-nats"
@@ -74,6 +75,11 @@ func main() {
 	httpTableSizeStore := NewValueStore[BytesPerSecond](measureMinutes)
 	otherTableSizeStore := NewValueStore[BytesPerSecond](measureMinutes)
 	tableCountStore := NewValueStore[int](measureMinutes)
+	rowBatchMu := sync.Mutex{}
+	httpTotalBytes := int64(0)
+	httpTotalRowBatches := int64(0)
+	otherTotalBytes := int64(0)
+	otherTotalRowBatches := int64(0)
 	go func() {
 		for {
 			time.Sleep(time.Duration(measureMinutes) * time.Minute / 2)
@@ -82,15 +88,30 @@ func main() {
 				log.Fatalf("error listing PEMs: %s", err.Error())
 			}
 			maxMissedRowBatchSize := GetMaxMissedRowBatchSize(pemPods, client)
-			log.Printf("max missed row batch size: %d", maxMissedRowBatchSize)
+
+			rowBatchMu.Lock()
+			httpAvgRowBatchSize := MiB(httpTotalBytes / httpTotalRowBatches / (1024 * 1024))
+			httpTotalBytes = 0
+			httpTotalRowBatches = 0
+
+			otherAvgRowBatchSize := MiB(otherTotalBytes / otherTotalRowBatches / (1024 * 1024))
+			otherTotalBytes = 0
+			otherTotalRowBatches = 0
+			rowBatchMu.Unlock()
+
+			httpMinTableSize := MaxNumber(maxMissedRowBatchSize, httpAvgRowBatchSize)
+			otherMinTableSize := MaxNumber(maxMissedRowBatchSize, otherAvgRowBatchSize)
+
+			log.Printf("minimum http table size: %d MiB", httpMinTableSize)
+			log.Printf("minimum other table size: %d MiB", otherMinTableSize)
 			scaledRetentionTime := ScaleDuration(trafficScaleFactor, targetRetentionTime)
 			tableCount := tableCountStore.MaxValue()
 			tableStoreLimit := CalculatePEMTableStoreLimit(
 				tableCount,
-				MaxNumber(maxMissedRowBatchSize, CalculatePerTableSize(otherTableSizeStore.MaxValue(), scaledRetentionTime)),
+				MaxNumber(otherMinTableSize, CalculatePerTableSize(otherTableSizeStore.MaxValue(), scaledRetentionTime)),
 				0,
 				0,
-				MaxNumber(maxMissedRowBatchSize, CalculatePerTableSize(httpTableSizeStore.MaxValue(), scaledRetentionTime)),
+				MaxNumber(httpMinTableSize, CalculatePerTableSize(httpTableSizeStore.MaxValue(), scaledRetentionTime)),
 			)
 			log.Printf("recommended table store size for %d tables: %s", tableCount, tableStoreLimit)
 		}
@@ -120,17 +141,26 @@ func main() {
 			}
 			coldBytes := FindMetricByTableName(metricsFamilies[colBytesMetricName].GetMetric(), tableName).GetGauge().GetValue()
 			hotBytes := FindMetricByTableName(metricsFamilies[hotBytesMetricName].GetMetric(), tableName).GetGauge().GetValue()
+			rowBatches := FindMetricByTableName(metricsFamilies[tableNumBatchesMetricName].GetMetric(), tableName).GetGauge().GetValue()
 			bytesPerSecond := (hotBytes + coldBytes) / retention
 			if tableName == "http_events" {
 				httpTableSizeStore.Record(now, bytesPerSecond)
+				rowBatchMu.Lock()
+				httpTotalBytes = int64(hotBytes + coldBytes)
+				httpTotalRowBatches = int64(rowBatches)
+				rowBatchMu.Unlock()
 			} else {
 				otherTableSizeStore.Record(now, bytesPerSecond)
+				rowBatchMu.Lock()
+				otherTotalBytes = int64(hotBytes + coldBytes)
+				otherTotalRowBatches = int64(rowBatches)
+				rowBatchMu.Unlock()
 			}
 		}
 	}
 }
 
-func GetMaxMissedRowBatchSize(pemPods []corev1.Pod, client kubernetes.Interface) Bytes {
+func GetMaxMissedRowBatchSize(pemPods []corev1.Pod, client kubernetes.Interface) MiB {
 	var maxMissedRowBatchSize Bytes
 	for _, pemPod := range pemPods {
 		rowBatchSizeErrors, err := ExtractFromPodLogs(client, pemPod, ExtractRowBatchSizeError)
@@ -144,7 +174,7 @@ func GetMaxMissedRowBatchSize(pemPods []corev1.Pod, client kubernetes.Interface)
 			maxMissedRowBatchSize = MaxNumber(rowBatchSizeError.RowBatchSize, maxMissedRowBatchSize)
 		}
 	}
-	return maxMissedRowBatchSize
+	return MiB(math.Ceil(float64(maxMissedRowBatchSize) / (1024.0 * 1024.0)))
 }
 
 func RequireFromEnv[T any](envName string, parse func(string) (T, error), value *T) {
@@ -197,9 +227,17 @@ func LabelValue(m *prom.Metric, name string) string {
 }
 
 func FindMetricByTableName(ms []*prom.Metric, tableName string) *prom.Metric {
+	return FindMetricByLabels(ms, map[string]string{"name": tableName})
+}
+
+func FindMetricByLabels(ms []*prom.Metric, labels map[string]string) *prom.Metric {
 	for _, m := range ms {
-		metricTableName := LabelValue(m, "name")
-		if metricTableName == tableName {
+		allMatched := true
+		for name, expectedValue := range labels {
+			actualValue := LabelValue(m, name)
+			allMatched = allMatched && actualValue == expectedValue
+		}
+		if allMatched {
 			return m
 		}
 	}
