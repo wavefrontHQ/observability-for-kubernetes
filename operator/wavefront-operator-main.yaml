@@ -719,19 +719,18 @@ spec:
                             type: object
                         type: object
                     type: object
-                  kubernetesEvents:
-                    description: KubernetesEvents is deprecated, please use aria-insights-secret
-                      instead
+                  insights:
+                    description: Insights
                     properties:
                       enable:
                         default: false
                         description: Enable is whether to enable events. Defaults
                           to false.
                         type: boolean
-                      externalEndpointURL:
+                      ingestionUrl:
                         type: string
                     required:
-                    - externalEndpointURL
+                    - ingestionUrl
                     type: object
                 type: object
               imagePullSecret:
@@ -1441,7 +1440,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.26.0-alpha-fafe49b3
+  collector: 1.26.0-alpha-0482a9bc
   logging: 2.1.9
   proxy: "13.2"
 kind: ConfigMap
@@ -1513,7 +1512,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.14.0-alpha-fafe49b3
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.14.0-alpha-0482a9bc
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
