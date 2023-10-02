@@ -603,7 +603,7 @@ spec:
                           resources:
                             limits:
                               cpu: 1000m
-                              memory: 500Mi
+                              memory: 750Mi
                             requests:
                               cpu: 100m
                               memory: 300Mi
@@ -685,7 +685,7 @@ spec:
                               resources:
                                 limits:
                                   cpu: 1000m
-                                  memory: 500Mi
+                                  memory: 750Mi
                                 requests:
                                   cpu: 100m
                                   memory: 300Mi

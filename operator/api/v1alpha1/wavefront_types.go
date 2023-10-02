@@ -88,10 +88,7 @@ type Experimental struct {
 }
 
 type AutoTracingPixie struct {
-	// +kubebuilder:default:=true
-	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "500Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20}}
-	Pem Pem `json:"pem,omitempty"`
+	PixieShared `json:",inline"`
 
 	// CanExportAutotracingScripts is for internal use only
 	CanExportAutotracingScripts bool `json:"-"`
@@ -104,9 +101,13 @@ type Hub struct {
 }
 
 type HubPixie struct {
+	PixieShared `json:",inline"`
+}
+
+type PixieShared struct {
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "500Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20}}
+	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "750Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20}}
 	Pem Pem `json:"pem,omitempty"`
 }
 
