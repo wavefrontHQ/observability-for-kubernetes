@@ -35,7 +35,6 @@ func (pixie *Component) Name() string {
 }
 
 func NewComponent(dir fs.FS, componentConfig ComponentConfig) (Component, error) {
-
 	return Component{
 		config: componentConfig,
 		dir:    dir,

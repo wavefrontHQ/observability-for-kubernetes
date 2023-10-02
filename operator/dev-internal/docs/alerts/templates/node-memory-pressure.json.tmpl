@@ -1,26 +1,26 @@
 {
-  "name": "Container CPU Overutilization",
+  "name": "Node Memory Pressure",
   "alertType": "THRESHOLD",
-  "additionalInformation": "Alert reports when a container's cpu utilization percentage is constantly high.",
-  "alertChartUnits": "%",
+  "additionalInformation": "Alert reports when a node has the problematic condition of MemoryPressure.",
+  "alertChartUnits": "",
   "alertSources": [
     {
       "name": "A",
-      "query": "round(sum(${B} by (sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name)) / sum(${C} by (sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name)) * 100)",
+      "query": "mcount(5m, ${B}) >= 2",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "B",
-      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "query": "count(${C} by (sources, cluster, cluster_uuid, nodename, node_role, status, condition))",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "C",
-      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "query": "ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND (condition=\"MemoryPressure\" AND status=\"True\"))",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -34,19 +34,20 @@
     },
     {
       "name": "Display Condition",
-      "query": "if(${A} >= 90, ${A})",
+      "query": "if(${A} >= 1, ${A})",
       "queryType": "WQL",
       "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "info": "${A} >= 90"
+    "warn": "${A} >= 1"
   },
   "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
   "displayExpressionQBEnabled": false,
-  "minutes": 15,
+  "includeObsoleteMetrics": false,
+  "minutes": 5,
   "resolveAfterMinutes": 2,
   "tags": {
     "customerTags": [
@@ -55,13 +56,12 @@
   },
   "alertTriageDashboards": [
     {
-      "dashboardId": "integration-kubernetes-workloads",
-      "parameters": {
-        "constants": {
-          "cluster": "K8S_CLUSTER_NAME"
-        }
-      }
+     "dashboardId": "integration-kubernetes-workloads",
+     "parameters": {
+       "constants": {
+         "cluster": "K8S_CLUSTER_NAME"
+       }
+     }
     }
-  ],
-  "includeObsoleteMetrics": false
+  ]
 }

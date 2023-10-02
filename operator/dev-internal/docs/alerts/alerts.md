@@ -32,6 +32,10 @@ We have alert templates on common Kubernetes issues.
 | [Detect node filesystem overutilization](templates/node-filesystem-overutilization.json.tmpl) | `node-filesystem-overutilization.json.tmpl` |
 | [Detect node cpu-request saturation](templates/node-cpu-request-saturation.json.tmpl) | `node-cpu-request-saturation.json.tmpl` |
 | [Detect node memory-request saturation](templates/node-memory-request-saturation.json.tmpl) | `node-memory-request-saturation.json.tmpl` |
+| [Detect node disk pressure condition](templates/node-disk-pressure.json.tmpl) | `node-disk-pressure.json.tmpl` |
+| [Detect node memory pressure condition](templates/node-memory-pressure.json.tmpl) | `node-memory-pressure.json.tmpl` |
+| [Detect node condition not ready](templates/node-condition-not-ready.json.tmpl)                     | `node-not-ready.json.tmpl`                          |
+| [Detect etcd has no leader](templates/etcd-no-leader.json.tmpl)                                     | `etcd-no-leader.json.tmpl`                          |
 
 ## Creating Alerts
 
