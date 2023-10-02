@@ -81,7 +81,7 @@ spec:
         - name: PS_TRAFFIC_SCALE_FACTOR # the factor by which network traffic throughput will scale from its min to its max (i.e. 2.0 means that the max is twice as much as the min)
           value: "1.0"
         - name: PS_MEASURE_MINUTES
-          value: "1"
+          value: "10"
         envFrom:
         - configMapRef:
             name: pl-tls-config

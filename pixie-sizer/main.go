@@ -32,13 +32,17 @@ const colBytesMetricName = "table_cold_bytes"
 const hotBytesMetricName = "table_hot_bytes"
 const tableNumBatchesMetricName = "table_num_batches"
 
+const HTTPEventsTable = "http_events"
+const UnknownTable = "unknown"
+
 var namespace = "observability-system"
 var natsServer = "pl-nats"
 var clientTLSCertFile = ""
 var clientTLSKeyFile = ""
 var tlsCAFile = ""
 var trafficScaleFactor = 2.0
-var measureMinutes = 5
+var measureMinutes = 10
+var reportMinutes int
 
 func init() {
 	OptionalFromEnv("PS_NAMESPACE", ParseString, &namespace)
@@ -48,6 +52,8 @@ func init() {
 	RequireFromEnv("PL_TLS_CA_CERT", ParseString, &tlsCAFile)
 	OptionalFromEnv("PS_TRAFFIC_SCALE_FACTOR", ParseFloat64, &trafficScaleFactor)
 	OptionalFromEnv("PS_MEASURE_MINUTES", ParseInt, &measureMinutes)
+	reportMinutes = measureMinutes / 2
+	OptionalFromEnv("PS_REPORT_MINUTES", ParseInt, &reportMinutes)
 }
 
 func main() {
@@ -72,32 +78,18 @@ func main() {
 		log.Fatalf("error creating nats subscriptions to Metrics topic: %s", err)
 	}
 	defer subscription.Unsubscribe()
-	httpTableSizeStore := NewValueStore[BytesPerSecond](measureMinutes)
-	otherTableSizeStore := NewValueStore[BytesPerSecond](measureMinutes)
-	tableCountStore := NewValueStore[int](measureMinutes)
-	rowBatchMu := sync.Mutex{}
-	httpTotalBytes := int64(0)
-	httpTotalRowBatches := int64(0)
-	otherTotalBytes := int64(0)
-	otherTotalRowBatches := int64(0)
+	statsStore := NewStatsStore(measureMinutes, []string{HTTPEventsTable})
 	go func() {
 		for {
-			time.Sleep(time.Duration(measureMinutes) * time.Minute / 2)
+			time.Sleep(time.Duration(reportMinutes) * time.Minute)
 			pemPods, err := GetPodsByLabel(client, namespace, "name=vizier-pem")
 			if err != nil {
 				log.Fatalf("error listing PEMs: %s", err.Error())
 			}
-			maxMissedRowBatchSize := GetMaxMissedRowBatchSize(pemPods, client)
+			maxMissedRowBatchSize := GetMaxMissedRowBatchSize(pemPods, int64(measureMinutes*60), client)
 
-			rowBatchMu.Lock()
-			httpAvgRowBatchSize := MiB(httpTotalBytes / httpTotalRowBatches / (1024 * 1024))
-			httpTotalBytes = 0
-			httpTotalRowBatches = 0
-
-			otherAvgRowBatchSize := MiB(otherTotalBytes / otherTotalRowBatches / (1024 * 1024))
-			otherTotalBytes = 0
-			otherTotalRowBatches = 0
-			rowBatchMu.Unlock()
+			httpAvgRowBatchSize := MiB(math.Ceil(float64(statsStore.TableBytes(HTTPEventsTable).Sum()) / float64(statsStore.TableRowBatches(HTTPEventsTable).Sum()) / (1024.0 * 1024.0)))
+			otherAvgRowBatchSize := MiB(math.Ceil(float64(statsStore.TableBytes(UnknownTable).Sum()) / float64(statsStore.TableRowBatches(UnknownTable).Sum()) / (1024.0 * 1024.0)))
 
 			httpMinTableSize := MaxNumber(maxMissedRowBatchSize, httpAvgRowBatchSize)
 			otherMinTableSize := MaxNumber(maxMissedRowBatchSize, otherAvgRowBatchSize)
@@ -105,14 +97,30 @@ func main() {
 			log.Printf("minimum http table size: %d MiB", httpMinTableSize)
 			log.Printf("minimum other table size: %d MiB", otherMinTableSize)
 			scaledRetentionTime := ScaleDuration(trafficScaleFactor, targetRetentionTime)
-			tableCount := tableCountStore.MaxValue()
+			tableCount := statsStore.TableCount().MaxValue()
+			smallestTableStoreLimit := CalculatePEMTableStoreLimit(
+				tableCount,
+				MaxNumber(otherMinTableSize, CalculatePerTableSize(statsStore.TableRate(UnknownTable).MinValue(), scaledRetentionTime)),
+				0,
+				0,
+				MaxNumber(httpMinTableSize, CalculatePerTableSize(statsStore.TableRate(HTTPEventsTable).MinValue(), scaledRetentionTime)),
+			)
 			tableStoreLimit := CalculatePEMTableStoreLimit(
 				tableCount,
-				MaxNumber(otherMinTableSize, CalculatePerTableSize(otherTableSizeStore.MaxValue(), scaledRetentionTime)),
+				MaxNumber(otherMinTableSize, CalculatePerTableSize(statsStore.TableRate(UnknownTable).PercentileValue(0.5), scaledRetentionTime)),
 				0,
 				0,
-				MaxNumber(httpMinTableSize, CalculatePerTableSize(httpTableSizeStore.MaxValue(), scaledRetentionTime)),
+				MaxNumber(httpMinTableSize, CalculatePerTableSize(statsStore.TableRate(HTTPEventsTable).PercentileValue(0.5), scaledRetentionTime)),
 			)
+			largestTableStoreLimit := CalculatePEMTableStoreLimit(
+				tableCount,
+				MaxNumber(otherMinTableSize, CalculatePerTableSize(statsStore.TableRate(UnknownTable).MaxValue(), scaledRetentionTime)),
+				0,
+				0,
+				MaxNumber(httpMinTableSize, CalculatePerTableSize(statsStore.TableRate(HTTPEventsTable).MaxValue(), scaledRetentionTime)),
+			)
+			log.Printf("smallest table store size for %d tables: %s", tableCount, smallestTableStoreLimit)
+			log.Printf("largest table store size for %d tables:%s", tableCount, largestTableStoreLimit)
 			log.Printf("recommended table store size for %d tables: %s", tableCount, tableStoreLimit)
 		}
 	}()
@@ -130,40 +138,90 @@ func main() {
 		if err != nil {
 			log.Fatalf("invalid prometheus metrics: %s", err)
 		}
-		metricFamily := metricsFamilies[retentionTimeNsMetricName]
-		now := time.Now()
-		tableCountStore.Record(now, len(metricFamily.GetMetric()))
-		for _, retentionNs := range metricFamily.GetMetric() {
-			tableName := LabelValue(retentionNs, "name")
-			retention := retentionNs.GetGauge().GetValue() / float64(time.Second)
-			if retention == 0.0 {
-				continue
-			}
-			coldBytes := FindMetricByTableName(metricsFamilies[colBytesMetricName].GetMetric(), tableName).GetGauge().GetValue()
-			hotBytes := FindMetricByTableName(metricsFamilies[hotBytesMetricName].GetMetric(), tableName).GetGauge().GetValue()
-			rowBatches := FindMetricByTableName(metricsFamilies[tableNumBatchesMetricName].GetMetric(), tableName).GetGauge().GetValue()
-			bytesPerSecond := (hotBytes + coldBytes) / retention
-			if tableName == "http_events" {
-				httpTableSizeStore.Record(now, bytesPerSecond)
-				rowBatchMu.Lock()
-				httpTotalBytes = int64(hotBytes + coldBytes)
-				httpTotalRowBatches = int64(rowBatches)
-				rowBatchMu.Unlock()
-			} else {
-				otherTableSizeStore.Record(now, bytesPerSecond)
-				rowBatchMu.Lock()
-				otherTotalBytes = int64(hotBytes + coldBytes)
-				otherTotalRowBatches = int64(rowBatches)
-				rowBatchMu.Unlock()
-			}
-		}
+		statsStore.Record(time.Now(), metricsFamilies)
 	}
 }
 
-func GetMaxMissedRowBatchSize(pemPods []corev1.Pod, client kubernetes.Interface) MiB {
+type StatsStore struct {
+	measureMinutes  int
+	knownTables     []string
+	tableRates      map[string]*NumberStore[BytesPerSecond]
+	tableBytes      map[string]*NumberStore[Bytes]
+	tableRowBatches map[string]*NumberStore[int]
+	tableCountStore *NumberStore[int]
+}
+
+func NewStatsStore(measureMinutes int, knownTables []string) *StatsStore {
+	return &StatsStore{
+		measureMinutes:  measureMinutes,
+		knownTables:     knownTables,
+		tableRates:      map[string]*NumberStore[BytesPerSecond]{},
+		tableBytes:      map[string]*NumberStore[Bytes]{},
+		tableRowBatches: map[string]*NumberStore[int]{},
+		tableCountStore: NewValueStore[int](measureMinutes),
+	}
+}
+
+func (s *StatsStore) normalizedTableName(tableName string) string {
+	for _, knownTable := range s.knownTables {
+		if knownTable == tableName {
+			return tableName
+		}
+	}
+	return UnknownTable
+}
+
+func (s *StatsStore) Record(now time.Time, metricsFamilies map[string]*prom.MetricFamily) {
+	metricsFamily := metricsFamilies[retentionTimeNsMetricName]
+	s.tableCountStore.Record(now, len(metricsFamily.GetMetric()))
+	for _, retentionNs := range metricsFamily.GetMetric() {
+		tableName := LabelValue(retentionNs, "name")
+		retention := retentionNs.GetGauge().GetValue() / float64(time.Second)
+		if retention == 0.0 {
+			continue
+		}
+		coldBytes := FindMetricByTableName(metricsFamilies[colBytesMetricName].GetMetric(), tableName).GetGauge().GetValue()
+		hotBytes := FindMetricByTableName(metricsFamilies[hotBytesMetricName].GetMetric(), tableName).GetGauge().GetValue()
+		rowBatches := FindMetricByTableName(metricsFamilies[tableNumBatchesMetricName].GetMetric(), tableName).GetGauge().GetValue()
+		bytesPerSecond := (hotBytes + coldBytes) / retention
+		s.TableRate(tableName).Record(now, bytesPerSecond)
+		s.TableBytes(tableName).Record(now, Bytes(hotBytes+coldBytes))
+		s.TableRowBatches(tableName).Record(now, int(rowBatches))
+	}
+}
+
+func (s *StatsStore) TableRate(tableName string) *NumberStore[BytesPerSecond] {
+	tableName = s.normalizedTableName(tableName)
+	if s.tableRates[tableName] == nil {
+		s.tableRates[tableName] = NewValueStore[BytesPerSecond](s.measureMinutes)
+	}
+	return s.tableRates[tableName]
+}
+
+func (s *StatsStore) TableCount() *NumberStore[int] {
+	return s.tableCountStore
+}
+
+func (s *StatsStore) TableBytes(tableName string) *NumberStore[Bytes] {
+	tableName = s.normalizedTableName(tableName)
+	if s.tableBytes[tableName] == nil {
+		s.tableBytes[tableName] = NewValueStore[Bytes](s.measureMinutes)
+	}
+	return s.tableBytes[tableName]
+}
+
+func (s *StatsStore) TableRowBatches(tableName string) *NumberStore[int] {
+	tableName = s.normalizedTableName(tableName)
+	if s.tableRowBatches[tableName] == nil {
+		s.tableRowBatches[tableName] = NewValueStore[Bytes](s.measureMinutes)
+	}
+	return s.tableRowBatches[tableName]
+}
+
+func GetMaxMissedRowBatchSize(pemPods []corev1.Pod, sinceSeconds int64, client kubernetes.Interface) MiB {
 	var maxMissedRowBatchSize Bytes
 	for _, pemPod := range pemPods {
-		rowBatchSizeErrors, err := ExtractFromPodLogs(client, pemPod, ExtractRowBatchSizeError)
+		rowBatchSizeErrors, err := ExtractFromPodLogs(client, pemPod, sinceSeconds, ExtractRowBatchSizeError)
 		if err != nil {
 			log.Fatalf("error extracting row batch size errors: %s", err.Error())
 		}
@@ -289,8 +347,8 @@ type NumberStore[V Number] struct {
 	observations     [][]observation[V]
 }
 
-func NewValueStore[V Number](retentionMinutes int) NumberStore[V] {
-	return NumberStore[V]{
+func NewValueStore[V Number](retentionMinutes int) *NumberStore[V] {
+	return &NumberStore[V]{
 		retentionMinutes: retentionMinutes,
 		index:            0,
 		observations:     make([][]observation[V], retentionMinutes),
@@ -316,6 +374,16 @@ func (s *NumberStore[V]) Record(at time.Time, value V) {
 	})
 }
 
+func (s *NumberStore[V]) each(visit func(time.Time, V)) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, obs := range s.observations {
+		for _, ob := range obs {
+			visit(ob.At, ob.Value)
+		}
+	}
+}
+
 func (s *NumberStore[V]) lastMinute() int64 {
 	if len(s.observations[s.index]) == 0 {
 		return 0
@@ -334,34 +402,48 @@ func (s *NumberStore[V]) LatestValue() V {
 }
 
 func (s *NumberStore[V]) MaxValue() V {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	var maxValue V
-	for _, obs := range s.observations {
-		for _, ob := range obs {
-			if ob.Value > maxValue {
-				maxValue = ob.Value
-			}
+	s.each(func(_ time.Time, value V) {
+		if value > maxValue {
+			maxValue = value
 		}
-	}
+	})
 	return maxValue
 }
 
-func (s *NumberStore[V]) PercentileValue(percentile float64) V {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	var values []V
-	for _, obs := range s.observations {
-		for _, ob := range obs {
-			values = append(values, ob.Value)
+func (s *NumberStore[V]) MinValue() V {
+	var minValue V
+	first := true
+	s.each(func(_ time.Time, value V) {
+		if first {
+			minValue = value
+			first = false
+		} else if value < minValue {
+			minValue = value
 		}
-	}
+	})
+	return minValue
+}
+
+func (s *NumberStore[V]) PercentileValue(percentile float64) V {
+	var values []V
+	s.each(func(_ time.Time, value V) {
+		values = append(values, value)
+	})
 	sort.Slice(values, func(i, j int) bool {
 		return values[i] < values[j]
 	})
 	low := int(math.Floor(float64(len(values)) * percentile))
 	high := int(math.Ceil(float64(len(values)) * percentile))
 	return (values[low] + values[high]) / V(2)
+}
+
+func (s *NumberStore[V]) Sum() V {
+	var sum V
+	s.each(func(_ time.Time, value V) {
+		sum += value
+	})
+	return sum
 }
 
 func GetClient() (kubernetes.Interface, error) {
@@ -415,8 +497,8 @@ func GetMaxFrequencyFromCronScripts(configMaps []corev1.ConfigMap) time.Duration
 	return time.Duration(maxFrequencyS) * time.Second
 }
 
-func ExtractFromPodLogs[T any](client kubernetes.Interface, pod corev1.Pod, extract func(string) (T, bool)) ([]T, error) {
-	podLogOpts := corev1.PodLogOptions{}
+func ExtractFromPodLogs[T any](client kubernetes.Interface, pod corev1.Pod, sinceSeconds int64, extract func(string) (T, bool)) ([]T, error) {
+	podLogOpts := corev1.PodLogOptions{SinceSeconds: &sinceSeconds}
 	req := client.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
 	podLogs, err := req.Stream(context.Background())
 	if err != nil {
