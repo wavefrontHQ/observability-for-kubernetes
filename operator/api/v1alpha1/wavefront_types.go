@@ -90,7 +90,7 @@ type Experimental struct {
 type AutoTracingPixie struct {
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "500Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20, proc_exit_events_bytes: 0, stirling_error_bytes: 0}}
+	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "500Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20}}
 	Pem Pem `json:"pem,omitempty"`
 
 	// CanExportAutotracingScripts is for internal use only
@@ -106,7 +106,7 @@ type Hub struct {
 type HubPixie struct {
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "500Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20, proc_exit_events_bytes: 0, stirling_error_bytes: 0}}
+	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "500Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20}}
 	Pem Pem `json:"pem,omitempty"`
 }
 
@@ -428,6 +428,7 @@ type Pem struct {
 	Resources Resources `json:"resources,omitempty"`
 
 	// TableStoreLimits Limits for queryable data for the PEM containers.
+	// +kubebuilder:default:={total_mib: 150, http_events_percent: 20}
 	TableStoreLimits TableStoreLimits `json:"table_store_limits,omitempty"`
 }
 

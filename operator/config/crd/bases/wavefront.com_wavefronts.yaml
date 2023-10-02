@@ -609,8 +609,6 @@ spec:
                               memory: 300Mi
                           table_store_limits:
                             http_events_percent: 20
-                            proc_exit_events_bytes: 0
-                            stirling_error_bytes: 0
                             total_mib: 150
                         properties:
                           resources:
@@ -651,6 +649,9 @@ spec:
                                 type: object
                             type: object
                           table_store_limits:
+                            default:
+                              http_events_percent: 20
+                              total_mib: 150
                             description: TableStoreLimits Limits for queryable data
                               for the PEM containers.
                             properties:
@@ -658,23 +659,12 @@ spec:
                                 description: HttpEventsPercent Percent of TotalMiB
                                   allocated to the http_events table
                                 type: integer
-                              proc_exit_events_bytes:
-                                description: ProcExitEventsBytes Bytes allocated to
-                                  the proc_exit_events table
-                                type: integer
-                              stirling_error_bytes:
-                                description: StirlingErrorBytes Bytes allocated to
-                                  the stirling_error and probe_status tables (half
-                                  to each)
-                                type: integer
                               total_mib:
                                 description: TotalMiB Total MiB of memory allocated
                                   to all tables
                                 type: integer
                             required:
                             - http_events_percent
-                            - proc_exit_events_bytes
-                            - stirling_error_bytes
                             - total_mib
                             type: object
                         type: object
@@ -701,8 +691,6 @@ spec:
                                   memory: 300Mi
                               table_store_limits:
                                 http_events_percent: 20
-                                proc_exit_events_bytes: 0
-                                stirling_error_bytes: 0
                                 total_mib: 150
                             properties:
                               resources:
@@ -747,6 +735,9 @@ spec:
                                     type: object
                                 type: object
                               table_store_limits:
+                                default:
+                                  http_events_percent: 20
+                                  total_mib: 150
                                 description: TableStoreLimits Limits for queryable
                                   data for the PEM containers.
                                 properties:
@@ -754,23 +745,12 @@ spec:
                                     description: HttpEventsPercent Percent of TotalMiB
                                       allocated to the http_events table
                                     type: integer
-                                  proc_exit_events_bytes:
-                                    description: ProcExitEventsBytes Bytes allocated
-                                      to the proc_exit_events table
-                                    type: integer
-                                  stirling_error_bytes:
-                                    description: StirlingErrorBytes Bytes allocated
-                                      to the stirling_error and probe_status tables
-                                      (half to each)
-                                    type: integer
                                   total_mib:
                                     description: TotalMiB Total MiB of memory allocated
                                       to all tables
                                     type: integer
                                 required:
                                 - http_events_percent
-                                - proc_exit_events_bytes
-                                - stirling_error_bytes
                                 - total_mib
                                 type: object
                             type: object
