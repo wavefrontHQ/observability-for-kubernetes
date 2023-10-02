@@ -326,6 +326,10 @@ func reconcileGlobalProperties(cfg *Config) {
 	}
 	cfg.EventsConfig.ClusterName = cfg.ClusterName
 	cfg.EventsConfig.ClusterUUID = util.GetClusterUUID()
+
+	if cfg.Sources.CadvisorConfig != nil {
+		cfg.Sources.CadvisorConfig.Source = util.GetNodeName()
+	}
 }
 
 func validateCfg(cfg *Config) error {

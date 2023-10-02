@@ -77,6 +77,21 @@ func TestNew(t *testing.T) {
 		require.ErrorContains(t, actualErr, "kubernetes_source is missing")
 	})
 
+	t.Run("does not break if Sources.CadvisorConfig is nil", func(t *testing.T) {
+		_, actualErr := New(func(config *Config) error {
+			config.Sources = &SourceConfig{
+				SummaryConfig:  &SummarySourceConfig{},
+				CadvisorConfig: nil,
+			}
+			config.Sinks = []*SinkConfig{
+				{},
+			}
+			return nil
+		})
+
+		require.NoError(t, actualErr)
+	})
+
 	t.Run("does not allow Sinks to be empty", func(t *testing.T) {
 		_, actualErr := New(func(config *Config) error {
 			config.Sources = &SourceConfig{SummaryConfig: &SummarySourceConfig{}}

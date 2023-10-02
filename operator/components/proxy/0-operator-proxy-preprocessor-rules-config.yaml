@@ -24,6 +24,30 @@ data:
       action: addTag
       tag: cluster
       value: "{{ .ClusterName }}"
+    - rule: rename-tag-cadvisor-namespace
+      action: renameTag
+      tag: namespace
+      newtag: namespace_name
+      if:
+        startsWith:
+          scope: metricName
+          value: "kubernetes.cadvisor"
+    - rule: rename-tag-cadvisor-container
+      action: renameTag
+      tag: container
+      newtag: container_name
+      if:
+        startsWith:
+          scope: metricName
+          value: "kubernetes.cadvisor"
+    - rule: rename-tag-cadvisor-pod
+      action: renameTag
+      tag: pod
+      newtag: pod_name
+      if:
+        startsWith:
+          scope: metricName
+          value: "kubernetes.cadvisor"
     - rule: span-drop-cluster-uuid
       action: spanDropTag
       key: cluster_uuid
