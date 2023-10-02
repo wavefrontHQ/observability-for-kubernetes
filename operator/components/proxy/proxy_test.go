@@ -173,19 +173,19 @@ func TestResources(t *testing.T) {
 		// check all resources for component labels
 		test.RequireCommonLabels(t, toApply, "wavefront", "proxy", wftest.DefaultNamespace)
 
-		configmap, err := test.GetAppliedConfigMap("operator-proxy-preprocessor-rules-config", toApply)
+		configmap, err := test.GetConfigMap("operator-proxy-preprocessor-rules-config", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, configmap)
 
-		deployment, err := test.GetAppliedDeployment(util.ProxyName, toApply)
+		deployment, err := test.GetDeployment(util.ProxyName, toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, deployment)
 
-		service, err := test.GetAppliedService(util.ProxyName, toApply)
+		service, err := test.GetService(util.ProxyName, toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, service)
 
-		serviceAccount, err := test.GetAppliedServiceAccount(util.ProxyName, toApply)
+		serviceAccount, err := test.GetServiceAccount(util.ProxyName, toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, serviceAccount)
 	})

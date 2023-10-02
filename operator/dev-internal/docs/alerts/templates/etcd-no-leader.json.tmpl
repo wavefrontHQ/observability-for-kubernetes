@@ -1,0 +1,53 @@
+{
+  "name": "ETCD No Leader",
+  "alertType": "THRESHOLD",
+  "additionalInformation": "Alert reports when some etcd pods don't have a leader",
+  "alertChartUnits": "",
+  "alertSources": [
+    {
+      "name": "A",
+      "query": "ts(\"kubernetes.controlplane.etcd.server.has.leader.gauge\", cluster=\"K8S_CLUSTER_NAME\")",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${A} < 1, ${A})",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "severe": "${A} < 1"
+  },
+  "conditionQBEnabled": false,
+  "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
+  "minutes": 10,
+  "resolveAfterMinutes": 2,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+      "dashboardId": "integration-kubernetes-workloads",
+      "parameters": {
+        "constants": {
+          "cluster": "K8S_CLUSTER_NAME"
+        }
+      }
+    }
+  ],
+  "includeObsoleteMetrics": false
+}

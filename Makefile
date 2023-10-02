@@ -23,6 +23,9 @@ combined-integration-tests:
 	cd $(MONOREPO_DIR) && ./scripts/combined-deploy.sh $(COMBINED_DEPLOY_ARGS)
 	$(MAKE) -C operator integration-test -o undeploy -o deploy
 
+.PHONY: combined-integration-test
+combined-integration-test: combined-integration-tests
+
 .PHONY: clean-cluster
 clean-cluster:
 	@$(MONOREPO_DIR)/scripts/clean-cluster.sh
