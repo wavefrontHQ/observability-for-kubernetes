@@ -21,8 +21,11 @@ dockerize-lemans: le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSIO
 start-wf-proxy: tmp/wavefront_csp_client_id tmp/wavefront_csp_client_secret dockerize-wf-proxy tmp/lemans_stream_name
 	docker run --tty --interactive --rm --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="https://nimba.wavefront.com/api" --env CSP_APP_ID="$(shell cat tmp/wavefront_csp_client_id)" --env CSP_APP_SECRET="$(shell cat tmp/wavefront_csp_client_secret)" --env WAVEFRONT_PROXY_ARGS="--le-mans-host http://gateway:8002 --le-mans-stream-name $(shell cat tmp/lemans_stream_name) --cspBaseUrl https://console-stg.cloud.vmware.com" --network le-mans_default wf-proxy
 
-dockerize-wf-proxy: wavefront-proxy
-	docker build -t wf-proxy -f wavefront-proxy/docker/Dockerfile ./wavefront-proxy
+dockerize-wf-proxy: wavefront-proxy/proxy/target/proxy-*.jar
+	cd wavefront-proxy && make docker
+
+wavefront-proxy/proxy/target/proxy-*.jar: wavefront-proxy
+	cd wavefront-proxy && make build-jar
 
 wavefront-proxy:
 	git clone --branch k8ssaas-2475-push-metrics-to-le-mans git@github.com:wavefrontHQ/wavefront-proxy.git
