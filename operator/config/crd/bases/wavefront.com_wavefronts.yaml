@@ -717,7 +717,7 @@ spec:
                     properties:
                       enable:
                         default: false
-                        description: Enable is whether to enable events. Defaults
+                        description: Enable is whether to enable Insights. Defaults
                           to false.
                         type: boolean
                       ingestionUrl:

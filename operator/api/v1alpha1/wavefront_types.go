@@ -452,7 +452,7 @@ type Logging struct {
 }
 
 type Insights struct {
-	// Enable is whether to enable events. Defaults to false.
+	// Enable is whether to enable Insights. Defaults to false.
 	// +kubebuilder:default:=false
 	Enable bool `json:"enable,omitempty"`
 
@@ -460,6 +460,9 @@ type Insights struct {
 
 	// SecretName is for internal use
 	SecretName string `json:"-"`
+
+	// SecretTokenKey is for internal use
+	SecretTokenKey string `json:"-"`
 }
 
 // WavefrontStatus defines the observed state of Wavefront

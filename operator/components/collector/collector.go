@@ -43,9 +43,10 @@ type ComponentConfig struct {
 }
 
 type KubernetesEvents struct {
-	Enable       bool
-	IngestionUrl string
-	SecretName   string
+	Enable         bool
+	IngestionUrl   string
+	SecretName     string
+	SecretTokenKey string
 }
 
 type Component struct {
