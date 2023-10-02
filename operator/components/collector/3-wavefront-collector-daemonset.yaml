@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/component: node-collector
+  name: wavefront-node-collector
+  namespace: {{ .Namespace }}
+  annotations:
+    wavefront.com/conditionally-provision: '{{ .MetricsEnable }}'
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name : wavefront
+      app.kubernetes.io/component: node-collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name : wavefront
+        app.kubernetes.io/component: node-collector
+      annotations:
+        installation-method: operator
+        proxy-available-replicas: "{{ .ProxyAvailableReplicas }}"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+          operator: Exists
+        - effect: NoSchedule
+          key: kubernetes.io/arch
+          value: arm64
+      {{- if .Tolerations }}
+{{ .Tolerations | toYaml | indent 8 }}
+      {{- end }}
+      serviceAccountName: wavefront-collector
+      automountServiceAccountToken: true
+      {{- if .ImagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .ImagePullSecret }}
+      {{- end }}
+      containers:
+        - name: wavefront-collector
+          securityContext:
+            readOnlyRootFilesystem: true
+          image: {{ .ImageRegistry }}/kubernetes-collector:{{ .CollectorVersion }}
+          imagePullPolicy: Always
+          command:
+            - /wavefront-collector
+            - --agent=node
+            - --config-file=/etc/collector/config.yaml
+          env:
+            - name: HOST_PROC
+              value: /host/proc
+            - name: POD_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: POD_NAMESPACE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: INSTALLATION_METHOD
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.annotations['installation-method']
+            - name: CLUSTER_UUID
+              value: {{ .ClusterUUID }}
+          ports:
+            - containerPort: 8088
+              protocol: TCP
+          resources:
+{{ .NodeCollectorResources | toYaml | indent 12 }}
+          volumeMounts:
+            - name: procfs
+              mountPath: /host/proc
+              readOnly: true
+            {{- if .ControlPlane.EnableEtcd }}
+            - name: etcd-certs
+              mountPath: /etc/etcd-certs/
+              readOnly: true
+            {{- end }}
+            - name: config
+              mountPath: /etc/collector/
+              readOnly: true
+            {{- if and .ControlPlane.Enable .Openshift }}
+            - name: openshift-service-ca-bundle
+              mountPath: /etc/openshift-service-ca-bundle/
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: procfs
+          hostPath:
+            path: /proc
+        {{- if .ControlPlane.EnableEtcd }}
+        - name: etcd-certs
+          secret:
+            secretName: etcd-certs
+        {{- end }}
+        - name: config
+          configMap:
+            name: {{ .CollectorConfigName }}
+        {{- if and .ControlPlane.Enable .Openshift }}
+        - name: openshift-service-ca-bundle
+          configMap:
+            name: openshift-service-ca-bundle
+        {{- end }}

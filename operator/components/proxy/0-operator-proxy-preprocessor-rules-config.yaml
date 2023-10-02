@@ -1,0 +1,67 @@
+# User supplied preprocessor rules are merged into this configmap at runtime.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: operator-proxy-preprocessor-rules-config
+  namespace: {{ .Namespace }}
+data:
+  rules.yaml: |
+    {{ .PreprocessorRules.EnabledPorts }},49151:
+    - rule: noop-rule
+      action: count
+{{- if .PreprocessorRules.UserDefinedPortRules }}
+{{ .PreprocessorRules.UserDefinedPortRules | indent 4 }}
+{{- end }}
+    global:
+{{- if .PreprocessorRules.UserDefinedGlobalRules }}
+{{ .PreprocessorRules.UserDefinedGlobalRules | indent 4 }}
+{{- end }}
+    - rule: metrics-add-cluster-uuid
+      action: addTag
+      tag: cluster_uuid
+      value: "{{ .ClusterUUID }}"
+    - rule: metrics-add-cluster-name
+      action: addTag
+      tag: cluster
+      value: "{{ .ClusterName }}"
+    - rule: rename-tag-cadvisor-namespace
+      action: renameTag
+      tag: namespace
+      newtag: namespace_name
+      if:
+        startsWith:
+          scope: metricName
+          value: "kubernetes.cadvisor"
+    - rule: rename-tag-cadvisor-container
+      action: renameTag
+      tag: container
+      newtag: container_name
+      if:
+        startsWith:
+          scope: metricName
+          value: "kubernetes.cadvisor"
+    - rule: rename-tag-cadvisor-pod
+      action: renameTag
+      tag: pod
+      newtag: pod_name
+      if:
+        startsWith:
+          scope: metricName
+          value: "kubernetes.cadvisor"
+    - rule: span-drop-cluster-uuid
+      action: spanDropTag
+      key: cluster_uuid
+    - rule: span-add-cluster-uuid
+      action: spanAddTag
+      key: cluster_uuid
+      value: "{{ .ClusterUUID }}"
+    - rule: span-drop-cluster-name
+      action: spanDropTag
+      key: cluster
+    - rule: span-add-cluster-name
+      action: spanAddTag
+      key: cluster
+      value: "{{ .ClusterName }}"
+    - rule: span-drop-px-cloud-address
+      action: spanDropTag
+      key: px.cloud.address

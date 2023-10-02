@@ -158,7 +158,7 @@ spec:
                         default:
                           resources:
                             limits:
-                              cpu: 400m
+                              cpu: 2000m
                               ephemeral-storage: 1Gi
                               memory: 512Mi
                             requests:
@@ -297,7 +297,7 @@ spec:
                         default:
                           resources:
                             limits:
-                              cpu: 200m
+                              cpu: 1000m
                               ephemeral-storage: 512Mi
                               memory: 256Mi
                             requests:
@@ -712,19 +712,18 @@ spec:
                             type: object
                         type: object
                     type: object
-                  kubernetesEvents:
-                    description: KubernetesEvents is deprecated, please use aria-insights-secret
-                      instead
+                  insights:
+                    description: Insights
                     properties:
                       enable:
                         default: false
                         description: Enable is whether to enable events. Defaults
                           to false.
                         type: boolean
-                      externalEndpointURL:
+                      ingestionUrl:
                         type: string
                     required:
-                    - externalEndpointURL
+                    - ingestionUrl
                     type: object
                 type: object
               imagePullSecret:

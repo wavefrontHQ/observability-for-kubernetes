@@ -1,0 +1,60 @@
+{
+  "name": "Persistent Volumes Error",
+  "alertType": "THRESHOLD",
+  "additionalInformation": "",
+  "alertChartUnits": "",
+  "alertSources": [
+    {
+      "name": "A",
+      "query": "mcount(5m, ${B}) >= 2",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND (phase=\"Failed\" OR phase=\"Pending\")) by (sources, cluster, cluster_uuid, pv_name, phase))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${A} >= 1, ${A})",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "warn": "${A} >= 1"
+  },
+  "conditionQBEnabled": false,
+  "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
+  "minutes": 10,
+  "resolveAfterMinutes": 2,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+      "dashboardId": "integration-kubernetes-workloads",
+      "parameters": {
+        "constants": {
+          "cluster": "K8S_CLUSTER_NAME"
+        }
+      }
+    }
+  ],
+  "includeObsoleteMetrics": false
+}

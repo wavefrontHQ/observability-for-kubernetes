@@ -26,7 +26,7 @@ import (
 // WavefrontSpec defines the desired state of Wavefront
 type WavefrontSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Important: Run "make build" in the operator directory to regenerate code after modifying this file
 
 	// ClusterName is a unique name for the Kubernetes cluster to be identified via a metric tag on Wavefront (Required).
 	// +kubebuilder:validation:MinLength:=3
@@ -81,8 +81,8 @@ type WavefrontSpec struct {
 type Experimental struct {
 	Autotracing AutoTracingPixie `json:"autotracing,omitempty"`
 
-	// KubernetesEvents is deprecated, please use aria-insights-secret instead
-	KubernetesEvents KubernetesEvents `json:"kubernetesEvents,omitempty"`
+	// Insights
+	Insights Insights `json:"insights,omitempty"`
 
 	Hub Hub `json:"hub,omitempty"`
 }
@@ -138,11 +138,11 @@ type Metrics struct {
 	EnableDiscovery bool `json:"enableDiscovery,omitempty"`
 
 	// ClusterCollector is for resource configuration for the cluster collector.
-	// +kubebuilder:default:={resources: {requests: {cpu: "200m", memory: "10Mi", ephemeral-storage: "20Mi"}, limits: {cpu: "400m", memory: "512Mi", ephemeral-storage: "1Gi"}}}
+	// +kubebuilder:default:={resources: {requests: {cpu: "200m", memory: "10Mi", ephemeral-storage: "20Mi"}, limits: {cpu: "2000m", memory: "512Mi", ephemeral-storage: "1Gi"}}}
 	ClusterCollector Collector `json:"clusterCollector,omitempty"`
 
 	// NodeCollector is for resource configuration for the node collector.
-	// +kubebuilder:default:={resources: {requests: {cpu: "200m", memory: "10Mi", ephemeral-storage: "20Mi"}, limits: {cpu: "200m", memory: "256Mi", ephemeral-storage: "512Mi"}}}
+	// +kubebuilder:default:={resources: {requests: {cpu: "200m", memory: "10Mi", ephemeral-storage: "20Mi"}, limits: {cpu: "1000m", memory: "256Mi", ephemeral-storage: "512Mi"}}}
 	NodeCollector Collector `json:"nodeCollector,omitempty"`
 
 	// CollectorConfigName ConfigMap name that is used internally
@@ -443,9 +443,7 @@ type Logging struct {
 	// Tags are a map of key value pairs that are added to all logging emitted.
 	Tags map[string]string `json:"tags,omitempty"`
 
-	// ConfigHash is for internal use only
-	ConfigHash string `json:"-"`
-
+	// TODO: Component Refactor  - remove the internal fields below
 	// ProxyAddress is for internal use only
 	ProxyAddress string `json:"-"`
 
@@ -453,12 +451,12 @@ type Logging struct {
 	LoggingVersion string `json:"-"`
 }
 
-type KubernetesEvents struct {
+type Insights struct {
 	// Enable is whether to enable events. Defaults to false.
 	// +kubebuilder:default:=false
 	Enable bool `json:"enable,omitempty"`
 
-	ExternalEndpointURL string `json:"externalEndpointURL,required"`
+	IngestionUrl string `json:"ingestionUrl,required"`
 
 	// SecretName is for internal use
 	SecretName string `json:"-"`

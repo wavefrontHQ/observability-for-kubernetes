@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openshift-service-ca-bundle
+  namespace: {{ .Namespace }}
+  annotations:
+    service.beta.openshift.io/inject-cabundle: "true"
+    wavefront.com/conditionally-provision: '{{ and .ControlPlane.Enable .Openshift }}'

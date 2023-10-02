@@ -1,0 +1,20 @@
+# automatically generated release notes
+changelog:
+  # category of changes in release notes
+  categories:
+  - title: Release notes
+    # labels: '*' is required to display a catchall category
+    labels:
+    - '*'
+    # list of labels/authors that exclude a PR from appearing in release notes
+    exclude:
+      labels:
+      - dependencies
+      - ci
+      - 'ignore for release'
+      authors:
+      - wf-jenkins
+  # separate out Dependabot automated PRs in release notes
+  - title: Dependencies
+    labels:
+    - dependencies

@@ -23,6 +23,9 @@ combined-integration-tests:
 	cd $(MONOREPO_DIR) && ./scripts/combined-deploy.sh $(COMBINED_DEPLOY_ARGS)
 	$(MAKE) -C operator integration-test -o undeploy -o deploy
 
+.PHONY: combined-integration-test
+combined-integration-test: combined-integration-tests
+
 .PHONY: clean-cluster
 clean-cluster:
 	@$(MONOREPO_DIR)/scripts/clean-cluster.sh
@@ -105,11 +108,18 @@ endif
 		--user $$(gcloud auth list --filter=status:ACTIVE --format="value(account)") \
 		clusterrolebinding
 
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+	DATE_CMD := gdate # need to use GNU date
+else
+	DATE_CMD := date
+endif
+
 GKE_EXPIRES_IN_HOURS?=10
 .PHONY: add-expire-labels-gke-cluster
 add-expire-labels-gke-cluster: gke-cluster-name-check
-	$(eval EXPIRE_DATE := $(shell date -u -v "+$(GKE_EXPIRES_IN_HOURS)H" +%F))
-	$(eval EXPIRE_TIME := $(shell date -u -v "+$(GKE_EXPIRES_IN_HOURS)H" +%H_%M_%S))
+	$(eval EXPIRE_DATE := $(shell $(DATE_CMD) -u --date="+$(GKE_EXPIRES_IN_HOURS) hours" +%F))
+	$(eval EXPIRE_TIME := $(shell $(DATE_CMD) -u --date="+$(GKE_EXPIRES_IN_HOURS) hours" +%H_%M_%S))
 	$(eval GKE_LABELS := "expire-date=$(EXPIRE_DATE),expire-time=$(EXPIRE_TIME)")
 	$(MAKE) update-gke-cluster-labels GKE_CLUSTER_NAME=$(GKE_CLUSTER_NAME) GCP_ZONE=$(GCP_ZONE) $(GKE_LABELS)
 

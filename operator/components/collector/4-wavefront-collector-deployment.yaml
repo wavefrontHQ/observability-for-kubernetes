@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wavefront-cluster-collector
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/component: cluster-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name : wavefront
+      app.kubernetes.io/component: cluster-collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name : wavefront
+        app.kubernetes.io/component: cluster-collector
+      annotations:
+        installation-method: operator
+        proxy-available-replicas: "{{ .ProxyAvailableReplicas }}"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+      tolerations:
+        - effect: NoSchedule
+          key: kubernetes.io/arch
+          value: arm64
+      serviceAccountName: wavefront-collector
+      automountServiceAccountToken: true
+      {{- if .ImagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .ImagePullSecret }}
+      {{- end }}
+      containers:
+        - name: wavefront-cluster-collector
+          securityContext:
+            readOnlyRootFilesystem: true
+          image: {{ .ImageRegistry }}/kubernetes-collector:{{ .CollectorVersion }}
+          imagePullPolicy: Always
+          command:
+            - /wavefront-collector
+            - --agent=cluster
+            - --config-file=/etc/collector/config.yaml
+          env:
+            - name: HOST_PROC
+              value: /host/proc
+            - name: POD_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: POD_NAMESPACE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: INSTALLATION_METHOD
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.annotations['installation-method']
+            - name: CLUSTER_UUID
+              value: {{ .ClusterUUID }}
+          {{- if .KubernetesEvents.Enable }}
+            - name: K8S_EVENTS_ENDPOINT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .KubernetesEvents.SecretName }}
+                  key: k8s-events-endpoint-token
+          {{- end }}
+          ports:
+            - containerPort: 8088
+              protocol: TCP
+          resources:
+{{ .ClusterCollectorResources | toYaml | indent 12 }}
+          volumeMounts:
+            - name: procfs
+              mountPath: /host/proc
+              readOnly: true
+            - name: config
+              mountPath: /etc/collector/
+              readOnly: true
+      volumes:
+        - name: procfs
+          hostPath:
+            path: /proc
+        - name: config
+          configMap:
+            name: {{ .CollectorConfigName }}

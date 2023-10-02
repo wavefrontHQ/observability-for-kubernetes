@@ -23,3 +23,7 @@ ij_yaml_indent_sequence_value = false
 [*.Jenkinsfile]
 indent_size = 2
 tab_width=2
+
+[*.tmpl]
+indent_size = 2
+tab_width = 2

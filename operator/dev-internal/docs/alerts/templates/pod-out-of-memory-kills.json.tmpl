@@ -1,26 +1,44 @@
 {
   "name": "Pod Out-of-memory Kills",
   "alertType": "THRESHOLD",
+  "additionalInformation": "",
+  "alertChartUnits": "",
   "alertSources": [
     {
+      "name": "A",
+      "query": "mcount(15m, ${B}) >= 2",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\") by (sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name, reason))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
       "name": "Alert Condition",
-      "query": "(mcount(15m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, workload_name, pod_name, namespace_name, cluster, container_name, cluster_uuid, reason)) >= 2)",
+      "query": "${A}",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
     },
     {
       "name": "Display Condition",
-      "query": "if(${Alert Condition}, ${Alert Condition})",
+      "query": "if(${A} >= 1, ${A})",
       "queryType": "WQL",
-      "alertSourceType": ["VARIABLE","AUDIT"],
+      "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "warn": "(mcount(15m, count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, workload_name, pod_name, namespace_name, cluster, container_name, cluster_uuid, reason)) >= 2) >= 1"
+    "warn": "${A} >= 1"
   },
+  "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
   "minutes": 15,
   "resolveAfterMinutes": 2,
   "tags": {
@@ -30,12 +48,13 @@
   },
   "alertTriageDashboards": [
     {
-     "dashboardId": "integration-kubernetes-workloads",
-     "parameters": {
-       "constants": {
-         "cluster": "K8S_CLUSTER_NAME"
-       }
-     }
+      "dashboardId": "integration-kubernetes-workloads",
+      "parameters": {
+        "constants": {
+          "cluster": "K8S_CLUSTER_NAME"
+        }
+      }
     }
-  ]
+  ],
+  "includeObsoleteMetrics": false
 }

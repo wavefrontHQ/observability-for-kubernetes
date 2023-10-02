@@ -1,0 +1,67 @@
+{
+  "name": "Node Disk Pressure",
+  "alertType": "THRESHOLD",
+  "additionalInformation": "Alert reports when a node has the problematic condition of DiskPressure.",
+  "alertChartUnits": "",
+  "alertSources": [
+    {
+      "name": "A",
+      "query": "mcount(5m, ${B}) >= 2",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "count(${C} by (sources, cluster, cluster_uuid, nodename, node_role, status, condition))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "C",
+      "query": "ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND (condition=\"DiskPressure\" AND status=\"True\"))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${A} >= 1, ${A})",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "warn": "${A} >= 1"
+  },
+  "conditionQBEnabled": false,
+  "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
+  "includeObsoleteMetrics": false,
+  "minutes": 5,
+  "resolveAfterMinutes": 2,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+     "dashboardId": "integration-kubernetes-workloads",
+     "parameters": {
+       "constants": {
+         "cluster": "K8S_CLUSTER_NAME"
+       }
+     }
+    }
+  ]
+}

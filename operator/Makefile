@@ -102,11 +102,9 @@ test: manifests generate fmt vet ## Run tests.
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
 	go build -ldflags "$(LDFLAGS)" -o build/$(GOOS)/$(GOARCH)/manager main.go
-	rm -rf build/$(GOOS)/$(GOARCH)/deploy
-	cp -r deploy build/$(GOOS)/$(GOARCH)
-	@if [ ${ALLOW_AUTO_INSTRUMENTATION} != true ]; then \
-    	rm -rf build/$(GOOS)/$(GOARCH)/deploy/internal/pixie; \
-	fi
+	rm -rf build/$(GOOS)/$(GOARCH)/components
+	find components -type f -name "*.yaml" | xargs dirname | uniq | xargs -I{} mkdir -p build/$(GOOS)/$(GOARCH)/{}
+	find components -type f -name "*.yaml" | xargs -I{} /bin/bash -c 'cp {} build/$(GOOS)/$(GOARCH)/$$(dirname {})'
 	cp open_source_licenses.txt build/
 
 .PHONY: clean
@@ -188,12 +186,6 @@ custom-kustomization-yaml: $(OPERATOR_BUILD_DIR)
 kubernetes-yaml: manifests $(OPERATOR_BUILD_DIR)
 	cd config/manager && kustomize edit set image controller=$(IMG)
 	kustomize build config/default > $(KUBERNETES_YAML)
-
-.PHONY: helm-kubernetes-yaml
-helm-kubernetes-yaml: copy-base-patches kubernetes-yaml
-	rm -f $(MONOREPO_DIR)/helm-charts/aria-integration/templates/*.yaml
-	kustomize build config/default -o $(MONOREPO_DIR)/helm-charts/aria-integration/templates
-	rm $(MONOREPO_DIR)/helm-charts/aria-integration/templates/v1_namespace_observability-system.yaml
 
 .PHONY: rc-kubernetes-yaml
 rc-kubernetes-yaml: $(OPERATOR_BUILD_DIR)

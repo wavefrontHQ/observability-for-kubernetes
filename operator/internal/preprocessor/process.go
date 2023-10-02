@@ -26,6 +26,7 @@ type rule struct {
 }
 
 func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
+	//TODO: Component Refactor - move all of this to components or the wavefront controller if is cross component specific
 	wfSpec := &wavefront.Spec
 	operator, err := deployment(client, util.OperatorName, wfSpec.Namespace)
 	if err != nil {
@@ -39,29 +40,13 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 		return err
 	}
 
-	preProcessDataCollection(wfSpec)
+	preProcessDataCollection(client, wfSpec)
 
 	err = preProcessDataExport(client, wfSpec)
 	if err != nil {
 		return err
 	}
 
-	err = preProcessLogging(wfSpec)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func preProcessLogging(wfSpec *wf.WavefrontSpec) error {
-	if wfSpec.DataCollection.Logging.Enable {
-		configHashBytes, err := json.Marshal(wfSpec.DataCollection.Logging)
-		if err != nil {
-			return err
-		}
-		wfSpec.DataCollection.Logging.ConfigHash = hashValue(configHashBytes)
-	}
 	return nil
 }
 
@@ -92,16 +77,35 @@ func preProcessDataExport(client crClient.Client, wfSpec *wf.WavefrontSpec) erro
 	return nil
 }
 
-func preProcessDataCollection(wfSpec *wf.WavefrontSpec) {
+func preProcessDataCollection(client crClient.Client, wfSpec *wf.WavefrontSpec) {
 	if wfSpec.DataCollection.Metrics.Enable {
 		if len(wfSpec.DataCollection.Metrics.CustomConfig) == 0 {
 			wfSpec.DataCollection.Metrics.CollectorConfigName = "default-wavefront-collector-config"
 		} else {
 			wfSpec.DataCollection.Metrics.CollectorConfigName = wfSpec.DataCollection.Metrics.CustomConfig
 		}
-	} else if wfSpec.Experimental.KubernetesEvents.Enable {
+	} else if wfSpec.Experimental.Insights.Enable {
 		wfSpec.DataCollection.Metrics.CollectorConfigName = "k8s-events-only-wavefront-collector-config"
 	}
+	if shouldEnableEtcdCollection(client, wfSpec) {
+		wfSpec.DataCollection.Metrics.ControlPlane.EnableEtcd = true
+	}
+}
+
+func shouldEnableEtcdCollection(client crClient.Client, wfSpec *wf.WavefrontSpec) bool {
+	// never collect etcd if control plane metrics are disabled
+	if !wfSpec.DataCollection.Metrics.ControlPlane.Enable {
+		return false
+	}
+
+	// only enable collection from etcd if the certs are supplied as a Secret
+	key := crClient.ObjectKey{
+		Namespace: wfSpec.Namespace,
+		Name:      "etcd-certs",
+	}
+	err := client.Get(context.Background(), key, &corev1.Secret{})
+
+	return err == nil
 }
 
 func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
@@ -110,7 +114,6 @@ func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) err
 		wfSpec.DataExport.WavefrontProxy.AvailableReplicas = int(deployment.Status.AvailableReplicas)
 		wfSpec.CanExportData = true
 	}
-	wfSpec.DataExport.WavefrontProxy.ConfigHash = ""
 	wfSpec.DataCollection.Metrics.ProxyAddress = fmt.Sprintf("%s:%d", util.ProxyName, wfSpec.DataExport.WavefrontProxy.MetricPort)
 
 	// The endpoint for logging requires the "http://" prefix
@@ -143,7 +146,7 @@ func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) err
 }
 
 func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
-	if wfSpec.Experimental.KubernetesEvents.Enable {
+	if wfSpec.Experimental.Insights.Enable {
 		secret, err := findSecret(client, wfSpec.WavefrontTokenSecret, wfSpec.Namespace)
 		if err != nil {
 			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' was not found", wfSpec.WavefrontTokenSecret)
@@ -152,18 +155,31 @@ func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		if _, ok := secret.Data["k8s-events-endpoint-token"]; !ok {
 			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' is missing Data 'k8s-events-endpoint-token'", wfSpec.WavefrontTokenSecret)
 		}
-		wfSpec.Experimental.KubernetesEvents.SecretName = wfSpec.WavefrontTokenSecret
+		wfSpec.Experimental.Insights.SecretName = wfSpec.WavefrontTokenSecret
 	}
 	if secret, err := findSecret(client, util.AriaInsightsSecret, wfSpec.Namespace); err == nil {
-		if len(secret.Data["k8s-events-endpoint-url"]) == 0 {
-			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' is missing Data 'k8s-events-endpoint-url'", secret.Name)
-		}
 		if len(secret.Data["k8s-events-endpoint-token"]) == 0 {
 			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' is missing Data 'k8s-events-endpoint-token'", secret.Name)
 		}
-		wfSpec.Experimental.KubernetesEvents.ExternalEndpointURL = string(secret.Data["k8s-events-endpoint-url"])
-		wfSpec.Experimental.KubernetesEvents.Enable = true
-		wfSpec.Experimental.KubernetesEvents.SecretName = secret.Name
+		if len(wfSpec.Experimental.Insights.IngestionUrl) == 0 {
+			wfSpec.Experimental.Insights.IngestionUrl = string(secret.Data["k8s-events-endpoint-url"])
+		}
+		wfSpec.Experimental.Insights.Enable = true
+		wfSpec.Experimental.Insights.SecretName = secret.Name
+	}
+	if wfSpec.Experimental.Insights.Enable && !wfSpec.DataCollection.Metrics.Enable && len(wfSpec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU) == 0 {
+		wfSpec.DataCollection.Metrics.ClusterCollector.Resources = wf.Resources{
+			Requests: wf.Resource{
+				CPU:              "200m",
+				Memory:           "10Mi",
+				EphemeralStorage: "20Mi",
+			},
+			Limits: wf.Resource{
+				CPU:              "2000m",
+				Memory:           "512Mi",
+				EphemeralStorage: "1Gi",
+			},
+		}
 	}
 	if wfSpec.Experimental.Autotracing.Enable {
 		daemonset, err := daemonset(client, util.PixieVizierPEMName, wfSpec.Namespace)
@@ -386,17 +402,10 @@ func setHttpProxyConfigs(httpProxySecret *corev1.Secret, wavefront *wf.Wavefront
 	wavefront.DataExport.WavefrontProxy.HttpProxy.HttpProxyUser = httpProxySecretData["basic-auth-username"]
 	wavefront.DataExport.WavefrontProxy.HttpProxy.HttpProxyPassword = httpProxySecretData["basic-auth-password"]
 
-	configHashBytes, err := json.Marshal(wavefront.DataExport.WavefrontProxy.HttpProxy)
-	if err != nil {
-		return err
-	}
-
 	if len(httpProxySecretData["tls-root-ca-bundle"]) != 0 {
 		wavefront.DataExport.WavefrontProxy.HttpProxy.UseHttpProxyCAcert = true
-		configHashBytes = append(configHashBytes, httpProxySecret.Data["tls-root-ca-bundle"]...)
+		wavefront.DataExport.WavefrontProxy.ConfigHash = hashValue(httpProxySecret.Data["tls-root-ca-bundle"])
 	}
-
-	wavefront.DataExport.WavefrontProxy.ConfigHash = hashValue(configHashBytes)
 
 	return nil
 }
