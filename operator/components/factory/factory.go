@@ -64,7 +64,7 @@ func BuildComponents(componentsDir fs.FS, wf *wf.Wavefront) ([]components.Compon
 		return nil, err
 	}
 
-	pixieComponent, _ := pixie.NewComponent(pixieDir, pixie.FromWavefront(wf))
+	pixieComponent, err := pixie.NewComponent(pixieDir, pixie.FromWavefront(wf))
 	if err != nil {
 		return nil, err
 	}
