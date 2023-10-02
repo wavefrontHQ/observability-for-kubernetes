@@ -180,9 +180,11 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Node Memory Overutilization](docs/alerts/templates/node-memory-overutilization.json.tmpl)         | Node has high memory utilization. |
 | [Node CPU Overutilization](docs/alerts/templates/node-cpu-overutilization.json.tmpl)               | Node has high CPU utilization. |
 | [Node Filesystem Overutilization](docs/alerts/templates/node-filesystem-overutilization.json.tmpl) | Node storage is almost full. |
+| [Node CPU-request Saturation](docs/alerts/templates/node-cpu-request-saturation.json.tmpl) | Node has overcommitted cpu resource requests. |
+| [Node Memory-request Saturation](docs/alerts/templates/node-memory-request-saturation.json.tmpl) | Node has overcommitted memory resource requests. |
+| [Node Disk Pressure](docs/alerts/templates/node-disk-pressure.json.tmpl) | Node has problematic `DiskPressure` condition. |
+| [Node Memory Pressure](docs/alerts/templates/node-memory-pressure.json.tmpl) | Node has problematic `MemoryPressure` condition. |
 | [Node Condition Not Ready](docs/alerts/templates/node-condition-not-ready.json.tmpl)               | Node Condition not in Ready state. |
-| [Node CPU-request Saturation](docs/alerts/templates/node-cpu-request-saturation.json.tmpl)         | Node has overcommitted cpu resource requests. |
-| [Node Memory-request Saturation](docs/alerts/templates/node-memory-request-saturation.json.tmpl)   | Node has overcommitted memory resource requests. |
 
 ## Bring Your Own Logs Shipper
 
