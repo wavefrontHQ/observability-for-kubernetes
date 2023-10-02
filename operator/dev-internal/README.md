@@ -162,6 +162,7 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 | [Pod Out-of-memory Kills](docs/alerts/templates/pod-out-of-memory-kills.json.tmpl) | Workload has pod with container status `OOMKilled`. |
 | [Container CPU Throttling](docs/alerts/templates/container-cpu-throttling.json.tmpl) | Workload has a container with high CPU throttling. |
 | [Container CPU Overutilization](docs/alerts/templates/container-cpu-overutilization.json.tmpl) | Workload has a container with high CPU utilization. |
+| [Container Memory Overutilization](docs/alerts/templates/container-memory-overutilization.json.tmpl) | Workload has a container with high memory utilization. |
 | [Missing etcd leader](templates/etcd-no-leader.json.tmpl) | etcd cannot elect a leader. |
 
 ### Persistent Volume Failures
@@ -174,13 +175,14 @@ We have alerts on common Kubernetes issues. For details on creating alerts, see 
 
 ### Node Failures
 
-| Alert name | Description |
-|---|---|
-| [Node Memory Overutilization](docs/alerts/templates/node-memory-overutilization.json.tmpl) | Node has high memory utilization. |
-| [Node CPU Overutilization](docs/alerts/templates/node-cpu-overutilization.json.tmpl) | Node has high CPU utilization. |
+| Alert name                                                                                         | Description |
+|----------------------------------------------------------------------------------------------------|-------------|
+| [Node Memory Overutilization](docs/alerts/templates/node-memory-overutilization.json.tmpl)         | Node has high memory utilization. |
+| [Node CPU Overutilization](docs/alerts/templates/node-cpu-overutilization.json.tmpl)               | Node has high CPU utilization. |
 | [Node Filesystem Overutilization](docs/alerts/templates/node-filesystem-overutilization.json.tmpl) | Node storage is almost full. |
-| [Node CPU-request Saturation](docs/alerts/templates/node-cpu-request-saturation.json.tmpl) | Node has overcommitted cpu resource requests. |
-| [Node Memory-request Saturation](docs/alerts/templates/node-memory-request-saturation.json.tmpl) | Node has overcommitted memory resource requests. |
+| [Node Condition Not Ready](docs/alerts/templates/node-condition-not-ready.json.tmpl)               | Node Condition not in Ready state. |
+| [Node CPU-request Saturation](docs/alerts/templates/node-cpu-request-saturation.json.tmpl)         | Node has overcommitted cpu resource requests. |
+| [Node Memory-request Saturation](docs/alerts/templates/node-memory-request-saturation.json.tmpl)   | Node has overcommitted memory resource requests. |
 
 ## Bring Your Own Logs Shipper
 

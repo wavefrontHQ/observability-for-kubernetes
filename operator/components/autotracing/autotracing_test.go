@@ -10,6 +10,7 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
+	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -83,6 +84,21 @@ func TestResources(t *testing.T) {
 
 		// check all resources for component labels
 		test.RequireCommonLabels(t, toApply, "wavefront", "autotracing", component.config.Namespace)
+
+		clusterSpansConfigMap, err := test.GetConfigMap("wavefront-cluster-spans-script", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, clusterSpansConfigMap)
+		checkConfigMapNamespace(t, clusterSpansConfigMap)
+
+		egressSpansConfigMap, err := test.GetConfigMap("wavefront-egress-spans-script", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, egressSpansConfigMap)
+		checkConfigMapNamespace(t, egressSpansConfigMap)
+
+		ingressSpansConfigMap, err := test.GetConfigMap("wavefront-ingress-spans-script", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, ingressSpansConfigMap)
+		checkConfigMapNamespace(t, ingressSpansConfigMap)
 	})
 
 	t.Run("can change namespace", func(t *testing.T) {
@@ -98,15 +114,21 @@ func TestResources(t *testing.T) {
 		// check all resources for component labels
 		test.RequireCommonLabels(t, toApply, "wavefront", "autotracing", wftest.DefaultNamespace)
 
-		// configmaps
 		checkConfigMapNamespaceChanges(t, "wavefront-cluster-spans-script", toApply)
 		checkConfigMapNamespaceChanges(t, "wavefront-egress-spans-script", toApply)
 		checkConfigMapNamespaceChanges(t, "wavefront-ingress-spans-script", toApply)
 	})
 }
 
+func checkConfigMapNamespace(t *testing.T, configMap v1.ConfigMap) {
+	pxlScript := configMap.Data["script.pxl"]
+	configs := configMap.Data["configs.yaml"]
+	require.Contains(t, configs, fmt.Sprintf(" wavefront-proxy.%s.svc.cluster.local:4317", util.Namespace))
+	require.Contains(t, pxlScript, util.Namespace)
+}
+
 func checkConfigMapNamespaceChanges(t *testing.T, metadataName string, toApply []client.Object) {
-	configmap, err := test.GetAppliedConfigMap(metadataName, toApply)
+	configmap, err := test.GetConfigMap(metadataName, toApply)
 	require.NoError(t, err)
 	require.Equal(t, wftest.DefaultNamespace, configmap.Namespace)
 

@@ -366,7 +366,7 @@ func TestProcessExperimental(t *testing.T) {
 		}
 		fakeClient := setup(secret)
 		wfcr := defaultWFCR()
-		wfcr.Spec.Experimental.KubernetesEvents.Enable = true
+		wfcr.Spec.Experimental.Insights.Enable = true
 
 		err := PreProcess(fakeClient, wfcr)
 
@@ -375,7 +375,7 @@ func TestProcessExperimental(t *testing.T) {
 
 	t.Run("returns error if K8s events are enabled and secret does not exist", func(t *testing.T) {
 		wfcr := defaultWFCR()
-		wfcr.Spec.Experimental.KubernetesEvents.Enable = true
+		wfcr.Spec.Experimental.Insights.Enable = true
 
 		err := PreProcess(setup(), wfcr)
 
@@ -394,29 +394,11 @@ func TestProcessExperimental(t *testing.T) {
 		}
 		fakeClient := setup(secret)
 		wfcr := defaultWFCR()
-		wfcr.Spec.Experimental.KubernetesEvents.Enable = true
+		wfcr.Spec.Experimental.Insights.Enable = true
 
 		err := PreProcess(fakeClient, wfcr)
 
 		require.ErrorContains(t, err, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'testWavefrontSecret' is missing Data 'k8s-events-endpoint-token'")
-	})
-
-	t.Run("surfaces error when endpoint url doesn't exist in aria-insights-secret", func(t *testing.T) {
-		secret := &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "aria-insights-secret",
-				Namespace: testNamespace,
-			},
-			Data: map[string][]byte{
-				"k8s-events-endpoint-token": []byte("ignored"),
-			},
-		}
-		fakeClient := setup(secret)
-		wfcr := defaultWFCR()
-
-		err := PreProcess(fakeClient, wfcr)
-
-		require.ErrorContains(t, err, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'aria-insights-secret' is missing Data 'k8s-events-endpoint-url'")
 	})
 
 	t.Run("surfaces error when endpoint token doesn't exist in aria-insights-secret", func(t *testing.T) {

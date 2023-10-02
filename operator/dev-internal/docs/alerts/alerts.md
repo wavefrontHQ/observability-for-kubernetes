@@ -14,24 +14,25 @@ This page contains the steps to create alerts for the Observability for Kubernet
 
 We have alert templates on common Kubernetes issues.
 
-| Alert | Template |
-|---|---|
-| [Detect pod stuck in pending](templates/pod-stuck-in-pending.json.tmpl) | `pod-stuck-in-pending.json.tmpl` |
-| [Detect pod stuck in terminating](templates/pod-stuck-in-terminating.json.tmpl) | `pod-stuck-in-terminating.json.tmpl` |
-| [Detect pod backoff event](templates/pod-backoff-event.json.tmpl) | `pod-backoff-event.json.tmpl` |
-| [Detect workload with non-ready pods](templates/workload-not-ready.json.tmpl) | `workload-not-ready.json.tmpl` |
-| [Detect pod out-of-memory kills](templates/pod-out-of-memory-kills.json.tmpl) | `pod-out-of-memory-kills.json.tmpl` |
-| [Detect container cpu throttling](templates/container-cpu-throttling.json.tmpl) | `container-cpu-throttling.json.tmpl` |
-| [Detect container cpu overutilization](templates/container-cpu-overutilization.json.tmpl) | `container-cpu-overutilization.json.tmpl` |
-| [Detect persistent volumes with no claims](templates/persistent-volumes-no-claim.json.tmpl) | `persistent-volumes-no-claim.json.tmpl` |
-| [Detect persistent volumes with error](templates/persistent-volumes-error.json.tmpl) | `persistent-volumes-error.json.tmpl` |
+| Alert                                                                                               | Template                                            |
+|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------|
+| [Detect pod stuck in pending](templates/pod-stuck-in-pending.json.tmpl)                             | `pod-stuck-in-pending.json.tmpl`                    |
+| [Detect pod stuck in terminating](templates/pod-stuck-in-terminating.json.tmpl)                     | `pod-stuck-in-terminating.json.tmpl`                |
+| [Detect pod backoff event](templates/pod-backoff-event.json.tmpl)                                   | `pod-backoff-event.json.tmpl`                       |
+| [Detect workload with non-ready pods](templates/workload-not-ready.json.tmpl)                       | `workload-not-ready.json.tmpl`                      |
+| [Detect pod out-of-memory kills](templates/pod-out-of-memory-kills.json.tmpl)                       | `pod-out-of-memory-kills.json.tmpl`                 |
+| [Detect container cpu throttling](templates/container-cpu-throttling.json.tmpl)                     | `container-cpu-throttling.json.tmpl`                |
+| [Detect container cpu overutilization](templates/container-cpu-overutilization.json.tmpl)           | `container-cpu-overutilization.json.tmpl`           |
+| [Detect persistent volumes with no claims](templates/persistent-volumes-no-claim.json.tmpl)         | `persistent-volumes-no-claim.json.tmpl`             |
+| [Detect persistent volumes with error](templates/persistent-volumes-error.json.tmpl)                | `persistent-volumes-error.json.tmpl`                |
 | [Detect persistent volumes filling up](templates/persistent-volume-claim-overutilization.json.tmpl) | `persistent-volume-claim-overutilization.json.tmpl` |
-| [Detect node memory overutilization](templates/node-memory-overutilization.json.tmpl) | `node-memory-overutilization.json.tmpl` |
-| [Detect node cpu overutilization](templates/node-cpu-overutilization.json.tmpl) | `node-cpu-overutilization.json.tmpl` |
-| [Detect node filesystem overutilization](templates/node-filesystem-overutilization.json.tmpl) | `node-filesystem-overutilization.json.tmpl` |
-| [Detect node cpu-request saturation](templates/node-cpu-request-saturation.json.tmpl) | `node-cpu-request-saturation.json.tmpl` |
-| [Detect node memory-request saturation](templates/node-memory-request-saturation.json.tmpl) | `node-memory-request-saturation.json.tmpl` |
-| [Detect etcd has no leader](templates/etcd-no-leader.json.tmpl) | `etcd-no-leader.json.tmpl` |
+| [Detect node condition not ready](templates/node-condition-not-ready.json.tmpl)                     | `node-not-ready.json.tmpl`                          |
+| [Detect node memory overutilization](templates/node-memory-overutilization.json.tmpl)               | `node-memory-overutilization.json.tmpl`             |
+| [Detect node cpu overutilization](templates/node-cpu-overutilization.json.tmpl)                     | `node-cpu-overutilization.json.tmpl`                |
+| [Detect node filesystem overutilization](templates/node-filesystem-overutilization.json.tmpl)       | `node-filesystem-overutilization.json.tmpl`         |
+| [Detect node cpu-request saturation](templates/node-cpu-request-saturation.json.tmpl)               | `node-cpu-request-saturation.json.tmpl`             |
+| [Detect node memory-request saturation](templates/node-memory-request-saturation.json.tmpl)         | `node-memory-request-saturation.json.tmpl`          |
+| [Detect etcd has no leader](templates/etcd-no-leader.json.tmpl)                                     | `etcd-no-leader.json.tmpl`                          |
 
 ## Creating Alerts
 

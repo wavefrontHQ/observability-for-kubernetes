@@ -712,19 +712,18 @@ spec:
                             type: object
                         type: object
                     type: object
-                  kubernetesEvents:
-                    description: KubernetesEvents is deprecated, please use aria-insights-secret
-                      instead
+                  insights:
+                    description: Insights
                     properties:
                       enable:
                         default: false
                         description: Enable is whether to enable events. Defaults
                           to false.
                         type: boolean
-                      externalEndpointURL:
+                      ingestionUrl:
                         type: string
                     required:
-                    - externalEndpointURL
+                    - ingestionUrl
                     type: object
                 type: object
               imagePullSecret:

@@ -18,7 +18,7 @@ var ComponentDir = os.DirFS(filepath.Join("..", DeployDir))
 
 func TestNewCollectorComponent(t *testing.T) {
 	t.Run("valid component", func(t *testing.T) {
-		config := validComponentConfig()
+		config := minimalComponentConfig()
 		t.Log(os.Getwd())
 		component, err := NewComponent(ComponentDir, config)
 		require.NoError(t, err)
@@ -28,14 +28,14 @@ func TestNewCollectorComponent(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	t.Run("valid component config", func(t *testing.T) {
-		config := validComponentConfig()
+		config := minimalComponentConfig()
 		component, _ := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.True(t, result.IsValid())
 	})
 
 	t.Run("Validation error when node collector CPU request is greater than CPU limit", func(t *testing.T) {
-		config := validComponentConfig()
+		config := minimalComponentConfig()
 		config.NodeCollectorResources.Requests.CPU = "500m"
 		config.NodeCollectorResources.Limits.CPU = "200m"
 
@@ -47,7 +47,7 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("Does not validates node collector resources when metrics is not enabled", func(t *testing.T) {
-		config := validComponentConfig()
+		config := minimalComponentConfig()
 		config.MetricsEnable = false
 		config.NodeCollectorResources = wf.Resources{}
 
@@ -58,7 +58,7 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("Validation error when cluster collector memory request is greater than CPU limit", func(t *testing.T) {
-		config := validComponentConfig()
+		config := minimalComponentConfig()
 		config.ClusterCollectorResources.Requests.Memory = "500Mi"
 		config.ClusterCollectorResources.Limits.Memory = "200Mi"
 
@@ -70,7 +70,7 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("CPU expressed differently should not be an error", func(t *testing.T) {
-		config := validComponentConfig()
+		config := minimalComponentConfig()
 		config.ClusterCollectorResources.Requests.CPU = "500m"
 		config.ClusterCollectorResources.Limits.CPU = "0.5"
 
@@ -83,50 +83,50 @@ func TestValidate(t *testing.T) {
 
 func TestResources(t *testing.T) {
 	t.Run("default configuration", func(t *testing.T) {
-		component, _ := NewComponent(ComponentDir, validComponentConfig())
+		component, _ := NewComponent(ComponentDir, minimalComponentConfig())
 		toApply, toDelete, err := component.Resources()
 
 		require.NoError(t, err)
 		require.Equal(t, 4, len(toApply))
 		require.Equal(t, 5, len(toDelete))
 
-		// check all resources for component labels
-		var nodeCollector, clusterCollector, others []client.Object
+		var nodeCollectors, clusterCollectors, others []client.Object
 		for _, clientObject := range toApply {
 			if clientObject.GetObjectKind().GroupVersionKind().Kind == "DaemonSet" {
-				nodeCollector = append(nodeCollector, clientObject)
+				nodeCollectors = append(nodeCollectors, clientObject)
 			} else if clientObject.GetObjectKind().GroupVersionKind().Kind == "Deployment" {
-				clusterCollector = append(clusterCollector, clientObject)
+				clusterCollectors = append(clusterCollectors, clientObject)
 			} else {
 				others = append(others, clientObject)
 			}
 		}
-		test.RequireCommonLabels(t, nodeCollector, "wavefront", "node-collector", wftest.DefaultNamespace)
-		test.RequireCommonLabels(t, clusterCollector, "wavefront", "cluster-collector", wftest.DefaultNamespace)
+
+		// check all resources for component labels
+		test.RequireCommonLabels(t, nodeCollectors, "wavefront", "node-collector", wftest.DefaultNamespace)
+		test.RequireCommonLabels(t, clusterCollectors, "wavefront", "cluster-collector", wftest.DefaultNamespace)
 		test.RequireCommonLabels(t, others, "wavefront", "collector", wftest.DefaultNamespace)
 
-		serviceAccount, err := test.GetAppliedServiceAccount(util.CollectorName, toApply)
+		serviceAccount, err := test.GetServiceAccount(util.CollectorName, toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, serviceAccount)
 
-		configMap, err := test.GetAppliedConfigMap("default-wavefront-collector-config", toApply)
+		configMap, err := test.GetConfigMap("default-wavefront-collector-config", toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, configMap)
 
-		daemonSet, err := test.GetAppliedDaemonSet(util.NodeCollectorName, toApply)
+		daemonSet, err := test.GetDaemonSet(util.NodeCollectorName, toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, daemonSet)
 
-		deployment, err := test.GetAppliedDeployment(util.ClusterCollectorName, toApply)
+		deployment, err := test.GetDeployment(util.ClusterCollectorName, toApply)
 		require.NoError(t, err)
 		require.NotEmpty(t, deployment)
 	})
 
 	// TODO: Component Refactor - move collector wavefront controller test here
-
 }
 
-func validComponentConfig() ComponentConfig {
+func minimalComponentConfig() ComponentConfig {
 	return ComponentConfig{
 		Enable:                    true,
 		MetricsEnable:             true,
