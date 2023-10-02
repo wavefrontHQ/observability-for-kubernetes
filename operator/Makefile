@@ -187,12 +187,6 @@ kubernetes-yaml: manifests $(OPERATOR_BUILD_DIR)
 	cd config/manager && kustomize edit set image controller=$(IMG)
 	kustomize build config/default > $(KUBERNETES_YAML)
 
-.PHONY: helm-kubernetes-yaml
-helm-kubernetes-yaml: copy-base-patches kubernetes-yaml
-	rm -f $(MONOREPO_DIR)/helm-charts/aria-integration/templates/*.yaml
-	kustomize build config/default -o $(MONOREPO_DIR)/helm-charts/aria-integration/templates
-	rm $(MONOREPO_DIR)/helm-charts/aria-integration/templates/v1_namespace_observability-system.yaml
-
 .PHONY: rc-kubernetes-yaml
 rc-kubernetes-yaml: $(OPERATOR_BUILD_DIR)
 	curl -v https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/$(OPERATOR_YAML_RC_SHA)/operator/wavefront-operator-$(GIT_BRANCH).yaml \

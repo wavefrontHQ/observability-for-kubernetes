@@ -117,8 +117,8 @@ func TestValidate(t *testing.T) {
 	t.Run("allow legacy install if metrics and proxy are not enabled", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
 		wfCR := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
-			w.Spec.Experimental.KubernetesEvents.Enable = true
-			w.Spec.Experimental.KubernetesEvents.ExternalEndpointURL = "my.endpoint.com"
+			w.Spec.Experimental.Insights.Enable = true
+			w.Spec.Experimental.Insights.IngestionUrl = "my.endpoint.com"
 		})
 		result := Validate(appsV1, wfCR)
 		require.True(t, result.IsValid())
@@ -177,11 +177,11 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		wfCR.Spec.Experimental.Autotracing.Enable = true
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
 		wfCR.Spec.DataCollection.Metrics.Enable = true
-		wfCR.Spec.Experimental.KubernetesEvents.Enable = true
+		wfCR.Spec.Experimental.Insights.Enable = true
 		wfCR.Spec.DataCollection.Metrics.CustomConfig = "fake custom config"
 		validationError := validateWavefrontSpec(wfCR)
 		require.NotNilf(t, validationError, "expected validation error")
-		require.Equal(t, "[invalid proxy configuration: either set dataExport.proxy.enable to true or configure dataExport.externalWavefrontProxy.url, 'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled., 'metrics.customConfig' must not be set when the 'experimental.kubernetesEvents.enable' is enabled.]", validationError.Error())
+		require.Equal(t, "[invalid proxy configuration: either set dataExport.proxy.enable to true or configure dataExport.externalWavefrontProxy.url, 'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled., 'metrics.customConfig' must not be set when the 'experimental.insights.enable' is enabled.]", validationError.Error())
 	})
 
 	t.Run("Test No Proxy configuration", func(t *testing.T) {
@@ -195,7 +195,7 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
 		wfCR.Spec.DataCollection.Metrics.Enable = false
-		wfCR.Spec.Experimental.KubernetesEvents.Enable = true
+		wfCR.Spec.Experimental.Insights.Enable = true
 		validationError := validateWavefrontSpec(wfCR)
 		require.Nilf(t, validationError, "expected no validation error")
 	})
@@ -203,7 +203,7 @@ func TestValidateWavefrontSpec(t *testing.T) {
 	t.Run("Test custom config with kubernetes events enabled", func(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataCollection.Metrics.CustomConfig = "my-custom-config"
-		wfCR.Spec.Experimental.KubernetesEvents.Enable = true
+		wfCR.Spec.Experimental.Insights.Enable = true
 		validationError := validateWavefrontSpec(wfCR)
 		require.NotNilf(t, validationError, "expected validation error")
 	})
@@ -212,7 +212,7 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		wfCR := defaultWFCR()
 		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
 		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = ""
-		wfCR.Spec.Experimental.KubernetesEvents.Enable = true
+		wfCR.Spec.Experimental.Insights.Enable = true
 		wfCR.Spec.DataCollection.Metrics.Enable = true
 		validationError := validateWavefrontSpec(wfCR)
 		require.NotNilf(t, validationError, "expected validation error")

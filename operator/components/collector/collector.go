@@ -43,9 +43,9 @@ type ComponentConfig struct {
 }
 
 type KubernetesEvents struct {
-	Enable              bool
-	ExternalEndpointURL string
-	SecretName          string
+	Enable       bool
+	IngestionUrl string
+	SecretName   string
 }
 
 type Component struct {

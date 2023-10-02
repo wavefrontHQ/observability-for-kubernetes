@@ -23,8 +23,9 @@ func TestFromWavefront(t *testing.T) {
 	})
 
 	t.Run("component config enable should be set to false", func(t *testing.T) {
-		cr := wftest.CR()
-		cr.Spec.DataExport.WavefrontProxy.Enable = false
+		cr := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataExport.WavefrontProxy.Enable = false
+		})
 		config := FromWavefront(cr)
 
 		require.False(t, config.Enable)
