@@ -398,7 +398,7 @@ spec:
                     description: External Wavefront WavefrontProxy configuration
                     properties:
                       url:
-                        description: URL is the proxy URL that the collector sends
+                        description: Url is the proxy URL that the collector sends
                           metrics to.
                         minLength: 10
                         type: string
@@ -720,10 +720,10 @@ spec:
                         description: Enable is whether to enable events. Defaults
                           to false.
                         type: boolean
-                      ingestionURL:
+                      ingestionUrl:
                         type: string
                     required:
-                    - ingestionURL
+                    - ingestionUrl
                     type: object
                 type: object
               imagePullSecret:
@@ -739,7 +739,7 @@ spec:
                 maxLength: 253
                 pattern: ^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$
                 type: string
-              wavefrontURL:
+              wavefrontUrl:
                 description: Wavefront URL for your cluster
                 pattern: ^https:\/\/.*.wavefront.com
                 type: string

@@ -40,7 +40,7 @@ data:
     {{- if .KubernetesEvents.Enable }}
     - type: "external"
       enableEvents: true
-      externalEndpointURL: "{{ .KubernetesEvents.ExternalEndpointURL }}"
+      externalEndpointURL: "{{ .KubernetesEvents.IngestionUrl }}"
     events:
       filters:
         tagAllowListSets:

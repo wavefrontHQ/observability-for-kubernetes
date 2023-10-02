@@ -9,7 +9,7 @@ spec:
   experimental:
     insights:
       enable: true
-      externalEndpointURL: http://test-proxy.YOUR_NAMESPACE.svc.cluster.local:9999/events
+      ingestionUrl: http://test-proxy.YOUR_NAMESPACE.svc.cluster.local:9999/events
 ---
 apiVersion: apps/v1
 kind: Deployment

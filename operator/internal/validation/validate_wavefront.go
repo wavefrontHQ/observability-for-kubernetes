@@ -120,7 +120,7 @@ func validateWavefrontSpec(wavefront *wf.Wavefront) error {
 
 	if wavefront.Spec.DataExport.WavefrontProxy.Enable {
 		errs = append(errs, validateWavefrontProxyConfig(wavefront)...)
-	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.URL) == 0 && (wavefront.Spec.DataCollection.Metrics.Enable || wavefront.Spec.DataCollection.Logging.Enable) {
+	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) == 0 && (wavefront.Spec.DataCollection.Metrics.Enable || wavefront.Spec.DataCollection.Logging.Enable) {
 		errs = append(errs, fmt.Errorf("invalid proxy configuration: either set dataExport.proxy.enable to true or configure dataExport.externalWavefrontProxy.url"))
 	}
 	if wavefront.Spec.Experimental.Autotracing.Enable && !wavefront.Spec.DataExport.WavefrontProxy.Enable {
@@ -136,10 +136,10 @@ func validateWavefrontSpec(wavefront *wf.Wavefront) error {
 
 func validateWavefrontProxyConfig(wavefront *wf.Wavefront) []error {
 	var errs []error
-	if len(wavefront.Spec.WavefrontURL) == 0 {
+	if len(wavefront.Spec.WavefrontUrl) == 0 {
 		errs = append(errs, fmt.Errorf("'wavefrontUrl' should be set"))
 	}
-	if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.URL) != 0 {
+	if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) != 0 {
 		errs = append(errs, fmt.Errorf("'externalWavefrontProxy.url' and 'wavefrontProxy.enable' should not be set at the same time"))
 	}
 	return errs

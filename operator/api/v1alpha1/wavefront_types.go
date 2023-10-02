@@ -34,7 +34,7 @@ type WavefrontSpec struct {
 
 	// Wavefront URL for your cluster
 	// +kubebuilder:validation:Pattern:=`^https:\/\/.*.wavefront.com`
-	WavefrontURL string `json:"wavefrontUrl,omitempty"`
+	WavefrontUrl string `json:"wavefrontUrl,omitempty"`
 
 	// WavefrontTokenSecret is the name of the secret that contains a wavefront API Token.
 	// +kubebuilder:validation:MaxLength:=253
@@ -164,9 +164,9 @@ type DataExport struct {
 }
 
 type ExternalWavefrontProxy struct {
-	// URL is the proxy URL that the collector sends metrics to.
+	// Url is the proxy URL that the collector sends metrics to.
 	// +kubebuilder:validation:MinLength:=10
-	URL string `json:"url,required"`
+	Url string `json:"url,required"`
 }
 
 type DataCollection struct {
@@ -456,7 +456,7 @@ type Insights struct {
 	// +kubebuilder:default:=false
 	Enable bool `json:"enable,omitempty"`
 
-	IngestionURL string `json:"ingestionURL,required"`
+	IngestionUrl string `json:"ingestionUrl,required"`
 
 	// SecretName is for internal use
 	SecretName string `json:"-"`

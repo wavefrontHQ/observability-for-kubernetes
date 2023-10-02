@@ -12,7 +12,7 @@ func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 		ClusterUUID:          cr.Spec.ClusterUUID,
 		ImageRegistry:        cr.Spec.ImageRegistry,
 		WavefrontTokenSecret: cr.Spec.WavefrontTokenSecret,
-		WavefrontUrl:         cr.Spec.WavefrontURL,
+		WavefrontUrl:         cr.Spec.WavefrontUrl,
 		Resources:            cr.Spec.DataExport.WavefrontProxy.Resources,
 		MetricPort:           cr.Spec.DataExport.WavefrontProxy.MetricPort,
 		ProxyVersion:         cr.Spec.DataExport.WavefrontProxy.ProxyVersion,
