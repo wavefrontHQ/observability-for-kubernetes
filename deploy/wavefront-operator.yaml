@@ -1442,7 +1442,7 @@ subjects:
 apiVersion: v1
 data:
   collector: 1.25.0
-  logging: 2.1.9-bad
+  logging: 2.1.9
   proxy: "13.1"
 kind: ConfigMap
 metadata:
