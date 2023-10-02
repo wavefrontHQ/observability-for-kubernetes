@@ -151,6 +151,12 @@ You can see all configuration options in the [wavefront-full-config.yaml](deploy
 
 We have alerts on common Kubernetes issues. For details on creating alerts, see [alerts.md](docs/alerts/alerts.md).
 
+### Observability Failures
+
+| Alert name | Description |
+|---|---|
+| [Observability Status is Unhealthy](docs/alerts/templates/observability-status-unhealthy.json.tmpl) | The status of the Observability for Kubernetes is unhealthy. |
+
 ### Pod Failures
 
 | Alert name | Description |

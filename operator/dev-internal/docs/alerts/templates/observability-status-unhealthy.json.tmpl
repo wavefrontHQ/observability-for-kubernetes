@@ -1,0 +1,53 @@
+{
+  "name": "Observability Status is Unhealthy",
+  "alertType": "THRESHOLD",
+  "additionalInformation": "The status of the Observability for Kubernetes is unhealthy.",
+  "alertChartUnits": "",
+  "alertSources": [
+    {
+      "name": "A",
+      "query": "count(ts(\"kubernetes.observability.*.status\", cluster=\"K8S_CLUSTER_NAME\" AND status=\"Unhealthy\") by (sources, cluster, cluster_uuid, message, status))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${A} > 0, ${A})",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "severe": "${A} > 0"
+  },
+  "conditionQBEnabled": false,
+  "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
+  "minutes": 1,
+  "resolveAfterMinutes": 5,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+      "dashboardId": "integration-kubernetes-status",
+      "parameters": {
+        "constants": {
+          "cluster_name": "K8S_CLUSTER_NAME"
+        }
+      }
+    }
+  ],
+  "includeObsoleteMetrics": false
+}
