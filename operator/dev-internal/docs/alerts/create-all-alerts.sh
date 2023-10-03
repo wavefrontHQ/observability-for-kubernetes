@@ -41,6 +41,7 @@ function create_alerts() {
   local wavefront_token="$1"
   local wavefront_cluster="$2"
   local k8s_cluster_name="$3"
+  local alert_target="$4"
   local alert_files
 
   pushd "${TEMP_DIR}" >/dev/null
@@ -48,7 +49,7 @@ function create_alerts() {
     # shellcheck disable=SC2068
     for alert_file in ${alert_files[@]}; do
       check_alert_file "${alert_file}"
-      post_alert_to_wavefront "${WAVEFRONT_TOKEN}" "${WF_CLUSTER}" "${K8S_CLUSTER_NAME}" "${alert_file}"
+      post_alert_to_wavefront "${WAVEFRONT_TOKEN}" "${WF_CLUSTER}" "${K8S_CLUSTER_NAME}" "${alert_file}" "${alert_target}"
     done
   popd >/dev/null
 
@@ -61,6 +62,7 @@ function post_alert_to_wavefront() {
   local wavefront_cluster="$2"
   local k8s_cluster_name="$3"
   local alert_file="$4"
+  local alert_target="$5"
   local alert_name response res_code
 
   if [ -x "$(command -v jq)" ]; then
@@ -76,7 +78,7 @@ function post_alert_to_wavefront() {
     -H "Accept: application/json" \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer ${wavefront_token}" \
-    -d @<(sed "s/K8S_CLUSTER_NAME/${k8s_cluster_name}/g" "${alert_file}"))
+    -d @<(sed "s/K8S_CLUSTER_NAME/${k8s_cluster_name}/g" "${alert_file}" | sed "s/ALERT_TARGET/${alert_target}/g"))
 
   if [[ ${res_code} -ne 200 ]]; then
     print_err_and_exit "Unable to create alert: $(cat "${response}")"
@@ -178,11 +180,12 @@ function print_usage() {
   echo -e "\t-t wavefront api token (optional)"
   echo -e "\t-c wavefront instance name (required)"
   echo -e "\t-n kubernetes cluster name (required)"
-  echo -e "\t-e end-point for csp authentication (optional)"
+  echo -e "\t-p end-point for csp authentication (optional)"
   echo -e "\t-a api token for csp authentication (optional)"
   echo -e "\t-i oauth app id for csp authentication (optional)"
   echo -e "\t-s oauth app secret for csp authentication (optional)"
   echo -e "\t-o oauth org id for csp authentication (optional)"
+  echo -e "\t-e alert target (optional)"
   echo -e "\t-h print usage"
 }
 
@@ -199,20 +202,22 @@ function main() {
 
   # Default arguments
   local GITHUB_REPO='wavefrontHQ/observability-for-kubernetes'
-  local ALERTS_FOLDER='docs/alerts/templates'
+  local ALERTS_DIRECTORY='docs/alerts/templates'
   local GIT_BRANCH='main'
+  local ALERT_TARGET=''
 
-  while getopts ':t:c:n:f:e:a:i:s:o:b:h' opt; do
+  while getopts ':t:c:n:p:a:i:s:o:e:d:b:h' opt; do
     case "${opt}" in
       t) WAVEFRONT_TOKEN="${OPTARG}" ;;
       c) WF_CLUSTER="${OPTARG}" ;;
       n) K8S_CLUSTER_NAME="${OPTARG}" ;;
-      f) ALERTS_FOLDER="${OPTARG}" ;;
-      e) CSP_ENDPOINT="${OPTARG}" ;;
+      p) CSP_ENDPOINT="${OPTARG}" ;;
       a) CSP_API_TOKEN="${OPTARG}" ;;
       i) CSP_APP_ID="${OPTARG}" ;;
       s) CSP_APP_SECRET="${OPTARG}" ;;
       o) CSP_ORG_ID="${OPTARG}" ;;
+      e) ALERT_TARGET="${OPTARG}" ;;
+      d) ALERTS_DIRECTORY="${OPTARG}" ;;
       b) GIT_BRANCH="${OPTARG}" ;;
       h) print_usage; exit 0 ;;
       \?) print_usage_and_exit "Invalid option: -${OPTARG}" ;;
@@ -233,8 +238,8 @@ function main() {
 
   # Download and create all the alerts
   TEMP_DIR=$(mktemp -d)
-  download_alerts "${GITHUB_REPO}" "${ALERTS_FOLDER}" "${GIT_BRANCH}"
-  create_alerts "${WAVEFRONT_TOKEN}" "${WF_CLUSTER}" "${K8S_CLUSTER_NAME}"
+  download_alerts "${GITHUB_REPO}" "${ALERTS_DIRECTORY}" "${GIT_BRANCH}"
+  create_alerts "${WAVEFRONT_TOKEN}" "${WF_CLUSTER}" "${K8S_CLUSTER_NAME}" "${ALERT_TARGET}"
   rm -rf "${TEMP_DIR}"
 }
 

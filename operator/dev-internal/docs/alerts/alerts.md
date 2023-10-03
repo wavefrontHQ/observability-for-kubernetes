@@ -44,6 +44,7 @@ We have alert templates on common Kubernetes issues.
     - **Wavefront instance**. For example, the value of `<YOUR_WAVEFRONT_INSTANCE>` from your wavefront url (`https://<YOUR_WAVEFRONT_INSTANCE>.wavefront.com`).
     - **Cluster name**. For example, the value of `clusterName` from your Wavefront Custom Resource configuration (ex: `mycluster-us-west-1`).
     - **(Optional) Alert template**. For example, the value of `<alert_template_file.json.tmpl>` from the list of alert templates (ex: `pod-backoff-event.json.tmpl`).
+    - **(Optional) Alert target**. For example, an email address, PagerDuty key, or [alert target](https://docs.wavefront.com/webhooks_alert_notification.html). Alert targets can be a comma separated list.
 
 ### Example: Creating All the Alerts
 
@@ -51,10 +52,11 @@ We have alert templates on common Kubernetes issues.
 curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/create-all-alerts.sh | bash -s -- \
   -t <YOUR_API_TOKEN> \
   -c <YOUR_WAVEFRONT_INSTANCE> \
+  -e <YOUR_ALERT_TARGET> \
   -n <YOUR_CLUSTER_NAME>
 ```
 
->**Note:** You will need to change <YOUR_API_TOKEN>, <YOUR_WAVEFRONT_INSTANCE>, and <YOUR_CLUSTER_NAME> in the above example.
+>**Note:** You will need to change <YOUR_API_TOKEN>, <YOUR_WAVEFRONT_INSTANCE>, <YOUR_ALERT_TARGET>, and <YOUR_CLUSTER_NAME> in the above example.
 
 ### Example: Creating a Single Alert
 
@@ -63,17 +65,17 @@ curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubern
   -t <YOUR_API_TOKEN> \
   -c <YOUR_WAVEFRONT_INSTANCE> \
   -n <YOUR_CLUSTER_NAME> \
+  -e <YOUR_ALERT_TARGET> \
   -f <ALERT_TEMPLATE>
 ```
 
->**Note:** You will need to change <YOUR_API_TOKEN>, <YOUR_WAVEFRONT_INSTANCE>, <YOUR_CLUSTER_NAME>, and <ALERT_TEMPLATE> in the above example.
+>**Note:** You will need to change <YOUR_API_TOKEN>, <YOUR_WAVEFRONT_INSTANCE>, <YOUR_CLUSTER_NAME>, <YOUR_ALERT_TARGET>, and <ALERT_TEMPLATE> in the above example.
 
 ## Customizing Alerts
 
 1. Log in to your service instance `https://<YOUR_WAVEFRONT_INSTANCE>.wavefront.com` as a user with the Alerts permission. Click **Alerting** > **All Alerts** from the toolbar to display the Alerts Browser.
 2. Click the alert name, or click the ellipsis icon next to the alert and select **Edit**.  You can search for the alert by typing the alert name in the search field.
 3. Change the alert properties when you edit the alert.
-4. Specify alert recipients to receive notifications when the alert changes state.
-5. Click **Save** in the top right to save your changes.
+4. Click **Save** in the top right to save your changes.
 
 >**Note:** See [Create and Manage Alerts](https://docs.wavefront.com/alerts_manage.html) for an overview on how to create and manage alerts.
