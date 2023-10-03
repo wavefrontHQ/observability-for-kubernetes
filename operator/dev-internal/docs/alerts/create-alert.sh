@@ -187,8 +187,9 @@ function main() {
   local ALERTS_DIRECTORY='docs/alerts/templates'
   local GIT_BRANCH='main'
   local ALERT_TARGET=''
+  local LOCAL_FILE=false
 
-  while getopts ':t:c:n:f:p:a:i:s:o:e:d:b:h' opt; do
+  while getopts ':t:c:n:f:p:a:i:s:o:e:d:b:l:h' opt; do
     case "${opt}" in
       t) WAVEFRONT_TOKEN="${OPTARG}" ;;
       c) WF_CLUSTER="${OPTARG}" ;;
@@ -202,6 +203,7 @@ function main() {
       e) ALERT_TARGET="${OPTARG}" ;;
       d) ALERTS_DIRECTORY="${OPTARG}" ;;
       b) GIT_BRANCH="${OPTARG}" ;;
+      l) LOCAL_FILE="${OPTARG}" ;;
       h) print_usage; exit 0 ;;
       \?) print_usage_and_exit "Invalid option: -${OPTARG}" ;;
     esac
@@ -222,7 +224,12 @@ function main() {
 
   # Download and create the alert
   TEMP_FILE=$(mktemp)
-  download_alert "${GITHUB_REPO}" "${ALERTS_DIRECTORY}/${ALERT_FILE_NAME}" "${GIT_BRANCH}" "${TEMP_FILE}"
+  echo "$LOCAL_FILE"
+  if [ $LOCAL_FILE == true ]; then
+    cp "${ALERTS_DIRECTORY}/${ALERT_FILE_NAME}" "${TEMP_FILE}"
+  else
+    download_alert "${GITHUB_REPO}" "${ALERTS_DIRECTORY}/${ALERT_FILE_NAME}" "${GIT_BRANCH}" "${TEMP_FILE}"
+  fi
   check_alert_file "${TEMP_FILE}"
   post_alert_to_wavefront "${WAVEFRONT_TOKEN}" "${WF_CLUSTER}" "${TEMP_FILE}" "${K8S_CLUSTER_NAME}" "${ALERT_TARGET}"
   rm "${TEMP_FILE}"
