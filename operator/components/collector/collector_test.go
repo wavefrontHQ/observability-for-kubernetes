@@ -79,6 +79,16 @@ func TestValidate(t *testing.T) {
 
 		require.True(t, result.IsValid())
 	})
+
+	t.Run("error when insights enabled but ingestion url is not set", func(t *testing.T) {
+		config := minimalComponentConfig()
+		config.KubernetesEvents.Enable = true
+
+		component, _ := NewComponent(ComponentDir, config)
+		result := component.Validate()
+
+		require.False(t, result.IsValid())
+	})
 }
 
 func TestResources(t *testing.T) {

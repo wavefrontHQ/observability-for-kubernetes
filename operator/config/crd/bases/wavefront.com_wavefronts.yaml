@@ -721,6 +721,9 @@ spec:
                           to false.
                         type: boolean
                       ingestionUrl:
+                        description: Ingestion Url is the endpoint to send kubernetes
+                          events.
+                        pattern: ^https:\/\/.*
                         type: string
                     required:
                     - ingestionUrl

@@ -146,20 +146,17 @@ func preProcessProxyConfig(client crClient.Client, wfSpec *wf.WavefrontSpec) err
 }
 
 func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) error {
-	if secret, err := findSecret(client, util.AriaInsightsSecret, wfSpec.Namespace); err == nil {
-		if len(secret.Data["ingestion-token"]) != 0 {
-			wfSpec.Experimental.Insights.SecretTokenKey = "ingestion-token"
-		} else if len(secret.Data["k8s-events-endpoint-token"]) != 0 {
-			wfSpec.Experimental.Insights.SecretTokenKey = "k8s-events-endpoint-token"
+	if wfSpec.Experimental.Insights.Enable {
+		if secret, err := findSecret(client, util.InsightsSecret, wfSpec.Namespace); err == nil {
+			if len(secret.Data["ingestion-token"]) != 0 {
+				wfSpec.Experimental.Insights.SecretTokenKey = "ingestion-token"
+			} else {
+				return fmt.Errorf("Invalid authentication configured for Experimental Insights. Secret '%s' is missing Data 'ingestion-token'", secret.Name)
+			}
+			wfSpec.Experimental.Insights.SecretName = secret.Name
 		} else {
-			return fmt.Errorf("Invalid Authentication configured for Experimental Insights. Secret '%s' is missing Data 'ingestion-token' or 'k8s-events-endpoint-token'", secret.Name)
+			return fmt.Errorf("Invalid authentication configured for Experimental Insights. Missing Secret '%s'", util.InsightsSecret)
 		}
-
-		if len(wfSpec.Experimental.Insights.IngestionUrl) == 0 {
-			wfSpec.Experimental.Insights.IngestionUrl = string(secret.Data["k8s-events-endpoint-url"])
-		}
-		wfSpec.Experimental.Insights.Enable = true
-		wfSpec.Experimental.Insights.SecretName = secret.Name
 	}
 	if wfSpec.Experimental.Insights.Enable && !wfSpec.DataCollection.Metrics.Enable && len(wfSpec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU) == 0 {
 		wfSpec.DataCollection.Metrics.ClusterCollector.Resources = wf.Resources{
@@ -204,10 +201,10 @@ func processWavefrontSecret(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 
 	checkTotal := checkVal(wavefrontTokenAuth) + checkVal(cspTokenAuth) + checkVal(cspAppID)
 	if checkTotal == 0 {
-		return fmt.Errorf("Invalid Authentication configured in Secret '%s'. Missing Authentication type. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", wfSpec.WavefrontTokenSecret)
+		return fmt.Errorf("Invalid authentication configured in Secret '%s'. Missing Authentication type. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", wfSpec.WavefrontTokenSecret)
 	}
 	if checkTotal > 1 {
-		return fmt.Errorf("Invalid Authentication configured in Secret '%s'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", wfSpec.WavefrontTokenSecret)
+		return fmt.Errorf("Invalid authentication configured in Secret '%s'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id", wfSpec.WavefrontTokenSecret)
 	}
 	if wavefrontTokenAuth {
 		wfSpec.DataExport.WavefrontProxy.Auth.Type = util.WavefrontTokenAuthType

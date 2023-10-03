@@ -456,6 +456,8 @@ type Insights struct {
 	// +kubebuilder:default:=false
 	Enable bool `json:"enable,omitempty"`
 
+	// Ingestion Url is the endpoint to send kubernetes events.
+	// +kubebuilder:validation:Pattern:=`^https:\/\/.*`
 	IngestionUrl string `json:"ingestionUrl,required"`
 
 	// SecretName is for internal use
