@@ -97,14 +97,14 @@ create-buffered-stream: tmp/lemans_stream_name
 post-to-stream:
 	./scripts/post-lemans-metric.sh
 
-setup-wf-customers:
-	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
-	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
-	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer localdev -credentials $(shell cat tmp/wf_password) -group browse -grant
-	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -identifier localdev@wavefront.com -customer localdev -group user_management -grant
+setup-wf-customers: system/cli/target/wfcli.sh
+	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
+	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
+	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer localdev -credentials $(shell cat tmp/wf_password) -group browse -grant
+	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier localdev@wavefront.com -customer localdev -group user_management -grant
 
 system/cli/target/wfcli.sh: system
-	cd system && mvn clean install -DskipTests=true -Duse.github.diff=none
+	cd system && mvn install -DskipTests=true -Duse.github.diff=none
 
 system:
 	git clone --branch k8ssaas-2427-ingest-from-le-mans git@github.com:sunnylabs/system.git
