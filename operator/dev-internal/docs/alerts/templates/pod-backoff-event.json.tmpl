@@ -22,14 +22,7 @@
       "name": "Alert Condition",
       "query": "${A}",
       "queryType": "WQL",
-      "alertSourceType": ["CONDITION"],
-      "hidden": true
-    },
-    {
-      "name": "Display Condition",
-      "query": "if(${A} >= 1, ${A})",
-      "queryType": "WQL",
-      "alertSourceType": ["AUDIT"],
+      "alertSourceType": ["CONDITION","AUDIT"],
       "hidden": false
     }
   ],
@@ -37,7 +30,7 @@
     "warn": "${A} >= 1"
   },
   "conditionQBEnabled": false,
-  "displayExpression": "${Display Condition}",
+  "displayExpression": "${Alert Condition}",
   "displayExpressionQBEnabled": false,
   "minutes": 10,
   "resolveAfterMinutes": 2,
