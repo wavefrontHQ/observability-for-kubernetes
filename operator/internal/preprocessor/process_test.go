@@ -406,7 +406,7 @@ func TestProcessExperimental(t *testing.T) {
 
 		err := PreProcess(fakeClient, wfcr)
 
-		require.ErrorContains(t, err, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'aria-insights-secret' is missing Data 'ingestion-token' or 'k8s-events-endpoint-token'")
+		require.ErrorContains(t, err, "Invalid Authentication configured for Experimental Insights. Secret 'aria-insights-secret' is missing Data 'ingestion-token' or 'k8s-events-endpoint-token'")
 	})
 
 	t.Run("properly sets canExportAutotracingScripts when pixie components are not running", func(t *testing.T) {

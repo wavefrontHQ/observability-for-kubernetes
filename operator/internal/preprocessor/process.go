@@ -152,7 +152,7 @@ func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		} else if len(secret.Data["k8s-events-endpoint-token"]) != 0 {
 			wfSpec.Experimental.Insights.SecretTokenKey = "k8s-events-endpoint-token"
 		} else {
-			return fmt.Errorf("Invalid Authentication configured for Experimental Kubernetes Events. Secret '%s' is missing Data 'ingestion-token' or 'k8s-events-endpoint-token'", secret.Name)
+			return fmt.Errorf("Invalid Authentication configured for Experimental Insights. Secret '%s' is missing Data 'ingestion-token' or 'k8s-events-endpoint-token'", secret.Name)
 		}
 
 		if len(wfSpec.Experimental.Insights.IngestionUrl) == 0 {
