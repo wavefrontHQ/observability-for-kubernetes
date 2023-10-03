@@ -21,11 +21,11 @@ dockerize-lemans: le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSIO
 start-wf-proxy: tmp/wavefront_csp_client_id tmp/wavefront_csp_client_secret dockerize-wf-proxy tmp/lemans_stream_name
 	docker run --tty --interactive --rm --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="https://nimba.wavefront.com/api" --env CSP_APP_ID="$(shell cat tmp/wavefront_csp_client_id)" --env CSP_APP_SECRET="$(shell cat tmp/wavefront_csp_client_secret)" --env WAVEFRONT_PROXY_ARGS="--le-mans-host http://gateway:8002 --le-mans-stream-name $(shell cat tmp/lemans_stream_name) --cspBaseUrl https://console-stg.cloud.vmware.com" --network le-mans_default wf-proxy
 
-dockerize-wf-proxy: wavefront-proxy/proxy/target/proxy-*.jar
-	cd wavefront-proxy && make docker
+start-wf-proxy-local: tmp/local_wavefront_token
+	docker run --tty --interactive --rm --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="http://localhost:8080" --network host wf-proxy
 
-wavefront-proxy/proxy/target/proxy-*.jar: wavefront-proxy
-	cd wavefront-proxy && make build-jar
+dockerize-wf-proxy: wavefront-proxy
+	docker build -t wf-proxy -f wavefront-proxy/docker/Dockerfile ./wavefront-proxy
 
 wavefront-proxy:
 	git clone --branch k8ssaas-2475-push-metrics-to-le-mans git@github.com:wavefrontHQ/wavefront-proxy.git
@@ -56,6 +56,10 @@ le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar: le-mans
 tmp/dbconfig: | tmp
 	./scripts/create-db-config.sh > $@
 
+tmp/local_wavefront_token: | tmp
+	@echo "Please create a tmp/local_wavefront_token file and populate it with a valid token"
+	@exit 1
+
 cleanup-lemans:
 	rm -f tmp/lemans_token
 	rm -f tmp/lemans_stream_name
@@ -80,11 +84,28 @@ tmp/lemans_stream_name: | tmp
 	@echo "Please create a tmp/lemans_stream_name file populated with a valid Lemans stream name"
 	@exit 1
 
+tmp/wf_password: | tmp
+	@echo "Please create a tmp/wf_password file populated with some password (like Wavefront1!)"
+	@exit 1
+
 le-mans:
 	git clone https://$(shell whoami)@bellevue-ci-gerrit.eng.vmware.com/le-mans
 
-create-buffered-stream:
-	./scripts/create-lemans-buffered-pipelines.sh
+create-buffered-stream: tmp/lemans_stream_name
+	STREAM_NAME=$(shell cat tmp/lemans_stream_name) ./scripts/create-lemans-buffered-pipelines.sh
 
 post-to-stream:
 	./scripts/post-lemans-metric.sh
+
+setup-wf-customers:
+	export JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home
+	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
+	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
+	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer localdev -credentials $(shell cat tmp/wf_password) -group browse -grant
+	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -identifier localdev@wavefront.com -customer localdev -group user_management -grant
+
+system/cli/target/wfcli.sh: system
+	cd system && mvn clean install -DskipTests=true -Duse.github.diff=none
+
+system:
+	git clone git@github.com:sunnylabs/system.git
