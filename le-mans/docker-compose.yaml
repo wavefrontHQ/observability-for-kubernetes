@@ -57,6 +57,8 @@ services:
 #      retries: 3
   lemans-gateway:
     image: lemans/lemans-gateway
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
     depends_on:
     - lemans-resource-server
     - kafka
@@ -83,7 +85,7 @@ services:
   fdb:
     image: foundationdb/foundationdb:7.1.37
     ports:
-    - ${FDB_PORT}:${FDB_PORT}/tcp
+    - $FDB_PORT:$FDB_PORT/tcp
     environment:
       FDB_NETWORKING_MODE: host
       FDB_COORDINATOR_PORT: $FDB_PORT

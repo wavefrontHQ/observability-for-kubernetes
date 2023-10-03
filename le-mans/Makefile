@@ -6,11 +6,11 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/
 tmp:
 	mkdir -p tmp
 
-start-lemans: tmp/le_mans_csp_client_id tmp/le_mans_csp_client_secret dockerize-lemans stop-lemans tmp/dbconfig cleanup-lemans
-	@CSP_CLIENT_ID='$(shell cat tmp/le_mans_csp_client_id)' CSP_CLIENT_SECRET='$(shell cat tmp/le_mans_csp_client_secret)' docker compose up --abort-on-container-exit
+start-lemans: tmp/le_mans_csp_client_id tmp/le_mans_csp_client_secret dockerize-lemans tmp/dbconfig cleanup-lemans
+	@CSP_CLIENT_ID='$(shell cat tmp/le_mans_csp_client_id)' CSP_CLIENT_SECRET='$(shell cat tmp/le_mans_csp_client_secret)' docker compose up --abort-on-container-exit lemans-gateway
 
-stop-lemans:
-	@CSP_CLIENT_ID="" CSP_CLIENT_SECRET="" FDB_PORT="${FDB_PORT}" docker compose down
+#stop-lemans:
+#	@CSP_CLIENT_ID="" CSP_CLIENT_SECRET="" FDB_PORT="${FDB_PORT}" docker compose down
 
 dockerize-lemans: le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar le-mans/le-mans-gateway/target/le-mans-gateway-${LM_VERSION}-exec.jar le-mans/docker/resources/base/lib le-mans/docker/gateway/base/lib
 	cp le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSION}-exec.jar le-mans/docker/resources/base/lib/le-mans-resources.jar
@@ -98,7 +98,6 @@ post-to-stream:
 	./scripts/post-lemans-metric.sh
 
 setup-wf-customers:
-	export JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home
 	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
 	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
 	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ../../system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer localdev -credentials $(shell cat tmp/wf_password) -group browse -grant

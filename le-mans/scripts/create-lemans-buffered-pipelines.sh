@@ -7,12 +7,13 @@ if [ -z "$STREAM_NAME" ]; then
 fi
 RECEIVER_NAME="$STREAM_NAME-receiver"
 LEMANS_RESOURCE_SERVER="localhost:8001"
-RECEIVER_URI=http://echo-server:8000/report
+RECEIVER_URI=http://host.docker.internal:8080/report/le-mans
+RECEIVER_URI_ECHO=http://echo-server:8000/report
 CSP_SECRET="$(echo -n "$(cat tmp/le_mans_csp_client_id):$(cat tmp/le_mans_csp_client_secret)" | base64)"
 
 token_file=$(mktemp)
 
-printf "\nauthenticating\n"
+printf "\n\nauthenticating\n"
 curl --fail-with-body --location --request POST 'https://console-stg.cloud.vmware.com/csp/gateway/am/api/auth/authorize' \
   --header 'Content-Type: application/x-www-form-urlencoded' \
   --header "Authorization: Basic $CSP_SECRET" \
@@ -21,7 +22,7 @@ curl --fail-with-body --location --request POST 'https://console-stg.cloud.vmwar
 
 CSP_AUTH_TOKEN="$(gojq -r .access_token  "$token_file")"
 
-printf "\ncreating consumer receiver\n"
+printf "\n\ncreating consumer receiver for wavefront\n"
 
 receiver_json_file="$(mktemp)"
 printf "\n$receiver_json_file\n"
@@ -38,14 +39,14 @@ curl --location --fail-with-body --request POST "http://$LEMANS_RESOURCE_SERVER/
   --header 'Content-Type: application/json' \
   --data @"$receiver_json_file"
 
-printf "\ncreating consumer receiver starter\n"
+printf "\n\ncreating consumer receiver starter for wavefront\n"
 
 consumer_receiver_starter_json_file="$(mktemp)"
 cat <<-JSON >"$consumer_receiver_starter_json_file"
 {
    "name": "$STREAM_NAME-consumer",
    "factoryLink": "/le-mans/consumers/kafka",
-   "startJsonState": "{'topic': '$STREAM_NAME', 'retryTopic': '$STREAM_NAME', 'statusCodesToRetryIndefinitely': [503], 'contentType': 'application/json', 'receiverLink': '/le-mans/v2/resources/receivers/$STREAM_NAME-receiver', 'maxRetryLimit': 10000, 'kafkaProperties': {'group.id': 'le-mans', 'fetch.min.bytes': 1, 'key.deserializer': 'org.apache.kafka.common.serialization.StringDeserializer', 'max.poll.records': 150, 'max.partition.fetch.bytes': 2097152, 'auto.offset.reset': 'latest', 'bootstrap.servers': 'kafka:9092', 'value.deserializer': 'org.apache.kafka.common.serialization.StringDeserializer'}, 'kafkaProducerPath': '/le-mans/receivers/kafka-producer/$STREAM_NAME-producer'}"
+   "startJsonState": "{'topic': '$STREAM_NAME', 'retryTopic': '$STREAM_NAME', 'statusCodesToRetryIndefinitely': [503], 'contentType': 'text/plain', 'receiverLink': '/le-mans/v2/resources/receivers/$STREAM_NAME-receiver', 'maxRetryLimit': 10000, 'kafkaProperties': {'group.id': 'le-mans', 'fetch.min.bytes': 1, 'key.deserializer': 'org.apache.kafka.common.serialization.StringDeserializer', 'max.poll.records': 150, 'max.partition.fetch.bytes': 2097152, 'auto.offset.reset': 'latest', 'bootstrap.servers': 'kafka:9092', 'value.deserializer': 'org.apache.kafka.common.serialization.StringDeserializer'}, 'kafkaProducerPath': '/le-mans/receivers/kafka-producer/$STREAM_NAME-producer'}"
 }
 JSON
 
@@ -54,7 +55,39 @@ curl --location --fail-with-body --request POST "http://$LEMANS_RESOURCE_SERVER/
   --header 'Content-Type: application/json' \
   --data @"$consumer_receiver_starter_json_file"
 
-printf "\ncreating producer receiver starter\n"
+printf "\n\ncreating consumer receiver for echo listener\n"
+receiver_json_file="$(mktemp)"
+printf "\n$receiver_json_file\n"
+cat <<-JSON >"$receiver_json_file"
+{
+  "name": "$RECEIVER_NAME-echo",
+  "address": "$RECEIVER_URI_ECHO",
+  "useHttp2": false
+}
+JSON
+
+curl --location --fail-with-body --request POST "http://$LEMANS_RESOURCE_SERVER/le-mans/v2/resources/receivers" \
+  --header "x-xenon-auth-token: $CSP_AUTH_TOKEN" \
+  --header 'Content-Type: application/json' \
+  --data @"$receiver_json_file"
+
+printf "\n\ncreating consumer receiver starter for echo listener\n"
+
+consumer_receiver_starter_json_file="$(mktemp)"
+cat <<-JSON >"$consumer_receiver_starter_json_file"
+{
+   "name": "$STREAM_NAME-consumer-echo",
+   "factoryLink": "/le-mans/consumers/kafka",
+   "startJsonState": "{'topic': '$STREAM_NAME', 'retryTopic': '$STREAM_NAME', 'statusCodesToRetryIndefinitely': [503], 'contentType': 'text/plain', 'receiverLink': '/le-mans/v2/resources/receivers/$STREAM_NAME-receiver-echo', 'maxRetryLimit': 10000, 'kafkaProperties': {'group.id': 'le-mans-echo', 'fetch.min.bytes': 1, 'key.deserializer': 'org.apache.kafka.common.serialization.StringDeserializer', 'max.poll.records': 150, 'max.partition.fetch.bytes': 2097152, 'auto.offset.reset': 'latest', 'bootstrap.servers': 'kafka:9092', 'value.deserializer': 'org.apache.kafka.common.serialization.StringDeserializer'}, 'kafkaProducerPath': '/le-mans/receivers/kafka-producer/$STREAM_NAME-producer'}"
+}
+JSON
+
+curl --location --fail-with-body --request POST "http://$LEMANS_RESOURCE_SERVER/le-mans/v2/resources/receiver-starters" \
+  --header "x-xenon-auth-token: $CSP_AUTH_TOKEN" \
+  --header 'Content-Type: application/json' \
+  --data @"$consumer_receiver_starter_json_file"
+
+printf "\n\ncreating producer receiver starter\n"
 
 producer_receiver_starter_json_file="$(mktemp)"
 cat <<-JSON >"$producer_receiver_starter_json_file"
@@ -71,7 +104,7 @@ curl --location --fail-with-body --request POST "http://$LEMANS_RESOURCE_SERVER/
   --header 'Content-Type: application/json' \
   --data @"$producer_receiver_starter_json_file"
 
-printf "\ncreating producer receiver\n"
+printf "\n\ncreating producer receiver\n"
 
 producer_receiver_json_file="$(mktemp)"
 printf "\n$producer_receiver_json_file"
@@ -88,7 +121,7 @@ curl --location --fail-with-body --request POST "http://$LEMANS_RESOURCE_SERVER/
   --header 'Content-Type: application/json' \
   --data @"$producer_receiver_json_file"
 
-printf "\ncreating stream\n"
+printf "\n\ncreating stream\n"
 
 stream_json_file="$(mktemp)"
 printf "\n$stream_json_file\n"
