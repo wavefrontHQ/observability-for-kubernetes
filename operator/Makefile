@@ -73,15 +73,17 @@ generate: api/v1alpha1/zz_generated.deepcopy.go
 api/v1alpha1/zz_generated.deepcopy.go: hack/boilerplate.go.txt api/v1alpha1/wavefront_types.go
 	controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
+FIND_GOIMPORTS_FILES:=find . -type f -name '*.go' -not -path "./vendor/*" -not -path "./pixie-sizer/vendor/*"
+
 .PHONY: fmt
 fmt:
-	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
+	$(FIND_GOIMPORTS_FILES) | xargs goimports -w
 
 .PHONY: checkfmt
 checkfmt:
-	@if [ $$(goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*") | wc -l) -gt 0 ]; then \
+	@if [ $$(goimports -d $$($(FIND_GOIMPORTS_FILES)) | wc -l) -gt 0 ]; then \
 		echo $$'\e[31mgoimports FAILED!!!\e[0m'; \
-		goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*"); \
+		goimports -d $$($(FIND_GOIMPORTS_FILES)); \
 		exit 1; \
 	fi
 
