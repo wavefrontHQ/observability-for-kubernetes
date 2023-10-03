@@ -107,4 +107,4 @@ system/cli/target/wfcli.sh: system
 	cd system && mvn clean install -DskipTests=true -Duse.github.diff=none
 
 system:
-	git clone git@github.com:sunnylabs/system.git
+	git clone --branch k8ssaas-2427-ingest-from-le-mans git@github.com:sunnylabs/system.git
