@@ -723,7 +723,7 @@ spec:
                       ingestionUrl:
                         description: Ingestion Url is the endpoint to send kubernetes
                           events.
-                        pattern: ^https:\/\/.*
+                        pattern: ^http(s)?:\/\/.+
                         type: string
                     required:
                     - ingestionUrl
