@@ -160,15 +160,16 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            lock("integration-test-gke-collector") {
-              /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'make gke-connect-to-cluster'
+            /* Setup */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'make gke-connect-to-cluster'
 
+            lock("integration-test-gke-collector") {
               /* Collector Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C collector integration-test'
+              sh 'make clean-cluster'
             }
           }
         }
@@ -188,15 +189,17 @@ pipeline {
             INTEGRATION_TEST_ARGS="-r basic -r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules"
           }
           steps {
+            /* Setup */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+
             lock("integration-test-gke-operator-1") {
-              /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
               sh './ci/jenkins/get-or-create-cluster.sh'
 
               /* Operator Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C operator integration-test'
+              sh 'make clean-cluster'
             }
           }
         }
@@ -216,15 +219,17 @@ pipeline {
             INTEGRATION_TEST_ARGS="-r common-metrics -r proxy-preprocessor -r logging-integration -r allow-legacy-install"
           }
           steps {
+            /* Setup */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+
             lock("integration-test-gke-operator-2") {
-              /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
               sh './ci/jenkins/get-or-create-cluster.sh'
 
               /* Operator Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C operator integration-test'
+              sh 'make clean-cluster'
             }
           }
         }
@@ -244,15 +249,17 @@ pipeline {
             INTEGRATION_TEST_ARGS="-r advanced -r with-http-proxy -r control-plane"
           }
           steps {
+            /* Setup */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+
             lock("integration-test-gke-operator-3") {
-              /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k gke'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
               sh './ci/jenkins/get-or-create-cluster.sh'
 
               /* Operator Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C operator integration-test'
+              sh 'make clean-cluster'
             }
           }
         }
@@ -273,19 +280,22 @@ pipeline {
             INTEGRATION_TEST_BUILD = "ci"
           }
           steps {
-            lock("integration-test-eks") {
-              /* Setup */
-              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
-              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-              sh 'make target-eks'
+            /* Setup */
+            sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k eks'
+            sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+            sh 'make target-eks'
 
+            lock("integration-test-eks") {
               /* Collector Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C collector integration-test'
+            }
 
+            lock("integration-test-eks") {
               /* Operator Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"'
+              sh 'make clean-cluster'
             }
           }
         }
@@ -305,20 +315,23 @@ pipeline {
             INTEGRATION_TEST_BUILD="ci"
           }
           steps {
-            lock("integration-test-aks") {
-              withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
-                /* Setup */
-                sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
-                sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
-                sh 'kubectl config use k8po-ci'
+            withCredentials([file(credentialsId: 'aks-kube-config', variable: 'KUBECONFIG')]) {
+              /* Setup */
+              sh 'cd collector && ./hack/jenkins/setup-for-integration-test.sh -k aks'
+              sh 'cd operator && ./hack/jenkins/setup-for-integration-test.sh'
+              sh 'kubectl config use k8po-ci'
 
+              lock("integration-test-aks") {
                 /* Collector Integration Tests */
                 sh 'make clean-cluster'
                 sh 'make -C collector integration-test'
+              }
 
+              lock("integration-test-aks") {
                 /* Operator Integration Tests */
                 sh 'make clean-cluster'
                 sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics"'
+                sh 'make clean-cluster'
               }
             }
           }
