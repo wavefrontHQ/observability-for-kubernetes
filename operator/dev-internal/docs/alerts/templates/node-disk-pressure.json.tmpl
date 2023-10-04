@@ -13,14 +13,7 @@
     },
     {
       "name": "B",
-      "query": "count(${C}, sources, cluster, cluster_uuid, nodename, node_role, status, condition)",
-      "queryType": "WQL",
-      "alertSourceType": ["VARIABLE"],
-      "hidden": true
-    },
-    {
-      "name": "C",
-      "query": "ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND (condition=\"DiskPressure\" AND status=\"True\"))",
+      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND (condition=\"DiskPressure\" AND status=\"True\")), sources, cluster, cluster_uuid, nodename, node_role, status, condition)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

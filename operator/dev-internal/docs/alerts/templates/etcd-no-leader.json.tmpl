@@ -1,7 +1,7 @@
 {
-  "name": "ETCD No Leader",
+  "name": "etcd Server Has No Leader",
   "alertType": "THRESHOLD",
-  "additionalInformation": "Alert reports when some etcd pods don't have a leader",
+  "additionalInformation": "Alert reports when an etcd server does not have a leader.",
   "alertChartUnits": "",
   "alertSources": [
     {
@@ -15,7 +15,14 @@
       "name": "Alert Condition",
       "query": "${A}",
       "queryType": "WQL",
-      "alertSourceType": ["CONDITION","AUDIT"],
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${A} < 1, ${A})",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
@@ -23,7 +30,7 @@
     "severe": "${A} < 1"
   },
   "conditionQBEnabled": false,
-  "displayExpression": "${Alert Condition}",
+  "displayExpression": "${Display Condition}",
   "displayExpressionQBEnabled": false,
   "minutes": 10,
   "resolveAfterMinutes": 2,

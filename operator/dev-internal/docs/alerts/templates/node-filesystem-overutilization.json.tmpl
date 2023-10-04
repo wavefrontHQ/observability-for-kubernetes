@@ -29,7 +29,14 @@
       "name": "Alert Condition",
       "query": "${A}",
       "queryType": "WQL",
-      "alertSourceType": ["CONDITION","AUDIT"],
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${A} >= 75, ${A})",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
@@ -38,7 +45,7 @@
     "severe": "${A} >= 95"
   },
   "conditionQBEnabled": false,
-  "displayExpression": "${Alert Condition}",
+  "displayExpression": "${Display Condition}",
   "displayExpressionQBEnabled": false,
   "includeObsoleteMetrics": false,
   "minutes": 10,
