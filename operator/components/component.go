@@ -177,8 +177,8 @@ func resourceFiles(dir fs.FS) ([]string, error) {
 			return err
 		}
 
-		if entry.IsDir() {
-			return nil
+		if entry.IsDir() && path != "." {
+			return fs.SkipDir
 		}
 
 		if filepath.Ext(path) == extension {

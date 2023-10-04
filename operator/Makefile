@@ -97,6 +97,7 @@ golangci-lint:
 
 .PHONY: test
 test: manifests generate fmt vet ## Run tests.
+	make -C components/pixie all
 	go test ./... -coverprofile cover.out
 
 ##@ Build

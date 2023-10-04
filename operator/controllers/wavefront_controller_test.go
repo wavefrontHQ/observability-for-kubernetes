@@ -1404,7 +1404,7 @@ func TestReconcileAutoTracing(t *testing.T) {
 
 		require.True(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config", "PL_CLUSTER_NAME: test-clusterName"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-name: test-clusterName"))
-		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
+		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: \"12345\""))
 
 		require.True(t, mockKM.ProxyPreprocessorRulesConfigMapContains("4317"))
 		containsPortInContainers(t, "otlpGrpcListenerPorts", *mockKM, 4317)
@@ -1535,7 +1535,7 @@ func TestReconcileHubPixie(t *testing.T) {
 
 		require.True(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config", "PL_CLUSTER_NAME: test-clusterName"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-name: test-clusterName"))
-		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
+		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: \"12345\""))
 
 		require.True(t, mockKM.PixieComponentContains("batch/v1", "Job", "cert-provisioner-job"))
 

@@ -209,9 +209,9 @@ func GetContainer(name string, containers []v1.Container) v1.Container {
 
 func RequireCommonLabels(t *testing.T, objects []client.Object, appName, componentName, ns string) {
 	for _, clientObject := range objects {
-		require.Equal(t, componentName, clientObject.GetLabels()["app.kubernetes.io/component"])
-		require.Equal(t, appName, clientObject.GetLabels()["app.kubernetes.io/name"])
-		require.Equal(t, ns, clientObject.GetNamespace())
+		require.Equal(t, componentName, clientObject.GetLabels()["app.kubernetes.io/component"], clientObject.GetName())
+		require.Equal(t, appName, clientObject.GetLabels()["app.kubernetes.io/name"], clientObject.GetName())
+		require.Equal(t, ns, clientObject.GetNamespace(), clientObject.GetName())
 
 		kind := clientObject.GetObjectKind().GroupVersionKind().Kind
 		if kind == "DaemonSet" || kind == "Deployment" || kind == "StatefulSet" {

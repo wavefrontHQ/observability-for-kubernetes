@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 data:
   # Change this to your domain, if you have set up a domain and DNS rules for your cloud.

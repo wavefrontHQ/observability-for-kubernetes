@@ -1,3 +1,4 @@
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -20,26 +21,26 @@ spec:
       name: cert-provisioner-job
     spec:
       containers:
-      - env:
-        - name: PL_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        envFrom:
-        - configMapRef:
-            name: pl-cloud-config
-        - configMapRef:
-            name: pl-cluster-config
-            optional: true
-        image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/cert_provisioner_image:0.14.2-multi
-        name: provisioner
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          seccompProfile:
-            type: RuntimeDefault
+        - env:
+            - name: PL_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          envFrom:
+            - configMapRef:
+                name: pl-cloud-config
+            - configMapRef:
+                name: pl-cluster-config
+                optional: true
+          image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/cert_provisioner_image:0.14.2-multi
+          name: provisioner
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
       restartPolicy: Never
       securityContext:
         fsGroup: 10100
@@ -50,19 +51,20 @@ spec:
           type: RuntimeDefault
       serviceAccountName: pl-cert-provisioner-service-account
       tolerations:
-      - effect: NoSchedule
-        key: kubernetes.io/arch
-        operator: Equal
-        value: amd64
-      - effect: NoExecute
-        key: kubernetes.io/arch
-        operator: Equal
-        value: amd64
-      - effect: NoSchedule
-        key: kubernetes.io/arch
-        operator: Equal
-        value: arm64
-      - effect: NoExecute
-        key: kubernetes.io/arch
-        operator: Equal
-        value: arm64
+        - effect: NoSchedule
+          key: kubernetes.io/arch
+          operator: Equal
+          value: amd64
+        - effect: NoExecute
+          key: kubernetes.io/arch
+          operator: Equal
+          value: amd64
+        - effect: NoSchedule
+          key: kubernetes.io/arch
+          operator: Equal
+          value: arm64
+        - effect: NoExecute
+          key: kubernetes.io/arch
+          operator: Equal
+          value: arm64
+      initContainers: []

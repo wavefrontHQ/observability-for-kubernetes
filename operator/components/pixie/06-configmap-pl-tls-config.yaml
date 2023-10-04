@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 data:
   PL_CLIENT_TLS_CERT: /certs/client.crt

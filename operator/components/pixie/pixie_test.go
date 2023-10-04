@@ -2,6 +2,7 @@ package pixie
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -49,6 +50,8 @@ func TestNewPixieComponent(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
+	require.NoError(t, exec.Command("make", "all").Run())
+
 	t.Run("valid component config", func(t *testing.T) {
 		config := validComponentConfig()
 		component, _ := NewComponent(ComponentDir, config)
