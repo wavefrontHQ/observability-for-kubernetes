@@ -13,7 +13,7 @@
     },
     {
       "name": "B",
-      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND (phase=\"Failed\" OR phase=\"Pending\")) by (sources, cluster, cluster_uuid, pv_name, phase))",
+      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND (phase=\"Failed\" OR phase=\"Pending\")), sources, cluster, cluster_uuid, pv_name, phase)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

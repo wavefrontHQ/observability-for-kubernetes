@@ -6,7 +6,7 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "round(sum(${B} by (sources, cluster, cluster_uuid, nodename, node_role)) / sum(${C} by (sources, cluster, cluster_uuid, nodename, node_role))  * 100)",
+      "query": "round(sum(${B}, sources, cluster, cluster_uuid, nodename, node_role) / sum(${C}, sources, cluster, cluster_uuid, nodename, node_role)  * 100)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

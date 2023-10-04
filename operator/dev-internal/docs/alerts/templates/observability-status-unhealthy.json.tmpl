@@ -6,7 +6,7 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "count(ts(\"kubernetes.observability.*.status\", cluster=\"K8S_CLUSTER_NAME\" AND status=\"Unhealthy\") by (sources, cluster, cluster_uuid, message, status))",
+      "query": "count(ts(\"kubernetes.observability.*.status\", cluster=\"K8S_CLUSTER_NAME\" AND status=\"Unhealthy\"), sources, cluster, cluster_uuid, message, status)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

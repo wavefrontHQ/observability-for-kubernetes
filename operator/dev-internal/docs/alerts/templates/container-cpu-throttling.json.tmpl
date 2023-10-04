@@ -6,7 +6,7 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "round(sum(${B} by (sources, cluster, cluster_uuid, container_name, pod_name, namespace_name)) / sum(${C} by (sources, cluster, cluster_uuid, container_name, pod_name, namespace_name)) * 100)",
+      "query": "round(sum(${B}, sources, cluster, cluster_uuid, container_name, pod_name, namespace_name) / sum(${C}, sources, cluster, cluster_uuid, container_name, pod_name, namespace_name) * 100)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
