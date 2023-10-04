@@ -1443,7 +1443,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.26.0-alpha-4d92008c
+  collector: 1.26.1-alpha-c6d6cfd7
   logging: 2.1.9
   proxy: "13.2"
 kind: ConfigMap
@@ -1515,7 +1515,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.14.0-alpha-4d92008c
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.14.1-alpha-c6d6cfd7
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
