@@ -13,14 +13,7 @@
     },
     {
       "name": "B",
-      "query": "count(${C} by (sources, cluster, cluster_uuid, nodename, node_role, status, condition))",
-      "queryType": "WQL",
-      "alertSourceType": ["VARIABLE"],
-      "hidden": true
-    },
-    {
-      "name": "C",
-      "query": "ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND (condition=\"DiskPressure\" AND status=\"True\"))",
+      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND (condition=\"DiskPressure\" AND status=\"True\")), sources, cluster, cluster_uuid, nodename, node_role, status, condition)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -29,14 +22,7 @@
       "name": "Alert Condition",
       "query": "${A}",
       "queryType": "WQL",
-      "alertSourceType": ["CONDITION"],
-      "hidden": true
-    },
-    {
-      "name": "Display Condition",
-      "query": "if(${A} >= 1, ${A})",
-      "queryType": "WQL",
-      "alertSourceType": ["AUDIT"],
+      "alertSourceType": ["CONDITION","AUDIT"],
       "hidden": false
     }
   ],
@@ -44,7 +30,7 @@
     "warn": "${A} >= 1"
   },
   "conditionQBEnabled": false,
-  "displayExpression": "${Display Condition}",
+  "displayExpression": "${Alert Condition}",
   "displayExpressionQBEnabled": false,
   "includeObsoleteMetrics": false,
   "minutes": 5,
@@ -56,12 +42,12 @@
   },
   "alertTriageDashboards": [
     {
-     "dashboardId": "integration-kubernetes-workloads",
-     "parameters": {
-       "constants": {
-         "cluster": "K8S_CLUSTER_NAME"
-       }
-     }
+      "dashboardId": "integration-kubernetes-nodes",
+      "parameters": {
+        "constants": {
+          "cluster_name": "K8S_CLUSTER_NAME"
+        }
+      }
     }
   ]
 }

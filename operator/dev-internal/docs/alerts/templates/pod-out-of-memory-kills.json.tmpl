@@ -13,7 +13,7 @@
     },
     {
       "name": "B",
-      "query": "count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\") by (sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name, reason))",
+      "query": "count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name, reason)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -22,14 +22,7 @@
       "name": "Alert Condition",
       "query": "${A}",
       "queryType": "WQL",
-      "alertSourceType": ["CONDITION"],
-      "hidden": true
-    },
-    {
-      "name": "Display Condition",
-      "query": "if(${A} >= 1, ${A})",
-      "queryType": "WQL",
-      "alertSourceType": ["AUDIT"],
+      "alertSourceType": ["CONDITION","AUDIT"],
       "hidden": false
     }
   ],
@@ -37,7 +30,7 @@
     "warn": "${A} >= 1"
   },
   "conditionQBEnabled": false,
-  "displayExpression": "${Display Condition}",
+  "displayExpression": "${Alert Condition}",
   "displayExpressionQBEnabled": false,
   "minutes": 15,
   "resolveAfterMinutes": 2,

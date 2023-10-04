@@ -1,12 +1,12 @@
 {
-  "name": "ETCD No Leader",
+  "name": "etcd Server Has No Leader",
   "alertType": "THRESHOLD",
-  "additionalInformation": "Alert reports when some etcd pods don't have a leader",
+  "additionalInformation": "Alert reports when an etcd server does not have a leader.",
   "alertChartUnits": "",
   "alertSources": [
     {
       "name": "A",
-      "query": "ts(\"kubernetes.controlplane.etcd.server.has.leader.gauge\", cluster=\"K8S_CLUSTER_NAME\")",
+      "query": "retainDimension(ts(\"kubernetes.controlplane.etcd.server.has.leader.gauge\", cluster=\"K8S_CLUSTER_NAME\"), sources, cluster, cluster_uuid, namespace, pod)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -41,10 +41,10 @@
   },
   "alertTriageDashboards": [
     {
-      "dashboardId": "integration-kubernetes-workloads",
+      "dashboardId": "integration-kubernetes-control-plane",
       "parameters": {
         "constants": {
-          "cluster": "K8S_CLUSTER_NAME"
+          "cluster_name": "K8S_CLUSTER_NAME"
         }
       }
     }

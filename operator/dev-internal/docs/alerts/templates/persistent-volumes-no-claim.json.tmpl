@@ -13,7 +13,7 @@
     },
     {
       "name": "B",
-      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Available\") by (sources, cluster, cluster_uuid, pv_name, phase))",
+      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Available\"), sources, cluster, cluster_uuid, pv_name, phase)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -22,14 +22,7 @@
       "name": "Alert Condition",
       "query": "${A}",
       "queryType": "WQL",
-      "alertSourceType": ["CONDITION"],
-      "hidden": true
-    },
-    {
-      "name": "Display Condition",
-      "query": "if(${A} >= 1, ${A})",
-      "queryType": "WQL",
-      "alertSourceType": ["AUDIT"],
+      "alertSourceType": ["CONDITION","AUDIT"],
       "hidden": false
     }
   ],
@@ -37,7 +30,7 @@
     "info": "${A} >= 1"
   },
   "conditionQBEnabled": false,
-  "displayExpression": "${Display Condition}",
+  "displayExpression": "${Alert Condition}",
   "displayExpressionQBEnabled": false,
   "minutes": 10,
   "resolveAfterMinutes": 2,
@@ -46,16 +39,6 @@
       "integration.kubernetes"
     ]
   },
-  "alertTriageDashboards": [
-    {
-      "dashboardId": "integration-kubernetes-workloads",
-      "parameters": {
-        "constants": {
-          "cluster": "K8S_CLUSTER_NAME"
-        }
-      }
-    }
-  ],
   "targets": {
     "info": "ALERT_TARGET"
   },

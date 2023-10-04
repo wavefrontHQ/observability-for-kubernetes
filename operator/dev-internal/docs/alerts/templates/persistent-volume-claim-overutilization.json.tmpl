@@ -6,7 +6,7 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "round(sum(${B} by (sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, pvc_name)) / sum(${C} by (sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, pvc_name)) * 100)",
+      "query": "round(sum(${B}, sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, pvc_name) / sum(${C}, sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, pvc_name) * 100)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -34,7 +34,7 @@
     },
     {
       "name": "Display Condition",
-      "query": "if(${A} <= 15, ${A})",
+      "query": "${A}.le(15)",
       "queryType": "WQL",
       "alertSourceType": ["AUDIT"],
       "hidden": false
@@ -54,16 +54,6 @@
       "integration.kubernetes"
     ]
   },
-  "alertTriageDashboards": [
-    {
-      "dashboardId": "integration-kubernetes-workloads",
-      "parameters": {
-        "constants": {
-          "cluster": "K8S_CLUSTER_NAME"
-        }
-      }
-    }
-  ],
   "targets": {
     "warn": "ALERT_TARGET"
   },
