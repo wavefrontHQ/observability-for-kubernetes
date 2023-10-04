@@ -1,19 +1,19 @@
 {
-  "name": "Pod Out-of-memory Kills",
+  "name": "Persistent Volumes Error",
   "alertType": "THRESHOLD",
   "additionalInformation": "",
   "alertChartUnits": "",
   "alertSources": [
     {
       "name": "A",
-      "query": "mcount(15m, ${B}) >= 2",
+      "query": "mcount(5m, ${B}) >= 2",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "B",
-      "query": "count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name, reason)",
+      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND (phase=\"Failed\" OR phase=\"Pending\")), sources, cluster, cluster_uuid, pv_name, phase)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -32,23 +32,13 @@
   "conditionQBEnabled": false,
   "displayExpression": "${Alert Condition}",
   "displayExpressionQBEnabled": false,
-  "minutes": 15,
+  "minutes": 10,
   "resolveAfterMinutes": 2,
   "tags": {
     "customerTags": [
       "integration.kubernetes"
     ]
   },
-  "alertTriageDashboards": [
-    {
-      "dashboardId": "integration-kubernetes-workloads",
-      "parameters": {
-        "constants": {
-          "cluster": "K8S_CLUSTER_NAME"
-        }
-      }
-    }
-  ],
   "targets": {
     "warn": "ALERT_TARGET"
   },
