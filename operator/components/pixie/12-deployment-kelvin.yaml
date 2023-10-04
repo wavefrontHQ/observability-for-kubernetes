@@ -97,11 +97,11 @@ spec:
             - containerPort: 59300
           resources:
             requests:
-              cpu: 50m
-              memory: 50Mi
+              cpu: 100m
+              memory: 100Mi
             limits:
               cpu: 2000m
-              memory: 100Gi
+              memory: 10Gi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
