@@ -69,7 +69,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .KubernetesEvents.SecretName }}
-                  key: k8s-events-endpoint-token
+                  key: {{ .KubernetesEvents.SecretTokenKey }}
           {{- end }}
           ports:
             - containerPort: 8088

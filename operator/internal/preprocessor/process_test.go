@@ -262,7 +262,7 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 		fakeClient := setup(secret)
 		wfcr := defaultWFCR()
 		err := PreProcess(fakeClient, wfcr)
-		require.ErrorContains(t, err, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
+		require.ErrorContains(t, err, "Invalid authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
 	})
 
 	t.Run("returns validation error if empty auth key and non empty auth key given", func(t *testing.T) {
@@ -279,7 +279,7 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 		fakeClient := setup(secret)
 		wfcr := defaultWFCR()
 		err := PreProcess(fakeClient, wfcr)
-		require.ErrorContains(t, err, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
+		require.ErrorContains(t, err, "Invalid authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
 	})
 
 	t.Run("returns validation error if wavefront token and csp app oauth are given", func(t *testing.T) {
@@ -296,7 +296,7 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 		fakeClient := setup(secret)
 		wfcr := defaultWFCR()
 		err := PreProcess(fakeClient, wfcr)
-		require.ErrorContains(t, err, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
+		require.ErrorContains(t, err, "Invalid authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
 	})
 
 	t.Run("returns validation error if csp api token and csp app oauth are given", func(t *testing.T) {
@@ -315,7 +315,7 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 
 		err := PreProcess(fakeClient, wfcr)
 
-		require.ErrorContains(t, err, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
+		require.ErrorContains(t, err, "Invalid authentication configured in Secret 'testWavefrontSecret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
 	})
 
 	t.Run("returns correct secret name", func(t *testing.T) {
@@ -335,7 +335,7 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 
 		err := PreProcess(fakeClient, wfcr)
 
-		require.ErrorContains(t, err, "Invalid Authentication configured in Secret 'my-secret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
+		require.ErrorContains(t, err, "Invalid authentication configured in Secret 'my-secret'. Only one authentication type is allowed. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
 	})
 
 	t.Run("returns error if no auth type given", func(t *testing.T) {
@@ -348,75 +348,58 @@ func TestProcessWavefrontProxyAuth(t *testing.T) {
 		fakeClient := setup(secret)
 		wfcr := defaultWFCR()
 		err := PreProcess(fakeClient, wfcr)
-		require.ErrorContains(t, err, "Invalid Authentication configured in Secret 'testWavefrontSecret'. Missing Authentication type. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
+		require.ErrorContains(t, err, "Invalid authentication configured in Secret 'testWavefrontSecret'. Missing Authentication type. Wavefront API Token 'token' or CSP API Token 'csp-api-token' or CSP App OAuth 'csp-app-id")
 	})
 }
 
 func TestProcessExperimental(t *testing.T) {
-	t.Run("succeeds when K8s events are enabled and secret exists", func(t *testing.T) {
+	t.Run("succeeds when insights secret exists", func(t *testing.T) {
 		secret := &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testWavefrontSecret",
+				Name:      util.InsightsSecret,
 				Namespace: testNamespace,
 			},
 			Data: map[string][]byte{
-				"k8s-events-endpoint-token": []byte("ignored"),
-				"token":                     []byte("ignored"),
+				"ingestion-token": []byte("ignored"),
 			},
 		}
 		fakeClient := setup(secret)
 		wfcr := defaultWFCR()
 		wfcr.Spec.Experimental.Insights.Enable = true
+		wfcr.Spec.Experimental.Insights.IngestionUrl = "https://example.com"
 
 		err := PreProcess(fakeClient, wfcr)
 
 		require.NoError(t, err)
 	})
 
-	t.Run("returns error if K8s events are enabled and secret does not exist", func(t *testing.T) {
+	t.Run("surfaces error when insights-secret doesn't exist when insights enabled", func(t *testing.T) {
+		fakeClient := setup()
 		wfcr := defaultWFCR()
 		wfcr.Spec.Experimental.Insights.Enable = true
+		wfcr.Spec.Experimental.Insights.IngestionUrl = "https://example.com"
 
-		err := PreProcess(setup(), wfcr)
+		err := PreProcess(fakeClient, wfcr)
 
-		require.ErrorContains(t, err, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'testWavefrontSecret' was not found")
+		require.ErrorContains(t, err, "Invalid authentication configured for Experimental Insights. Missing Secret 'insights-secret'")
 	})
 
-	t.Run("returns error if K8s events are enabled and data does not exist in secret", func(t *testing.T) {
+	t.Run("surfaces error when token key doesn't exist in insights-secret", func(t *testing.T) {
 		secret := &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testWavefrontSecret",
+				Name:      util.InsightsSecret,
 				Namespace: testNamespace,
 			},
-			Data: map[string][]byte{
-				"token": []byte("some-token"),
-			},
+			Data: map[string][]byte{},
 		}
 		fakeClient := setup(secret)
 		wfcr := defaultWFCR()
 		wfcr.Spec.Experimental.Insights.Enable = true
+		wfcr.Spec.Experimental.Insights.IngestionUrl = "https://example.com"
 
 		err := PreProcess(fakeClient, wfcr)
 
-		require.ErrorContains(t, err, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'testWavefrontSecret' is missing Data 'k8s-events-endpoint-token'")
-	})
-
-	t.Run("surfaces error when endpoint token doesn't exist in aria-insights-secret", func(t *testing.T) {
-		secret := &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "aria-insights-secret",
-				Namespace: testNamespace,
-			},
-			Data: map[string][]byte{
-				"k8s-events-endpoint-url": []byte("https://example.com"),
-			},
-		}
-		fakeClient := setup(secret)
-		wfcr := defaultWFCR()
-
-		err := PreProcess(fakeClient, wfcr)
-
-		require.ErrorContains(t, err, "Invalid Authentication configured for Experimental Kubernetes Events. Secret 'aria-insights-secret' is missing Data 'k8s-events-endpoint-token'")
+		require.ErrorContains(t, err, "Invalid authentication configured for Experimental Insights. Secret 'insights-secret' is missing Data 'ingestion-token'")
 	})
 
 	t.Run("properly sets canExportAutotracingScripts when pixie components are not running", func(t *testing.T) {

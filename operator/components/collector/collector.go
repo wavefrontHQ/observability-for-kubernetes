@@ -43,9 +43,10 @@ type ComponentConfig struct {
 }
 
 type KubernetesEvents struct {
-	Enable       bool
-	IngestionUrl string
-	SecretName   string
+	Enable         bool
+	IngestionUrl   string
+	SecretName     string
+	SecretTokenKey string
 }
 
 type Component struct {
@@ -83,9 +84,16 @@ func (component *Component) Validate() validation.Result {
 	if result := validation.ValidateResources(&component.config.ClusterCollectorResources, util.ClusterCollectorName); result.IsError() {
 		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
+
 	if component.config.MetricsEnable {
 		if result := validation.ValidateResources(&component.config.NodeCollectorResources, util.NodeCollectorName); result.IsError() {
 			errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
+		}
+	}
+
+	if component.config.KubernetesEvents.Enable {
+		if len(component.config.KubernetesEvents.IngestionUrl) == 0 {
+			errs = append(errs, fmt.Errorf("%s: missing insights ingestion url", component.Name()))
 		}
 	}
 

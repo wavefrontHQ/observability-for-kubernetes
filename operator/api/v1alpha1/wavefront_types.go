@@ -452,14 +452,19 @@ type Logging struct {
 }
 
 type Insights struct {
-	// Enable is whether to enable events. Defaults to false.
+	// Enable is whether to enable Insights. Defaults to false.
 	// +kubebuilder:default:=false
 	Enable bool `json:"enable,omitempty"`
 
+	// Ingestion Url is the endpoint to send kubernetes events.
+	// +kubebuilder:validation:Pattern:=`^http(s)?:\/\/.+`
 	IngestionUrl string `json:"ingestionUrl,required"`
 
 	// SecretName is for internal use
 	SecretName string `json:"-"`
+
+	// SecretTokenKey is for internal use
+	SecretTokenKey string `json:"-"`
 }
 
 // WavefrontStatus defines the observed state of Wavefront

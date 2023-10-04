@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BIN_DIR=$(dirname $(realpath "$0"))
+BIN_DIR=$(dirname "$(realpath "$0")")
 
 VERSION=1.24.15
 
@@ -15,5 +15,5 @@ if [[ ! -f "$BIN_DIR/.cache/kubectl" ]] || ! "$BIN_DIR"/.cache/kubectl version -
     echo " done." 1>&2
 fi
 
-# shellcheck disable=SC2086
-"$BIN_DIR"/.cache/kubectl $*
+# Need to use `"$@"` for commands like kubectl get secret foo --template='{{index .data "key-name-with-dashes"}}'
+"$BIN_DIR"/.cache/kubectl "$@"

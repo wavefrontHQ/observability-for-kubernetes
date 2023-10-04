@@ -28,6 +28,7 @@ func TestFromWavefront(t *testing.T) {
 			w.Spec.DataCollection.Metrics.Enable = false
 			w.Spec.CanExportData = false
 			w.Spec.Experimental.Insights.Enable = true
+			w.Spec.Experimental.Insights.IngestionUrl = "https://example.com"
 		})
 		config := FromWavefront(cr)
 		component, _ := NewComponent(ComponentDir, config)

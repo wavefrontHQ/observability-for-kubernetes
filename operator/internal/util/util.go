@@ -15,7 +15,7 @@ const WavefrontTokenAuthType = "wavefront-token"
 const CSPTokenAuthType = "csp-api-token"
 const CSPAppAuthType = "csp-app-oauth"
 
-const AriaInsightsSecret = "aria-insights-secret"
+const InsightsSecret = "insights-secret"
 
 const PixieKelvinName = "kelvin"
 const PixieVizierQueryBrokerName = "vizier-query-broker"

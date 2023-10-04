@@ -717,10 +717,13 @@ spec:
                     properties:
                       enable:
                         default: false
-                        description: Enable is whether to enable events. Defaults
+                        description: Enable is whether to enable Insights. Defaults
                           to false.
                         type: boolean
                       ingestionUrl:
+                        description: Ingestion Url is the endpoint to send kubernetes
+                          events.
+                        pattern: ^http(s)?:\/\/.+
                         type: string
                     required:
                     - ingestionUrl
