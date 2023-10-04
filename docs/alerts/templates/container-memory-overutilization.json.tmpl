@@ -1,7 +1,7 @@
 {
-  "name": "Container CPU Overutilization",
+  "name": "Container Memory Overutilization",
   "alertType": "THRESHOLD",
-  "additionalInformation": "Alert reports when a container's cpu utilization percentage is constantly high.",
+  "additionalInformation": "Alert reports when a container's memory utilization percentage is constantly high.",
   "alertChartUnits": "%",
   "alertSources": [
     {
@@ -13,14 +13,14 @@
     },
     {
       "name": "B",
-      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.memory.working_set\", cluster=\"K8S_CLUSTER_NAME\")))",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "C",
-      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.memory.limit\", cluster=\"K8S_CLUSTER_NAME\")))",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -63,8 +63,5 @@
       }
     }
   ],
-  "targets": {
-    "info": "ALERT_TARGET"
-  },
   "includeObsoleteMetrics": false
 }

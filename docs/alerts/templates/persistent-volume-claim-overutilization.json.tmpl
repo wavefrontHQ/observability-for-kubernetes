@@ -1,26 +1,26 @@
 {
-  "name": "Container CPU Overutilization",
+  "name": "Persistent Volume Claim Overutilization",
   "alertType": "THRESHOLD",
-  "additionalInformation": "Alert reports when a container's cpu utilization percentage is constantly high.",
+  "additionalInformation": "Alert reports when a Persistent Volume's available storage is below the required level specified.",
   "alertChartUnits": "%",
   "alertSources": [
     {
       "name": "A",
-      "query": "round(sum(${B}, sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name) / sum(${C}, sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name) * 100)",
+      "query": "round(sum(${B}, sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, pvc_name) / sum(${C}, sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, pvc_name) * 100)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "B",
-      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.usage_rate\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "query": "mmin(5m, align(1m, ts(\"kubernetes.pod.filesystem.available\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\")))",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "C",
-      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.cpu.limit\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "query": "mmax(5m, align(1m, ts(\"kubernetes.pod.filesystem.limit\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\")))",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -34,37 +34,28 @@
     },
     {
       "name": "Display Condition",
-      "query": "${A}.ge(90)",
+      "query": "${A}.le(15)",
       "queryType": "WQL",
       "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "info": "${A} >= 90"
+    "warn": "${A} <= 15",
+    "severe": "${A} <= 5"
   },
   "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
   "displayExpressionQBEnabled": false,
-  "minutes": 15,
-  "resolveAfterMinutes": 2,
+  "minutes": 5,
+  "resolveAfterMinutes": 5,
   "tags": {
     "customerTags": [
       "integration.kubernetes"
     ]
   },
-  "alertTriageDashboards": [
-    {
-      "dashboardId": "integration-kubernetes-workloads",
-      "parameters": {
-        "constants": {
-          "cluster": "K8S_CLUSTER_NAME"
-        }
-      }
-    }
-  ],
   "targets": {
-    "info": "ALERT_TARGET"
+    "warn": "ALERT_TARGET"
   },
   "includeObsoleteMetrics": false
 }

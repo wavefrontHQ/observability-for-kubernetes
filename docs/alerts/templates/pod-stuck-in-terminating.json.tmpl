@@ -1,26 +1,37 @@
 {
   "name": "Pod Stuck in Terminating",
   "alertType": "THRESHOLD",
+  "additionalInformation": "",
+  "alertChartUnits": "",
   "alertSources": [
     {
-      "name": "Alert Condition",
-      "query": "(mcount(10m, count(ts(\"kubernetes.pod.terminating\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, pod_name, namespace_name, cluster, DeletionTimestamp, cluster_uuid)) >= 10)",
+      "name": "A",
+      "query": "mcount(10m, ${B}) >= 10",
       "queryType": "WQL",
-      "alertSourceType": ["CONDITION"],
+      "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
-      "name": "Display Condition",
-      "query": "if(${Alert Condition}, ${Alert Condition})",
+      "name": "B",
+      "query": "count(ts(\"kubernetes.pod.terminating\", cluster=\"K8S_CLUSTER_NAME\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, reason, DeletionTimestamp)",
       "queryType": "WQL",
-      "alertSourceType": ["VARIABLE","AUDIT"],
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION","AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "warn": "(mcount(10m, count(ts(\"kubernetes.pod.terminating\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, pod_name, namespace_name, cluster, DeletionTimestamp, cluster_uuid)) >= 10) >= 1"
+    "warn": "${A} >= 1"
   },
-  "displayExpression": "${Display Condition}",
+  "conditionQBEnabled": false,
+  "displayExpression": "${Alert Condition}",
+  "displayExpressionQBEnabled": false,
   "minutes": 5,
   "resolveAfterMinutes": 2,
   "tags": {
@@ -30,12 +41,16 @@
   },
   "alertTriageDashboards": [
     {
-     "dashboardId": "integration-kubernetes-workloads",
-     "parameters": {
-       "constants": {
-         "cluster": "K8S_CLUSTER_NAME"
-       }
-     }
+      "dashboardId": "integration-kubernetes-workloads",
+      "parameters": {
+        "constants": {
+          "cluster": "K8S_CLUSTER_NAME"
+        }
+      }
     }
-  ]
+  ],
+  "targets": {
+    "warn": "ALERT_TARGET"
+  },
+  "includeObsoleteMetrics": false
 }

@@ -1,26 +1,19 @@
 {
-  "name": "Container CPU Throttling",
+  "name": "Node CPU Overutilization",
   "alertType": "THRESHOLD",
-  "additionalInformation": "",
+  "additionalInformation": "Alert reports when a node's cpu utilization percentage is constantly high.",
   "alertChartUnits": "%",
   "alertSources": [
     {
       "name": "A",
-      "query": "round(sum(${B}, sources, cluster, cluster_uuid, container_name, pod_name, namespace_name) / sum(${C}, sources, cluster, cluster_uuid, container_name, pod_name, namespace_name) * 100)",
+      "query": "round(sum(${B}, sources, cluster, cluster_uuid, nodename, node_role) * 100)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "B",
-      "query": "mavg(5m, rate(ts(\"kubernetes.cadvisor.container.cpu.cfs.throttled.periods.total.counter\", cluster=\"K8S_CLUSTER_NAME\")))",
-      "queryType": "WQL",
-      "alertSourceType": ["VARIABLE"],
-      "hidden": true
-    },
-    {
-      "name": "C",
-      "query": "mavg(5m, rate(ts(\"kubernetes.cadvisor.container.cpu.cfs.periods.total.counter\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "query": "ts(\"kubernetes.node.cpu.node_utilization\", cluster=\"K8S_CLUSTER_NAME\")",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -34,20 +27,22 @@
     },
     {
       "name": "Display Condition",
-      "query": "${A}.ge(25)",
+      "query": "if(${A} >= 80, ${A})",
       "queryType": "WQL",
       "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "info": "${A} >= 25"
+    "warn": "${A} >= 80",
+    "severe": "${A} >= 90"
   },
   "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
   "displayExpressionQBEnabled": false,
-  "minutes": 15,
-  "resolveAfterMinutes": 2,
+  "includeObsoleteMetrics": false,
+  "minutes": 5,
+  "resolveAfterMinutes": 5,
   "tags": {
     "customerTags": [
       "integration.kubernetes"
@@ -55,16 +50,15 @@
   },
   "alertTriageDashboards": [
     {
-      "dashboardId": "integration-kubernetes-workloads",
+      "dashboardId": "integration-kubernetes-nodes",
       "parameters": {
         "constants": {
-          "cluster": "K8S_CLUSTER_NAME"
+          "cluster_name": "K8S_CLUSTER_NAME"
         }
       }
     }
   ],
   "targets": {
-    "info": "ALERT_TARGET"
-  },
-  "includeObsoleteMetrics": false
+    "warn": "ALERT_TARGET"
+  }
 }

@@ -1,5 +1,6 @@
 # Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
 # This is not a valid configuration since some options are not compatible. See notes for more information.
+# Unless otherwise specified, the values here are set to their default values.
 apiVersion: wavefront.com/v1alpha1
 kind: Wavefront
 metadata:
@@ -56,16 +57,16 @@ spec:
           - kubernetes.collector.runtime.*
         tagGuaranteeList:
           - label.env
-      defaultCollectionInterval: 90s #defaults to 60s
+      defaultCollectionInterval: 60s
       # Rules based and Prometheus endpoints auto-discovery.
-      enableDiscovery: true #defaults to true
+      enableDiscovery: true
       # controlPlane can enable/disable control plane metrics
       controlPlane:
-        enable: true #defaults to true
+        enable: true
       clusterCollector:
         resources:
           limits:
-            cpu: 400m
+            cpu: 2000m
             ephemeral-storage: 1Gi
             memory: 512Mi
           requests:
@@ -75,7 +76,7 @@ spec:
       nodeCollector:
         resources:
           limits:
-            cpu: 200m
+            cpu: 1000m
             ephemeral-storage: 512Mi
             memory: 256Mi
           requests:

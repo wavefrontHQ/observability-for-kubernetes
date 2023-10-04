@@ -1,19 +1,19 @@
 {
-  "name": "Pod Out-of-memory Kills",
+  "name": "Node Disk Pressure",
   "alertType": "THRESHOLD",
-  "additionalInformation": "",
+  "additionalInformation": "Alert reports when a node has the problematic condition of DiskPressure.",
   "alertChartUnits": "",
   "alertSources": [
     {
       "name": "A",
-      "query": "mcount(15m, ${B}) >= 2",
+      "query": "mcount(5m, ${B}) >= 2",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
       "name": "B",
-      "query": "count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND reason=\"OOMKilled\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name, reason)",
+      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND (condition=\"DiskPressure\" AND status=\"True\")), sources, cluster, cluster_uuid, nodename, node_role, status, condition)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
@@ -32,7 +32,8 @@
   "conditionQBEnabled": false,
   "displayExpression": "${Alert Condition}",
   "displayExpressionQBEnabled": false,
-  "minutes": 15,
+  "includeObsoleteMetrics": false,
+  "minutes": 5,
   "resolveAfterMinutes": 2,
   "tags": {
     "customerTags": [
@@ -41,16 +42,12 @@
   },
   "alertTriageDashboards": [
     {
-      "dashboardId": "integration-kubernetes-workloads",
+      "dashboardId": "integration-kubernetes-nodes",
       "parameters": {
         "constants": {
-          "cluster": "K8S_CLUSTER_NAME"
+          "cluster_name": "K8S_CLUSTER_NAME"
         }
       }
     }
-  ],
-  "targets": {
-    "warn": "ALERT_TARGET"
-  },
-  "includeObsoleteMetrics": false
+  ]
 }
