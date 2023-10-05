@@ -28,7 +28,7 @@ combined-integration-test: combined-integration-tests
 
 .PHONY: clean-cluster
 clean-cluster:
-	@$(MONOREPO_DIR)/scripts/clean-cluster.sh
+	@$(MONOREPO_DIR)/scripts/clean-cluster.sh $(CLEAN_CLUSTER_ARGS)
 
 #----- KIND ----#
 KIND_K8S_VERSION?=v1.25.9
@@ -136,13 +136,16 @@ update-gke-cluster-labels: gke-cluster-name-check
 .PHONY: create-gke-cluster-with-arm-nodes
 create-gke-cluster-with-arm-nodes: create-gke-cluster add-arm-node-pool-gke-cluster
 
+# usage: make add-arm-node-pool-gke-cluster GKE_CLUSTER_NAME=XXXX GKE_ASYNC=true
 .PHONY: add-arm-node-pool-gke-cluster
 add-arm-node-pool-gke-cluster: gke-cluster-name-check
+	$(eval ASYNC_FLAG := $(if $(GKE_ASYNC),--async,))
 	gcloud container node-pools create arm-pool \
 		--cluster=$(GKE_CLUSTER_NAME) \
 		--zone=$(GCP_REGION)-$(GCP_ZONE) \
         --machine-type=t2a-standard-1 \
-        --num-nodes=$(NUMBER_OF_ARM_NODES)
+        --num-nodes=$(NUMBER_OF_ARM_NODES) \
+        --quiet $(ASYNC_FLAG)
 
 # usage: make resize-node-pool-gke-cluster GKE_CLUSTER_NAME=XXXX GKE_ASYNC=true
 .PHONY: resize-node-pool-gke-cluster
