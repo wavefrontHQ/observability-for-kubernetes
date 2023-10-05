@@ -65,7 +65,7 @@ pipeline {
           }
 
           if (env.FAIL_ENFORCE_DEV_INTERNAL == 'true') {
-            error("Failing build because file were edited outside of normal dev-internal promotion flow. Run 'VERBOSE=true ./ci/jenkins/run-ci.sh -b origin/main -d ${GIT_COMMIT} -f '${FILES_TO_CHECK}'")
+            error("Failing build because file were edited outside of normal dev-internal promotion flow. Run 'VERBOSE=true ./ci/jenkins/run-ci.sh -b origin/main -d ${GIT_COMMIT} -f '${FILES_TO_CHECK}', revert the changes, and then run CI for current PR with parameters and check 'SKIP_ENFORCE_DEV_INTERNAL'.")
           }
         }
       }
