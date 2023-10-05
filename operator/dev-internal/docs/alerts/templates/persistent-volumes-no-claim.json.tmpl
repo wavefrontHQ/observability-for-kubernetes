@@ -6,14 +6,7 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "mcount(5m, ${B}) >= 2",
-      "queryType": "WQL",
-      "alertSourceType": ["VARIABLE"],
-      "hidden": true
-    },
-    {
-      "name": "B",
-      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Available\"), sources, cluster, cluster_uuid, pv_name, phase)",
+      "query": "retainDimension(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Available\"), sources, cluster, cluster_uuid, pv_name, phase)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

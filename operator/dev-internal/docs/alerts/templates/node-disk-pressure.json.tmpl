@@ -6,14 +6,7 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "mcount(5m, ${B}) >= 2",
-      "queryType": "WQL",
-      "alertSourceType": ["VARIABLE"],
-      "hidden": true
-    },
-    {
-      "name": "B",
-      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND (condition=\"DiskPressure\" AND status=\"True\")), sources, cluster, cluster_uuid, nodename, node_role, status, condition)",
+      "query": "retainDimension(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND (condition=\"DiskPressure\" AND status=\"True\")), sources, cluster, cluster_uuid, nodename, node_role, status, condition)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

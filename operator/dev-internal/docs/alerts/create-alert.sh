@@ -224,7 +224,6 @@ function main() {
 
   # Download and create the alert
   TEMP_FILE=$(mktemp)
-  echo "$LOCAL_FILE"
   if [ $LOCAL_FILE == true ]; then
     cp "${ALERTS_DIRECTORY}/${ALERT_FILE_NAME}" "${TEMP_FILE}"
   else

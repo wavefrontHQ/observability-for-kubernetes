@@ -34,7 +34,7 @@
     },
     {
       "name": "Display Condition",
-      "query": "${A}.ge(25)",
+      "query": "if(${A}.ge(25), ${A})",
       "queryType": "WQL",
       "alertSourceType": ["AUDIT"],
       "hidden": false

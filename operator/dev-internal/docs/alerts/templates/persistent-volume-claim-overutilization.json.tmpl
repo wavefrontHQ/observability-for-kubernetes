@@ -34,7 +34,7 @@
     },
     {
       "name": "Display Condition",
-      "query": "${A}.le(15)",
+      "query": "if(${A}.le(15), ${A})",
       "queryType": "WQL",
       "alertSourceType": ["AUDIT"],
       "hidden": false

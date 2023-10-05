@@ -6,14 +6,7 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "mcount(10m, ${B}) >= 10",
-      "queryType": "WQL",
-      "alertSourceType": ["VARIABLE"],
-      "hidden": true
-    },
-    {
-      "name": "B",
-      "query": "count(ts(\"kubernetes.pod.terminating\", cluster=\"K8S_CLUSTER_NAME\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, reason, DeletionTimestamp)",
+      "query": "retainDimension(ts(\"kubernetes.pod.terminating\", cluster=\"K8S_CLUSTER_NAME\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, reason, DeletionTimestamp)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
