@@ -29,7 +29,7 @@ pipeline {
       steps {
         sh './operator/hack/jenkins/setup-for-integration-test.sh'
         sh 'echo $HARBOR_CREDS_PSW | docker login $PREFIX -u $HARBOR_CREDS_USR --password-stdin'
-        sh './scripts/promote-release-images.sh'
+        sh './scripts/promote-release-images.sh' // note: also does 'make promote-internal'
         lock("integration-test-gke-2") {
           sh 'make gke-connect-to-cluster'
           sh 'NUMBER_OF_NODES=2 GKE_NODE_POOL=default-pool make resize-node-pool-gke-cluster'
