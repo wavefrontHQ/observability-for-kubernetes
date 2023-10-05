@@ -4,7 +4,6 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
-    test: this-should-not-be-edited
   creationTimestamp: null
   name: wavefronts.wavefront.com
 spec:
