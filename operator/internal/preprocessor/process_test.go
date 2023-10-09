@@ -198,10 +198,11 @@ func TestProcess(t *testing.T) {
 		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: example-span-force-lowercase\n  action: spanForceLowercase\n  match: ^UPPERCASE.*$\n  scope: spanName\n  iterations: \"10\"")
 	})
 
+	// TODO: Captial "I" in "replaceInput" is not getting unmarshalled to the struct for some reason
 	t.Run("can parse user defined preprocessor rules with input, replaceInput", func(t *testing.T) {
 		wfcr := defaultWFCR()
 		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
-		rules := "    '2878':\n      - rule          : example-extract-tag-from-span\n        action        : spanExtractTag\n        key           : serviceTag\n        replaceInput8174  : abc"
+		rules := "    '2878':\n      - rule          : example-extract-tag-from-span\n        action        : spanExtractTag\n        key           : serviceTag\n        input         : spanName\n        match         : \"span.*\"\n        search        : \"^([^\\\\.]*\\\\.[^\\\\.]*\\\\.)([^\\\\.]*)\\\\.(.*)$\"\n        replaceInput  : \"$1$3\"\n        replace       : \"$2\""
 
 		rulesConfigMap := &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -218,13 +219,36 @@ func TestProcess(t *testing.T) {
 
 		require.NoError(t, err)
 		fmt.Printf("UserDefinedPortRules:%+v", wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules)
-		//require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: example-extract-tag-from-span\n  action: spanExtractTag\n  key: serviceTag\n  match: span.*\n  search: ^([^\\.]*\\.[^\\.]*\\.)([^\\.]*)\\.(.*)$\n  replace: $2\n  input: spanName")
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: example-extract-tag-from-span\n  action: spanExtractTag\n  key: serviceTag\n  match: span.*\n  search: ^([^\\.]*\\.[^\\.]*\\.)([^\\.]*)\\.(.*)$\n  replace: $2\n  input: spanName\n  replaceInput: $1$3\n")
+	})
+
+	t.Run("can parse user defined preprocessor rules with newKey", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := "    '2878':\n      - rule   : rename-span-tag-x-request-id\n        action : spanRenameTag\n        key    : guid:x-request-id\n        newkey : guid-x-request-id"
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		fmt.Printf("UserDefinedPortRules:%+v", wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: rename-span-tag-x-request-id\n  action: spanRenameTag\n  key: guid:x-request-id\n  newkey: guid-x-request-id\n")
 	})
 
 	t.Run("can parse user defined preprocessor rules with if conditions", func(t *testing.T) {
 		wfcr := defaultWFCR()
 		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
-		rules := "    '2878':\n      - rule: drop-tag-1\n        action: dropTag\n        tag: tag-1\n        match: dev.*"
+		rules := "    '2878':\n      - rule: test-spanblock-list\n        action: spanBlock\n        if:\n          equals:\n            scope: http.status_code\n            value: [\"302, 404\"]"
 
 		rulesConfigMap := &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
@@ -241,7 +265,7 @@ func TestProcess(t *testing.T) {
 
 		require.NoError(t, err)
 		fmt.Printf("UserDefinedRules: %+v", wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules)
-		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: drop-tag-1\n  action: dropTag\n  tag: tag-1\n  match: dev.*")
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: test-spanblock-list\n  action: spanBlock\n  if:\n    equals:\n      scope: http.status_code\n      value:\n      - 302, 404\n")
 	})
 
 	t.Run("returns error if user provides invalid preprocessor rule yaml", func(t *testing.T) {
