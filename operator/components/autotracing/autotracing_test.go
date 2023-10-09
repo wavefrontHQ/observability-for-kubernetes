@@ -16,7 +16,7 @@ import (
 
 var ComponentDir = os.DirFS(filepath.Join("..", DeployDir))
 
-func TestNewPixieComponent(t *testing.T) {
+func TestNewAutoTracingComponent(t *testing.T) {
 	t.Run("valid component", func(t *testing.T) {
 		config := validComponentConfig()
 		t.Log(os.Getwd())
@@ -25,6 +25,33 @@ func TestNewPixieComponent(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, component)
+	})
+
+	t.Run("default configuration", func(t *testing.T) {
+		component, _ := NewComponent(ComponentDir, validComponentConfig())
+		toApply, toDelete, err := component.Resources()
+
+		require.NoError(t, err)
+		require.Equal(t, 3, len(toApply))
+		require.Empty(t, toDelete)
+
+		// check all resources for component labels
+		test.RequireCommonLabels(t, toApply, "wavefront", "autotracing", component.config.Namespace)
+
+		clusterSpansConfigMap, err := test.GetConfigMap("wavefront-cluster-spans-script", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, clusterSpansConfigMap)
+		checkConfigMapNamespace(t, clusterSpansConfigMap)
+
+		egressSpansConfigMap, err := test.GetConfigMap("wavefront-egress-spans-script", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, egressSpansConfigMap)
+		checkConfigMapNamespace(t, egressSpansConfigMap)
+
+		ingressSpansConfigMap, err := test.GetConfigMap("wavefront-ingress-spans-script", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, ingressSpansConfigMap)
+		checkConfigMapNamespace(t, ingressSpansConfigMap)
 	})
 }
 
@@ -74,33 +101,6 @@ func TestValidate(t *testing.T) {
 }
 
 func TestResources(t *testing.T) {
-	t.Run("default configuration", func(t *testing.T) {
-		component, _ := NewComponent(ComponentDir, validComponentConfig())
-		toApply, toDelete, err := component.Resources()
-
-		require.NoError(t, err)
-		require.Equal(t, 3, len(toApply))
-		require.Empty(t, toDelete)
-
-		// check all resources for component labels
-		test.RequireCommonLabels(t, toApply, "wavefront", "autotracing", component.config.Namespace)
-
-		clusterSpansConfigMap, err := test.GetConfigMap("wavefront-cluster-spans-script", toApply)
-		require.NoError(t, err)
-		require.NotEmpty(t, clusterSpansConfigMap)
-		checkConfigMapNamespace(t, clusterSpansConfigMap)
-
-		egressSpansConfigMap, err := test.GetConfigMap("wavefront-egress-spans-script", toApply)
-		require.NoError(t, err)
-		require.NotEmpty(t, egressSpansConfigMap)
-		checkConfigMapNamespace(t, egressSpansConfigMap)
-
-		ingressSpansConfigMap, err := test.GetConfigMap("wavefront-ingress-spans-script", toApply)
-		require.NoError(t, err)
-		require.NotEmpty(t, ingressSpansConfigMap)
-		checkConfigMapNamespace(t, ingressSpansConfigMap)
-	})
-
 	t.Run("can change namespace", func(t *testing.T) {
 		config := validComponentConfig()
 		config.Namespace = wftest.DefaultNamespace

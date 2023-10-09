@@ -18,82 +18,15 @@ var ComponentDir = os.DirFS(filepath.Join("..", DeployDir))
 
 func TestNewCollectorComponent(t *testing.T) {
 	t.Run("valid component", func(t *testing.T) {
-		config := minimalComponentConfig()
+		config := validComponentConfig()
 		t.Log(os.Getwd())
 		component, err := NewComponent(ComponentDir, config)
 		require.NoError(t, err)
 		require.NotNil(t, component)
 	})
-}
 
-func TestValidate(t *testing.T) {
-	t.Run("valid component config", func(t *testing.T) {
-		config := minimalComponentConfig()
-		component, _ := NewComponent(ComponentDir, config)
-		result := component.Validate()
-		require.True(t, result.IsValid())
-	})
-
-	t.Run("Validation error when node collector CPU request is greater than CPU limit", func(t *testing.T) {
-		config := minimalComponentConfig()
-		config.NodeCollectorResources.Requests.CPU = "500m"
-		config.NodeCollectorResources.Limits.CPU = "200m"
-
-		component, _ := NewComponent(ComponentDir, config)
-		result := component.Validate()
-
-		require.False(t, result.IsValid())
-		require.Equal(t, "collector: invalid wavefront-node-collector.resources.requests.cpu: 500m must be less than or equal to cpu limit", result.Message())
-	})
-
-	t.Run("Does not validates node collector resources when metrics is not enabled", func(t *testing.T) {
-		config := minimalComponentConfig()
-		config.MetricsEnable = false
-		config.NodeCollectorResources = wf.Resources{}
-
-		component, _ := NewComponent(ComponentDir, config)
-		result := component.Validate()
-
-		require.True(t, result.IsValid())
-	})
-
-	t.Run("Validation error when cluster collector memory request is greater than CPU limit", func(t *testing.T) {
-		config := minimalComponentConfig()
-		config.ClusterCollectorResources.Requests.Memory = "500Mi"
-		config.ClusterCollectorResources.Limits.Memory = "200Mi"
-
-		component, _ := NewComponent(ComponentDir, config)
-		result := component.Validate()
-
-		require.False(t, result.IsValid())
-		require.Equal(t, "collector: invalid wavefront-cluster-collector.resources.requests.memory: 500Mi must be less than or equal to memory limit", result.Message())
-	})
-
-	t.Run("CPU expressed differently should not be an error", func(t *testing.T) {
-		config := minimalComponentConfig()
-		config.ClusterCollectorResources.Requests.CPU = "500m"
-		config.ClusterCollectorResources.Limits.CPU = "0.5"
-
-		component, _ := NewComponent(ComponentDir, config)
-		result := component.Validate()
-
-		require.True(t, result.IsValid())
-	})
-
-	t.Run("error when insights enabled but ingestion url is not set", func(t *testing.T) {
-		config := minimalComponentConfig()
-		config.KubernetesEvents.Enable = true
-
-		component, _ := NewComponent(ComponentDir, config)
-		result := component.Validate()
-
-		require.False(t, result.IsValid())
-	})
-}
-
-func TestResources(t *testing.T) {
 	t.Run("default configuration", func(t *testing.T) {
-		component, _ := NewComponent(ComponentDir, minimalComponentConfig())
+		component, _ := NewComponent(ComponentDir, validComponentConfig())
 		toApply, toDelete, err := component.Resources()
 
 		require.NoError(t, err)
@@ -132,11 +65,78 @@ func TestResources(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, deployment)
 	})
+}
 
+func TestValidate(t *testing.T) {
+	t.Run("valid component config", func(t *testing.T) {
+		config := validComponentConfig()
+		component, _ := NewComponent(ComponentDir, config)
+		result := component.Validate()
+		require.True(t, result.IsValid())
+	})
+
+	t.Run("Validation error when node collector CPU request is greater than CPU limit", func(t *testing.T) {
+		config := validComponentConfig()
+		config.NodeCollectorResources.Requests.CPU = "500m"
+		config.NodeCollectorResources.Limits.CPU = "200m"
+
+		component, _ := NewComponent(ComponentDir, config)
+		result := component.Validate()
+
+		require.False(t, result.IsValid())
+		require.Equal(t, "collector: invalid wavefront-node-collector.resources.requests.cpu: 500m must be less than or equal to cpu limit", result.Message())
+	})
+
+	t.Run("Does not validates node collector resources when metrics is not enabled", func(t *testing.T) {
+		config := validComponentConfig()
+		config.MetricsEnable = false
+		config.NodeCollectorResources = wf.Resources{}
+
+		component, _ := NewComponent(ComponentDir, config)
+		result := component.Validate()
+
+		require.True(t, result.IsValid())
+	})
+
+	t.Run("Validation error when cluster collector memory request is greater than CPU limit", func(t *testing.T) {
+		config := validComponentConfig()
+		config.ClusterCollectorResources.Requests.Memory = "500Mi"
+		config.ClusterCollectorResources.Limits.Memory = "200Mi"
+
+		component, _ := NewComponent(ComponentDir, config)
+		result := component.Validate()
+
+		require.False(t, result.IsValid())
+		require.Equal(t, "collector: invalid wavefront-cluster-collector.resources.requests.memory: 500Mi must be less than or equal to memory limit", result.Message())
+	})
+
+	t.Run("CPU expressed differently should not be an error", func(t *testing.T) {
+		config := validComponentConfig()
+		config.ClusterCollectorResources.Requests.CPU = "500m"
+		config.ClusterCollectorResources.Limits.CPU = "0.5"
+
+		component, _ := NewComponent(ComponentDir, config)
+		result := component.Validate()
+
+		require.True(t, result.IsValid())
+	})
+
+	t.Run("error when insights enabled but ingestion url is not set", func(t *testing.T) {
+		config := validComponentConfig()
+		config.KubernetesEvents.Enable = true
+
+		component, _ := NewComponent(ComponentDir, config)
+		result := component.Validate()
+
+		require.False(t, result.IsValid())
+	})
+}
+
+func TestResources(t *testing.T) {
 	// TODO: Component Refactor - move collector wavefront controller test here
 }
 
-func minimalComponentConfig() ComponentConfig {
+func validComponentConfig() ComponentConfig {
 	return ComponentConfig{
 		Enable:                    true,
 		MetricsEnable:             true,

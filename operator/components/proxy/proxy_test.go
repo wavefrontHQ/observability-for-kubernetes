@@ -26,6 +26,34 @@ func TestNewProxyComponent(t *testing.T) {
 		require.NotEmpty(t, component.config.ConfigHash)
 	})
 
+	t.Run("default configuration", func(t *testing.T) {
+		component, _ := NewComponent(ComponentDir, validComponentConfig())
+		toApply, toDelete, err := component.Resources()
+
+		require.NoError(t, err)
+		require.Equal(t, 4, len(toApply))
+		require.Equal(t, 1, len(toDelete))
+
+		// check all resources for component labels
+		test.RequireCommonLabels(t, toApply, "wavefront", "proxy", wftest.DefaultNamespace)
+
+		configmap, err := test.GetConfigMap("operator-proxy-preprocessor-rules-config", toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, configmap)
+
+		deployment, err := test.GetDeployment(util.ProxyName, toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, deployment)
+
+		service, err := test.GetService(util.ProxyName, toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, service)
+
+		serviceAccount, err := test.GetServiceAccount(util.ProxyName, toApply)
+		require.NoError(t, err)
+		require.NotEmpty(t, serviceAccount)
+	})
+
 	t.Run("updates config hash if set", func(t *testing.T) {
 		config := validComponentConfig()
 		config.ConfigHash = "some value"
@@ -162,34 +190,6 @@ func TestValidate(t *testing.T) {
 }
 
 func TestResources(t *testing.T) {
-	t.Run("default configuration", func(t *testing.T) {
-		component, _ := NewComponent(ComponentDir, validComponentConfig())
-		toApply, toDelete, err := component.Resources()
-
-		require.NoError(t, err)
-		require.Equal(t, 4, len(toApply))
-		require.Equal(t, 1, len(toDelete))
-
-		// check all resources for component labels
-		test.RequireCommonLabels(t, toApply, "wavefront", "proxy", wftest.DefaultNamespace)
-
-		configmap, err := test.GetConfigMap("operator-proxy-preprocessor-rules-config", toApply)
-		require.NoError(t, err)
-		require.NotEmpty(t, configmap)
-
-		deployment, err := test.GetDeployment(util.ProxyName, toApply)
-		require.NoError(t, err)
-		require.NotEmpty(t, deployment)
-
-		service, err := test.GetService(util.ProxyName, toApply)
-		require.NoError(t, err)
-		require.NotEmpty(t, service)
-
-		serviceAccount, err := test.GetServiceAccount(util.ProxyName, toApply)
-		require.NoError(t, err)
-		require.NotEmpty(t, serviceAccount)
-	})
-
 	// TODO: Component Refactor - move proxy wavefront controller test here
 }
 
