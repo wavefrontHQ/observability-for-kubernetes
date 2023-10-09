@@ -37,7 +37,7 @@ type rule struct {
 	Iterations     string         `yaml:",omitempty"`
 	FirstMatchOnly string         `yaml:",omitempty"`
 	Input          string         `yaml:",omitempty"`
-	Replaceinput   string         `yaml:",omitempty"`
+	ReplaceInput   string         `yaml:"replaceInput,omitempty"`
 	Newkey         string         `yaml:",omitempty"`
 	If             interface{}    `yaml:",omitempty"`
 }

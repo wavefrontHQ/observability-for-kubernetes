@@ -151,7 +151,6 @@ func TestProcess(t *testing.T) {
 		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: rename-dc-to-datacenter\n  action: renameTag\n  tag: dc\n  newtag: datacenter")
 	})
 
-	// TODO: Should maxlength be a string or int
 	t.Run("can parse user defined preprocessor rules with actionSubtype, maxLength", func(t *testing.T) {
 		wfcr := defaultWFCR()
 		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
@@ -198,7 +197,6 @@ func TestProcess(t *testing.T) {
 		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: example-span-force-lowercase\n  action: spanForceLowercase\n  match: ^UPPERCASE.*$\n  scope: spanName\n  iterations: \"10\"")
 	})
 
-	// TODO: Captial "I" in "replaceInput" is not getting unmarshalled to the struct for some reason
 	t.Run("can parse user defined preprocessor rules with input, replaceInput", func(t *testing.T) {
 		wfcr := defaultWFCR()
 		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
