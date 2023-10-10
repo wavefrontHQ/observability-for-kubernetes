@@ -169,7 +169,7 @@ pipeline {
               /* Collector Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C collector integration-test'
-              sh 'make clean-cluster'
+              sh 'CLEAN_CLUSTER_ARGS="-n" make clean-cluster'
             }
           }
         }
@@ -199,7 +199,7 @@ pipeline {
               /* Operator Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C operator integration-test'
-              sh 'make clean-cluster'
+              sh 'CLEAN_CLUSTER_ARGS="-n" make clean-cluster'
             }
           }
         }
@@ -229,7 +229,7 @@ pipeline {
               /* Operator Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C operator integration-test'
-              sh 'make clean-cluster'
+              sh 'CLEAN_CLUSTER_ARGS="-n" make clean-cluster'
             }
           }
         }
@@ -259,7 +259,7 @@ pipeline {
               /* Operator Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C operator integration-test'
-              sh 'make clean-cluster'
+              sh 'CLEAN_CLUSTER_ARGS="-n" make clean-cluster'
             }
           }
         }
@@ -295,7 +295,7 @@ pipeline {
               /* Operator Integration Tests */
               sh 'make clean-cluster'
               sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"'
-              sh 'make clean-cluster'
+              sh 'CLEAN_CLUSTER_ARGS="-n" make clean-cluster'
             }
           }
         }
@@ -331,7 +331,7 @@ pipeline {
                 /* Operator Integration Tests */
                 sh 'make clean-cluster'
                 sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics"'
-                sh 'make clean-cluster'
+                sh 'CLEAN_CLUSTER_ARGS="-n" make clean-cluster'
               }
             }
           }

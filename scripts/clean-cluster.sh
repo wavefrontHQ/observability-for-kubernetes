@@ -46,12 +46,12 @@ function delete_security_context_constraints() {
 
 function main() {
   echo "Cleaning up cluster ..."
-  local WAIT_FOR_CLUSTER_TO_FINISH=false
+  local WAIT_FOR_CLUSTER_TO_FINISH=true
 
-  while getopts ":w" opt; do
+  while getopts ":n" opt; do
     case $opt in
-    w)
-      WAIT_FOR_CLUSTER_TO_FINISH=true
+    n)
+      WAIT_FOR_CLUSTER_TO_FINISH=false
       ;;
     \?)
       print_usage_and_exit "Invalid option: -$OPTARG"
