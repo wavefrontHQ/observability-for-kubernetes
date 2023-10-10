@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
+REPO_ROOT=$(git rev-parse --show-toplevel)
+source "${REPO_ROOT}/scripts/k8s-utils.sh"
+
 function delete_cluster_roles() {
   local cluster_roles=''
 
@@ -43,6 +46,18 @@ function delete_security_context_constraints() {
 
 function main() {
   echo "Cleaning up cluster ..."
+  local WAIT_FOR_CLUSTER_TO_FINISH=false
+
+  while getopts ":w" opt; do
+    case $opt in
+    w)
+      WAIT_FOR_CLUSTER_TO_FINISH=true
+      ;;
+    \?)
+      print_usage_and_exit "Invalid option: -$OPTARG"
+      ;;
+    esac
+  done
 
   kubectl delete --ignore-not-found=true --wait=false deployment/wavefront-proxy || true
 
@@ -52,6 +67,11 @@ function main() {
 
   if kubectl get scc &>/dev/null; then
     delete_security_context_constraints
+  fi
+
+  if [[ "${WAIT_FOR_CLUSTER_TO_FINISH}" == "true" ]]; then
+    wait_for_proxy_termination
+    wait_for_cluster_ready
   fi
 }
 

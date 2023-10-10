@@ -21,9 +21,10 @@ function main() {
   local NS=observability-system
   local WAVEFRONT_URL='https://nimba.wavefront.com'
   local CONFIG_CLUSTER_NAME
+  local INCLUDE_CR_DEPLOYMENT=true
   CONFIG_CLUSTER_NAME=$(create_cluster_name)
 
-  while getopts ":u:t:n:" opt; do
+  while getopts ":u:t:n:x" opt; do
     case $opt in
     u)
       WAVEFRONT_URL="$OPTARG"
@@ -33,6 +34,9 @@ function main() {
       ;;
     n)
       CONFIG_CLUSTER_NAME="$OPTARG"
+      ;;
+    x)
+      INCLUDE_CR_DEPLOYMENT=false
       ;;
     \?)
       print_usage_and_exit "Invalid option: -$OPTARG"
@@ -48,27 +52,29 @@ function main() {
   kubectl apply -f ${REPO_ROOT}/deploy/wavefront-operator.yaml
   kubectl create -n ${NS} secret generic wavefront-secret --from-literal token=${WAVEFRONT_TOKEN} || true
 
-  cat <<EOF | kubectl apply -f -
-  apiVersion: wavefront.com/v1alpha1
-  kind: Wavefront
-  metadata:
-    name: wavefront
-    namespace: ${NS}
-  spec:
-    clusterName: $CONFIG_CLUSTER_NAME
-    wavefrontUrl: $WAVEFRONT_URL
-    dataCollection:
-      metrics:
-        enable: true
-      logging:
-        enable: true
-    dataExport:
-      wavefrontProxy:
-        enable: true
+  if [[ "${INCLUDE_CR_DEPLOYMENT}" == "true" ]]; then
+    cat <<EOF | kubectl apply -f -
+    apiVersion: wavefront.com/v1alpha1
+    kind: Wavefront
+    metadata:
+      name: wavefront
+      namespace: ${NS}
+    spec:
+      clusterName: $CONFIG_CLUSTER_NAME
+      wavefrontUrl: $WAVEFRONT_URL
+      dataCollection:
+        metrics:
+          enable: true
+        logging:
+          enable: true
+      dataExport:
+        wavefrontProxy:
+          enable: true
 EOF
 
-  wait_for_cluster_ready "$NS"
-  kubectl get wavefront -n ${NS}
+    wait_for_cluster_ready "$NS"
+    kubectl get wavefront -n ${NS}
+  fi
 }
 
 main "$@"
