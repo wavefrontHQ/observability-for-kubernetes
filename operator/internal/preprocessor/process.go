@@ -243,6 +243,7 @@ func checkVal(check bool) int {
 	}
 	return 0
 }
+
 func getEnabledPorts(wfSpec *wf.WavefrontSpec) string {
 	allPorts := []int{wfSpec.DataExport.WavefrontProxy.MetricPort,
 		wfSpec.DataExport.WavefrontProxy.DeltaCounterPort,
