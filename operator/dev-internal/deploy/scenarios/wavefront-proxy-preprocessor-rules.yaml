@@ -27,3 +27,18 @@ data:
         action: addTag
         tag: processed
         value: "true"
+      # only allow points listed under "names"
+      - rule: allow-selected-metrics
+        action: metricsFilter
+        function: allow
+        opts:
+          cacheSize: 10000
+        names:
+        # allows a metric called metrics.1 but drops metrics.1.test
+        - "metrics.1"
+        # allows any metric that starts with metrics.2
+        # Note: notice the use of "\\" as an escape character instead
+        # of "\" (which is the defacto escape character used for regex)
+        - "/metrics\\.2.*/"
+        # allows any metric that ends with .ok
+        - "/.*.ok$/"
