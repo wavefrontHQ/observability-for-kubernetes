@@ -58,6 +58,281 @@ func TestProcess(t *testing.T) {
 		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedGlobalRules, "- rule: tag3\n  action: addTag\n  tag: tag3\n  value: \"true\"\n")
 	})
 
+	t.Run("can parse user defined preprocessor rules with scope, search, replace, source", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := "    '2878':\n      - rule    : example-replace-badchars\n        action  : replaceRegex\n        scope   : pointLine\n        search  : \"[&\\\\$\\\\*]\"\n        replace : \"_\"\n        source  : sourceName"
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: example-replace-badchars\n  action: replaceRegex\n  scope: pointLine\n  search: '[&\\$\\*]'\n  replace: _\n  source: sourceName")
+	})
+
+	t.Run("can parse user defined preprocessor rules with match", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := "    '2878':\n      - rule    : drop-az-tag\n        action  : dropTag\n        tag     : az\n        match   : dev.*"
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: drop-az-tag\n  action: dropTag\n  tag: az\n  match: dev.*\n")
+	})
+
+	t.Run("can parse user defined preprocessor rules with function, names, opts", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		// TODO: revisit for metric\.2
+		rules := "    '2878':\n      - rule: allow-selected-metrics\n        action: metricsFilter\n        function: allow\n        opts:\n          cacheSize: 10000\n        names:\n          - \"metrics.1\"\n          - \"/.*.ok$/\"\n          - \"/metrics.2.*/\""
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: allow-selected-metrics\n  action: metricsFilter\n  function: allow\n  names:\n  - metrics.1\n  - /.*.ok$/\n  - /metrics.2.*/")
+	})
+
+	t.Run("can parse user defined preprocessor rules with newtag", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := "    '2878':\n      - rule    : rename-dc-to-datacenter\n        action  : renameTag\n        tag     : dc\n        newtag  : datacenter"
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: rename-dc-to-datacenter\n  action: renameTag\n  tag: dc\n  newtag: datacenter")
+	})
+
+	t.Run("can parse user defined preprocessor rules with actionSubtype, maxLength", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := "    '2878':\n      - rule          : limit-metric-name-length\n        action        : limitLength\n        scope         : metricName\n        actionSubtype : truncateWithEllipsis\n        maxLength     : 16\n        match         : \"^metric.*\""
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: limit-metric-name-length\n  action: limitLength\n  match: ^metric.*\n  scope: metricName")
+	})
+
+	t.Run("can parse user defined preprocessor rules with iterations,firstMatchOnly", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := "    '2878':\n      - rule          : example-span-force-lowercase\n        action        : spanForceLowercase\n        scope         : spanName\n        match         : \"^UPPERCASE.*$\"\n        firstMatchOnly: false\n        iterations : '10'"
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: example-span-force-lowercase\n  action: spanForceLowercase\n  match: ^UPPERCASE.*$\n  scope: spanName\n  iterations: \"10\"")
+	})
+
+	t.Run("can parse user defined preprocessor rules with input, replaceInput", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := "    '2878':\n      - rule          : example-extract-tag-from-span\n        action        : spanExtractTag\n        key           : serviceTag\n        input         : spanName\n        match         : \"span.*\"\n        search        : \"^([^\\\\.]*\\\\.[^\\\\.]*\\\\.)([^\\\\.]*)\\\\.(.*)$\"\n        replaceInput  : \"$1$3\"\n        replace       : \"$2\""
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: example-extract-tag-from-span\n  action: spanExtractTag\n  key: serviceTag\n  match: span.*\n  search: ^([^\\.]*\\.[^\\.]*\\.)([^\\.]*)\\.(.*)$\n  replace: $2\n  input: spanName\n  replaceInput: $1$3\n")
+	})
+
+	t.Run("can parse user defined preprocessor rules with newKey", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := "    '2878':\n      - rule   : rename-span-tag-x-request-id\n        action : spanRenameTag\n        key    : guid:x-request-id\n        newkey : guid-x-request-id"
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: rename-span-tag-x-request-id\n  action: spanRenameTag\n  key: guid:x-request-id\n  newkey: guid-x-request-id\n")
+	})
+
+	t.Run("can parse user defined preprocessor rules with if condition", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := "    '2878':\n      - rule: test-spanblock-list\n        action: spanBlock\n        if:\n          equals:\n            scope: http.status_code\n            value: [\"302, 404\"]"
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: test-spanblock-list\n  action: spanBlock\n  if:\n    equals:\n      scope: http.status_code\n      value:\n      - 302, 404\n")
+	})
+
+	t.Run("can parse raw string user defined preprocessor rules with if condition", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := `
+    '2878':
+      - rule: tag-all-metrics-processed
+        action: addTag
+        tag: processed
+        value: "true"
+        if:
+          startsWith:
+            scope: metricName
+            value: "kubernetes.collector.version"
+`
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: tag-all-metrics-processed\n  action: addTag\n  tag: processed\n  value: \"true\"")
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "if:\n    startsWith:\n      scope: metricName\n      value: kubernetes.collector.version")
+	})
+
+	t.Run("can parse raw string user defined preprocessor point filtering rules", func(t *testing.T) {
+		wfcr := defaultWFCR()
+		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
+		rules := `
+    '2878':
+      - rule: example-block-west
+        action: block
+        scope: datacenter
+        match: "west.*"
+      - rule: example-allow-only-prod
+        action: allow
+        scope: pointLine
+        match: ".*prod.*"
+      - rule: allow-selected-metrics
+        action: metricsFilter
+        function: allow
+        names:
+          - "metrics.1"
+          - "/metrics\\.2.*/"
+          - "/.*.ok$/"
+        opts:
+          cacheSize: 10000
+`
+
+		rulesConfigMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      wfcr.Spec.DataExport.WavefrontProxy.Preprocessor,
+				Namespace: wfcr.Namespace,
+			},
+			Data: map[string]string{
+				"rules.yaml": rules,
+			},
+		}
+
+		client := setup(rulesConfigMap)
+		err := PreProcess(client, wfcr)
+
+		require.NoError(t, err)
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: example-block-west\n  action: block\n  match: west.*\n  scope: datacenter")
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: example-allow-only-prod\n  action: allow\n  match: .*prod.*\n  scope: pointLine")
+		require.Contains(t, wfcr.Spec.DataExport.WavefrontProxy.PreprocessorRules.UserDefinedPortRules, "- rule: allow-selected-metrics\n  action: metricsFilter\n  function: allow\n  names:\n  - metrics.1\n  - /metrics\\.2.*/\n  - /.*.ok$/\n  opts:\n    cacheSize: 10000")
+	})
+
 	t.Run("returns error if user provides invalid preprocessor rule yaml", func(t *testing.T) {
 		wfcr := defaultWFCR()
 		wfcr.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"

@@ -18,11 +18,28 @@ import (
 )
 
 type rule struct {
-	Rule   string
-	Action string
-	Key    string `yaml:",omitempty"`
-	Tag    string `yaml:",omitempty"`
-	Value  string `yaml:",omitempty"`
+	Rule           string
+	Action         string
+	Key            string         `yaml:",omitempty"`
+	Tag            string         `yaml:",omitempty"`
+	Value          string         `yaml:",omitempty"`
+	Match          string         `yaml:",omitempty"`
+	Scope          string         `yaml:",omitempty"`
+	Search         string         `yaml:",omitempty"`
+	Replace        string         `yaml:",omitempty"`
+	Function       string         `yaml:",omitempty"`
+	Names          []string       `yaml:",omitempty"`
+	Opts           map[string]int `yaml:",omitempty"`
+	Source         string         `yaml:",omitempty"`
+	Newtag         string         `yaml:",omitempty"`
+	ActionSubtype  string         `yaml:",omitempty"`
+	MaxLength      string         `yaml:",omitempty"`
+	Iterations     string         `yaml:",omitempty"`
+	FirstMatchOnly string         `yaml:",omitempty"`
+	Input          string         `yaml:",omitempty"`
+	ReplaceInput   string         `yaml:"replaceInput,omitempty"`
+	Newkey         string         `yaml:",omitempty"`
+	If             interface{}    `yaml:",omitempty"`
 }
 
 func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
@@ -226,6 +243,7 @@ func checkVal(check bool) int {
 	}
 	return 0
 }
+
 func getEnabledPorts(wfSpec *wf.WavefrontSpec) string {
 	allPorts := []int{wfSpec.DataExport.WavefrontProxy.MetricPort,
 		wfSpec.DataExport.WavefrontProxy.DeltaCounterPort,
