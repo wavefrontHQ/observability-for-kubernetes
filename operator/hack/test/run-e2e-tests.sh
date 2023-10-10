@@ -659,10 +659,7 @@ function main() {
       run_test "allow-legacy-install" "healthy"
     fi
     if [[ $test_to_run == "basic" ]]; then
-      run_test "basic" "health" "static_analysis"
-    fi
-    if [[ $test_to_run == "proxy-preprocessor" ]]; then
-      run_test "basic" "test_wavefront_metrics" "proxy"
+      run_test "basic" "health" "static_analysis" "test_wavefront_metrics" "proxy"
     fi
     if [[ $test_to_run == "common-metrics" ]]; then
       run_test "common-metrics" "common-metrics-check"
