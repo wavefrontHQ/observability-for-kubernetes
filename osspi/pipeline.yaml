@@ -134,7 +134,7 @@ jobs:
             PRODUCT: Wavefront_K8_Operator
             VERSION: Latest
             PREPARE: |
-              go mod vendor
+              go mod tidy && go mod vendor
             OSSPI_SCANNING_PARAMS: |
               enable: true
               include_bomtools: "go_mod"
