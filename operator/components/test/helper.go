@@ -198,6 +198,15 @@ func ENVVarExists(name string, vars []v1.EnvVar) bool {
 	return false
 }
 
+func GetContainer(name string, containers []v1.Container) v1.Container {
+	for _, container := range containers {
+		if container.Name == name {
+			return container
+		}
+	}
+	panic(fmt.Sprintf("container %s not found", name))
+}
+
 func RequireCommonLabels(t *testing.T, objects []client.Object, appName, componentName, ns string) {
 	for _, clientObject := range objects {
 		require.Equal(t, componentName, clientObject.GetLabels()["app.kubernetes.io/component"])
@@ -213,4 +222,8 @@ func RequireCommonLabels(t *testing.T, objects []client.Object, appName, compone
 			require.Equal(t, appName, templateLabels["app.kubernetes.io/name"])
 		}
 	}
+}
+
+func RequireEnv(t *testing.T, expectedValue string, name string, container v1.Container) {
+	require.Equalf(t, expectedValue, GetENVValue(name, container.Env), `expected %s to be set to "%s" on %s container`, name, expectedValue, container.Name)
 }

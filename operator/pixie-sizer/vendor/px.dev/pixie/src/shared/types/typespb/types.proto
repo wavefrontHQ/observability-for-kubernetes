@@ -1,0 +1,95 @@
+/*
+ * Copyright 2018- The Pixie Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+syntax = "proto3";
+
+package px.types;
+
+option go_package = "typespb";
+
+// The list of data types supported by our execution engine.
+enum DataType {
+  DATA_TYPE_UNKNOWN = 0;
+  BOOLEAN = 1;
+  INT64 = 2;
+  UINT128 = 3;
+  FLOAT64 = 4;
+  STRING = 5;
+  TIME64NS = 6;
+}
+
+// The types of patterns for the different data elements.
+// clang-format off
+//|                | Current Value | Time Series | Histogram | Event log | Top K | Example                          |
+//|----------------|---------------|-------------|-----------|-----------|-------|----------------------------------|
+//| UNSPECIFIED    |               |             |           |           |       |                                  |
+//| METRIC_COUNTER | Y             | Y           | N         | Y?        | N     | time, cpu_utime_ns               |
+//| METRIC_GAUGE   | Y             | Y           | Y         | Y?        | N     | system_percent, http_resp_latency|
+//| GENERAL_ENUM   | Y             | N           | Y         | Y         | Y?    | http_status, bpf_event           |
+//| GENERAL        | Y             | N           | N         | Y         | Y     | src_addr, src_port, pid          |
+//| STRUCTURED     | Y             | N           | N         | Y         | N     | http_body, http_headers          |
+// clang-format on
+// Counters and gauges generally only applies to numeric types. General_enum records
+// states/properties with finite locality. General includes other information/logs. Structured is
+// everything can be parsed(JSON, HTML, SQL body etc.).
+enum PatternType {
+  UNSPECIFIED = 0;
+  GENERAL = 100;
+  GENERAL_ENUM = 101;
+  STRUCTURED = 200;
+  METRIC_COUNTER = 300;
+  METRIC_GAUGE = 301;
+}
+
+// Represents an unsigned 128-bit int.
+message UInt128 {
+  uint64 low = 1;
+  uint64 high = 2;
+}
+
+// Semantic types can specify that a generic value has a specific context in Pixie.
+enum SemanticType {
+  ST_UNSPECIFIED = 0;
+  ST_NONE = 1;
+  ST_TIME_NS = 2;
+  ST_AGENT_UID = 100;
+  ST_ASID = 101;
+  ST_UPID = 200;
+  ST_SERVICE_NAME = 300;
+  ST_POD_NAME = 400;
+  ST_POD_PHASE = 401;
+  ST_POD_STATUS = 402;
+  ST_NODE_NAME = 500;
+  ST_CONTAINER_NAME = 600;
+  ST_CONTAINER_STATE = 601;
+  ST_CONTAINER_STATUS = 602;
+  ST_NAMESPACE_NAME = 700;
+  ST_BYTES = 800;
+  ST_PERCENT = 900;
+  ST_DURATION_NS = 901;
+  ST_THROUGHPUT_PER_NS = 902;
+  ST_THROUGHPUT_BYTES_PER_NS = 903;
+  ST_QUANTILES = 1000;
+  ST_DURATION_NS_QUANTILES = 1001;
+  ST_IP_ADDRESS = 1100;
+  ST_PORT = 1200;
+  ST_HTTP_REQ_METHOD = 1300;
+  ST_HTTP_RESP_STATUS = 1400;
+  ST_HTTP_RESP_MESSAGE = 1500;
+  ST_SCRIPT_REFERENCE = 3000;
+}

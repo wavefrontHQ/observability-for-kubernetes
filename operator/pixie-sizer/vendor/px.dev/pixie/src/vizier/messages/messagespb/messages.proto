@@ -1,0 +1,191 @@
+/*
+ * Copyright 2018- The Pixie Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+syntax = "proto3";
+
+package px.vizier.messages;
+
+option go_package = "messagespb";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "src/api/proto/uuidpb/uuid.proto";
+import "src/carnot/planner/distributedpb/distributed_plan.proto";
+import "src/carnot/planner/dynamic_tracing/ir/logicalpb/logical.proto";
+import "src/carnot/planpb/plan.proto";
+import "src/common/base/statuspb/status.proto";
+import "src/shared/k8s/metadatapb/metadata.proto";
+import "src/vizier/services/metadata/storepb/store.proto";
+import "src/vizier/services/shared/agentpb/agent.proto";
+
+// A wrapper around all messages which can be sent over the message bus.
+message VizierMessage {
+  oneof msg {
+    RegisterAgentRequest register_agent_request = 1;
+    RegisterAgentResponse register_agent_response = 2;
+    Heartbeat heartbeat = 5;
+    HeartbeatAck heartbeat_ack = 6;
+    HeartbeatNack heartbeat_nack = 7;
+    ExecuteQueryRequest execute_query_request = 8;
+    TracepointMessage tracepoint_message = 10;
+    ConfigUpdateMessage config_update_message = 11;
+    K8sMetadataMessage k8s_metadata_message = 12;
+  }
+  // DEPRECATED: Formerly used for UpdateAgentRequest.
+  reserved 3;
+  // DEPRECATED: Formerly used for UpdateAgentResponse.
+  reserved 4;
+}
+
+// A wrapper around all tracepoint-related messages that can be sent over the message bus.
+message TracepointMessage {
+  oneof msg {
+    TracepointInfoUpdate tracepoint_info_update = 1;
+    RemoveTracepointRequest remove_tracepoint_request = 2;
+    RegisterTracepointRequest register_tracepoint_request = 3;
+  }
+}
+
+// A wrapper around all PEM-config-related messages that can be sent over the message bus.
+message ConfigUpdateMessage {
+  oneof msg {
+    ConfigUpdateRequest config_update_request = 1;
+  }
+}
+
+// A wrapper around all K8s metadata-related messages that can be sent over the message bus.
+message K8sMetadataMessage {
+  oneof msg {
+    px.shared.k8s.metadatapb.ResourceUpdate k8s_metadata_update = 1;
+    px.shared.k8s.metadatapb.MissingK8sMetadataRequest missing_k8s_metadata_request = 2;
+    px.shared.k8s.metadatapb.MissingK8sMetadataResponse missing_k8s_metadata_response = 3;
+  }
+}
+
+message RegisterAgentRequest {
+  px.vizier.services.shared.agent.AgentInfo info = 1;
+  // ASID is the agent short ID.
+  // This field is used only when reregistering an agent, because the same ID needs
+  // to be preserved.
+  uint32 asid = 3 [ (gogoproto.customname) = "ASID" ];
+  // DEPRECATED: This was update info, which are now only included in Heartbeats.
+  reserved 2;
+}
+
+message RegisterAgentResponse {
+  // ASID is the agent short ID.
+  uint32 asid = 1 [ (gogoproto.customname) = "ASID" ];
+  // DEPRECATED: This was clusterCIDR has been replaced by PodCIDRs in HeartbeatAck.
+  reserved 2;
+}
+
+// Struct representing the data that the agent has available to query.
+// Used by the compiler to selectively run queries on applicable agents only.
+message AgentDataInfo {
+  px.carnot.planner.distributedpb.MetadataInfo metadata_info = 1;
+}
+
+message AgentUpdateInfo {
+  // Schema holds information about tables on the agent.
+  repeated px.vizier.services.metadata.TableInfo schema = 2;
+  repeated px.shared.k8s.metadatapb.ProcessCreated process_created = 4;
+  repeated px.shared.k8s.metadatapb.ProcessTerminated process_terminated = 5;
+  // Whether the schema updates.
+  bool does_update_schema = 6;
+  AgentDataInfo data = 7;
+  // DEPRECATED: This was ProcessInfo which has been replaced by ProcessCreated and
+  // ProcessTerminated.
+  reserved 3;
+}
+
+// The heart beat signal.
+message Heartbeat {
+  uuidpb.UUID agent_id = 1 [ (gogoproto.customname) = "AgentID" ];
+  // The current unix time in ns on the machine.
+  int64 time = 2;
+  AgentUpdateInfo update_info = 3;
+  int64 sequence_number = 4;
+}
+
+message MetadataUpdateInfo {
+  // repeated px.shared.k8s.metadatapb.ResourceUpdate updates = 1;
+  string service_cidr = 2 [ (gogoproto.customname) = "ServiceCIDR" ];
+  repeated string pod_cidrs = 3 [ (gogoproto.customname) = "PodCIDRs" ];
+  // Formerly used for K8s updates.
+  reserved 1;
+}
+
+// Response sent for a successful heart beat.
+message HeartbeatAck {
+  // The current unix time in ns on the machine.
+  int64 time = 1;
+  int64 sequence_number = 2;
+  MetadataUpdateInfo update_info = 3;
+}
+
+// Response sent for a failed heart beat.
+message HeartbeatNack {
+  // If set to true, the agent should reregister rather than killing itself.
+  bool reregister = 1;
+}
+
+message ExecuteQueryRequest {
+  uuidpb.UUID query_id = 1 [ (gogoproto.customname) = "QueryID" ];
+  // Formerly used for query string.
+  reserved 2;
+  px.carnot.planpb.Plan plan = 3;
+  bool analyze = 4;
+}
+
+// The request to register tracepoints on a PEM.
+message RegisterTracepointRequest {
+  px.carnot.planner.dynamic_tracing.ir.logical.TracepointDeployment tracepoint_deployment = 1;
+  uuidpb.UUID id = 2 [ (gogoproto.customname) = "ID" ];
+}
+
+// An update message sent when a tracepoint's status changes.
+message TracepointInfoUpdate {
+  uuidpb.UUID id = 1 [ (gogoproto.customname) = "ID" ];
+  // The state of the tracepoint.
+  px.statuspb.LifeCycleState state = 2;
+  // The status of the tracepoint, specified if the state of the tracepoint is not healthy.
+  px.statuspb.Status status = 3;
+  // The ID of the agent sending the update.
+  uuidpb.UUID agent_id = 4 [ (gogoproto.customname) = "AgentID" ];
+}
+
+message RemoveTracepointRequest {
+  uuidpb.UUID id = 1 [ (gogoproto.customname) = "ID" ];
+}
+
+// A request to update a config setting on a PEM.
+message ConfigUpdateRequest {
+  // The key of the setting that should be updated.
+  string key = 1;
+  // The new value of the updated setting.
+  string value = 2;
+}
+
+// A message containing prometheus metrics from a vizier agent, sent to cloud connector to be
+// forwarded to cloud.
+message MetricsMessage {
+  // The prometheus metrics in prometheus' text exposition format.
+  string prom_metrics_text = 1;
+  // The k8s name of the pod sending the metrics. If empty, it won't be added to the metric's
+  // labels.
+  string pod_name = 2;
+}
