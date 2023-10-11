@@ -410,7 +410,7 @@ Metrics has resource configuration for node- and cluster-deployed collectors
         <td>
           ClusterCollector is for resource configuration for the cluster collector.<br/>
           <br/>
-            <i>Default</i>: map[resources:map[limits:map[cpu:400m ephemeral-storage:1Gi memory:512Mi] requests:map[cpu:200m ephemeral-storage:20Mi memory:10Mi]]]<br/>
+            <i>Default</i>: map[resources:map[limits:map[cpu:2000m ephemeral-storage:1Gi memory:512Mi] requests:map[cpu:200m ephemeral-storage:20Mi memory:10Mi]]]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -471,7 +471,7 @@ Metrics has resource configuration for node- and cluster-deployed collectors
         <td>
           NodeCollector is for resource configuration for the node collector.<br/>
           <br/>
-            <i>Default</i>: map[resources:map[limits:map[cpu:200m ephemeral-storage:512Mi memory:256Mi] requests:map[cpu:200m ephemeral-storage:20Mi memory:10Mi]]]<br/>
+            <i>Default</i>: map[resources:map[limits:map[cpu:1000m ephemeral-storage:512Mi memory:256Mi] requests:map[cpu:200m ephemeral-storage:20Mi memory:10Mi]]]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -1494,10 +1494,10 @@ Experimental features
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#wavefrontspecexperimentalkubernetesevents">kubernetesEvents</a></b></td>
+        <td><b><a href="#wavefrontspecexperimentalinsights">insights</a></b></td>
         <td>object</td>
         <td>
-          KubernetesEvents is deprecated, please use aria-insights-secret instead<br/>
+          Insights<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -1902,12 +1902,12 @@ Requests CPU and Memory requirements
 </table>
 
 
-### Wavefront.spec.experimental.kubernetesEvents
+### Wavefront.spec.experimental.insights
 <sup><sup>[↩ Parent](#wavefrontspecexperimental)</sup></sup>
 
 
 
-KubernetesEvents is deprecated, please use aria-insights-secret instead
+Insights
 
 <table>
     <thead>
@@ -1919,17 +1919,17 @@ KubernetesEvents is deprecated, please use aria-insights-secret instead
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>externalEndpointURL</b></td>
+        <td><b>ingestionUrl</b></td>
         <td>string</td>
         <td>
-          <br/>
+          Ingestion Url is the endpoint to send kubernetes events.<br/>
         </td>
         <td>true</td>
       </tr><tr>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Enable is whether to enable events. Defaults to false.<br/>
+          Enable is whether to enable Insights. Defaults to false.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
