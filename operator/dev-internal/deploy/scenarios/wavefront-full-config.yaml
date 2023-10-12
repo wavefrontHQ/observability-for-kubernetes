@@ -50,13 +50,12 @@ spec:
       tags:
         userDefinedTag: userDefinedValue
       filters:
-        allowList:
-          - kubernetes.*
-        denyList:
-          - kubernetes.sys_container.*
-          - kubernetes.collector.runtime.*
+#        denyList:
+#          - kubernetes.sys_container.*
+#          - kubernetes.collector.runtime.*
         tagGuaranteeList:
           - label.env
+          - prod
       defaultCollectionInterval: 60s
       # Rules based and Prometheus endpoints auto-discovery.
       enableDiscovery: true
