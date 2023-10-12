@@ -554,6 +554,18 @@ function run_test() {
   green "[$(date +%H:%M:%S)] Successfully ran $type test!"
 }
 
+function run_test_if_enabled() {
+  local enabled_test=$1
+  local type=$2
+  shift
+  shift
+  local checks=("$@")
+
+  if [[ $type == $enabled_test ]]; then
+    run_test $type $checks
+  fi
+}
+
 function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: $0 [flags] [options]"
@@ -639,42 +651,22 @@ function main() {
 
   cd "$OPERATOR_REPO_ROOT"
 
-  if [[ " ${tests_to_run[*]} " =~ " k8s-events-only " ]]; then
-    run_test "k8s-events-only" "k8s_events"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " validation-errors " ]]; then
-    run_test "validation-errors" "unhealthy"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " validation-legacy " ]]; then
-    run_test "validation-legacy" "unhealthy"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " validation-errors-preprocessor-rules " ]]; then
-    run_test "validation-errors-preprocessor-rules" "unhealthy"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " logging-integration " ]]; then
-    run_test "logging-integration" "logging-integration-checks"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " allow-legacy-install " ]]; then
-    run_test "allow-legacy-install" "healthy"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " basic " ]]; then
-    run_test "basic" "health" "static_analysis"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " proxy-preprocessor " ]]; then
-    run_test "basic" "test_wavefront_metrics" "proxy"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " common-metrics " ]]; then
-    run_test "common-metrics" "common-metrics-check"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " advanced " ]]; then
-    run_test "advanced" "health" "test_wavefront_metrics" "logging" "proxy"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " with-http-proxy " ]]; then
-    run_test "with-http-proxy" "health" "test_wavefront_metrics"
-  fi
-  if [[ " ${tests_to_run[*]} " =~ " control-plane " ]]; then
-    run_test "control-plane" "test_control_plane_metrics"
-  fi
+  for test_to_run in ${tests_to_run[*]} ; do
+    run_test_if_enabled $test_to_run "k8s-events-only" "k8s_events"
+    run_test_if_enabled $test_to_run "validation-errors" "unhealthy"
+    run_test_if_enabled $test_to_run "validation-legacy" "unhealthy"
+    run_test_if_enabled $test_to_run "validation-errors-preprocessor-rules" "unhealthy"
+    run_test_if_enabled $test_to_run "logging-integration" "logging-integration-checks"
+    run_test_if_enabled $test_to_run "allow-legacy-install" "healthy"
+    run_test_if_enabled $test_to_run "basic" "health" "static_analysis" "test_wavefront_metrics" "proxy"
+    run_test_if_enabled $test_to_run "common-metrics" "common-metrics-check"
+    run_test_if_enabled $test_to_run "advanced" "health" "test_wavefront_metrics" "logging" "proxy"
+    run_test_if_enabled $test_to_run "with-http-proxy" "health" "test_wavefront_metrics"
+    run_test_if_enabled $test_to_run "control-plane" "test_control_plane_metrics"
+  done
+
+  exit 0
+
 }
 
 main "$@"
