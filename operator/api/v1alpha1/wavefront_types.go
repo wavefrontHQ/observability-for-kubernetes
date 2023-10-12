@@ -419,17 +419,23 @@ type ControlPlane struct {
 }
 
 type Filters struct {
-	// List of metric patterns to deny
+	// DenyList List of glob patterns, metrics with names matching this list are dropped.
 	// +kubebuilder:default:={kubernetes.sys_container.*, kubernetes.collector.runtime.*, kubernetes.*.network.rx_rate, kubernetes.*.network.rx_errors_rate, kubernetes.*.network.tx_rate, kubernetes.*.network.tx_errors_rate, kubernetes.*.memory.page_faults, kubernetes.*.memory.page_faults_rate, kubernetes.*.memory.major_page_faults, kubernetes.*.memory.major_page_faults_rate, kubernetes.*.filesystem.inodes, kubernetes.*.filesystem.inodes_free, kubernetes.*.ephemeral_storage.request, kubernetes.*.ephemeral_storage.limit}
 	DenyList []string `json:"denyList,omitempty"`
 
-	// List of metric patterns to allow
+	// AllowList List of glob patterns, only metrics with names matching this list are reported.
 	AllowList []string `json:"allowList,omitempty"`
 
-	// List of tags guaranteed to not be removed during kubernetes metrics collection. Supersedes all other collection filters. These tags are given priority if you hit the 20 tag limit.
+	// TagGuaranteeList List of tags guaranteed to not be removed during kubernetes metrics collection. Supersedes all other collection filters. These tags are given priority if you hit the 20 tag limit.
 	TagGuaranteeList []string `json:"tagGuaranteeList,omitempty"`
 
-	// TODO: metricTagAllowList, metricTagDenyList, tagInclude, and tagExclude
+	// TagDenyList Map of tag names to list of glob patterns, metrics containing these tag keys and values will be dropped.
+	TagDenyList map[string][]string `json:"tagDenyList,omitempty"`
+
+	// TagAllowList Map of tag names to list of glob patterns, only metrics containing tag keys and values matching this list will be reported.
+	TagAllowList map[string][]string `json:"tagAllowList,omitempty"`
+
+	// TODO: tagInclude, and tagExclude
 }
 
 type LogFilters struct {

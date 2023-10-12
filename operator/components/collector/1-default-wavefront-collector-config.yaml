@@ -29,6 +29,14 @@ data:
         metricAllowList:
 {{ .Filters.AllowList | toYaml | indent 8 }}
         {{- end }}
+        {{- if .Filters.TagDenyList }}
+        metricTagDenyList:
+{{ .Filters.TagDenyList | toYaml | indent 10 }}
+        {{- end }}
+        {{- if .Filters.TagAllowList }}
+        metricTagAllowList:
+{{ .Filters.TagAllowList | toYaml | indent 10 }}
+        {{- end }}
         {{- if .Filters.TagGuaranteeList }}
         tagGuaranteeList:
 {{ .Filters.TagGuaranteeList | toYaml | indent 8 }}
