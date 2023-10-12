@@ -36,16 +36,16 @@ spec:
 
         ## List of glob patterns.
         ## Only metrics with names matching the list are reported.
-        ## Example: Allow metrics that start with the "kubernetes" prefix.
+        ## Example: Allow metrics that start with the kubernetes prefix.
         # allowList:
         # - kubernetes.*
 
         ## Map of tag names to list of glob patterns.
         ## Metrics containing these tag keys and values will be dropped.
-        ## Example: Block metrics that have an environment tag of test.
+        ## Example: Block metrics that have a namespace_name tag of kube-system.
         # tagDenyList:
-        #   env:
-        #   - 'test*'
+        #   namespace_name:
+        #   - kube-system
 
         ## Map of tag names to list of glob patterns.
         ## Only metrics containing tag keys and values matching this list will be reported.
@@ -59,4 +59,4 @@ spec:
         ## Tags that are guaranteed to not be removed as part of limiting the point tags to the 20 tag limit.
         ## Example: Guarantee that if metrics have a point tag key "prod", the tag key will not be filtered out.
         # tagGuaranteeList:
-        # - 'prod'
+        # - prod
