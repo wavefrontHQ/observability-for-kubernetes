@@ -20,10 +20,10 @@ require (
 	github.com/wavefronthq/wavefront-sdk-go v0.10.4
 	golang.org/x/crypto v0.14.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.24.13
-	k8s.io/apimachinery v0.24.13
-	k8s.io/client-go v0.24.13
-	k8s.io/kubectl v0.24.13
+	k8s.io/api v0.24.17
+	k8s.io/apimachinery v0.24.17
+	k8s.io/client-go v0.24.17
+	k8s.io/kubectl v0.24.17
 	k8s.io/kubelet v0.24.13
 )
 
