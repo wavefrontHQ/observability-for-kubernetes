@@ -6,8 +6,12 @@ function check_for_ci_changes() {
   local target="$2"
   local files="$3"
 
-  if git diff --diff-filter=ADMR --name-only ${base}..${target} -- ${files} \
-    | grep -v operator/dev-internal &>/dev/null; then
+  local changes=$(git diff --diff-filter=ADMR --name-only ${base}..${target} -- ${files})
+  if [ "${VERBOSE}" == "true" ]; then
+      echo "${changes}"
+  fi
+
+  if echo "${changes}" | grep -v operator/dev-internal &>/dev/null; then
     echo true
   else
     echo false

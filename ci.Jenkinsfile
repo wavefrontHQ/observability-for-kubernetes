@@ -25,6 +25,11 @@ pipeline {
       defaultValue: false,
       description: 'To manually trigger a build, activate the FORCE_RUN_CI checkbox.'
     )
+    booleanParam(
+      name: 'SKIP_ENFORCE_DEV_INTERNAL',
+      defaultValue: false,
+      description: 'Force CI to allow edits that would otherwise automatically be promoted from dev-internal.'
+    )
   }
 
   stages {
@@ -40,6 +45,27 @@ pipeline {
             env.RUN_CI = sh(script: './ci/jenkins/run-ci.sh -b ${GIT_COMMIT}~ -d ${GIT_COMMIT} -f "${FILES_TO_CHECK}"', returnStdout: true).trim()
           } else {
             env.RUN_CI = sh(script: './ci/jenkins/run-ci.sh -b origin/main -d ${GIT_COMMIT} -f "${FILES_TO_CHECK}"', returnStdout: true).trim()
+          }
+        }
+      }
+    }
+
+    stage("Enforce dev-internal") {
+      environment {
+        FILES_TO_CHECK = 'deploy docs README.md deploy/crd' // note: deploy/crd would already be covered but I want it to be explicit
+      }
+      steps {
+        script {
+          if (params.SKIP_ENFORCE_DEV_INTERNAL) {
+            env.FAIL_ENFORCE_DEV_INTERNAL = 'false'
+          } else if (env.BRANCH_NAME == 'main') {
+            env.FAIL_ENFORCE_DEV_INTERNAL = 'false' // release pipeline will automatically run 'make promote-internal'
+          } else {
+            env.FAIL_ENFORCE_DEV_INTERNAL = sh(script: './ci/jenkins/run-ci.sh -b origin/main -d ${GIT_COMMIT} -f "${FILES_TO_CHECK}"', returnStdout: true, returnStderr: true).trim()
+          }
+
+          if (env.FAIL_ENFORCE_DEV_INTERNAL == 'true') {
+            error("Failing build because files were edited outside of normal dev-internal promotion flow. Run 'VERBOSE=true ./ci/jenkins/run-ci.sh -b origin/main -d ${GIT_COMMIT} -f '${FILES_TO_CHECK}', revert the changes, and then run CI for current PR with parameters and check 'SKIP_ENFORCE_DEV_INTERNAL'.")
           }
         }
       }
