@@ -7,19 +7,56 @@ metadata:
 spec:
   clusterName: YOUR_CLUSTER_NAME
   wavefrontUrl: YOUR_WAVEFRONT_URL
-  dataCollection:
-    metrics:
-      enable: true
-      filters:
-        allowList:
-        - kubernetes.*
-        denyList:
-        - kubernetes.sys_container.*
-        - kubernetes.collector.runtime.*
-        tagGuaranteeList:
-        - label.env
-      defaultCollectionInterval: 90s #defaults to 60s
-      enableDiscovery: false #defaults to true
   dataExport:
     wavefrontProxy:
       enable: true
+  dataCollection:
+    metrics:
+      enable: true
+      # Filters to apply towards all metrics collected by the collector
+      filters:
+        # List of glob patterns.
+        # Metrics with names matching the list are dropped.
+        # Default: Optimized metrics collection to omit peripheral metrics.
+        denyList:
+        - kubernetes.sys_container.*
+        - kubernetes.collector.runtime.*
+        - kubernetes.*.network.rx_rate
+        - kubernetes.*.network.rx_errors_rate
+        - kubernetes.*.network.tx_rate
+        - kubernetes.*.network.tx_errors_rate
+        - kubernetes.*.memory.page_faults
+        - kubernetes.*.memory.page_faults_rate
+        - kubernetes.*.memory.major_page_faults
+        - kubernetes.*.memory.major_page_faults_rate
+        - kubernetes.*.filesystem.inodes
+        - kubernetes.*.filesystem.inodes_free
+        - kubernetes.*.ephemeral_storage.request
+        - kubernetes.*.ephemeral_storage.limit
+
+        ## List of glob patterns.
+        ## Only metrics with names matching the list are reported.
+        ## Example: Allow metrics that start with the "kubernetes" prefix.
+        # allowList:
+        # - kubernetes.*
+
+        ## Map of tag names to list of glob patterns.
+        ## Metrics containing these tag keys and values will be dropped.
+        ## Example: Block metrics that have an environment tag of test.
+        # tagDenyList:
+        #   env:
+        #   - 'test*'
+
+        ## Map of tag names to list of glob patterns.
+        ## Only metrics containing tag keys and values matching this list will be reported.
+        ## Example: Allow metrics that have an environment tag of production or staging.
+        # tagAllowList:
+        #   env:
+        #   - 'prod*'
+        #   - 'staging*'
+
+        ## List of tag keys.
+        ## Tags that are guaranteed to not be removed as part of limiting the point tags to the 20 tag limit.
+        ## Example: Guarantee that if metrics have a point tag key "prod", the tag key will not be filtered out.
+        # tagGuaranteeList:
+        # - 'prod'
