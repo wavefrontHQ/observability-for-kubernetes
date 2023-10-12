@@ -435,7 +435,12 @@ type Filters struct {
 	// TagAllowList Map of tag names to list of glob patterns, only metrics containing tag keys and values matching this list will be reported.
 	TagAllowList map[string][]string `json:"tagAllowList,omitempty"`
 
-	// TODO: tagInclude, and tagExclude
+	// TagExclude List of glob patterns. Tags with matching keys will be excluded.
+	// +kubebuilder:default:={label?controller?revision*, label?pod?template*, annotation_kubectl_kubernetes_io_last_applied_configuration}
+	TagExclude []string `json:"tagExclude,omitempty"`
+
+	// TagInclude List of glob patterns. Tags with matching keys will be included. All other tags will be excluded.
+	TagInclude []string `json:"tagInclude,omitempty"`
 }
 
 type LogFilters struct {

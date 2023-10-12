@@ -490,6 +490,8 @@ func TestReconcileCollector(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Filters.TagAllowList = map[string][]string{"env1": {"prod", "staging"}}
 			w.Spec.DataCollection.Metrics.Filters.TagDenyList = map[string][]string{"env2": {"test"}}
+			w.Spec.DataCollection.Metrics.Filters.TagInclude = []string{"includeSomeTag"}
+			w.Spec.DataCollection.Metrics.Filters.TagExclude = []string{"excludeSomeTag"}
 		}), nil)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
@@ -498,6 +500,8 @@ func TestReconcileCollector(t *testing.T) {
 
 		require.True(t, mockKM.CollectorConfigMapContains("metricTagAllowList:", "env1:", "- prod", "- staging"))
 		require.True(t, mockKM.CollectorConfigMapContains("metricTagDenyList:", "env2:", "- test"))
+		require.True(t, mockKM.CollectorConfigMapContains("tagInclude:", "includeSomeTag"))
+		require.True(t, mockKM.CollectorConfigMapContains("tagExclude:", "excludeSomeTag"))
 	})
 
 	t.Run("can add custom metric filter with tag guarantee list", func(t *testing.T) {
@@ -1603,7 +1607,7 @@ func TestReconcileInsightsByCR(t *testing.T) {
 
 		require.True(t, mockKM.CollectorConfigMapContains("externalEndpointURL: \\\"https://example.com\\\""))
 		require.True(t, mockKM.CollectorConfigMapContains("enableEvents:\n    false"))
-		require.True(t, mockKM.CollectorConfigMapContains("type: \\\"external\\\"\\n  enableEvents: true"))
+		require.True(t, mockKM.CollectorConfigMapContains("type: \\\"external\\\"", "enableEvents: true"))
 		require.True(t, mockKM.CollectorConfigMapContains("events:\\n\n    \\ filters:\\n    tagAllowListSets:\\n    - type:\\n      - \\\"Warning\\\"\\n    - type:\\n\n    \\     - \\\"Normal\\\"\\n      kind:\\n      - \\\"Pod\\\"\\n      reason:\\n      - \\\"Backoff\\\""))
 		require.True(t, mockKM.CollectorConfigMapContains("proxyAddress: wavefront-proxy:2878"))
 

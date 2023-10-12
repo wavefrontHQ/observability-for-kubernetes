@@ -311,11 +311,28 @@ spec:
                               patterns, metrics containing these tag keys and values
                               will be dropped.
                             type: object
+                          tagExclude:
+                            default:
+                            - label?controller?revision*
+                            - label?pod?template*
+                            - annotation_kubectl_kubernetes_io_last_applied_configuration
+                            description: TagExclude List of glob patterns. Tags with
+                              matching keys will be excluded.
+                            items:
+                              type: string
+                            type: array
                           tagGuaranteeList:
                             description: TagGuaranteeList List of tags guaranteed
                               to not be removed during kubernetes metrics collection.
                               Supersedes all other collection filters. These tags
                               are given priority if you hit the 20 tag limit.
+                            items:
+                              type: string
+                            type: array
+                          tagInclude:
+                            description: TagInclude List of glob patterns. Tags with
+                              matching keys will be included. All other tags will
+                              be excluded.
                             items:
                               type: string
                             type: array
