@@ -158,6 +158,14 @@ func GetPrefixForPEMSettings(client dynamic.Interface, namespace string) (string
 	return "spec.experimental.autotracing.pem", nil
 }
 
+func GetPEMResourceRequirements(client kubernetes.Interface, namespace string) (corev1.ResourceRequirements, error) {
+	ds, err := client.AppsV1().DaemonSets(namespace).Get(context.Background(), "vizier-pem", metav1.GetOptions{})
+	if err != nil {
+		return corev1.ResourceRequirements{}, err
+	}
+	return ds.Spec.Template.Spec.Containers[0].Resources, nil
+}
+
 type RowBatchSizeError struct {
 	RowBatchSize Bytes
 	MaxTableSize Bytes

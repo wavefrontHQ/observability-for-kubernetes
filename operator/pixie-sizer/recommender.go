@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"math"
+	"strings"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -45,6 +49,11 @@ func (r *Recommender) Run() {
 		}
 		maxMissedRowBatchSize := GetMaxMissedRowBatchSize(pemPods, int64(r.MeasureMinutes*60), r.Client)
 
+		pemResourceRequirements, err := GetPEMResourceRequirements(r.Client, r.Namespace)
+		if err != nil {
+			log.Fatalf("error getting PEM resource requirements: %s", err.Error())
+		}
+
 		httpAvgRowBatchSize := MiB(math.Ceil(float64(r.StatsStore.TableBytes(HTTPEventsTable).Sum()) / float64(r.StatsStore.TableRowBatches(HTTPEventsTable).Sum()) / (1024.0 * 1024.0)))
 		otherAvgRowBatchSize := MiB(math.Ceil(float64(r.StatsStore.TableBytes(UnknownTable).Sum()) / float64(r.StatsStore.TableRowBatches(UnknownTable).Sum()) / (1024.0 * 1024.0)))
 
@@ -57,30 +66,14 @@ func (r *Recommender) Run() {
 		scaledRetentionTime := ScaleDuration(r.TrafficScaleFactor, targetRetentionTime)
 		tableCount := r.StatsStore.TableCount().MaxValue()
 		log.Printf("table count: %d", tableCount)
-		smallestTableStoreLimit := CalculatePEMLimits(
-			tableCount,
-			MaxNumber(otherMinTableSize, CalculatePerTableSize(r.StatsStore.TableRate(UnknownTable).MinValue(), scaledRetentionTime)),
-			0,
-			0,
-			MaxNumber(httpMinTableSize, CalculatePerTableSize(r.StatsStore.TableRate(HTTPEventsTable).MinValue(), scaledRetentionTime)),
-		)
 		tableStoreLimit := CalculatePEMLimits(
-			tableCount,
-			MaxNumber(otherMinTableSize, CalculatePerTableSize(r.StatsStore.TableRate(UnknownTable).PercentileValue(0.5), scaledRetentionTime)),
-			0,
-			0,
-			MaxNumber(httpMinTableSize, CalculatePerTableSize(r.StatsStore.TableRate(HTTPEventsTable).PercentileValue(0.5), scaledRetentionTime)),
-		)
-		largestTableStoreLimit := CalculatePEMLimits(
 			tableCount,
 			MaxNumber(otherMinTableSize, CalculatePerTableSize(r.StatsStore.TableRate(UnknownTable).MaxValue(), scaledRetentionTime)),
 			0,
 			0,
 			MaxNumber(httpMinTableSize, CalculatePerTableSize(r.StatsStore.TableRate(HTTPEventsTable).MaxValue(), scaledRetentionTime)),
 		)
-		log.Printf("smallest settings (under %s): %s", settingsPrefix, smallestTableStoreLimit)
-		log.Printf("largest settings (under %s): %s", settingsPrefix, largestTableStoreLimit)
-		log.Printf("recommended settings (under %s): %s", settingsPrefix, tableStoreLimit)
+		log.Printf("recommended settings:\n%s", tableStoreLimit.YAMLSnippet(settingsPrefix, pemResourceRequirements))
 	}
 }
 
@@ -109,6 +102,29 @@ func (l PEMLimits) MemoryLimit() MiB {
 	return MaxNumber(0, l.Total-200) + 750
 }
 
-func (l PEMLimits) String() string {
-	return fmt.Sprintf("table_store_limits.http_events_percent=%d, table_store_limits.total_mib=%d, resources.limits.memory=%dMi", l.HTTP, l.Total, l.MemoryLimit())
+func (l PEMLimits) YAMLSnippet(prefix string, pemResourceRequirements corev1.ResourceRequirements) string {
+	buf := bytes.NewBuffer(nil)
+	segments := strings.Split(prefix, ".")
+	for i, segment := range segments {
+		FprintlnWithIndent(buf, i, "%s:", segment)
+	}
+	baseTab := len(segments)
+	FprintlnWithIndent(buf, baseTab, "resources:")
+	FprintlnWithIndent(buf, baseTab+1, "limits:")
+	FprintlnWithIndent(buf, baseTab+2, "cpu: %s", pemResourceRequirements.Limits.Cpu().String())
+	FprintlnWithIndent(buf, baseTab+2, "memory: %dMi", l.MemoryLimit())
+	FprintlnWithIndent(buf, baseTab+1, "requests:")
+	FprintlnWithIndent(buf, baseTab+2, "cpu: %s", pemResourceRequirements.Requests.Cpu().String())
+	FprintlnWithIndent(buf, baseTab+2, "memory: %s", pemResourceRequirements.Requests.Memory().String())
+
+	FprintlnWithIndent(buf, baseTab, "table_store_limits:")
+	FprintlnWithIndent(buf, baseTab+1, "total_mib: %d", l.Total)
+	FprintlnWithIndent(buf, baseTab+1, "http_events_percent: %d", l.HTTP)
+
+	return buf.String()
+}
+
+func FprintlnWithIndent(w io.Writer, tabs int, line string, args ...any) {
+	_, _ = fmt.Fprintf(w, strings.Repeat("  ", tabs))
+	_, _ = fmt.Fprintf(w, line+"\n", args...)
 }
