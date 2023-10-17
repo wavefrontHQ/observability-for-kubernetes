@@ -19,9 +19,9 @@ const HTTPEventsTable = "http_events"
 var KnownTables = []string{HTTPEventsTable}
 
 type Recommender struct {
-	ReportMinutes      int
-	MeasureMinutes     int
-	TrafficScaleFactor float64
+	ReportMinutes       int
+	SamplePeriodMinutes int
+	TrafficScaleFactor  float64
 
 	Client        kubernetes.Interface
 	DynamicClient dynamic.Interface
@@ -47,7 +47,7 @@ func (r *Recommender) Run() {
 		if err != nil {
 			log.Fatalf("error listing PEMs: %s", err.Error())
 		}
-		maxMissedRowBatchSize := GetMaxMissedRowBatchSize(pemPods, int64(r.MeasureMinutes*60), r.Client)
+		maxMissedRowBatchSize := GetMaxMissedRowBatchSize(pemPods, int64(r.SamplePeriodMinutes*60), r.Client)
 
 		pemResourceRequirements, err := GetPEMResourceRequirements(r.Client, r.Namespace)
 		if err != nil {

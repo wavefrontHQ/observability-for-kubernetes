@@ -89,8 +89,8 @@ spec:
               fieldPath: metadata.namespace
         - name: PS_TRAFFIC_SCALE_FACTOR # the factor by which network traffic throughput will scale from its min to its max (i.e. 2.0 means that the max is twice as much as the min)
           value: "PS_TRAFFIC_SCALE_FACTOR_VALUE"
-        - name: PS_MEASURE_MINUTES
-          value: "PS_MEASURE_MINUTES_VALUE"
+        - name: PS_SAMPLE_PERIOD_MINUTES
+          value: "PS_SAMPLE_PERIOD_MINUTES_VALUE"
         envFrom:
         - configMapRef:
             name: pl-tls-config

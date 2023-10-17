@@ -10,22 +10,22 @@ import (
 const UnknownTable = "unknown"
 
 type StatsStore struct {
-	measureMinutes  int
-	knownTables     []string
-	tableRates      map[string]*NumberStore[BytesPerSecond]
-	tableBytes      map[string]*NumberStore[Bytes]
-	tableRowBatches map[string]*NumberStore[int]
-	tableCountStore *NumberStore[int]
+	samplePeriodMinutes int
+	knownTables         []string
+	tableRates          map[string]*NumberStore[BytesPerSecond]
+	tableBytes          map[string]*NumberStore[Bytes]
+	tableRowBatches     map[string]*NumberStore[int]
+	tableCountStore     *NumberStore[int]
 }
 
 func NewStatsStore(measureMinutes int, knownTables []string) *StatsStore {
 	return &StatsStore{
-		measureMinutes:  measureMinutes,
-		knownTables:     knownTables,
-		tableRates:      map[string]*NumberStore[BytesPerSecond]{},
-		tableBytes:      map[string]*NumberStore[Bytes]{},
-		tableRowBatches: map[string]*NumberStore[int]{},
-		tableCountStore: NewNumberStore[int](measureMinutes),
+		samplePeriodMinutes: measureMinutes,
+		knownTables:         knownTables,
+		tableRates:          map[string]*NumberStore[BytesPerSecond]{},
+		tableBytes:          map[string]*NumberStore[Bytes]{},
+		tableRowBatches:     map[string]*NumberStore[int]{},
+		tableCountStore:     NewNumberStore[int](measureMinutes),
 	}
 }
 
@@ -60,7 +60,7 @@ func (s *StatsStore) Record(now time.Time, metricsFamilies map[string]*prom.Metr
 func (s *StatsStore) TableRate(tableName string) *NumberStore[BytesPerSecond] {
 	tableName = s.normalizedTableName(tableName)
 	if s.tableRates[tableName] == nil {
-		s.tableRates[tableName] = NewNumberStore[BytesPerSecond](s.measureMinutes)
+		s.tableRates[tableName] = NewNumberStore[BytesPerSecond](s.samplePeriodMinutes)
 	}
 	return s.tableRates[tableName]
 }
@@ -72,7 +72,7 @@ func (s *StatsStore) TableCount() *NumberStore[int] {
 func (s *StatsStore) TableBytes(tableName string) *NumberStore[Bytes] {
 	tableName = s.normalizedTableName(tableName)
 	if s.tableBytes[tableName] == nil {
-		s.tableBytes[tableName] = NewNumberStore[Bytes](s.measureMinutes)
+		s.tableBytes[tableName] = NewNumberStore[Bytes](s.samplePeriodMinutes)
 	}
 	return s.tableBytes[tableName]
 }
@@ -80,7 +80,7 @@ func (s *StatsStore) TableBytes(tableName string) *NumberStore[Bytes] {
 func (s *StatsStore) TableRowBatches(tableName string) *NumberStore[int] {
 	tableName = s.normalizedTableName(tableName)
 	if s.tableRowBatches[tableName] == nil {
-		s.tableRowBatches[tableName] = NewNumberStore[Bytes](s.measureMinutes)
+		s.tableRowBatches[tableName] = NewNumberStore[Bytes](s.samplePeriodMinutes)
 	}
 	return s.tableRowBatches[tableName]
 }

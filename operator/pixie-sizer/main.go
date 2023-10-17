@@ -19,7 +19,7 @@ var clientTLSCertFile = ""
 var clientTLSKeyFile = ""
 var tlsCAFile = ""
 var trafficScaleFactor = 2.0
-var measureMinutes = 10
+var samplePeriodMinutes = 10
 var reportMinutes int
 
 func init() {
@@ -29,14 +29,14 @@ func init() {
 	RequireFromEnv("PL_CLIENT_TLS_KEY", ParseString, &clientTLSKeyFile)
 	RequireFromEnv("PL_TLS_CA_CERT", ParseString, &tlsCAFile)
 	OptionalFromEnv("PS_TRAFFIC_SCALE_FACTOR", ParseFloat64, &trafficScaleFactor)
-	OptionalFromEnv("PS_MEASURE_MINUTES", ParseInt, &measureMinutes)
-	reportMinutes = measureMinutes
+	OptionalFromEnv("PS_SAMPLE_PERIOD_MINUTES", ParseInt, &samplePeriodMinutes)
+	reportMinutes = samplePeriodMinutes
 	OptionalFromEnv("PS_REPORT_MINUTES", ParseInt, &reportMinutes)
 }
 
 func main() {
 	log.Printf("traffic scale factor: %f", trafficScaleFactor)
-	statsStore := NewStatsStore(measureMinutes, KnownTables)
+	statsStore := NewStatsStore(samplePeriodMinutes, KnownTables)
 	metricStream, err := NewMetricStream(natsServer, clientTLSCertFile, clientTLSKeyFile, tlsCAFile)
 	if err != nil {
 		log.Fatalf("error creating metrics stream: %s", err.Error())
@@ -60,13 +60,13 @@ func main() {
 		log.Fatalf("error getting kuberntes dynamic client: %s", err.Error())
 	}
 	(&Recommender{
-		ReportMinutes:      reportMinutes,
-		MeasureMinutes:     measureMinutes,
-		TrafficScaleFactor: trafficScaleFactor,
-		Client:             client,
-		DynamicClient:      dynamicClient,
-		Namespace:          namespace,
-		StatsStore:         statsStore,
+		ReportMinutes:       reportMinutes,
+		SamplePeriodMinutes: samplePeriodMinutes,
+		TrafficScaleFactor:  trafficScaleFactor,
+		Client:              client,
+		DynamicClient:       dynamicClient,
+		Namespace:           namespace,
+		StatsStore:          statsStore,
 	}).Run()
 
 }
