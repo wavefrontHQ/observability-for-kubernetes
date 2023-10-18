@@ -7,9 +7,9 @@ spec:
   clusterName: YOUR_CLUSTER_NAME
   wavefrontUrl: YOUR_WAVEFRONT_URL
   experimental:
-    kubernetesEvents:
+    insights:
       enable: true
-      externalEndpointURL: http://test-proxy.YOUR_NAMESPACE.svc.cluster.local:9999/events
+      ingestionUrl: http://test-proxy.YOUR_NAMESPACE.svc.cluster.local:9999/events
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,7 +41,7 @@ spec:
                 - amd64
       containers:
       - name: test-proxy
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:2.9.9
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:2.9.10
         imagePullPolicy: Always
         command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info" ]
         ports:

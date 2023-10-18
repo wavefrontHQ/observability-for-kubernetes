@@ -14,25 +14,53 @@ func CR(options ...CROption) *wf.Wavefront {
 			Namespace: DefaultNamespace,
 		},
 		Spec: wf.WavefrontSpec{
-			ClusterName:          "testClusterName",
+			ClusterName:          DefaultClusterName,
 			WavefrontUrl:         "testWavefrontUrl",
 			WavefrontTokenSecret: "testToken",
 			Namespace:            DefaultNamespace,
+			ControllerManagerUID: "controller-manager-uid",
+			ClusterUUID:          "cluster-uuid",
+			ImageRegistry:        DefaultImageRegistry,
 			DataCollection: wf.DataCollection{
 				Metrics: wf.Metrics{
 					Enable: true,
 					ControlPlane: wf.ControlPlane{
 						Enable: true,
 					},
+					ClusterCollector: wf.Collector{Resources: wf.Resources{Limits: wf.Resource{
+						CPU:    "100Mi",
+						Memory: "50Mi",
+					}}},
+					NodeCollector: wf.Collector{Resources: wf.Resources{Limits: wf.Resource{
+						CPU:    "100Mi",
+						Memory: "50Mi",
+					}}},
+					CollectorVersion: "1.28.0",
 				},
 				Logging: wf.Logging{
-					Enable: true,
+					Enable:         true,
+					LoggingVersion: "2.1.6",
+					Resources: wf.Resources{
+						Requests: wf.Resource{},
+						Limits: wf.Resource{
+							CPU:    "100Mi",
+							Memory: "50Mi",
+						},
+					},
 				},
 			},
 			DataExport: wf.DataExport{
 				WavefrontProxy: wf.WavefrontProxy{
 					Enable:     true,
 					MetricPort: 2878,
+					Resources: wf.Resources{
+						Requests: wf.Resource{},
+						Limits: wf.Resource{
+							CPU:    "100Mi",
+							Memory: "50Mi",
+						},
+					},
+					ProxyVersion: "13.1",
 				},
 			},
 		},
@@ -50,7 +78,9 @@ func NothingEnabledCR(options ...CROption) *wf.Wavefront {
 			Namespace: DefaultNamespace,
 		},
 		Spec: wf.WavefrontSpec{
-			ClusterName: "testClusterName",
+			ClusterName:          "testClusterName",
+			ControllerManagerUID: "controller-manager-uid",
+			ClusterUUID:          "cluster-uuid",
 		},
 	}
 	for _, option := range options {

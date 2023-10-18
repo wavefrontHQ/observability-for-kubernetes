@@ -26,7 +26,7 @@ import (
 // WavefrontSpec defines the desired state of Wavefront
 type WavefrontSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Important: Run "make build" in the operator directory to regenerate code after modifying this file
 
 	// ClusterName is a unique name for the Kubernetes cluster to be identified via a metric tag on Wavefront (Required).
 	// +kubebuilder:validation:MinLength:=3
@@ -81,17 +81,14 @@ type WavefrontSpec struct {
 type Experimental struct {
 	Autotracing AutoTracingPixie `json:"autotracing,omitempty"`
 
-	// KubernetesEvents is deprecated, please use aria-insights-secret instead
-	KubernetesEvents KubernetesEvents `json:"kubernetesEvents,omitempty"`
+	// Insights
+	Insights Insights `json:"insights,omitempty"`
 
 	Hub Hub `json:"hub,omitempty"`
 }
 
 type AutoTracingPixie struct {
-	// +kubebuilder:default:=true
-	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "600Mi"}, limits: {cpu: "1000m", memory: "600Mi"}}}
-	Pem Pem `json:"pem,omitempty"`
+	PixieShared `json:",inline"`
 
 	// CanExportAutotracingScripts is for internal use only
 	CanExportAutotracingScripts bool `json:"-"`
@@ -104,9 +101,13 @@ type Hub struct {
 }
 
 type HubPixie struct {
+	PixieShared `json:",inline"`
+}
+
+type PixieShared struct {
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "1Gi"}, limits: {cpu: "1000m", memory: "2Gi"}}}
+	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "750Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20}}
 	Pem Pem `json:"pem,omitempty"`
 }
 
@@ -138,11 +139,11 @@ type Metrics struct {
 	EnableDiscovery bool `json:"enableDiscovery,omitempty"`
 
 	// ClusterCollector is for resource configuration for the cluster collector.
-	// +kubebuilder:default:={resources: {requests: {cpu: "200m", memory: "10Mi", ephemeral-storage: "20Mi"}, limits: {cpu: "400m", memory: "512Mi", ephemeral-storage: "1Gi"}}}
+	// +kubebuilder:default:={resources: {requests: {cpu: "200m", memory: "10Mi", ephemeral-storage: "20Mi"}, limits: {cpu: "2000m", memory: "512Mi", ephemeral-storage: "1Gi"}}}
 	ClusterCollector Collector `json:"clusterCollector,omitempty"`
 
 	// NodeCollector is for resource configuration for the node collector.
-	// +kubebuilder:default:={resources: {requests: {cpu: "200m", memory: "10Mi", ephemeral-storage: "20Mi"}, limits: {cpu: "200m", memory: "256Mi", ephemeral-storage: "512Mi"}}}
+	// +kubebuilder:default:={resources: {requests: {cpu: "200m", memory: "10Mi", ephemeral-storage: "20Mi"}, limits: {cpu: "1000m", memory: "256Mi", ephemeral-storage: "512Mi"}}}
 	NodeCollector Collector `json:"nodeCollector,omitempty"`
 
 	// CollectorConfigName ConfigMap name that is used internally
@@ -424,8 +425,20 @@ type Collector struct {
 }
 
 type Pem struct {
-	// Resources Compute resources required by the Pem containers.
+	// Resources Compute resources required by the PEM containers.
 	Resources Resources `json:"resources,omitempty"`
+
+	// TableStoreLimits Limits for queryable data for the PEM containers.
+	// +kubebuilder:default:={total_mib: 150, http_events_percent: 20}
+	TableStoreLimits TableStoreLimits `json:"table_store_limits,omitempty"`
+}
+
+type TableStoreLimits struct {
+	// TotalMiB Total MiB of memory allocated to all tables
+	TotalMiB int `json:"total_mib"`
+
+	// HttpEventsPercent Percent of TotalMiB allocated to the http_events table
+	HttpEventsPercent int `json:"http_events_percent"`
 }
 
 type Logging struct {
@@ -443,9 +456,7 @@ type Logging struct {
 	// Tags are a map of key value pairs that are added to all logging emitted.
 	Tags map[string]string `json:"tags,omitempty"`
 
-	// ConfigHash is for internal use only
-	ConfigHash string `json:"-"`
-
+	// TODO: Component Refactor  - remove the internal fields below
 	// ProxyAddress is for internal use only
 	ProxyAddress string `json:"-"`
 
@@ -453,15 +464,20 @@ type Logging struct {
 	LoggingVersion string `json:"-"`
 }
 
-type KubernetesEvents struct {
-	// Enable is whether to enable events. Defaults to false.
+type Insights struct {
+	// Enable is whether to enable Insights. Defaults to false.
 	// +kubebuilder:default:=false
 	Enable bool `json:"enable,omitempty"`
 
-	ExternalEndpointURL string `json:"externalEndpointURL,required"`
+	// Ingestion Url is the endpoint to send kubernetes events.
+	// +kubebuilder:validation:Pattern:=`^http(s)?:\/\/.+`
+	IngestionUrl string `json:"ingestionUrl,required"`
 
 	// SecretName is for internal use
 	SecretName string `json:"-"`
+
+	// SecretTokenKey is for internal use
+	SecretTokenKey string `json:"-"`
 }
 
 // WavefrontStatus defines the observed state of Wavefront

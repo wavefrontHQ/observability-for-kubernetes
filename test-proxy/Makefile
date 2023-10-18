@@ -6,7 +6,7 @@ DOCKER_IMAGE:=test-proxy
 BINARY_NAME:=test-proxy
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 LDFLAGS=-w -X main.version=$(VERSION) -X main.commit=$(GIT_COMMIT)
-BUILD_DIR:=$(MONOREPO_DIR)/testproxy/build
+BUILD_DIR:=$(MONOREPO_DIR)/test-proxy/build
 
 .PHONY: clean
 clean:

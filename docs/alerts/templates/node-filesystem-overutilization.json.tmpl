@@ -1,0 +1,71 @@
+{
+  "name": "Node Filesystem Overutilization",
+  "alertType": "THRESHOLD",
+  "additionalInformation": "Alert reports when a node's storage is almost full.",
+  "alertChartUnits": "%",
+  "alertSources": [
+    {
+      "name": "A",
+      "query": "round(sum(${B}, sources, cluster, cluster_uuid, nodename, node_role) / sum(${C}, sources, cluster, cluster_uuid, nodename, node_role)  * 100)",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "ts(\"kubernetes.node.filesystem.usage\", cluster=\"K8S_CLUSTER_NAME\")",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "C",
+      "query": "ts(\"kubernetes.node.filesystem.limit\", cluster=\"K8S_CLUSTER_NAME\")",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${A} >= 75, ${A})",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "warn": "${A} >= 75",
+    "severe": "${A} >= 95"
+  },
+  "conditionQBEnabled": false,
+  "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
+  "includeObsoleteMetrics": false,
+  "minutes": 10,
+  "resolveAfterMinutes": 10,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+      "dashboardId": "integration-kubernetes-nodes",
+      "parameters": {
+        "constants": {
+          "cluster_name": "K8S_CLUSTER_NAME"
+        }
+      }
+    }
+  ],
+  "targets": {
+    "warn": "ALERT_TARGET"
+  }
+}

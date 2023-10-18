@@ -1,0 +1,131 @@
+/*
+ * Copyright 2018- The Pixie Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+syntax = "proto3";
+
+package px.vizier.services.metadata;
+
+option go_package = "storepb";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "src/api/proto/uuidpb/uuid.proto";
+import "src/carnot/planner/dynamic_tracing/ir/logicalpb/logical.proto";
+import "src/common/base/statuspb/status.proto";
+import "src/shared/k8s/metadatapb/metadata.proto";
+import "src/shared/types/typespb/types.proto";
+
+// This file contains protos for data that is stored in the metadata service's datastore.
+// Along with the protos in this file, the datastore also contains shared protos, such as from
+// agentpb and metadatapb.
+
+// Information about the status of a specific tracepoint.
+message TracepointInfo {
+  uuidpb.UUID id = 1 [ (gogoproto.customname) = "ID" ];
+  // The tracepoint deployment.
+  px.carnot.planner.dynamic_tracing.ir.logical.TracepointDeployment tracepoint = 2;
+  // The name of the tracepoint, not unique.
+  string name = 3;
+  // The desired state of the tracepoint, either running or terminated. The actual
+  // state of the tracepoint is derived by the states of the individual agent tracepoints.
+  px.statuspb.LifeCycleState expected_state = 4;
+}
+
+// The agent's registration status for a particular tracepoint.
+message AgentTracepointStatus {
+  // The state of the tracepoint.
+  px.statuspb.LifeCycleState state = 1;
+  // The status of the tracepoint, specified if the state of the tracepoint is not healthy.
+  px.statuspb.Status status = 2;
+  uuidpb.UUID id = 3 [ (gogoproto.customname) = "ID" ];
+  uuidpb.UUID agent_id = 4 [ (gogoproto.customname) = "AgentID" ];
+}
+
+// TableInfo contains info about the table in Vizier.
+message TableInfo {
+  // Name of the table.
+  string name = 1;
+  // The description of the table.
+  string desc = 7;
+  // TODO need to move this information to a different message, no need to couple it with
+  // ColumnInfo. Maybe in DataInfo? The server unix time in nanoseconds when the schema was
+  // available.
+  int64 start_timestamp_ns = 2 [ (gogoproto.customname) = "StartTimestampNS" ];
+  // The unix time in nanoseconds when the schema stopped being available. It will be 0 if there is
+  // no stop time.
+  int64 stop_timestamp_ns = 3 [ (gogoproto.customname) = "StopTimestampNS" ];
+  message ColumnInfo {
+    string name = 1;
+    px.types.DataType data_type = 2;
+    px.types.PatternType pattern_type = 3;
+    // The description of this column.
+    string desc = 4;
+    px.types.SemanticType semantic_type = 5;
+  }
+  // The column info of the schema.
+  repeated ColumnInfo columns = 4;
+  // Whether the table referenced by this schema is tabletized.
+  bool tabletized = 5;
+  // The tabletization key of this schema.
+  string tabletization_key = 6;
+}
+
+// ComputedSchema describes the schema available on Vizier.
+message ComputedSchema {
+  repeated TableInfo tables = 1;
+  message AgentIDs {
+    repeated uuidpb.UUID agent_id = 1 [ (gogoproto.customname) = "AgentID" ];
+  }
+  map<string, AgentIDs> table_name_to_agent_ids = 2
+      [ (gogoproto.customname) = "TableNameToAgentIDs" ];
+}
+
+// K8sResource contains a full update for a K8s resource.
+message K8sResource {
+  oneof resource {
+    px.shared.k8s.metadatapb.Pod pod = 1;
+    px.shared.k8s.metadatapb.ContainerUpdate container = 2;
+    px.shared.k8s.metadatapb.Service service = 3;
+    px.shared.k8s.metadatapb.Endpoints endpoints = 4;
+    px.shared.k8s.metadatapb.Namespace namespace = 5;
+    px.shared.k8s.metadatapb.Node node = 6;
+    px.shared.k8s.metadatapb.ReplicaSet replica_set = 7;
+    px.shared.k8s.metadatapb.Deployment deployment = 8;
+  }
+}
+
+// K8sResourceUpdate contains an update for a K8s resource, scoped down to just
+// the data that we need to send to our agents.
+message K8sResourceUpdate {
+  px.shared.k8s.metadatapb.ResourceUpdate update = 1;
+}
+
+message CronScriptResult {
+  // The ID of the script that was run.
+  uuidpb.UUID script_id = 1 [ (gogoproto.customname) = "ScriptID" ];
+  google.protobuf.Timestamp timestamp = 2;
+  px.statuspb.Status error = 3;
+  // The total execution time for the query in nanoseconds.
+  int64 execution_time_ns = 4;
+  // The time in ns spent compiling the query.
+  int64 compilation_time_ns = 5;
+  // The number of input bytes.
+  int64 bytes_processed = 6;
+  // The number of input records.
+  int64 records_processed = 7;
+}

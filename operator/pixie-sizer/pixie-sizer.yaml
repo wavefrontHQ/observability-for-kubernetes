@@ -1,0 +1,155 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie-sizer
+  creationTimestamp: null
+  name: pixie-sizer
+  namespace: observability-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/log
+  verbs:
+  - list
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - list
+- apiGroups:
+  - "apps"
+  resources:
+  - daemonsets
+  verbs:
+  - get
+- apiGroups:
+  - wavefront.com
+  resources:
+  - wavefronts
+  verbs:
+  - get
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie-sizer
+  name: pixie-sizer
+  namespace: observability-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie-sizer
+  name: pixie-sizer
+  namespace: observability-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pixie-sizer
+subjects:
+- kind: ServiceAccount
+  name: pixie-sizer
+  namespace: observability-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pixie-sizer
+  namespace: observability-system
+  labels:
+    app.kubernetes.io/name: wavefront
+    app.kubernetes.io/component: pixie-sizer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wavefront
+      app.kubernetes.io/component: pixie-sizer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wavefront
+        app.kubernetes.io/component: pixie-sizer
+    spec:
+      containers:
+      - env:
+        - name: PS_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: PS_TRAFFIC_SCALE_FACTOR # the factor by which network traffic throughput will scale from its min to its max (i.e. 2.0 means that the max is twice as much as the min)
+          value: "PS_TRAFFIC_SCALE_FACTOR_VALUE"
+        - name: PS_SAMPLE_PERIOD_MINUTES
+          value: "PS_SAMPLE_PERIOD_MINUTES_VALUE"
+        envFrom:
+        - configMapRef:
+            name: pl-tls-config
+        image: projects.registry.vmware.com/tanzu_observability/pixie-sizer:VERSION
+        name: pixie-sizer
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /certs
+          name: certs
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - set -xe; URL="${PROTOCOL}://${SERVICE_NAME}:${SERVICE_PORT}${HEALTH_PATH}"; until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do echo "waiting for ${URL}"; sleep 2; done;
+        env:
+        - name: SERVICE_NAME
+          value: pl-nats-mgmt
+        - name: SERVICE_PORT
+          value: "8222"
+        - name: HEALTH_PATH
+          value: ""
+        - name: PROTOCOL
+          value: http
+        image: projects.registry.vmware.com/tanzu_observability/bitnami/os-shell:11
+        name: nats-wait
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      serviceAccountName: pixie-sizer
+      securityContext:
+        fsGroup: 10100
+        runAsGroup: 10100
+        runAsNonRoot: true
+        runAsUser: 10100
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: certs
+        secret:
+          secretName: service-tls-certs
+      - hostPath:
+          path: /sys
+          type: Directory
+        name: sys

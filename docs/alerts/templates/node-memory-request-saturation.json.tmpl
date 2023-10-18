@@ -1,0 +1,70 @@
+{
+  "name": "Node Memory-request Saturation",
+  "alertType": "THRESHOLD",
+  "additionalInformation": "Alert reports when a node's memory-request saturation exceeds the specified threshold.",
+  "alertChartUnits": "%",
+  "alertSources": [
+    {
+      "name": "A",
+      "query": "round(sum(${B}, sources, cluster, cluster_uuid, nodename, node_role) / sum(${C}, sources, cluster, cluster_uuid, nodename, node_role)  * 100)",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "ts(\"kubernetes.node.memory.request\", cluster=\"K8S_CLUSTER_NAME\")",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "C",
+      "query": "ts(\"kubernetes.node.memory.node_allocatable\", cluster=\"K8S_CLUSTER_NAME\")",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "if(${A} >= 90, ${A})",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "warn": "${A} >= 90"
+  },
+  "conditionQBEnabled": false,
+  "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
+  "includeObsoleteMetrics": false,
+  "minutes": 5,
+  "resolveAfterMinutes": 5,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+      "dashboardId": "integration-kubernetes-nodes",
+      "parameters": {
+        "constants": {
+          "cluster_name": "K8S_CLUSTER_NAME"
+        }
+      }
+    }
+  ],
+  "targets": {
+    "warn": "ALERT_TARGET"
+  }
+}

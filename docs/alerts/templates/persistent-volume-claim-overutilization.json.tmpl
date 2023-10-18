@@ -1,0 +1,61 @@
+{
+  "name": "Persistent Volume Claim Overutilization",
+  "alertType": "THRESHOLD",
+  "additionalInformation": "Alert reports when a Persistent Volume's available storage is below the required level specified.",
+  "alertChartUnits": "%",
+  "alertSources": [
+    {
+      "name": "A",
+      "query": "round(sum(${B}, sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, pvc_name) / sum(${C}, sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, pvc_name) * 100)",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "mmin(5m, align(1m, ts(\"kubernetes.pod.filesystem.available\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\")))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "C",
+      "query": "mmax(5m, align(1m, ts(\"kubernetes.pod.filesystem.limit\", cluster=\"K8S_CLUSTER_NAME\" AND pvc_name=\"*\")))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "${A}.le(15)",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "warn": "${A} <= 15",
+    "severe": "${A} <= 5"
+  },
+  "conditionQBEnabled": false,
+  "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
+  "minutes": 5,
+  "resolveAfterMinutes": 5,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "targets": {
+    "warn": "ALERT_TARGET"
+  },
+  "includeObsoleteMetrics": false
+}

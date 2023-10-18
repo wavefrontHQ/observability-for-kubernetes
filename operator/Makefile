@@ -73,15 +73,17 @@ generate: api/v1alpha1/zz_generated.deepcopy.go
 api/v1alpha1/zz_generated.deepcopy.go: hack/boilerplate.go.txt api/v1alpha1/wavefront_types.go
 	controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
+FIND_GOIMPORTS_FILES:=find . -type f -name '*.go' -not -path "./vendor/*" -not -path "./pixie-sizer/vendor/*"
+
 .PHONY: fmt
 fmt:
-	find . -type f -name "*.go" | grep -v "./vendor*" | xargs goimports -w
+	$(FIND_GOIMPORTS_FILES) | xargs goimports -w
 
 .PHONY: checkfmt
 checkfmt:
-	@if [ $$(goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*") | wc -l) -gt 0 ]; then \
+	@if [ $$(goimports -d $$($(FIND_GOIMPORTS_FILES)) | wc -l) -gt 0 ]; then \
 		echo $$'\e[31mgoimports FAILED!!!\e[0m'; \
-		goimports -d $$(find . -type f -name '*.go' -not -path "./vendor/*"); \
+		goimports -d $$($(FIND_GOIMPORTS_FILES)); \
 		exit 1; \
 	fi
 
@@ -102,11 +104,9 @@ test: manifests generate fmt vet ## Run tests.
 .PHONY: build
 build: generate fmt vet ## Build manager binary.
 	go build -ldflags "$(LDFLAGS)" -o build/$(GOOS)/$(GOARCH)/manager main.go
-	rm -rf build/$(GOOS)/$(GOARCH)/deploy
-	cp -r deploy build/$(GOOS)/$(GOARCH)
-	@if [ ${ALLOW_AUTO_INSTRUMENTATION} != true ]; then \
-    	rm -rf build/$(GOOS)/$(GOARCH)/deploy/internal/pixie; \
-	fi
+	rm -rf build/$(GOOS)/$(GOARCH)/components
+	find components -type f -name "*.yaml" | xargs dirname | uniq | xargs -I{} mkdir -p build/$(GOOS)/$(GOARCH)/{}
+	find components -type f -name "*.yaml" | xargs -I{} /bin/bash -c 'cp {} build/$(GOOS)/$(GOARCH)/$$(dirname {})'
 	cp open_source_licenses.txt build/
 
 .PHONY: clean
@@ -189,12 +189,6 @@ kubernetes-yaml: manifests $(OPERATOR_BUILD_DIR)
 	cd config/manager && kustomize edit set image controller=$(IMG)
 	kustomize build config/default > $(KUBERNETES_YAML)
 
-.PHONY: helm-kubernetes-yaml
-helm-kubernetes-yaml: copy-base-patches kubernetes-yaml
-	rm -f $(MONOREPO_DIR)/helm-charts/aria-integration/templates/*.yaml
-	kustomize build config/default -o $(MONOREPO_DIR)/helm-charts/aria-integration/templates
-	rm $(MONOREPO_DIR)/helm-charts/aria-integration/templates/v1_namespace_observability-system.yaml
-
 .PHONY: rc-kubernetes-yaml
 rc-kubernetes-yaml: $(OPERATOR_BUILD_DIR)
 	curl -v https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/$(OPERATOR_YAML_RC_SHA)/operator/wavefront-operator-$(GIT_BRANCH).yaml \
@@ -231,8 +225,8 @@ operator-yaml: copy-rbac-kustomization-yaml $(OPERATOR_YAML_TYPE)-kubernetes-yam
 .PHONY: deploy
 deploy: operator-yaml
 	kubectl apply -k $(OPERATOR_BUILD_DIR)
-	kubectl create -n $(NS) secret generic wavefront-secret --from-literal token=$(WAVEFRONT_TOKEN) \
-      --from-literal k8s-events-endpoint-token='a-key' || true
+	kubectl create -n $(NS) secret generic wavefront-secret --from-literal token=$(WAVEFRONT_TOKEN)  || true
+	kubectl create -n $(NS) secret generic insights-secret --from-literal ingestion-token='a-token' || true
 
 .PHONY: undeploy
 undeploy: operator-yaml

@@ -1,64 +1,81 @@
 # Alerts
-This page contains the steps to create an alert template.
+
+This page contains the steps to create alerts for the Observability for Kubernetes Operator.
+
+## Table of Content
+
+- [Alert Templates](#alert-templates)
+- [Creating Alerts](#creating-alerts)
+- [Example: Creating All the Alerts](#example-creating-all-the-alerts)
+- [Example: Creating a Single Alert](#example-creating-a-single-alert)
+- [Customizing Alerts](#customizing-alerts)
+
+## Alert Templates
 
 We have alert templates on common Kubernetes issues.
 
-* [Detect pod stuck in pending](templates/pod-stuck-in-pending.json.tmpl)
-* [Detect pod stuck in terminating](templates/pod-stuck-in-terminating.json.tmpl)
-* [Detect pod backoff event](templates/pod-backoff-event.json.tmpl)
-* [Detect workload with non-ready pods](templates/workload-not-ready.json.tmpl)
-* [Detect pod out-of-memory kills](templates/pod-out-of-memory-kills.json.tmpl)
-* [Detect container cpu throttling](templates/container-cpu-throttling.json.tmpl)
-* [Detect container cpu overutilization](templates/container-cpu-overutilization.json.tmpl)
+| Alert | Template |
+|---|---|
+| [Detect if observability status is unhealthy](templates/observability-status-unhealthy.json.tmpl) | `observability-status-unhealthy.json.tmpl` |
+| [Detect pod stuck in pending](templates/pod-stuck-in-pending.json.tmpl) | `pod-stuck-in-pending.json.tmpl` |
+| [Detect pod stuck in terminating](templates/pod-stuck-in-terminating.json.tmpl) | `pod-stuck-in-terminating.json.tmpl` |
+| [Detect pod backoff event](templates/pod-backoff-event.json.tmpl) | `pod-backoff-event.json.tmpl` |
+| [Detect workload with non-ready pods](templates/workload-not-ready.json.tmpl) | `workload-not-ready.json.tmpl` |
+| [Detect pod out-of-memory kills](templates/pod-out-of-memory-kills.json.tmpl) | `pod-out-of-memory-kills.json.tmpl` |
+| [Detect container cpu throttling](templates/container-cpu-throttling.json.tmpl) | `container-cpu-throttling.json.tmpl` |
+| [Detect container cpu overutilization](templates/container-cpu-overutilization.json.tmpl) | `container-cpu-overutilization.json.tmpl` |
+| [Detect persistent volumes with no claims](templates/persistent-volumes-no-claim.json.tmpl) | `persistent-volumes-no-claim.json.tmpl` |
+| [Detect persistent volumes with error](templates/persistent-volumes-error.json.tmpl) | `persistent-volumes-error.json.tmpl` |
+| [Detect persistent volumes filling up](templates/persistent-volume-claim-overutilization.json.tmpl) | `persistent-volume-claim-overutilization.json.tmpl` |
+| [Detect node memory overutilization](templates/node-memory-overutilization.json.tmpl) | `node-memory-overutilization.json.tmpl` |
+| [Detect node cpu overutilization](templates/node-cpu-overutilization.json.tmpl) | `node-cpu-overutilization.json.tmpl` |
+| [Detect node filesystem overutilization](templates/node-filesystem-overutilization.json.tmpl) | `node-filesystem-overutilization.json.tmpl` |
+| [Detect node cpu-request saturation](templates/node-cpu-request-saturation.json.tmpl) | `node-cpu-request-saturation.json.tmpl` |
+| [Detect node memory-request saturation](templates/node-memory-request-saturation.json.tmpl) | `node-memory-request-saturation.json.tmpl` |
+| [Detect node disk pressure condition](templates/node-disk-pressure.json.tmpl) | `node-disk-pressure.json.tmpl` |
+| [Detect node memory pressure condition](templates/node-memory-pressure.json.tmpl) | `node-memory-pressure.json.tmpl` |
+| [Detect node condition not ready](templates/node-condition-not-ready.json.tmpl)                     | `node-not-ready.json.tmpl`                          |
+| [Detect etcd has no leader](templates/etcd-no-leader.json.tmpl)                                     | `etcd-no-leader.json.tmpl`                          |
 
-## Flags
-
-```
-Usage of ./create-alert.sh:
-    -t  (Required) Wavefront API token
-    -c  (Required) Wavefront instance name
-    -f  (Required) path to alert file template
-    -n  (Required) kubernetes cluster name
-    -h  print usage info and exit
-```
-
-## Create an alert
-
-### Step 1: Download the alert template file.
-
-1. Replace `<alert_file_output_path>`, (ex: `/tmp/pod-stuck-in-pending.json`).
-2. Replace `<alert_template_file.json.tmpl>`, (ex: `pod-stuck-in-pending.json.tmpl`).
-
-```bash
-export ALERT_FILE_OUTPUT_PATH=<alert_file_output_path>
-export ALERT_TEMPLATE_FILE=<alert_template_file.json.tmpl>
-curl -sSL -o "$ALERT_FILE_OUTPUT_PATH" "https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/templates/$ALERT_TEMPLATE_FILE"
-```
-
-### Step 2: Create the alert template.
+## Creating Alerts
 
 1. Ensure that you have the information for the required fields:
-   - **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
-   - **Wavefront instance**. For example, the value of `<your_instance>` from your wavefront url (`https://<your_instance>.wavefront.com`).
-   - **Cluster name**. For example, the value of `clusterName` from your Wavefront Custom Resource configuration (ex: `mycluster-us-west-1`).
-   - **Alert template file**. For example, the download output path of the alert template file from **Step 1**.
+    - **Wavefront API token**. See [Managing API Tokens](https://docs.wavefront.com/wavefront_api.html#managing-api-tokens) page.
+    - **Wavefront instance**. For example, the value of `<YOUR_WAVEFRONT_INSTANCE>` from your wavefront url (`https://<YOUR_WAVEFRONT_INSTANCE>.wavefront.com`).
+    - **Cluster name**. For example, the value of `clusterName` from your Wavefront Custom Resource configuration (ex: `mycluster-us-west-1`).
+    - **(Optional) Alert template**. For example, the value of `<alert_template_file.json.tmpl>` from the list of alert templates (ex: `pod-backoff-event.json.tmpl`).
+    - **(Optional) Alert target**. For example, an email address, PagerDuty key, or [alert target](https://docs.wavefront.com/webhooks_alert_notification.html). Alert targets can be a comma separated list.
+
+### Example: Creating All the Alerts
+
+```bash
+curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/create-all-alerts.sh | bash -s -- \
+  -t <YOUR_API_TOKEN> \
+  -c <YOUR_WAVEFRONT_INSTANCE> \
+  -e <YOUR_ALERT_TARGET> \
+  -n <YOUR_CLUSTER_NAME>
+```
+
+>**Note:** You will need to change <YOUR_API_TOKEN>, <YOUR_WAVEFRONT_INSTANCE>, <YOUR_ALERT_TARGET>, and <YOUR_CLUSTER_NAME> in the above example.
+
+### Example: Creating a Single Alert
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/docs/alerts/create-alert.sh | bash -s -- \
   -t <YOUR_API_TOKEN> \
   -c <YOUR_WAVEFRONT_INSTANCE> \
   -n <YOUR_CLUSTER_NAME> \
-  -f <PATH_TO_ALERT_FILE>
+  -e <YOUR_ALERT_TARGET> \
+  -f <ALERT_TEMPLATE>
 ```
 
-**Note:** You will need to change YOUR_API_TOKEN, YOUR_WAVEFRONT_INSTANCE, YOUR_CLUSTER_NAME, and PATH_TO_ALERT_FILE in the above example.
+>**Note:** You will need to change <YOUR_API_TOKEN>, <YOUR_WAVEFRONT_INSTANCE>, <YOUR_CLUSTER_NAME>, <YOUR_ALERT_TARGET>, and <ALERT_TEMPLATE> in the above example.
 
-### Step 3: Customize the alert.
+## Customizing Alerts
 
-1. Log in to your service instance `https://<your_instance>.wavefront.com` as a user with the Alerts permission. Click **Alerting** > **All Alerts** from the toolbar to display the Alerts Browser.
+1. Log in to your service instance `https://<YOUR_WAVEFRONT_INSTANCE>.wavefront.com` as a user with the Alerts permission. Click **Alerting** > **All Alerts** from the toolbar to display the Alerts Browser.
 2. Click the alert name, or click the ellipsis icon next to the alert and select **Edit**.  You can search for the alert by typing the alert name in the search field.
 3. Change the alert properties when you edit the alert.
-4. Specify alert recipients to receive notifications when the alert changes state.
-5. Click **Save** in the top right to save your changes.
+4. Click **Save** in the top right to save your changes.
 
-See [Create and Manage Alerts](https://docs.wavefront.com/alerts_manage.html) for an overview on how to create and manage alerts.
+>**Note:** See [Create and Manage Alerts](https://docs.wavefront.com/alerts_manage.html) for an overview on how to create and manage alerts.

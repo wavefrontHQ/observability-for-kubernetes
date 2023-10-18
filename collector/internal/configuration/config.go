@@ -133,7 +133,7 @@ type SinkConfig struct {
 	// Whether event collection has been enabled
 	EnableEvents *bool `yaml:"enableEvents"`
 
-	//  The Wavefront URL of the form https://YOUR_INSTANCE.wavefront.com. Only required for direct ingestion.
+	//  The Wavefront Url of the form https://YOUR_INSTANCE.wavefront.com. Only required for direct ingestion.
 	Server string `yaml:"server"`
 
 	// The Wavefront API token with direct data ingestion permission. Only required for direct ingestion.
@@ -326,6 +326,10 @@ func reconcileGlobalProperties(cfg *Config) {
 	}
 	cfg.EventsConfig.ClusterName = cfg.ClusterName
 	cfg.EventsConfig.ClusterUUID = util.GetClusterUUID()
+
+	if cfg.Sources.CadvisorConfig != nil {
+		cfg.Sources.CadvisorConfig.Source = util.GetNodeName()
+	}
 }
 
 func validateCfg(cfg *Config) error {

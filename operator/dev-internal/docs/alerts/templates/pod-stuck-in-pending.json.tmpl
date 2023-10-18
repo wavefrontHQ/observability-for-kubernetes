@@ -1,26 +1,37 @@
 {
   "name": "Pod Stuck in Pending",
   "alertType": "THRESHOLD",
+  "additionalInformation": "",
+  "alertChartUnits": "",
   "alertSources": [
     {
-      "name": "Alert Condition",
-      "query": "(mcount(10m, count(ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\"), sources, pod_name, workload_name, namespace_name, cluster, message, cluster_uuid, reason)) >= 10)",
+      "name": "A",
+      "query": "mcount(10m, ${B}) >= 10",
       "queryType": "WQL",
-      "alertSourceType": ["CONDITION"],
+      "alertSourceType": ["VARIABLE"],
       "hidden": true
     },
     {
-      "name": "Display Condition",
-      "query": "if(${Alert Condition}, ${Alert Condition})",
+      "name": "B",
+      "query": "count(ts(\"kubernetes.pod.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Pending\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, message, reason, phase)",
       "queryType": "WQL",
-      "alertSourceType": ["VARIABLE","AUDIT"],
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION","AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "warn": "(mcount(10m, count(ts(\"kubernetes.pod.status.phase\", phase=\"Pending\" AND cluster=\"K8S_CLUSTER_NAME\"), sources, pod_name, workload_name, namespace_name, cluster, message, cluster_uuid, reason)) >= 10) >= 1"
+    "warn": "${A} >= 1"
   },
-  "displayExpression": "${Display Condition}",
+  "conditionQBEnabled": false,
+  "displayExpression": "${Alert Condition}",
+  "displayExpressionQBEnabled": false,
   "minutes": 5,
   "resolveAfterMinutes": 2,
   "tags": {
@@ -30,12 +41,16 @@
   },
   "alertTriageDashboards": [
     {
-     "dashboardId": "integration-kubernetes-workloads",
-     "parameters": {
-       "constants": {
-         "cluster": "K8S_CLUSTER_NAME"
-       }
-     }
+      "dashboardId": "integration-kubernetes-workloads",
+      "parameters": {
+        "constants": {
+          "cluster": "K8S_CLUSTER_NAME"
+        }
+      }
     }
-  ]
+  ],
+  "targets": {
+    "warn": "ALERT_TARGET"
+  },
+  "includeObsoleteMetrics": false
 }

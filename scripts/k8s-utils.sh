@@ -105,12 +105,20 @@ function get_component_version() {
   yq .data."${component_name}" "${REPO_ROOT}"/operator/config/manager/component_versions.yaml
 }
 
+function get_collector_version() {
+  cat "${REPO_ROOT}"/collector/release/VERSION
+}
+
+function get_operator_version() {
+  cat "${REPO_ROOT}"/operator/release/OPERATOR_VERSION
+}
+
 function get_next_collector_version() {
-  cat ${REPO_ROOT}/collector/release/NEXT_RELEASE_VERSION
+  cat "${REPO_ROOT}"/collector/release/NEXT_RELEASE_VERSION
 }
 
 function get_next_operator_version() {
-  "${REPO_ROOT}"/scripts/get-next-operator-version.sh
+  cat "${REPO_ROOT}"/operator/release/NEXT_RELEASE_VERSION
 }
 
 function start_forward_test_proxy() {

@@ -120,13 +120,42 @@ jobs:
                 version_regex: .*
               - name_regex: gomega
                 version_regex: .*
+        - task: osspi-scan-pixie-sizer
+          attempts: 3
+          file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
+          input_mapping:
+            ci_repo: observability-for-kubernetes
+            project_repo: observability-for-kubernetes
+          params:
+            SCAN_PATH: operator/pixie-sizer
+            REPO: project_repo
+            API_KEY: ((osspi.osm-prod-api-key))
+            USERNAME: ((osspi.osm-prod-username))
+            PRODUCT: Wavefront_K8_Operator
+            VERSION: Latest
+            PREPARE: |
+              go mod tidy && go mod vendor
+            OSSPI_SCANNING_PARAMS: |
+              enable: true
+              include_bomtools: "go_mod"
+              search_depth: 5
+              go_mod.path: "/go/bin/go"
+
+              # exclude for signature scans
+              exclude_patterns:
+                - vendor
+            OSSPI_IGNORE_RULES: |
+              - name_regex: onsi\/ginkgo
+                version_regex: .*
+              - name_regex: gomega
+                version_regex: .*
         - task: osspi-scan-fluentbit
           file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
           input_mapping:
             ci_repo: observability-for-kubernetes
           params:
             IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit
-            TAG: 2.1.9
+            TAG: 2.1.10
             API_KEY: ((osspi.osm-prod-api-key))
             USERNAME: ((osspi.osm-prod-username))
             PRODUCT: Wavefront_K8_Operator

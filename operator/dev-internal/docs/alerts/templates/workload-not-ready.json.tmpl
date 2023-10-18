@@ -1,26 +1,44 @@
 {
   "name": "Workload Not Ready",
   "alertType": "THRESHOLD",
+  "additionalInformation": "",
+  "alertChartUnits": "",
   "alertSources": [
     {
+      "name": "A",
+      "query": "msum(10m, ${B}) >= 10",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "sum(ts(\"kubernetes.workload.status\", cluster=\"K8S_CLUSTER_NAME\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind) = 0",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
       "name": "Alert Condition",
-      "query": "(msum(10m, sum(ts(\"kubernetes.workload.status\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, workload_kind, namespace_name, cluster, cluster_uuid) = 0) >= 10)",
+      "query": "${A}",
       "queryType": "WQL",
       "alertSourceType": ["CONDITION"],
       "hidden": true
     },
     {
       "name": "Display Condition",
-      "query": "if(${Alert Condition}, ${Alert Condition})",
+      "query": "if(${A} >= 1, ${A})",
       "queryType": "WQL",
-      "alertSourceType": ["VARIABLE","AUDIT"],
+      "alertSourceType": ["AUDIT"],
       "hidden": false
     }
   ],
   "conditions": {
-    "warn": "(msum(10m, sum(ts(\"kubernetes.workload.status\", cluster=\"K8S_CLUSTER_NAME\"), sources, workload_name, workload_kind, namespace_name, cluster, cluster_uuid) = 0) >= 10) >= 1"
+    "warn": "${A} >= 1"
   },
+  "conditionQBEnabled": false,
   "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
   "minutes": 5,
   "resolveAfterMinutes": 2,
   "tags": {
@@ -30,12 +48,16 @@
   },
   "alertTriageDashboards": [
     {
-     "dashboardId": "integration-kubernetes-workloads",
-     "parameters": {
-       "constants": {
-         "cluster": "K8S_CLUSTER_NAME"
-       }
-     }
+      "dashboardId": "integration-kubernetes-workloads",
+      "parameters": {
+        "constants": {
+          "cluster": "K8S_CLUSTER_NAME"
+        }
+      }
     }
-  ]
+  ],
+  "targets": {
+    "warn": "ALERT_TARGET"
+  },
+  "includeObsoleteMetrics": false
 }

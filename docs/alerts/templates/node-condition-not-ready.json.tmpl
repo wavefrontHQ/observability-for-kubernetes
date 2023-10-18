@@ -1,0 +1,53 @@
+{
+  "name": "Node Condition Not Ready",
+  "alertType": "THRESHOLD",
+  "additionalInformation": "",
+  "alertChartUnits": "",
+  "alertSources": [
+    {
+      "name": "A",
+      "query": "mcount(5m, ${B}) >= 2",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND condition=\"Ready\" AND status!=\"True\"), sources, cluster, cluster_uuid, nodename, node_role, condition, status)",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION","AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "warn": "${A} >= 1"
+  },
+  "conditionQBEnabled": false,
+  "displayExpression": "${Alert Condition}",
+  "displayExpressionQBEnabled": false,
+  "minutes": 10,
+  "resolveAfterMinutes": 2,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+      "dashboardId": "integration-kubernetes-nodes",
+      "parameters": {
+        "constants": {
+          "cluster_name": "K8S_CLUSTER_NAME"
+        }
+      }
+    }
+  ],
+  "includeObsoleteMetrics": false
+}

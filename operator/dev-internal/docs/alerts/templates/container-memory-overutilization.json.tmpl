@@ -1,0 +1,67 @@
+{
+  "name": "Container Memory Overutilization",
+  "alertType": "THRESHOLD",
+  "additionalInformation": "Alert reports when a container's memory utilization percentage is constantly high.",
+  "alertChartUnits": "%",
+  "alertSources": [
+    {
+      "name": "A",
+      "query": "round(sum(${B}, sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name) / sum(${C}, sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, container_name) * 100)",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "B",
+      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.memory.working_set\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "C",
+      "query": "mavg(5m, align(1m, ts(\"kubernetes.pod_container.memory.limit\", cluster=\"K8S_CLUSTER_NAME\")))",
+      "queryType": "WQL",
+      "alertSourceType": ["VARIABLE"],
+      "hidden": true
+    },
+    {
+      "name": "Alert Condition",
+      "query": "${A}",
+      "queryType": "WQL",
+      "alertSourceType": ["CONDITION"],
+      "hidden": true
+    },
+    {
+      "name": "Display Condition",
+      "query": "${A}.ge(90)",
+      "queryType": "WQL",
+      "alertSourceType": ["AUDIT"],
+      "hidden": false
+    }
+  ],
+  "conditions": {
+    "info": "${A} >= 90"
+  },
+  "conditionQBEnabled": false,
+  "displayExpression": "${Display Condition}",
+  "displayExpressionQBEnabled": false,
+  "minutes": 15,
+  "resolveAfterMinutes": 2,
+  "tags": {
+    "customerTags": [
+      "integration.kubernetes"
+    ]
+  },
+  "alertTriageDashboards": [
+    {
+      "dashboardId": "integration-kubernetes-workloads",
+      "parameters": {
+        "constants": {
+          "cluster": "K8S_CLUSTER_NAME"
+        }
+      }
+    }
+  ],
+  "includeObsoleteMetrics": false
+}
