@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,6 +48,7 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 
 		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, "", "", testTransform.Tags)
 
+		assert.Equal(t, metrics.MetricSetTypeWorkloadKind, testTags[workloadTypeTag])
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
 		assert.Equal(t, fmt.Sprint(numberDesired), testTags[workloadDesiredTag])
@@ -79,6 +81,7 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 
 		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, failureReason, failureMessage, testTransform.Tags)
 
+		assert.Equal(t, metrics.MetricSetTypeWorkloadKind, testTags[workloadTypeTag])
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
 		assert.Equal(t, fmt.Sprint(numberDesired), testTags[workloadDesiredTag])

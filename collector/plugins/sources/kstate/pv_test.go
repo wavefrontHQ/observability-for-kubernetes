@@ -268,7 +268,7 @@ func TestPointsForPV(t *testing.T) {
 			})
 		})
 
-		t.Run("buildPVPhase has shared tags and phase by default", func(t *testing.T) {
+		t.Run("buildPVPhase has shared tags, type and phase by default", func(t *testing.T) {
 			actualMetric := buildPVPhase(basicPVBuilderInput())
 			expectedMetric := metricPoint(
 				"kubernetes.",
@@ -281,6 +281,7 @@ func TestPointsForPV(t *testing.T) {
 					"pv-tag2": "value2",
 					"pv-tag3": "value3",
 					"phase":   "Failed",
+					"type":    "persistent_volume",
 				},
 			)
 			assert.Equal(t, expectedMetric, actualMetric)

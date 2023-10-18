@@ -4,6 +4,7 @@ import (
 	"fmt"
 	s "strings"
 
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/wf"
 )
 
@@ -17,6 +18,7 @@ const (
 	workloadDesiredTag       = "desired"
 	workloadFailedReasonTag  = "reason"
 	workloadFailedMessageTag = "message"
+	workloadTypeTag          = "type"
 
 	workloadReady    = float64(1.0)
 	workloadNotReady = float64(0.0)
@@ -37,6 +39,7 @@ func buildWorkloadStatusMetric(prefix string, status float64, ts int64, source s
 func buildWorkloadTags(kind string, name string, namespace string, desired int32, available int32, reason string, message string, customTags map[string]string) map[string]string {
 	tags := buildTags(workloadNameTag, name, namespace, customTags)
 	tags[workloadKindTag] = kind
+	tags[workloadTypeTag] = metrics.MetricSetTypeWorkloadKind
 	tags[workloadAvailableTag] = fmt.Sprint(available)
 	tags[workloadDesiredTag] = fmt.Sprint(desired)
 	if len(reason) > 0 {

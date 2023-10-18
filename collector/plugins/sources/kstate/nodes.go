@@ -39,6 +39,7 @@ func buildNodeConditions(node *v1.Node, transforms configuration.Transforms, ts 
 		copyLabels(node.GetLabels(), tags)
 		tags["status"] = string(condition.Status)
 		tags["condition"] = string(condition.Type)
+		tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypeNode
 		tags[metrics.LabelNodeRole.Key] = util.GetNodeRole(node)
 
 		// add status and condition (condition.status and condition.type)
