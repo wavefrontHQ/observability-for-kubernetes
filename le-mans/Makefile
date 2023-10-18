@@ -1,4 +1,4 @@
-.PHONY=dockerize-lemans start-lemans clean stop-lemans tmp/dbconfig
+.PHONY=dockerize-lemans start-lemans clean stop-lemans tmp/dbconfig create-wf-users
 LM_VERSION=1.0.11-SNAPSHOT
 FDB_PORT=4550
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/
@@ -108,3 +108,10 @@ system/cli/target/wfcli.sh: system
 
 system:
 	git clone --branch k8ssaas-2427-ingest-from-le-mans git@github.com:sunnylabs/system.git
+
+create-wf-users:
+	./system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
+	./system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
+	./system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer csp-customer-2 -credentials $(shell cat tmp/wf_password) -group browse -grant
+	./system/cli/target/wfcli.sh auth -identifier localdev@wavefront.com -customer csp-customer-2 -group user_management -grant
+	./system/cli/target/wfcli.sh csp -customer csp-customer-2 -setCspData -cspOrgId eeb0c55e-c84c-4267-8ee2-d6aac76a6180 -cspServInstId d3e5bacf-346a-486b-ac21-74736b42b018
