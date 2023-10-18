@@ -22,7 +22,7 @@ start-wf-proxy: tmp/wavefront_csp_client_id tmp/wavefront_csp_client_secret dock
 	docker run --tty --interactive --rm --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="https://nimba.wavefront.com/api" --env CSP_APP_ID="$(shell cat tmp/wavefront_csp_client_id)" --env CSP_APP_SECRET="$(shell cat tmp/wavefront_csp_client_secret)" --env WAVEFRONT_PROXY_ARGS="--le-mans-host http://gateway:8002 --le-mans-stream-name $(shell cat tmp/lemans_stream_name) --cspBaseUrl https://console-stg.cloud.vmware.com" --network le-mans_default wf-proxy
 
 start-wf-proxy-local: tmp/local_wavefront_token
-	docker run --tty --interactive --rm --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="http://localhost:8080" --network host wf-proxy
+	docker run --tty --interactive --rm --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="http://host.docker.internal:8082" --env CSP_APP_ID="$(shell cat tmp/wavefront_csp_client_id)" --env CSP_APP_SECRET="$(shell cat tmp/wavefront_csp_client_secret)" --env WAVEFRONT_PROXY_ARGS="--le-mans-host http://gateway:8002 --le-mans-stream-name $(shell cat tmp/lemans_stream_name) --cspBaseUrl https://console-stg.cloud.vmware.com" --network le-mans_default wf-proxy
 
 dockerize-wf-proxy: wavefront-proxy
 	docker build -t wf-proxy -f wavefront-proxy/docker/Dockerfile ./wavefront-proxy
@@ -98,10 +98,10 @@ post-to-stream:
 	./scripts/post-lemans-metric.sh
 
 setup-wf-customers: system/cli/target/wfcli.sh
-	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
-	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
-	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer localdev -credentials $(shell cat tmp/wf_password) -group browse -grant
-	JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier localdev@wavefront.com -customer localdev -group user_management -grant
+	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
+	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
+	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer localdev -credentials $(shell cat tmp/wf_password) -group browse -grant
+	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier localdev@wavefront.com -customer localdev -group user_management -grant
 
 system/cli/target/wfcli.sh: system
 	cd system && mvn install -DskipTests=true -Duse.github.diff=none
@@ -110,8 +110,8 @@ system:
 	git clone --branch k8ssaas-2427-ingest-from-le-mans git@github.com:sunnylabs/system.git
 
 create-wf-users:
-	./system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
-	./system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
-	./system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer csp-customer-2 -credentials $(shell cat tmp/wf_password) -group browse -grant
-	./system/cli/target/wfcli.sh auth -identifier localdev@wavefront.com -customer csp-customer-2 -group user_management -grant
-	./system/cli/target/wfcli.sh csp -customer csp-customer-2 -setCspData -cspOrgId eeb0c55e-c84c-4267-8ee2-d6aac76a6180 -cspServInstId d3e5bacf-346a-486b-ac21-74736b42b018
+	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
+	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
+	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer csp-customer-2 -credentials $(shell cat tmp/wf_password) -group browse -grant
+	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier localdev@wavefront.com -customer csp-customer-2 -group user_management -grant
+	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh csp -customer csp-customer-2 -setCspData -cspOrgId eeb0c55e-c84c-4267-8ee2-d6aac76a6180 -cspServInstId d3e5bacf-346a-486b-ac21-74736b42b018
