@@ -7,7 +7,7 @@ if [ -z "$STREAM_NAME" ]; then
 fi
 RECEIVER_NAME="$STREAM_NAME-receiver"
 LEMANS_RESOURCE_SERVER="localhost:8001"
-RECEIVER_URI=http://host.docker.internal:8080/report/le-mans
+RECEIVER_URI=http://host.docker.internal:8082/report/le-mans
 RECEIVER_URI_ECHO=http://echo-server:8000/report
 CSP_SECRET="$(echo -n "$(cat tmp/le_mans_csp_client_id):$(cat tmp/le_mans_csp_client_secret)" | base64)"
 
