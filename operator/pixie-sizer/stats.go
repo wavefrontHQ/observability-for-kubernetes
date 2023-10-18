@@ -1,8 +1,6 @@
 package main
 
 import (
-	"math"
-	"sort"
 	"sync"
 	"time"
 
@@ -12,22 +10,22 @@ import (
 const UnknownTable = "unknown"
 
 type StatsStore struct {
-	measureMinutes  int
-	knownTables     []string
-	tableRates      map[string]*NumberStore[BytesPerSecond]
-	tableBytes      map[string]*NumberStore[Bytes]
-	tableRowBatches map[string]*NumberStore[int]
-	tableCountStore *NumberStore[int]
+	samplePeriodMinutes int
+	knownTables         []string
+	tableRates          map[string]*NumberStore[BytesPerSecond]
+	tableBytes          map[string]*NumberStore[Bytes]
+	tableRowBatches     map[string]*NumberStore[int]
+	tableCountStore     *NumberStore[int]
 }
 
 func NewStatsStore(measureMinutes int, knownTables []string) *StatsStore {
 	return &StatsStore{
-		measureMinutes:  measureMinutes,
-		knownTables:     knownTables,
-		tableRates:      map[string]*NumberStore[BytesPerSecond]{},
-		tableBytes:      map[string]*NumberStore[Bytes]{},
-		tableRowBatches: map[string]*NumberStore[int]{},
-		tableCountStore: NewValueStore[int](measureMinutes),
+		samplePeriodMinutes: measureMinutes,
+		knownTables:         knownTables,
+		tableRates:          map[string]*NumberStore[BytesPerSecond]{},
+		tableBytes:          map[string]*NumberStore[Bytes]{},
+		tableRowBatches:     map[string]*NumberStore[int]{},
+		tableCountStore:     NewNumberStore[int](measureMinutes),
 	}
 }
 
@@ -62,7 +60,7 @@ func (s *StatsStore) Record(now time.Time, metricsFamilies map[string]*prom.Metr
 func (s *StatsStore) TableRate(tableName string) *NumberStore[BytesPerSecond] {
 	tableName = s.normalizedTableName(tableName)
 	if s.tableRates[tableName] == nil {
-		s.tableRates[tableName] = NewValueStore[BytesPerSecond](s.measureMinutes)
+		s.tableRates[tableName] = NewNumberStore[BytesPerSecond](s.samplePeriodMinutes)
 	}
 	return s.tableRates[tableName]
 }
@@ -74,7 +72,7 @@ func (s *StatsStore) TableCount() *NumberStore[int] {
 func (s *StatsStore) TableBytes(tableName string) *NumberStore[Bytes] {
 	tableName = s.normalizedTableName(tableName)
 	if s.tableBytes[tableName] == nil {
-		s.tableBytes[tableName] = NewValueStore[Bytes](s.measureMinutes)
+		s.tableBytes[tableName] = NewNumberStore[Bytes](s.samplePeriodMinutes)
 	}
 	return s.tableBytes[tableName]
 }
@@ -82,7 +80,7 @@ func (s *StatsStore) TableBytes(tableName string) *NumberStore[Bytes] {
 func (s *StatsStore) TableRowBatches(tableName string) *NumberStore[int] {
 	tableName = s.normalizedTableName(tableName)
 	if s.tableRowBatches[tableName] == nil {
-		s.tableRowBatches[tableName] = NewValueStore[Bytes](s.measureMinutes)
+		s.tableRowBatches[tableName] = NewNumberStore[Bytes](s.samplePeriodMinutes)
 	}
 	return s.tableRowBatches[tableName]
 }
@@ -98,7 +96,7 @@ type NumberStore[V Number] struct {
 	observations     [][]observation[V]
 }
 
-func NewValueStore[V Number](retentionMinutes int) *NumberStore[V] {
+func NewNumberStore[V Number](retentionMinutes int) *NumberStore[V] {
 	return &NumberStore[V]{
 		retentionMinutes: retentionMinutes,
 		index:            0,
@@ -142,16 +140,6 @@ func (s *NumberStore[V]) lastMinute() int64 {
 	return s.observations[s.index][0].At.Unix() / 60
 }
 
-func (s *NumberStore[V]) LatestValue() V {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	var value V
-	if len(s.observations[s.index]) > 0 {
-		value = s.observations[s.index][len(s.observations[s.index])-1].Value
-	}
-	return value
-}
-
 func (s *NumberStore[V]) MaxValue() V {
 	var maxValue V
 	s.each(func(_ time.Time, value V) {
@@ -160,33 +148,6 @@ func (s *NumberStore[V]) MaxValue() V {
 		}
 	})
 	return maxValue
-}
-
-func (s *NumberStore[V]) MinValue() V {
-	var minValue V
-	first := true
-	s.each(func(_ time.Time, value V) {
-		if first {
-			minValue = value
-			first = false
-		} else if value < minValue {
-			minValue = value
-		}
-	})
-	return minValue
-}
-
-func (s *NumberStore[V]) PercentileValue(percentile float64) V {
-	var values []V
-	s.each(func(_ time.Time, value V) {
-		values = append(values, value)
-	})
-	sort.Slice(values, func(i, j int) bool {
-		return values[i] < values[j]
-	})
-	low := int(math.Floor(float64(len(values)) * percentile))
-	high := int(math.Ceil(float64(len(values)) * percentile))
-	return (values[low] + values[high]) / V(2)
 }
 
 func (s *NumberStore[V]) Sum() V {
