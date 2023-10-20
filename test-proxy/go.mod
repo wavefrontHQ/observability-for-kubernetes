@@ -6,7 +6,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
-	github.com/wavefronthq/wavefront-sdk-go v0.14.0
+	github.com/wavefronthq/wavefront-sdk-go v0.15.0
 	k8s.io/api v0.24.17
 )
 
