@@ -25,30 +25,27 @@ Filtering can be enabled on the sink or sources. Where it is applied controls th
 Filtering applied on the sink applies to all the metrics collected by the collector:
 
 ```yaml
-sinks:
-  - proxyAddress: wavefront-proxy.default.svc.cluster.local:2878
+# global sink level filter
+filters:
+# Filter out all go runtime metrics for kube-dns and apiserver.
+metricDenyList:
+- 'kube.dns.go.*'
+- 'kube.apiserver.go.*'
 
-  # global sink level filter
-  filters:
-    # Filter out all go runtime metrics for kube-dns and apiserver.
-    metricDenyList:
-    - 'kube.dns.go.*'
-    - 'kube.apiserver.go.*'
+# Allow metrics that have an environment tag of production or staging.
+metricTagAllowList:
+  env:
+  - 'prod*'
+  - 'staging*'
 
-    # Allow metrics that have an environment tag of production or staging.
-    metricTagAllowList:
-      env:
-      - 'prod*'
-      - 'staging*'
+# Block metrics that have an environment tag of test.
+metricTagDenyList:
+  env:
+  - 'test*'
 
-    # Block metrics that have an environment tag of test.
-    metricTagDenyList:
-      env:
-      - 'test*'
-
-    # Guarantees that if metrics have a point tag key "prod", the tag key will not be filtered out.
-    tagGuaranteeList:
-    - 'prod'
+# Guarantees that if metrics have a point tag key "prod", the tag key will not be filtered out.
+tagGuaranteeList:
+- 'prod'
 ```
 
 Filtering applied on a source applies only to metrics collected by that source:
