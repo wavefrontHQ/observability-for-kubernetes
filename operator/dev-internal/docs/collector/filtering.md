@@ -112,13 +112,13 @@ events:
   filters:
     tagAllowListSets:
     - kind:
-     - "Pod"
-     reason:
-     - "Scheduled"
-     - "Failed*"
+      - "Pod"
+      reason:
+      - "Scheduled"
+      - "Failed*"
     - kind:
-     - "DaemonSet"
-     reason:
-     - "SuccessfulCreate"
-     - "Failed*"
+      - "DaemonSet"
+      reason:
+      - "SuccessfulCreate"
+      - "Failed*"
 ```
