@@ -31,7 +31,6 @@ var (
 	MetricSetTypeNode             = "node"
 	MetricSetTypeCluster          = "cluster"
 	MetricSetTypePersistentVolume = "persistent_volume"
-	MetricSetTypeWorkloadKind     = "workload_kind"
 
 	LabelCluster = LabelDescriptor{
 		Key:         "cluster",

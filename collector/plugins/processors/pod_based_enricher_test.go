@@ -180,6 +180,7 @@ func TestPodWorkloadStatus(t *testing.T) {
 			"workload_kind":  testWorkloadKind,
 			"available":      "1",
 			"desired":        "1",
+			"type":           testWorkloadKind,
 		}
 		expectedPodLabelValue := metrics.LabeledValue{
 			Name: "workload/status",
@@ -230,6 +231,7 @@ func TestPodWorkloadStatus(t *testing.T) {
 			"desired":        "1",
 			"reason":         expectedReason,
 			"message":        expectedMessage,
+			"type":           testWorkloadKind,
 		}
 		expectedPodLabelValue := metrics.LabeledValue{
 			Name: "workload/status",
@@ -280,6 +282,7 @@ func TestPodWorkloadStatus(t *testing.T) {
 			"desired":        "1",
 			"reason":         expectedReason,
 			"message":        expectedMessage,
+			"type":           testWorkloadKind,
 		}
 		expectedPodLabelValue := metrics.LabeledValue{
 			Name: "workload/status",
