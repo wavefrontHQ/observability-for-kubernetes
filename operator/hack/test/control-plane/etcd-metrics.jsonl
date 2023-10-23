@@ -1,1 +1,0 @@
-{"Name":"kubernetes.controlplane.etcd.server.has.leader.gauge","Value":"1","Tags":{"cluster":"","name":"","source":"","type":"cluuster"}}

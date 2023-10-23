@@ -349,13 +349,13 @@
 {"Name":"kubernetes.replicaset.ready_replicas","Tags":{"cluster":"","namespace_name":"observability-system","replicaset":"","source":""}}
 {"Name":"kubernetes.replicaset.ready_replicas","Tags":{"cluster":"","namespace_name": "collector-targets","replicaset":"","source":""}}
 {"Name":"kubernetes.replicaset.ready_replicas","Tags":{"cluster":"","namespace_name":"","replicaset":"","source":""}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"kube-system","source":"","workload_name":"kube-proxy","workload_kind":"DaemonSet", "type":"DaemonSet"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"cronjob-hello","workload_kind":"CronJob", "type":"CronJob"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success","workload_kind":"Job", "type":"Job"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"memcached-release","workload_kind":"Deployment", "type":"Deployment"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"replicaset-no-owner","workload_kind":"ReplicaSet", "type":"ReplicaSet"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"observability-system","source":"","workload_name":"wavefront-cluster-collector","workload_kind":"Deployment", "type":"Deployment"}}
-{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"observability-system","source":"","workload_name":"wavefront-node-collector","workload_kind":"DaemonSet", "type":"DaemonSet"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"kube-system","source":"","workload_name":"kube-proxy","workload_kind":"DaemonSet"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"cronjob-hello","workload_kind":"CronJob"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"job-success","workload_kind":"Job"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"memcached-release","workload_kind":"Deployment"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"collector-targets","source":"","workload_name":"replicaset-no-owner","workload_kind":"ReplicaSet"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"observability-system","source":"","workload_name":"wavefront-cluster-collector","workload_kind":"Deployment"}}
+{"Name":"kubernetes.workload.status","Tags":{"cluster":"","namespace_name":"observability-system","source":"","workload_name":"wavefront-node-collector","workload_kind":"DaemonSet"}}
 {"Name":"~wavefront.kubernetes.collector.version","Tags":{"cluster":"","source":"","k8s_provider":"","k8s_version":"","installation_method":"","stats_prefix":""}}
 {"Name":"memcached.curr.connections","Tags":{"cluster":"","label.app.kubernetes.io/instance":"memcached-release","label.app.kubernetes.io/managed-by":"Helm","label.app.kubernetes.io/name":"memcached","label.helm.sh/chart":"","namespace":"","pod":"","server":"memcached-release.collector-targets.svc.cluster.local:11211","source":""}}
 {"Name":"prom-example.acquire.shards.latency.bucket","Value":"0","Tags":{"cluster":"","label.k8s-app":"prom-example","label.name":"prom-example","le":"0.001","namespace":"","operation":"ShardController","pod":"prom-example","source":"","type":"history"}}
