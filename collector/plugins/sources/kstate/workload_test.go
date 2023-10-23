@@ -47,7 +47,6 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 
 		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, "", "", testTransform.Tags)
 
-		assert.Equal(t, workloadKindDeployment, testTags[workloadTypeTag])
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
 		assert.Equal(t, fmt.Sprint(numberDesired), testTags[workloadDesiredTag])
@@ -80,7 +79,6 @@ func TestBuildWorkloadStatusMetric(t *testing.T) {
 
 		testTags := buildWorkloadTags(workloadKindDeployment, testDeployment.Name, "", numberDesired, numberAvailable, failureReason, failureMessage, testTransform.Tags)
 
-		assert.Equal(t, workloadKindDeployment, testTags[workloadTypeTag])
 		assert.Equal(t, expectedWorkloadName, testTags[workloadNameTag])
 		assert.Equal(t, workloadKindDeployment, testTags[workloadKindTag])
 		assert.Equal(t, fmt.Sprint(numberDesired), testTags[workloadDesiredTag])

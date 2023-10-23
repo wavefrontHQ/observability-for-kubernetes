@@ -33,6 +33,12 @@ func NewProvider(
 	if err != nil {
 		return nil, err
 	}
+
+	if config.Tags == nil {
+		config.Tags = make(map[string]string, 1)
+	}
+	config.Tags["type"] = "pod_container"
+
 	return &cadvisorSourceProvider{
 		config:        config,
 		kubeClient:    kubeClient,

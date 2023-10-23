@@ -215,7 +215,6 @@ func (pbe *PodBasedEnricher) addWorkloadStatusMetric(podMs *metrics.Set, pod *ku
 			metrics.LabelWorkloadKind.Key:  podMs.Labels[metrics.LabelWorkloadKind.Key],
 			metrics.LabelAvailable.Key:     podMs.Labels[metrics.LabelAvailable.Key],
 			metrics.LabelDesired.Key:       podMs.Labels[metrics.LabelDesired.Key],
-			metrics.LabelMetricSetType.Key: podMs.Labels[metrics.LabelWorkloadKind.Key],
 		},
 	}
 	workloadStatus := 1
