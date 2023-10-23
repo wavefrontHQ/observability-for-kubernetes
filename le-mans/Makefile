@@ -30,10 +30,12 @@ dockerize-wf-proxy: wavefront-proxy
 wavefront-proxy:
 	git clone --branch k8ssaas-2475-push-metrics-to-le-mans git@github.com:wavefrontHQ/wavefront-proxy.git
 
-start-fdb:
-	echo "docker:docker@127.0.0.1:${FDB_PORT}" > tmp/fdb.cluster
-	FDB_PORT="${FDB_PORT}" docker-compose up -d fdb
-	fdbcli -C tmp/fdb.cluster --exec "configure new single memory"
+start-wf-backend: tmp/fdb-data
+	FDB_PORT="${FDB_PORT}" docker-compose up -d uberserver
+	docker exec le-mans-fdb-1 fdbcli --exec 'configure new single memory'
+
+tmp/fdb-data: tmp
+	mkdir tmp/fdb-data
 
 test-proxy: wavefront-proxy
 	mvn -f wavefront-proxy/proxy test
@@ -98,20 +100,13 @@ post-to-stream:
 	./scripts/post-lemans-metric.sh
 
 setup-wf-customers: system/cli/target/wfcli.sh
-	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
-	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
-	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer localdev -credentials $(shell cat tmp/wf_password) -group browse -grant
-	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier localdev@wavefront.com -customer localdev -group user_management -grant
+	docker cp ./system/cli/target le-mans-uberserver-1:/wf-cli
+	docker cp ./tmp/wf_password le-mans-uberserver-1:/tmp/wf_password
+	docker cp ./scripts le-mans-uberserver-1:/scripts
+	docker exec le-mans-uberserver-1 /scripts/setup-wf-customers.sh
 
 system/cli/target/wfcli.sh: system
 	cd system && mvn install -DskipTests=true -Duse.github.diff=none
 
 system:
 	git clone --branch k8ssaas-2427-ingest-from-le-mans git@github.com:sunnylabs/system.git
-
-create-wf-users:
-	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier dev+master@wavefront.com -customer master -credentials $(shell cat tmp/wf_password) -group browse -grant
-	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier dev+master@wavefront.com -customer master -group user_management -grant
-	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -create -identifier localdev@wavefront.com -customer csp-customer-2 -credentials $(shell cat tmp/wf_password) -group browse -grant
-	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh auth -identifier localdev@wavefront.com -customer csp-customer-2 -group user_management -grant
-	JAVA_HOME=/usr/local/Cellar/openjdk@11/11.0.20.1/libexec/openjdk.jdk/Contents/Home ./system/cli/target/wfcli.sh csp -customer csp-customer-2 -setCspData -cspOrgId eeb0c55e-c84c-4267-8ee2-d6aac76a6180 -cspServInstId d3e5bacf-346a-486b-ac21-74736b42b018

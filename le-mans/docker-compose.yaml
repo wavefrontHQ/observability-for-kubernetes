@@ -85,8 +85,19 @@ services:
   fdb:
     image: foundationdb/foundationdb:7.1.37
     ports:
-    - $FDB_PORT:$FDB_PORT/tcp
+    - $FDB_PORT:$FDB_PORT
+    volumes:
+    - "./tmp/fdb-data:/var/fdb/data"
     environment:
-      FDB_NETWORKING_MODE: host
+      FDB_NETWORKING_MODE: container
       FDB_COORDINATOR_PORT: $FDB_PORT
+      FDB_COORDINATOR: fdb
       FDB_PORT: $FDB_PORT
+  uberserver:
+    image: uberserver
+    depends_on:
+    - fdb
+    ports:
+    - "8082:8082"
+    environment:
+      CXN: docker:docker@fdb:$FDB_PORT
