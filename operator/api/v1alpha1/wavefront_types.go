@@ -23,10 +23,22 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+const (
+	ClusterSizeSmall  = "small"
+	ClusterSizeMedium = "medium"
+	ClusterSizeLarge  = "large"
+)
+
+var ClusterSizes = []string{ClusterSizeSmall, ClusterSizeMedium, ClusterSizeLarge}
+
 // WavefrontSpec defines the desired state of Wavefront
 type WavefrontSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make build" in the operator directory to regenerate code after modifying this file
+
+	// +kubebuilder:validation:Enum:=small;medium;large
+	// +kubebuilder:default:=medium
+	ClusterSize string `json:"clusterSize,omitempty"`
 
 	// ClusterName is a unique name for the Kubernetes cluster to be identified via a metric tag on Wavefront (Required).
 	// +kubebuilder:validation:MinLength:=3
@@ -97,18 +109,12 @@ type AutoTracingPixie struct {
 type Hub struct {
 	Enable bool `json:"enable,omitempty"`
 	// +kubebuilder:default:={enable: true}
-	Pixie HubPixie `json:"pixie,omitempty"`
-}
-
-type HubPixie struct {
-	PixieShared `json:",inline"`
+	Pixie PixieShared `json:"pixie,omitempty"`
 }
 
 type PixieShared struct {
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "750Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20}}
-	Pem Pem `json:"pem,omitempty"`
 }
 
 type Metrics struct {
@@ -422,15 +428,6 @@ type LogFilters struct {
 type Collector struct {
 	// Resources Compute resources required by the Collector containers.
 	Resources Resources `json:"resources,omitempty"`
-}
-
-type Pem struct {
-	// Resources Compute resources required by the PEM containers.
-	Resources Resources `json:"resources,omitempty"`
-
-	// TableStoreLimits Limits for queryable data for the PEM containers.
-	// +kubebuilder:default:={total_mib: 150, http_events_percent: 20}
-	TableStoreLimits TableStoreLimits `json:"table_store_limits,omitempty"`
 }
 
 type TableStoreLimits struct {

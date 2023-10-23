@@ -100,25 +100,15 @@ func TestValidate(t *testing.T) {
 		require.False(t, result.IsValid())
 		require.Equal(t, "pixie: missing cluster name", result.Message())
 	})
-
-	t.Run("no pem resources set is not valid", func(t *testing.T) {
-		config := validComponentConfig()
-		config.PemResources = wf.Resources{}
-		component, err := NewComponent(ComponentDir, config)
-		result := component.Validate()
-		require.NoError(t, err)
-		require.False(t, result.IsValid())
-		require.Equal(t, "pixie: [invalid vizier-pem.resources.limits.memory must be set, invalid vizier-pem.resources.limits.cpu must be set]", result.Message())
-	})
 }
 
 func TestResources(t *testing.T) {
 	t.Run("pem resources are configurable", func(t *testing.T) {
 		config := validComponentConfig()
-		config.PemResources.Requests.Memory = "500Mi"
-		config.PemResources.Requests.CPU = "50Mi"
-		config.PemResources.Limits.Memory = "1Gi"
-		config.PemResources.Limits.CPU = "100Mi"
+		config.PEMResources.Requests.Memory = "500Mi"
+		config.PEMResources.Requests.CPU = "50Mi"
+		config.PEMResources.Limits.Memory = "1Gi"
+		config.PEMResources.Limits.CPU = "100Mi"
 
 		component, _ := NewComponent(ComponentDir, config)
 		toApply, _, err := component.Resources()
@@ -176,7 +166,7 @@ func validComponentConfig() Config {
 		ControllerManagerUID: "controller-manager-uid",
 		ClusterUUID:          "cluster-uuid",
 		ClusterName:          wftest.DefaultClusterName,
-		PemResources: wf.Resources{Limits: wf.Resource{
+		PEMResources: wf.Resources{Limits: wf.Resource{
 			CPU:    "100Mi",
 			Memory: "1Gi",
 		}},

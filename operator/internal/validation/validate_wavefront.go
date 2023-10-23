@@ -3,6 +3,7 @@ package validation
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -118,6 +119,10 @@ func validateWavefrontSpec(wavefront *wf.Wavefront) error {
 	var errs []error
 	//TODO: Component Refactor - move all non cross component validation to individual components
 
+	if !validClusterSize(wavefront) {
+		errs = append(errs, fmt.Errorf("clusterSize must be %s", strings.Join(wf.ClusterSizes, ", ")))
+	}
+
 	if wavefront.Spec.DataExport.WavefrontProxy.Enable {
 		errs = append(errs, validateWavefrontProxyConfig(wavefront)...)
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) == 0 && (wavefront.Spec.DataCollection.Metrics.Enable || wavefront.Spec.DataCollection.Logging.Enable) {
@@ -132,6 +137,15 @@ func validateWavefrontSpec(wavefront *wf.Wavefront) error {
 		}
 	}
 	return utilerrors.NewAggregate(errs)
+}
+
+func validClusterSize(wavefront *wf.Wavefront) bool {
+	for _, clusterSize := range wf.ClusterSizes {
+		if clusterSize == wavefront.Spec.ClusterSize {
+			return true
+		}
+	}
+	return false
 }
 
 func validateWavefrontProxyConfig(wavefront *wf.Wavefront) []error {

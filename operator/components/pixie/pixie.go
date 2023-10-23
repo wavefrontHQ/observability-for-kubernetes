@@ -22,10 +22,14 @@ type Config struct {
 	// StirlingSources list of sources to enable on the PEM containers.
 	// Specify a source group (kAll, kProd, kMetrics, kTracers, kProfiler, kTCPStats) or individual sources.
 	// You can find the names of sources at https://github.com/pixie-io/pixie/blob/release/vizier/v0.14.2/src/stirling/stirling.cc
-	StirlingSources  []string
-	PemResources     wf.Resources
-	TableStoreLimits wf.TableStoreLimits
-	MaxHTTPBodyBytes int
+	StirlingSources      []string
+	PEMResources         wf.Resources
+	TableStoreLimits     wf.TableStoreLimits
+	KelvinResources      wf.Resources
+	QueryBrokerResources wf.Resources
+	NATSResources        wf.Resources
+	MetadataResources    wf.Resources
+	MaxHTTPBodyBytes     int
 }
 
 func (c Config) StirlingSourcesEnv() string {
@@ -67,7 +71,7 @@ func (pc *Component) Validate() validation.Result {
 		errs = append(errs, fmt.Errorf("%s: missing cluster name", pc.Name()))
 	}
 
-	if result := validation.ValidateResources(&pc.config.PemResources, util.PixieVizierPEMName); result.IsError() {
+	if result := validation.ValidateResources(&pc.config.PEMResources, util.PixieVizierPEMName); result.IsError() {
 		errs = append(errs, fmt.Errorf("%s: %s", pc.Name(), result.Message()))
 	}
 

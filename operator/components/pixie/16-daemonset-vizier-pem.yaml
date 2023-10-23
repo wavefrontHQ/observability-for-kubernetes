@@ -101,7 +101,7 @@ spec:
           image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/pem_image:0.14.2-multi
           name: pem
           resources:
-{{ .PemResources | toYaml | indent 12 }}
+{{ .PEMResources | toYaml | indent 12 }}
           securityContext:
             capabilities:
               add:
