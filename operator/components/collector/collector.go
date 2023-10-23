@@ -101,5 +101,5 @@ func (component *Component) Validate() validation.Result {
 }
 
 func (collector *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(collector.dir, collector.Name(), collector.config.Enable, collector.config.ControllerManagerUID, collector.config)
+	return components.BuildResources(collector.dir, collector.Name(), collector.config.Enable, collector.config.ControllerManagerUID, nil, collector.config)
 }

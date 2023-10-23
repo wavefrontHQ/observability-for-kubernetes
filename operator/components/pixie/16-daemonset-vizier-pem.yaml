@@ -100,8 +100,7 @@ spec:
               value: '{{ .StirlingSourcesEnv }}'
           image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/pem_image:0.14.2-multi
           name: pem
-          resources:
-{{ .PEMResources | toYaml | indent 12 }}
+          resources: {}
           securityContext:
             capabilities:
               add:

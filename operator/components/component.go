@@ -7,8 +7,10 @@ import (
 	"strings"
 	"text/template"
 
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	yaml2 "gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
@@ -25,7 +27,7 @@ type Component interface {
 
 const DeployDir = "components"
 
-func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID string, data any) ([]client.Object, []client.Object, error) {
+func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID string, resourceOverrides map[string]wf.Resources, data any) ([]client.Object, []client.Object, error) {
 	files, err := resourceFiles(fs)
 	if err != nil {
 		return nil, nil, err
@@ -63,6 +65,7 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 		resource.SetLabels(labels)
 		if resource.GetKind() == "DaemonSet" || resource.GetKind() == "Deployment" || resource.GetKind() == "StatefulSet" {
 			setTemplateComponentLabels(resource, componentName)
+			setResources(resource, resourceOverrides)
 		}
 		resource.SetOwnerReferences([]v1.OwnerReference{{
 			APIVersion: "apps/v1",
@@ -78,6 +81,26 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 		}
 	}
 	return resourcesToApply, resourcesToDelete, nil
+}
+
+func setResources(workload *unstructured.Unstructured, overrides map[string]wf.Resources) {
+	override, exists := overrides[workload.GetName()]
+	if !exists {
+		return
+	}
+
+	r := map[string]any{
+		"limits": map[string]any{
+			corev1.ResourceCPU.String():    override.Limits.CPU,
+			corev1.ResourceMemory.String(): override.Limits.Memory,
+		},
+		"requests": map[string]any{
+			corev1.ResourceCPU.String():    override.Requests.CPU,
+			corev1.ResourceMemory.String(): override.Requests.Memory,
+		},
+	}
+
+	_ = unstructured.SetNestedMap(workload.Object, r, "spec", "template", "spec", "containers", "0", "resources")
 }
 
 func setTemplateComponentLabels(resource *unstructured.Unstructured, componentName string) {

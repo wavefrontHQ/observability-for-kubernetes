@@ -124,5 +124,5 @@ func (component *Component) Validate() validation.Result {
 }
 
 func (proxy *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(proxy.dir, proxy.Name(), proxy.config.Enable, proxy.config.ControllerManagerUID, proxy.config)
+	return components.BuildResources(proxy.dir, proxy.Name(), proxy.config.Enable, proxy.config.ControllerManagerUID, nil, proxy.config)
 }

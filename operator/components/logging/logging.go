@@ -102,5 +102,5 @@ func (component *Component) Validate() validation.Result {
 }
 
 func (logging *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(logging.dir, logging.Name(), logging.config.Enable, logging.config.ControllerManagerUID, logging.config)
+	return components.BuildResources(logging.dir, logging.Name(), logging.config.Enable, logging.config.ControllerManagerUID, nil, logging.config)
 }

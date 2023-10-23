@@ -78,6 +78,12 @@ func (pc *Component) Validate() validation.Result {
 	return validation.NewValidationResult(errs)
 }
 
+func (pc *Component) resourceOverrides() map[string]wf.Resources {
+	return map[string]wf.Resources{
+		"vizier-pem": pc.config.PEMResources,
+	}
+}
+
 func (pc *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(pc.dir, pc.Name(), pc.config.Enable, pc.config.ControllerManagerUID, pc.config)
+	return components.BuildResources(pc.dir, pc.Name(), pc.config.Enable, pc.config.ControllerManagerUID, pc.resourceOverrides(), pc.config)
 }

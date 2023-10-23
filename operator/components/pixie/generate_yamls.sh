@@ -102,7 +102,6 @@ sed -i "s/:${PIXIE_VERSION}/:${PIXIE_VERSION}-multi/" "${REPO_ROOT}"/operator/co
 sed -i 's/@sha256:.*//' "${REPO_ROOT}"/operator/components/pixie/*.yaml
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/components/pixie/00-secret-pl-cluster-secrets.yaml"
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/components/pixie/00-secret-pl-cluster-secrets.yaml"
-sed -i "s/resources: {}/resources:\n{{ .PEMResources | toYaml | indent 12 }}/" "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 #sed -i "s/value: default/value: default\n{{- if (not .Experimental.Hub.Pixie.Enable) }}\n        - name: PL_TABLE_STORE_DATA_LIMIT_MB\n          value: \"150\"\n        - name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT\n          value: \"90\"\n        - name: PL_STIRLING_SOURCES\n          value: \"kTracers\"\n{{- end }}/" "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 sed -i 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/components/pixie/18-configmap-pl-cloud-config.yaml"
 
