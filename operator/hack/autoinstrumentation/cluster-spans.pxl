@@ -195,28 +195,11 @@ px.export(
 
                     # Wavefront Conventions
                     'service': df.destination_service,
-                    'application': df.destination_namespace,
+                    'application': df.source_namespace,
+                    'from_service': df.source_service,
+                    'from_source': df.source_pod,
                     # We follow pixie's convention of setting an error tag only for a server span.
                     'error': df.error,
-
-                    # OTEL HTTP Conventions
-                    'http.status_code': df.resp_status,
-                    'http.method': df.req_method,
-                },
-            ),
-            px.otel.trace.Span(
-                name=df.req_path,
-                start_time=df.start_time,
-                end_time=df.time_,
-                trace_id=df.trace_id,
-                span_id=df.parent_span_id,
-                kind=px.otel.trace.SPAN_KIND_CLIENT,
-                attributes={
-                    # NOTE: the integration handles splitting of services.
-
-                    # Wavefront Conventions
-                    'service': df.source_service,
-                    'application': df.source_namespace,
 
                     # OTEL HTTP Conventions
                     'http.status_code': df.resp_status,
