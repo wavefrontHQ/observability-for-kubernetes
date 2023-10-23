@@ -31,11 +31,11 @@ wavefront-proxy:
 	git clone --branch k8ssaas-2475-push-metrics-to-le-mans git@github.com:wavefrontHQ/wavefront-proxy.git
 
 start-wf-backend: tmp/fdb-data
-	FDB_PORT="${FDB_PORT}" docker-compose up -d uberserver
+	FDB_PORT="${FDB_PORT}" docker-compose up uberserver --abort-on-container-exit
 	docker exec le-mans-fdb-1 fdbcli --exec 'configure new single memory'
 
 tmp/fdb-data: tmp
-	mkdir tmp/fdb-data
+	mkdir -p tmp/fdb-data
 
 test-proxy: wavefront-proxy
 	mvn -f wavefront-proxy/proxy test
