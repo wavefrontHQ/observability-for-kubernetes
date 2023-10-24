@@ -49,7 +49,7 @@ ${team_members.join('\n')}
       steps {
         script {
           team_name = '*Team Raven* :disco_raven:'
-          team_members = ['Anil', 'Jerry', 'John', 'Yuqi'] // 'Jeremy' is on paternity leave
+          team_members = ['Anil', 'Jerry', 'John', 'Yuqi', 'Priya'] // 'Jeremy' is on paternity leave
 
           // Prevent the same person from being selected twice in a row.
           previous_build_description = currentBuild.getPreviousBuild().description
