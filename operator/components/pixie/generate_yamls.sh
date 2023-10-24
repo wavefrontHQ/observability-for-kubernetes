@@ -81,11 +81,7 @@ do
   yq -i '.metadata.labels["app.kubernetes.io/component"] |= "pixie"' "$f"
 done
 
-yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "100m", "memory": "100Mi"}, "limits": {"cpu": "2000m", "memory": "10Gi"}}' "${REPO_ROOT}"/operator/components/pixie/12-deployment-kelvin.yaml
-yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "100m", "memory": "50Mi"}, "limits": {"cpu": "1000m", "memory": "512Mi"}}' "${REPO_ROOT}"/operator/components/pixie/14-deployment-vizier-query-broker.yaml
-yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "1000m", "memory": "2Gi"}}' "${REPO_ROOT}"/operator/components/pixie/15-statefulset-vizier-metadata.yaml
 yq -i '(.spec.template.spec.containers[] | select(.name == "provisioner") | .resources) = {"requests": {"cpu": "50m", "memory": "10Mi"}, "limits": {"cpu": "100m", "memory": "100Mi"}}' "${REPO_ROOT}"/operator/components/pixie/17-job-cert-provisioner-job.yaml
-yq -i '(.spec.template.spec.containers[] | select(.name == "pl-nats") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "1000m", "memory": "2Gi"}}' "${REPO_ROOT}"/operator/components/pixie/23-statefulset-pl-nats.yaml
 
 yq -i '(.spec.template.spec.containers[] | select(.name == "pem") | .env) += {"name": "PL_TABLE_STORE_DATA_LIMIT_MB", "value": "{{ .TableStoreLimits.TotalMiB }}"}' "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 yq -i '(.spec.template.spec.containers[] | select(.name == "pem") | .env) += {"name": "PL_TABLE_STORE_HTTP_EVENTS_PERCENT", "value": "{{ .TableStoreLimits.HttpEventsPercent }}"}' "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
