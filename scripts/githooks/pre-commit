@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -e
+
+if [[ "${SKIP_PRE_COMMIT_HOOK:-}" == "true" ]]; then
+  exit 0
+fi
+
+function pre_commit_msg() {
+  local message="pre-commit: $1"
+  echo "${message}"
+}
+
+function pre_commit_warning() {
+  local message="pre-commit: $1"
+  echo -e $'\e[33m\e[1m'"${message}"$'\e[0m'
+}
+
+function pre_commit_error_and_exit() {
+  local message="pre-commit: $1"
+  echo -e $'\e[31m\e[1m'"${message}"$'\e[0m'
+  pre_commit_msg 'To skip pre-commit hook, use "export SKIP_PRE_COMMIT_HOOK=true"'
+  exit 1
+}
+
+function check_for_root_level_changes() {
+  local directory="$1"
+  if ! git diff --diff-filter=ADMR --exit-code --quiet --cached -- $directory; then
+    pre_commit_warning "Did you intend to make the following changes in the operator/dev-internal/ directory?"
+    git diff --diff-filter=ADMR --name-status --cached -- $directory
+    pre_commit_error_and_exit "Aborting git commit due to potential release pipeline errors"
+  fi
+}
+
+pre_commit_msg "Checking for potential release pipeline errors"
+
+check_for_root_level_changes "docs"
+check_for_root_level_changes "deploy"
+
+pre_commit_msg "No potential release pipeline errors found"
+
