@@ -238,6 +238,26 @@ func TestResources(t *testing.T) {
 		require.Equal(t, "1Gi", res.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
 		require.Equal(t, "100m", res.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
 	})
+
+	t.Run("Job Cert Provisioner resources are configurable", func(t *testing.T) {
+		config := validComponentConfig()
+		config.CertProvisionerJobResources.Requests.Memory = "50Mi"
+		config.CertProvisionerJobResources.Requests.CPU = "50m"
+		config.CertProvisionerJobResources.Limits.Memory = "100Mi"
+		config.CertProvisionerJobResources.Limits.CPU = "100m"
+
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources()
+
+		require.NoError(t, err)
+
+		res, err := test.GetJob(util.PixieCertProvisionerJobName, toApply)
+		require.NoError(t, err)
+		require.Equal(t, "50Mi", res.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		require.Equal(t, "50m", res.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "100Mi", res.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		require.Equal(t, "100m", res.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
+	})
 }
 
 func validComponentConfig() Config {

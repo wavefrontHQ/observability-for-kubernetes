@@ -22,14 +22,15 @@ type Config struct {
 	// StirlingSources list of sources to enable on the PEM containers.
 	// Specify a source group (kAll, kProd, kMetrics, kTracers, kProfiler, kTCPStats) or individual sources.
 	// You can find the names of sources at https://github.com/pixie-io/pixie/blob/release/vizier/v0.14.2/src/stirling/stirling.cc
-	StirlingSources      []string
-	PEMResources         wf.Resources
-	TableStoreLimits     wf.TableStoreLimits
-	KelvinResources      wf.Resources
-	QueryBrokerResources wf.Resources
-	NATSResources        wf.Resources
-	MetadataResources    wf.Resources
-	MaxHTTPBodyBytes     int
+	StirlingSources             []string
+	PEMResources                wf.Resources
+	TableStoreLimits            wf.TableStoreLimits
+	KelvinResources             wf.Resources
+	QueryBrokerResources        wf.Resources
+	NATSResources               wf.Resources
+	MetadataResources           wf.Resources
+	CertProvisionerJobResources wf.Resources
+	MaxHTTPBodyBytes            int
 }
 
 func (c Config) StirlingSourcesEnv() string {
@@ -80,11 +81,12 @@ func (pc *Component) Validate() validation.Result {
 
 func (pc *Component) resourceOverrides() map[string]wf.Resources {
 	return map[string]wf.Resources{
-		util.PixieVizierPEMName:         pc.config.PEMResources,
-		util.PixieVizierQueryBrokerName: pc.config.QueryBrokerResources,
-		util.PixieNatsName:              pc.config.NATSResources,
-		util.PixieKelvinName:            pc.config.KelvinResources,
-		util.PixieVizierMetadataName:    pc.config.MetadataResources,
+		util.PixieVizierPEMName:          pc.config.PEMResources,
+		util.PixieVizierQueryBrokerName:  pc.config.QueryBrokerResources,
+		util.PixieNatsName:               pc.config.NATSResources,
+		util.PixieKelvinName:             pc.config.KelvinResources,
+		util.PixieVizierMetadataName:     pc.config.MetadataResources,
+		util.PixieCertProvisionerJobName: pc.config.CertProvisionerJobResources,
 	}
 }
 

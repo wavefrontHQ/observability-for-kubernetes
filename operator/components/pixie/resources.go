@@ -191,3 +191,36 @@ var MetadataResources = map[string]v1alpha1.Resources{
 		},
 	},
 }
+
+var CertProvisionerJobResources = map[string]v1alpha1.Resources{
+	v1alpha1.ClusterSizeSmall: {
+		Requests: v1alpha1.Resource{
+			CPU:    "50m",
+			Memory: "10Mi",
+		},
+		Limits: v1alpha1.Resource{
+			CPU:    "100m",
+			Memory: "100Mi",
+		},
+	},
+	v1alpha1.ClusterSizeMedium: {
+		Requests: v1alpha1.Resource{
+			CPU:    "50m",
+			Memory: "10Mi",
+		},
+		Limits: v1alpha1.Resource{
+			CPU:    "100m",
+			Memory: "100Mi",
+		},
+	},
+	v1alpha1.ClusterSizeLarge: {
+		Requests: v1alpha1.Resource{
+			CPU:    "50m",
+			Memory: "10Mi",
+		},
+		Limits: v1alpha1.Resource{
+			CPU:    "100m",
+			Memory: "100Mi",
+		},
+	},
+}

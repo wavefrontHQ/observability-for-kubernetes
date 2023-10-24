@@ -63,7 +63,7 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 			labels["app.kubernetes.io/component"] = componentName
 		}
 		resource.SetLabels(labels)
-		if resource.GetKind() == "DaemonSet" || resource.GetKind() == "Deployment" || resource.GetKind() == "StatefulSet" {
+		if resource.GetKind() == "DaemonSet" || resource.GetKind() == "Deployment" || resource.GetKind() == "StatefulSet" || resource.GetKind() == "Job" {
 			setTemplateComponentLabels(resource, componentName)
 			setResources(resource, resourceOverrides)
 		}
