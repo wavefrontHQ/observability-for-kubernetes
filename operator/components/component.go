@@ -100,7 +100,10 @@ func setResources(workload *unstructured.Unstructured, overrides map[string]wf.R
 		},
 	}
 
-	_ = unstructured.SetNestedMap(workload.Object, r, "spec", "template", "spec", "containers", "0", "resources")
+	containers, _, _ := unstructured.NestedSlice(workload.Object, "spec", "template", "spec", "containers")
+	container := containers[0].(map[string]interface{})
+	container["resources"] = r
+	_ = unstructured.SetNestedSlice(workload.Object, containers, "spec", "template", "spec", "containers")
 }
 
 func setTemplateComponentLabels(resource *unstructured.Unstructured, componentName string) {

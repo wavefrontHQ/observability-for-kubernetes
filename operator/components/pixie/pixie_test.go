@@ -106,9 +106,9 @@ func TestResources(t *testing.T) {
 	t.Run("pem resources are configurable", func(t *testing.T) {
 		config := validComponentConfig()
 		config.PEMResources.Requests.Memory = "500Mi"
-		config.PEMResources.Requests.CPU = "50Mi"
+		config.PEMResources.Requests.CPU = "50m"
 		config.PEMResources.Limits.Memory = "1Gi"
-		config.PEMResources.Limits.CPU = "100Mi"
+		config.PEMResources.Limits.CPU = "100m"
 
 		component, _ := NewComponent(ComponentDir, config)
 		toApply, _, err := component.Resources()
@@ -119,9 +119,9 @@ func TestResources(t *testing.T) {
 		ds, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
 		require.Equal(t, "500Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
-		require.Equal(t, "50Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "50m", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
 		require.Equal(t, "1Gi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
-		require.Equal(t, "100Mi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
+		require.Equal(t, "100m", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
 	})
 
 	t.Run("table store limits are configurable", func(t *testing.T) {
@@ -166,10 +166,16 @@ func validComponentConfig() Config {
 		ControllerManagerUID: "controller-manager-uid",
 		ClusterUUID:          "cluster-uuid",
 		ClusterName:          wftest.DefaultClusterName,
-		PEMResources: wf.Resources{Limits: wf.Resource{
-			CPU:    "100Mi",
-			Memory: "1Gi",
-		}},
+		PEMResources: wf.Resources{
+			Limits: wf.Resource{
+				CPU:    "100m",
+				Memory: "1Gi",
+			},
+			Requests: wf.Resource{
+				CPU:    "50m",
+				Memory: "500Mi",
+			},
+		},
 		TableStoreLimits: wf.TableStoreLimits{
 			TotalMiB:          2,
 			HttpEventsPercent: 1,
