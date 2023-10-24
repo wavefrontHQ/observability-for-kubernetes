@@ -1,6 +1,6 @@
 # Migration
 This is a migration doc for the Observability for Kubernetes Operator from the manual and Helm Collector and proxy installation.
-If you want to test the new Operator in parallel with your existing manual or Helm installation, use the [wavefront-allow-legacy-intall.yaml](../../deploy/scenarios/wavefront-allow-legacy-install.yaml) template.
+If you want to test the new Operator in parallel with your existing manual or Helm installation, use the [wavefront-allow-legacy-install.yaml](../../deploy/scenarios/wavefront-allow-legacy-install.yaml) template.
 
 ## Migrate from Helm Installation
 
