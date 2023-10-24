@@ -95,6 +95,7 @@ services:
       FDB_PORT: $FDB_PORT
   uberserver:
     image: uberserver
+    hostname: uberserver
     depends_on:
     - fdb
     ports:

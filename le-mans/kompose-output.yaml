@@ -1,0 +1,624 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: echo-server
+  name: echo-server
+spec:
+  ports:
+    - name: "8000"
+      port: 8000
+      targetPort: 8000
+  selector:
+    io.kompose.service: echo-server
+status:
+  loadBalancer: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: fdb
+  name: fdb
+spec:
+  ports:
+    - name: "4550"
+      port: 4550
+      targetPort: 4550
+  selector:
+    io.kompose.service: fdb
+status:
+  loadBalancer: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: kafka
+  name: kafka
+spec:
+  ports:
+    - name: "9092"
+      port: 9092
+      targetPort: 9092
+  selector:
+    io.kompose.service: kafka
+status:
+  loadBalancer: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: lemans-gateway
+  name: lemans-gateway
+spec:
+  ports:
+    - name: "8002"
+      port: 8002
+      targetPort: 8002
+  selector:
+    io.kompose.service: lemans-gateway
+status:
+  loadBalancer: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: lemans-resource-server
+  name: lemans-resource-server
+spec:
+  ports:
+    - name: "8001"
+      port: 8001
+      targetPort: 8001
+  selector:
+    io.kompose.service: lemans-resource-server
+status:
+  loadBalancer: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: postgres
+  name: postgres
+spec:
+  ports:
+    - name: "5432"
+      port: 5432
+      targetPort: 5432
+  selector:
+    io.kompose.service: postgres
+status:
+  loadBalancer: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: uberserver
+  name: uberserver
+spec:
+  type: NodePort
+  ports:
+    - name: "8082"
+      port: 8082
+      targetPort: 8082
+      nodePort: 30001
+  selector:
+    io.kompose.service: uberserver
+status:
+  loadBalancer: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: zookeeper
+  name: zookeeper
+spec:
+  ports:
+    - name: "2181"
+      port: 2181
+      targetPort: 2181
+  selector:
+    io.kompose.service: zookeeper
+status:
+  loadBalancer: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: echo-server
+  name: echo-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: echo-server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --out kompose-output.yaml
+        kompose.version: 1.31.2 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/le-mans-default: "true"
+        io.kompose.service: echo-server
+    spec:
+      containers:
+        - args:
+            - python3
+            - /opt/le-mans/scripts/echo-server.py
+            - "8000"
+          image: python
+          name: echo-server
+          ports:
+            - containerPort: 8000
+              hostPort: 8000
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - mountPath: /opt/le-mans/scripts
+              name: echo-server-claim0
+      hostname: echo-server
+      restartPolicy: Always
+      volumes:
+        - name: echo-server-claim0
+          persistentVolumeClaim:
+            claimName: echo-server-claim0
+status: {}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: echo-server-claim0
+  name: echo-server-claim0
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: fdb
+  name: fdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: fdb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --out kompose-output.yaml
+        kompose.version: 1.31.2 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/le-mans-default: "true"
+        io.kompose.service: fdb
+    spec:
+      containers:
+        - env:
+            - name: FDB_COORDINATOR_PORT
+              value: "4550"
+            - name: FDB_NETWORKING_MODE
+              value: container
+            - name: FDB_PORT
+              value: "4550"
+          image: foundationdb/foundationdb:7.1.37
+          name: fdb
+          ports:
+            - containerPort: 4550
+              hostPort: 4550
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+status: {}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: fdb-claim0
+  name: fdb-claim0
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: kafka
+  name: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: kafka
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --out kompose-output.yaml
+        kompose.version: 1.31.2 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/le-mans-default: "true"
+        io.kompose.service: kafka
+    spec:
+      containers:
+        - env:
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS
+              value: PLAINTEXT://:9092
+            - name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES
+              value: CONTROLLER
+            - name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
+              value: 0@kafka:9093
+            - name: KAFKA_CFG_INTER_BROKER_LISTENER_NAME
+              value: PLAINTEXT
+            - name: KAFKA_CFG_LISTENERS
+              value: PLAINTEXT://:9092,CONTROLLER://:9093
+            - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+              value: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+            - name: KAFKA_CFG_NODE_ID
+              value: "0"
+            - name: KAFKA_CFG_PROCESS_ROLES
+              value: controller,broker
+          image: docker.io/bitnami/kafka:3.5
+          name: kafka
+          ports:
+            - containerPort: 9092
+              hostPort: 9092
+              protocol: TCP
+          resources: {}
+      hostname: kafka
+      restartPolicy: Always
+status: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: lemans-gateway
+  name: lemans-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: lemans-gateway
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --out kompose-output.yaml
+        kompose.version: 1.31.2 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/le-mans-default: "true"
+        io.kompose.service: lemans-gateway
+    spec:
+      containers:
+        - args:
+            - bash
+            - /opt/le-mans/bin/start-gateway.sh
+            - --cspUri=https://console-stg.cloud.vmware.com
+            - --enableJwksCspKeyFormat=true
+          env:
+            - name: BINDING_ADDRESS
+              value: 0.0.0.0
+            - name: BINDING_PORT
+              value: "8002"
+            - name: CSP_CLIENT_ID
+              value: hnIsmQ7VH1JPvshExJMmEY7Hm1FAxLstxOI
+            - name: CSP_CLIENT_SECRET
+              value: f3js2cGPbfLerbXUGquhRarARiK3IcVRCJTby7LMODFCWpCSF5
+            - name: PUBLIC_URI
+              value: http://localhost:8002
+            - name: RESOURCES_HOST_URI
+              value: http://lemans-resource-server.default.svc.cluster.local:8001
+          image: lemans/lemans-gateway
+          imagePullPolicy: Never
+          name: lemans-gateway
+          ports:
+            - containerPort: 8002
+              hostPort: 8002
+              protocol: TCP
+          resources: {}
+      hostname: gateway
+      restartPolicy: Always
+status: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: lemans-resource-server
+  name: lemans-resource-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: lemans-resource-server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --out kompose-output.yaml
+        kompose.version: 1.31.2 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/le-mans-default: "true"
+        io.kompose.service: lemans-resource-server
+    spec:
+      containers:
+        - args:
+            - bash
+            - /opt/le-mans/bin/start-resources.sh
+            - --cspUri=https://console-stg.cloud.vmware.com
+            - --enableJwksCspKeyFormat=true
+          env:
+            - name: BINDING_ADDRESS
+              value: 0.0.0.0
+            - name: BINDING_PORT
+              value: "8001"
+            - name: DB_CONFIG_FILE
+              value: /opt/le-mans/tmp/dbconfig
+            - name: LEMS_HOME
+              value: tmp
+            - name: PUBLIC_URI
+              value: http://resources:8001
+          image: lemans/lemans-resources
+          imagePullPolicy: Never
+          name: lemans-resource-server
+          ports:
+            - containerPort: 8001
+              hostPort: 8001
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - mountPath: /opt/le-mans/tmp
+              name: config
+      hostname: resources
+      restartPolicy: Always
+      volumes:
+        - name: config
+          configMap:
+            # Provide the name of the ConfigMap you want to mount.
+            name: lemans-resource-server-configmap
+            # An array of keys from the ConfigMap to create as files
+            items:
+            - key: "resource-config"
+              path: "dbconfig"
+status: {}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: lemans-resource-server-claim0
+  name: lemans-resource-server-configmap
+data:
+  resource-config: |
+    dataSource.user=postgres
+    dataSource.portNumber=5432
+    dataSource.serverName=postgres
+    dataSource.databaseName=postgres
+    dataSource.password=password
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: postgres
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: postgres
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --out kompose-output.yaml
+        kompose.version: 1.31.2 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/le-mans-default: "true"
+        io.kompose.service: postgres
+    spec:
+      containers:
+        - env:
+            - name: POSTGRES_HOST_AUTH_METHOD
+              value: trust
+          image: postgres
+          name: postgres
+          ports:
+            - containerPort: 5432
+              hostPort: 5432
+              protocol: TCP
+          resources: {}
+      hostname: postgres
+      restartPolicy: Always
+status: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: uberserver
+  name: uberserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: uberserver
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --out kompose-output.yaml
+        kompose.version: 1.31.2 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/le-mans-default: "true"
+        io.kompose.service: uberserver
+    spec:
+      containers:
+        - env:
+            - name: CXN
+              value: docker:docker@fdb.default:4550
+          image: uberserver
+          imagePullPolicy: Never
+          name: uberserver
+          ports:
+            - containerPort: 8082
+              hostPort: 8082
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+status: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out kompose-output.yaml
+    kompose.version: 1.31.2 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: zookeeper
+  name: zookeeper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: zookeeper
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --out kompose-output.yaml
+        kompose.version: 1.31.2 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/le-mans-default: "true"
+        io.kompose.service: zookeeper
+    spec:
+      containers:
+        - env:
+            - name: ALLOW_ANONYMOUS_LOGIN
+              value: "yes"
+          image: bitnami/zookeeper:latest
+          name: zookeeper
+          ports:
+            - containerPort: 2181
+              hostPort: 2181
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+status: {}
+
