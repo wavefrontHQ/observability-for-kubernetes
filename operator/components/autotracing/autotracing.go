@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/fs"
 
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,5 +56,5 @@ func (component *Component) Validate() validation.Result {
 }
 
 func (autotracing *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(autotracing.dir, autotracing.Name(), autotracing.config.Enable, autotracing.config.ControllerManagerUID, autotracing.config)
+	return components.BuildResources(autotracing.dir, autotracing.Name(), autotracing.config.Enable, autotracing.config.ControllerManagerUID, map[string]wf.Resources{}, autotracing.config)
 }

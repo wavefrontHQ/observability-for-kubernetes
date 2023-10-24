@@ -80,7 +80,11 @@ func (pc *Component) Validate() validation.Result {
 
 func (pc *Component) resourceOverrides() map[string]wf.Resources {
 	return map[string]wf.Resources{
-		"vizier-pem": pc.config.PEMResources,
+		util.PixieVizierPEMName:         pc.config.PEMResources,
+		util.PixieVizierQueryBrokerName: pc.config.QueryBrokerResources,
+		util.PixieNatsName:              pc.config.NATSResources,
+		util.PixieKelvinName:            pc.config.KelvinResources,
+		util.PixieVizierMetadataName:    pc.config.MetadataResources,
 	}
 }
 

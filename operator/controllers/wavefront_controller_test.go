@@ -1586,7 +1586,9 @@ func TestReconcileInsightsByCR(t *testing.T) {
 				Name:      "wavefront",
 				Namespace: wftest.DefaultNamespace,
 			},
-			Spec: wf.WavefrontSpec{ClusterName: "a-cluster",
+			Spec: wf.WavefrontSpec{
+				ClusterName: "a-cluster",
+				ClusterSize: wf.ClusterSizeMedium,
 				DataCollection: wf.DataCollection{
 					Metrics: wf.Metrics{
 						Enable: false,
