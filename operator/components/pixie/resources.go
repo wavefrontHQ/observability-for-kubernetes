@@ -1,6 +1,8 @@
 package pixie
 
-import "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+import (
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+)
 
 func defaultResources(clusterSize string, config Config) Config {
 	config.PEMResources = PEMResources[clusterSize]
