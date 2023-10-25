@@ -32,11 +32,11 @@ build/%/pixie-sizer: always_out_of_date
 	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -o build/$(GOOS)/$(GOARCH)/pixie-sizer ./...
 
 .PRECIOUS: build/%/open_source_licenses.txt
-build/%/open_source_licenses.txt: open_source_licenses.txt
+build/%/open_source_licenses.txt: ../open_source_licenses.txt
 	$(eval OS := $(wordlist 1,1,$(subst /, ,$(basename $*))))
 	$(eval ARCH := $(wordlist 2,2,$(subst /, ,$(basename $*))))
 	mkdir -p build/$(OS)/$(ARCH)
-	cp open_source_licenses.txt build/$(OS)/$(ARCH)
+	cp $< build/$(OS)/$(ARCH)
 
 .PHONY: always_out_of_date
 always_out_of_date:
