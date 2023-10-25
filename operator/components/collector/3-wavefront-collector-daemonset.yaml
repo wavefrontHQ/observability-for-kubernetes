@@ -76,8 +76,6 @@ spec:
           ports:
             - containerPort: 8088
               protocol: TCP
-          resources:
-{{ .NodeCollectorResources | toYaml | indent 12 }}
           volumeMounts:
             - name: procfs
               mountPath: /host/proc
