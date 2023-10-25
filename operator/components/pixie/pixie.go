@@ -79,7 +79,7 @@ func (pc *Component) Validate() validation.Result {
 	return validation.NewValidationResult(errs)
 }
 
-func (pc *Component) resourceOverrides() map[string]wf.Resources {
+func (pc *Component) containerResourceDefaults() map[string]wf.Resources {
 	return map[string]wf.Resources{
 		util.PixieVizierPEMName:          pc.config.PEMResources,
 		util.PixieVizierQueryBrokerName:  pc.config.QueryBrokerResources,
@@ -91,5 +91,5 @@ func (pc *Component) resourceOverrides() map[string]wf.Resources {
 }
 
 func (pc *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(pc.dir, pc.Name(), pc.config.Enable, pc.config.ControllerManagerUID, pc.resourceOverrides(), pc.config)
+	return components.BuildResources(pc.dir, pc.Name(), pc.config.Enable, pc.config.ControllerManagerUID, pc.containerResourceDefaults(), pc.config)
 }
