@@ -437,6 +437,47 @@ func TestProcess(t *testing.T) {
 
 		require.ErrorContains(t, err, "Invalid rule configured in ConfigMap 'user-preprocessor-rules' on port 'global', overriding metric tag 'cluster' is disallowed", err.Error())
 	})
+
+	t.Run("workloadResources", func(t *testing.T) {
+		t.Run("when only limit is set, sets request to match", func(t *testing.T) {
+			wfcr := defaultWFCR()
+			wfcr.Spec.WorkloadResources = map[string]wf.Resources{
+				"some-deployment": {
+					Limits: wf.Resource{
+						CPU:              "100m",
+						Memory:           "100Mi",
+						EphemeralStorage: "200Mi",
+					},
+				},
+			}
+
+			require.NoError(t, PreProcess(setup(), wfcr))
+
+			require.Equal(t, wfcr.Spec.WorkloadResources["some-deployment"].Limits, wfcr.Spec.WorkloadResources["some-deployment"].Requests)
+		})
+
+		t.Run("does not override request when request is set", func(t *testing.T) {
+			wfcr := defaultWFCR()
+			wfcr.Spec.WorkloadResources = map[string]wf.Resources{
+				"some-deployment": {
+					Requests: wf.Resource{
+						CPU:              "50m",
+						Memory:           "50Mi",
+						EphemeralStorage: "100Mi",
+					},
+					Limits: wf.Resource{
+						CPU:              "100m",
+						Memory:           "100Mi",
+						EphemeralStorage: "200Mi",
+					},
+				},
+			}
+
+			require.NoError(t, PreProcess(setup(), wfcr))
+
+			require.NotEqual(t, wfcr.Spec.WorkloadResources["some-deployment"].Limits, wfcr.Spec.WorkloadResources["some-deployment"].Requests)
+		})
+	})
 }
 
 func TestProcessWavefrontProxyAuth(t *testing.T) {

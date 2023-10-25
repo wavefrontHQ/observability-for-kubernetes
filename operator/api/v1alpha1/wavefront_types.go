@@ -367,6 +367,10 @@ type Resource struct {
 	EphemeralStorage string `json:"ephemeral-storage,omitempty" yaml:"ephemeral-storage,omitempty"`
 }
 
+func (r *Resource) IsEmpty() bool {
+	return r.CPU == "" && r.Memory == "" && r.EphemeralStorage == ""
+}
+
 type Toleration struct {
 	// Key is the taint key that the toleration applies to. Empty means match all taint keys.
 	// If the key is empty, operator must be Exists; this combination means to match all values and all keys.
