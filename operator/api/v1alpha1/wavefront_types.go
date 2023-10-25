@@ -40,8 +40,8 @@ type WavefrontSpec struct {
 	// +kubebuilder:default:=medium
 	ClusterSize string `json:"clusterSize,omitempty"`
 
-	//ResourceOverrides are a map of pod names to resources requests and limits that should override the default requests and limits of the given pod / co
-	ResourceOverrides map[string]Resources `json:"resourceOverrides,omitempty"`
+	// WorkloadResources are a map from workload name (i.e. Deployment, StatefulSet, DaemonSet, or Job) to resource requests and limits
+	WorkloadResources map[string]Resources `json:"workloadResources,omitempty"`
 
 	// ClusterName is a unique name for the Kubernetes cluster to be identified via a metric tag on Wavefront (Required).
 	// +kubebuilder:validation:MinLength:=3

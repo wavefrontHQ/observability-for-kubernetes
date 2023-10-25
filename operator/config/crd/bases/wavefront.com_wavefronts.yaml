@@ -642,7 +642,18 @@ spec:
                 maxLength: 253
                 pattern: ^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$
                 type: string
-              resourceOverrides:
+              wavefrontTokenSecret:
+                default: wavefront-secret
+                description: WavefrontTokenSecret is the name of the secret that contains
+                  a wavefront API Token.
+                maxLength: 253
+                pattern: ^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$
+                type: string
+              wavefrontUrl:
+                description: Wavefront URL for your cluster
+                pattern: ^https:\/\/.*.wavefront.com
+                type: string
+              workloadResources:
                 additionalProperties:
                   properties:
                     limits:
@@ -678,21 +689,10 @@ spec:
                           type: string
                       type: object
                   type: object
-                description: ResourceOverrides are a map of pod names to resources
-                  requests and limits that should override the default requests and
-                  limits of the given pod
+                description: WorkloadResources are a map from workload name (i.e.
+                  Deployment, StatefulSet, DaemonSet, or Job) to resource requests
+                  and limits
                 type: object
-              wavefrontTokenSecret:
-                default: wavefront-secret
-                description: WavefrontTokenSecret is the name of the secret that contains
-                  a wavefront API Token.
-                maxLength: 253
-                pattern: ^[a-z0-9]([a-z0-9\.\-]*[a-z0-9])?$
-                type: string
-              wavefrontUrl:
-                description: Wavefront URL for your cluster
-                pattern: ^https:\/\/.*.wavefront.com
-                type: string
             required:
             - clusterName
             type: object
