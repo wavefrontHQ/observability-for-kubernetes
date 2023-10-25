@@ -101,6 +101,12 @@ func (component *Component) Validate() validation.Result {
 	return validation.NewValidationResult(errs)
 }
 
-func (logging *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(logging.dir, logging.Name(), logging.config.Enable, logging.config.ControllerManagerUID, nil, logging.config)
+func (logging *Component) defaultWorkloadResources() map[string]wf.Resources {
+	return map[string]wf.Resources{
+		util.LoggingName: logging.config.Resources,
+	}
+}
+
+func (logging *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
+	return builder.Build(logging.dir, logging.Name(), logging.config.Enable, logging.config.ControllerManagerUID, logging.defaultWorkloadResources(), logging.config)
 }

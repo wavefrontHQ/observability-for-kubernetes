@@ -19,23 +19,38 @@ func CR(options ...CROption) *wf.Wavefront {
 				ControlPlane: wf.ControlPlane{
 					Enable: true,
 				},
-				ClusterCollector: wf.Collector{Resources: wf.Resources{Limits: wf.Resource{
-					CPU:    "100Mi",
-					Memory: "50Mi",
-				}}},
-				NodeCollector: wf.Collector{Resources: wf.Resources{Limits: wf.Resource{
-					CPU:    "100Mi",
-					Memory: "50Mi",
-				}}},
+				ClusterCollector: wf.Collector{Resources: wf.Resources{
+					Requests: wf.Resource{
+						CPU:    "100m",
+						Memory: "50Mi",
+					},
+					Limits: wf.Resource{
+						CPU:    "100m",
+						Memory: "50Mi",
+					},
+				}},
+				NodeCollector: wf.Collector{Resources: wf.Resources{
+					Requests: wf.Resource{
+						CPU:    "100m",
+						Memory: "50Mi",
+					},
+					Limits: wf.Resource{
+						CPU:    "100m",
+						Memory: "50Mi",
+					},
+				}},
 				CollectorVersion: "1.28.0",
 			},
 			Logging: wf.Logging{
 				Enable:         true,
 				LoggingVersion: "2.1.6",
 				Resources: wf.Resources{
-					Requests: wf.Resource{},
+					Requests: wf.Resource{
+						CPU:    "100m",
+						Memory: "50Mi",
+					},
 					Limits: wf.Resource{
-						CPU:    "100Mi",
+						CPU:    "100m",
 						Memory: "50Mi",
 					},
 				},
@@ -46,10 +61,15 @@ func CR(options ...CROption) *wf.Wavefront {
 				Enable:     true,
 				MetricPort: 2878,
 				Resources: wf.Resources{
-					Requests: wf.Resource{},
+					Requests: wf.Resource{
+						CPU:              "100m",
+						Memory:           "1Gi",
+						EphemeralStorage: "2Gi",
+					},
 					Limits: wf.Resource{
-						CPU:    "100Mi",
-						Memory: "50Mi",
+						CPU:              "1",
+						Memory:           "4Gi",
+						EphemeralStorage: "8Gi",
 					},
 				},
 				ProxyVersion: "13.1",

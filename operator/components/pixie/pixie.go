@@ -90,6 +90,6 @@ func (pc *Component) containerResourceDefaults() map[string]wf.Resources {
 	}
 }
 
-func (pc *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(pc.dir, pc.Name(), pc.config.Enable, pc.config.ControllerManagerUID, pc.containerResourceDefaults(), pc.config)
+func (pc *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
+	return builder.Build(pc.dir, pc.Name(), pc.config.Enable, pc.config.ControllerManagerUID, pc.containerResourceDefaults(), pc.config)
 }

@@ -303,6 +303,42 @@ func TestReconcileAll(t *testing.T) {
 		require.False(t, mockKM.AppliedContains("security.openshift.io/v1", "SecurityContextConstraints", "wavefront", "collector", "wavefront-collector-scc"))
 		require.False(t, mockKM.AppliedContains("security.openshift.io/v1", "SecurityContextConstraints", "wavefront", "proxy", "wavefront-proxy-scc"))
 	})
+
+	t.Run("can override workload resources", func(t *testing.T) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.Autotracing.Enable = true
+			wavefront.Spec.WorkloadResources = map[string]wf.Resources{
+				"wavefront-proxy": {
+					Requests: wf.Resource{
+						CPU:    "50m",
+						Memory: "50Mi",
+					},
+					Limits: wf.Resource{
+						CPU:    "100m",
+						Memory: "100Mi",
+					},
+				},
+			}
+		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.NoError(t, err)
+
+		proxy, err := mockKM.GetProxyDeployment()
+
+		require.NoError(t, err)
+
+		require.Equal(t, "50m", proxy.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "50Mi", proxy.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		require.Equal(t, "2Gi", proxy.Spec.Template.Spec.Containers[0].Resources.Requests.StorageEphemeral().String())
+
+		require.Equal(t, "100m", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
+		require.Equal(t, "100Mi", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		require.Equal(t, "8Gi", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.StorageEphemeral().String())
+	})
 }
 
 func TestReconcileCollector(t *testing.T) {
@@ -501,21 +537,6 @@ func TestReconcileCollector(t *testing.T) {
 		require.NoError(t, err)
 
 		require.True(t, mockKM.NodeCollectorDaemonSetContains("memory: 10Mi"))
-	})
-
-	t.Run("no resources set for node and cluster collector", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(), nil)
-
-		_, err := r.Reconcile(context.Background(), defaultRequest())
-		require.NoError(t, err)
-
-		/* DaemonSet wavefront-node-collector */
-		require.True(t, mockKM.NodeCollectorDaemonSetContains("resources:"))
-		require.False(t, mockKM.NodeCollectorDaemonSetContains("limits:", "requests:"))
-
-		/* Deployment wavefront-cluster-collector */
-		require.True(t, mockKM.ClusterCollectorDeploymentContains("resources:"))
-		require.False(t, mockKM.ClusterCollectorDeploymentContains("limits:", "requests:"))
 	})
 
 	t.Run("Values from metrics.filters is propagated to default collector configmap", func(t *testing.T) {

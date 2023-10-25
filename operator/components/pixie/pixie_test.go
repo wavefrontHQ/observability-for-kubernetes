@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
@@ -26,7 +27,7 @@ func TestNewPixieComponent(t *testing.T) {
 
 	t.Run("default configuration", func(t *testing.T) {
 		component, _ := NewComponent(ComponentDir, validComponentConfig())
-		toApply, toDelete, err := component.Resources()
+		toApply, toDelete, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
@@ -111,7 +112,7 @@ func TestResources(t *testing.T) {
 		config.PEMResources.Limits.CPU = "100m"
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
@@ -129,7 +130,7 @@ func TestResources(t *testing.T) {
 		config.StirlingSources = []string{"a", "b", "c"}
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
@@ -147,7 +148,7 @@ func TestResources(t *testing.T) {
 		config.MaxHTTPBodyBytes = 128
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
@@ -167,7 +168,7 @@ func TestResources(t *testing.T) {
 		config.QueryBrokerResources.Limits.CPU = "100m"
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
@@ -187,7 +188,7 @@ func TestResources(t *testing.T) {
 		config.NATSResources.Limits.CPU = "100m"
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
@@ -207,7 +208,7 @@ func TestResources(t *testing.T) {
 		config.MetadataResources.Limits.CPU = "100m"
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
@@ -227,7 +228,7 @@ func TestResources(t *testing.T) {
 		config.KelvinResources.Limits.CPU = "100m"
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
@@ -247,7 +248,7 @@ func TestResources(t *testing.T) {
 		config.CertProvisionerJobResources.Limits.CPU = "100m"
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 

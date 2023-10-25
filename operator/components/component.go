@@ -2,6 +2,7 @@ package components
 
 import (
 	"bytes"
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -21,7 +22,7 @@ import (
 
 type Component interface {
 	Validate() validation.Result
-	Resources() (resourcesToApply []client.Object, resourcesToDelete []client.Object, error error)
+	Resources(builder *K8sResourceBuilder) (resourcesToApply []client.Object, resourcesToDelete []client.Object, error error)
 	Name() string
 }
 
@@ -67,7 +68,9 @@ func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool
 		_, hasTemplate, _ := unstructured.NestedMap(resource.Object, "spec", "template")
 		if hasTemplate {
 			setTemplateComponentLabels(resource, componentName)
-			setTemplateResources(resource, mergedContainerResourceOverrides)
+			if err := setTemplateResources(resource, mergedContainerResourceOverrides); err != nil {
+				return nil, nil, err
+			}
 		}
 		resource.SetOwnerReferences([]v1.OwnerReference{{
 			APIVersion: "apps/v1",
@@ -112,14 +115,10 @@ func mergeResource(a, b wf.Resource) wf.Resource {
 	return a
 }
 
-func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID string, containerResourceDefaults map[string]wf.Resources, data any) ([]client.Object, []client.Object, error) {
-	return (&K8sResourceBuilder{}).Build(fs, componentName, enabled, managerUID, containerResourceDefaults, data)
-}
-
-func setTemplateResources(workload *unstructured.Unstructured, overrides map[string]wf.Resources) {
-	override, exists := overrides[workload.GetName()]
+func setTemplateResources(workload *unstructured.Unstructured, workloadResources map[string]wf.Resources) error {
+	override, exists := workloadResources[workload.GetName()]
 	if !exists {
-		return
+		return fmt.Errorf("workload resource not specified for %s", workload.GetName())
 	}
 
 	r := map[string]any{
@@ -144,6 +143,7 @@ func setTemplateResources(workload *unstructured.Unstructured, overrides map[str
 	container := containers[0].(map[string]any)
 	container["resources"] = r
 	_ = unstructured.SetNestedSlice(workload.Object, containers, "spec", "template", "spec", "containers")
+	return nil
 }
 
 func setResourceComponentLabels(resource *unstructured.Unstructured, componentName string) {

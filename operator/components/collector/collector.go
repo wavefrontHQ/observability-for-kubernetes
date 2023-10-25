@@ -100,6 +100,13 @@ func (component *Component) Validate() validation.Result {
 	return validation.NewValidationResult(errs)
 }
 
-func (collector *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(collector.dir, collector.Name(), collector.config.Enable, collector.config.ControllerManagerUID, nil, collector.config)
+func (collector *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
+	return builder.Build(collector.dir, collector.Name(), collector.config.Enable, collector.config.ControllerManagerUID, collector.defaultWorkloadResources(), collector.config)
+}
+
+func (collector *Component) defaultWorkloadResources() map[string]wf.Resources {
+	return map[string]wf.Resources{
+		util.NodeCollectorName:    collector.config.NodeCollectorResources,
+		util.ClusterCollectorName: collector.config.ClusterCollectorResources,
+	}
 }

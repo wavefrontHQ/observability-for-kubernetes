@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
@@ -115,7 +116,7 @@ func TestValidate(t *testing.T) {
 func TestResources(t *testing.T) {
 	t.Run("default configuration", func(t *testing.T) {
 		loggingComponent, _ := NewComponent(ComponentDir, validLoggingComponentConfig())
-		toApply, toDelete, err := loggingComponent.Resources()
+		toApply, toDelete, err := loggingComponent.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 		require.Equal(t, 3, len(toApply))
@@ -155,7 +156,7 @@ func TestResources(t *testing.T) {
 		config.Resources.Requests.Memory = "10Mi"
 		config.Resources.Limits.Memory = "256Mi"
 		loggingComponent, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := loggingComponent.Resources()
+		toApply, _, err := loggingComponent.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
@@ -170,7 +171,7 @@ func TestResources(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.TagAllowList = map[string][]string{"namespace_name": {"kube-sys", "wavefront"}, "pod_name": {"pet-clinic"}}
 		loggingComponent, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := loggingComponent.Resources()
+		toApply, _, err := loggingComponent.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
@@ -185,7 +186,7 @@ func TestResources(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.Tags = map[string]string{"key1": "value1", "key2": "value2"}
 		loggingComponent, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := loggingComponent.Resources()
+		toApply, _, err := loggingComponent.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
@@ -200,7 +201,7 @@ func TestResources(t *testing.T) {
 		config := validLoggingComponentConfig()
 		config.ProxyAddress = "http://my-proxy:8888"
 		loggingComponent, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := loggingComponent.Resources()
+		toApply, _, err := loggingComponent.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
@@ -227,9 +228,15 @@ func validLoggingComponentConfig() ComponentConfig {
 		ImageRegistry:          wftest.DefaultImageRegistry,
 		ProxyAddress:           fmt.Sprintf("http://%s", wftest.DefaultProxyAddress),
 		ProxyAvailableReplicas: 1,
-		Resources: wf.Resources{Limits: wf.Resource{
-			CPU:    "100Mi",
-			Memory: "50Mi",
-		}},
+		Resources: wf.Resources{
+			Requests: wf.Resource{
+				CPU:    "100m",
+				Memory: "50Mi",
+			},
+			Limits: wf.Resource{
+				CPU:    "100m",
+				Memory: "50Mi",
+			},
+		},
 	}
 }

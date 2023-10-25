@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
@@ -76,7 +77,7 @@ func TestValidate(t *testing.T) {
 func TestResources(t *testing.T) {
 	t.Run("default configuration", func(t *testing.T) {
 		component, _ := NewComponent(ComponentDir, validComponentConfig())
-		toApply, toDelete, err := component.Resources()
+		toApply, toDelete, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 		require.Equal(t, 3, len(toApply))
@@ -105,7 +106,7 @@ func TestResources(t *testing.T) {
 		config := validComponentConfig()
 		config.Namespace = wftest.DefaultNamespace
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, toDelete, err := component.Resources()
+		toApply, toDelete, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 		require.Equal(t, 3, len(toApply))

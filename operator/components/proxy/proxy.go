@@ -123,6 +123,12 @@ func (component *Component) Validate() validation.Result {
 	return validation.NewValidationResult(errs)
 }
 
-func (proxy *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(proxy.dir, proxy.Name(), proxy.config.Enable, proxy.config.ControllerManagerUID, nil, proxy.config)
+func (proxy *Component) defaultWorkloadResources() map[string]wf.Resources {
+	return map[string]wf.Resources{
+		util.ProxyName: proxy.config.Resources,
+	}
+}
+
+func (proxy *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
+	return builder.Build(proxy.dir, proxy.Name(), proxy.config.Enable, proxy.config.ControllerManagerUID, proxy.defaultWorkloadResources(), proxy.config)
 }
