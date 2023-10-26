@@ -94,12 +94,20 @@ type WavefrontSpec struct {
 }
 
 type Experimental struct {
+	// Pixie contains performance tuning settings for Pixie workloads
+	Pixie Pixie `json:"pixie"`
+
 	Autotracing AutoTracingPixie `json:"autotracing,omitempty"`
 
 	// Insights
 	Insights Insights `json:"insights,omitempty"`
 
 	Hub Hub `json:"hub,omitempty"`
+}
+
+type Pixie struct {
+	// TableStoreLimits Limits on queryable data for the PEM containers.
+	TableStoreLimits TableStoreLimits `json:"table_store_limits"`
 }
 
 type AutoTracingPixie struct {
@@ -443,6 +451,10 @@ type TableStoreLimits struct {
 
 	// HttpEventsPercent Percent of TotalMiB allocated to the http_events table
 	HttpEventsPercent int `json:"http_events_percent"`
+}
+
+func (t *TableStoreLimits) IsEmpty() bool {
+	return t.TotalMiB == 0 && t.HttpEventsPercent == 0
 }
 
 type Logging struct {

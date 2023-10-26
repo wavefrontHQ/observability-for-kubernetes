@@ -15,6 +15,10 @@ func FromWavefront(cr *wf.Wavefront) Config {
 		ClusterName:          cr.Spec.ClusterName,
 	})
 
+	if !cr.Spec.Experimental.Pixie.TableStoreLimits.IsEmpty() {
+		config.TableStoreLimits = cr.Spec.Experimental.Pixie.TableStoreLimits
+	}
+
 	if cr.Spec.Experimental.Hub.Pixie.Enable {
 		config.StirlingSources = HubSources
 	} else if cr.Spec.Experimental.Autotracing.Enable {

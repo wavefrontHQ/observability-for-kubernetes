@@ -78,5 +78,16 @@ func TestFromWavefront(t *testing.T) {
 				require.Equal(t, MetadataResources[clusterSize], config.MetadataResources)
 			})
 		}
+
+		t.Run("config.TableStoreLimits matches table_store_limits when it is configured", func(t *testing.T) {
+			cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+				w.Spec.ClusterSize = wf.ClusterSizeSmall
+				w.Spec.Experimental.Pixie.TableStoreLimits = wf.TableStoreLimits{TotalMiB: 9, HttpEventsPercent: 10}
+			})
+
+			config := FromWavefront(cr)
+
+			require.Equal(t, cr.Spec.Experimental.Pixie.TableStoreLimits, config.TableStoreLimits)
+		})
 	})
 }
