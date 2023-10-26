@@ -212,7 +212,10 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 func (r *WavefrontReconciler) readAndInterpolateResources() ([]client.Object, []client.Object, error) {
 	var resourcesToApply, resourcesToDelete []client.Object
 	for _, component := range r.components {
-		toApply, toDelete, _ := component.Resources()
+		toApply, toDelete, err := component.Resources()
+		if err != nil {
+			log.Log.Error(err, "could not get resources", "component", component.Name())
+		}
 		resourcesToApply = append(resourcesToApply, toApply...)
 		resourcesToDelete = append(resourcesToDelete, toDelete...)
 	}
