@@ -2,18 +2,26 @@ package components
 
 import (
 	"bytes"
+	"context"
 	"io/fs"
 	"path/filepath"
 	"strings"
 	"text/template"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	yaml2 "gopkg.in/yaml.v2"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	"k8s.io/apimachinery/pkg/types"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -31,6 +39,8 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 		return nil, nil, err
 	}
 
+	certJobNotFound := true
+	certJobSucceeded := false
 	var resourcesToApply, resourcesToDelete []client.Object
 	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
 	for _, resourceFile := range files {
@@ -72,7 +82,43 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 		}})
 
 		if enabled && resource.GetAnnotations()["wavefront.com/conditionally-provision"] != "false" {
-			resourcesToApply = append(resourcesToApply, resource)
+			if componentName == "pixie" {
+				scheme := runtime.NewScheme()
+				utilruntime.Must(batchv1.AddToScheme(scheme))
+				objClient, err := client.New(config.GetConfigOrDie(), client.Options{Scheme: scheme})
+				if err != nil {
+					return nil, nil, err
+				}
+
+				certProvisionerJob, err := getJob(objClient, "cert-provisioner-job", "observability-system")
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						if resource.GetName() == "cert-provisioner-job" || resource.GetName() == "pl-cert-provisioner-service-account" {
+							resourcesToApply = append(resourcesToApply, resource)
+						} else {
+							continue
+						}
+					} else {
+						return nil, nil, err
+					}
+				}
+
+				//log.Log.Info("", "job", certProvisionerJob)
+				certProvisioningCompleted := false
+				for _, status := range certProvisionerJob.Status.Conditions {
+					if status.Type == batchv1.JobComplete && status.Status == corev1.ConditionTrue {
+						certProvisioningCompleted = true
+					}
+				}
+
+				//if resource.GetName() == "cert-provisioner-job" {
+				//	resourcesToApply = append(resourcesToApply, resource)
+				if certProvisioningCompleted {
+					resourcesToApply = append(resourcesToApply, resource)
+				}
+			} else {
+				resourcesToApply = append(resourcesToApply, resource)
+			}
 		} else {
 			resourcesToDelete = append(resourcesToDelete, resource)
 		}
@@ -133,4 +179,14 @@ func newTemplate(resourceFile string) *template.Template {
 	}
 
 	return template.New(resourceFile).Funcs(fMap)
+}
+
+func getJob(client client.Client, name, ns string) (*batchv1.Job, error) {
+	var job batchv1.Job
+	err := client.Get(context.Background(), util.ObjKey(ns, name), &job)
+	if err != nil {
+		return nil, err
+	}
+
+	return &job, nil
 }
