@@ -11,8 +11,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -137,33 +135,6 @@ func GetMaxFrequencyFromCronScripts(configMaps []corev1.ConfigMap) time.Duration
 		maxFrequencyS = MaxNumber(maxFrequencyS, cronFrequencyS)
 	}
 	return time.Duration(maxFrequencyS) * time.Second
-}
-
-func GetPrefixForPEMSettings(client dynamic.Interface, namespace string) (string, error) {
-	obj, err := client.Resource(schema.GroupVersionResource{
-		Group:    "wavefront.com",
-		Version:  "v1alpha1",
-		Resource: "wavefronts",
-	}).Namespace(namespace).Get(context.Background(), "wavefront", metav1.GetOptions{})
-	if err != nil {
-		return "", fmt.Errorf("error fetching wavefront CR: %s", err)
-	}
-	hubPixieEnabled, _, err := unstructured.NestedBool(obj.Object, "spec", "experimental", "hub", "pixie", "enable")
-	if err != nil {
-		return "", fmt.Errorf("error retrieving spec.experimental.hub.pixie.enable: %s", err)
-	}
-	if hubPixieEnabled {
-		return "spec.experimental.hub.pixie.pem", nil
-	}
-	return "spec.experimental.autotracing.pem", nil
-}
-
-func GetPEMResourceRequirements(client kubernetes.Interface, namespace string) (corev1.ResourceRequirements, error) {
-	ds, err := client.AppsV1().DaemonSets(namespace).Get(context.Background(), "vizier-pem", metav1.GetOptions{})
-	if err != nil {
-		return corev1.ResourceRequirements{}, err
-	}
-	return ds.Spec.Template.Spec.Containers[0].Resources, nil
 }
 
 type RowBatchSizeError struct {
