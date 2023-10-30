@@ -95,7 +95,7 @@ type WavefrontSpec struct {
 
 type Experimental struct {
 	// Pixie contains performance tuning settings for Pixie workloads
-	Pixie Pixie `json:"pixie"`
+	Pixie Pixie `json:"pixie,omitempty"`
 
 	Autotracing AutoTracingPixie `json:"autotracing,omitempty"`
 

@@ -635,6 +635,29 @@ spec:
                     required:
                     - ingestionUrl
                     type: object
+                  pixie:
+                    description: Pixie contains performance tuning settings for Pixie
+                      workloads
+                    properties:
+                      table_store_limits:
+                        description: TableStoreLimits Limits on queryable data for
+                          the PEM containers.
+                        properties:
+                          http_events_percent:
+                            description: HttpEventsPercent Percent of TotalMiB allocated
+                              to the http_events table
+                            type: integer
+                          total_mib:
+                            description: TotalMiB Total MiB of memory allocated to
+                              all tables
+                            type: integer
+                        required:
+                        - http_events_percent
+                        - total_mib
+                        type: object
+                    required:
+                    - table_store_limits
+                    type: object
                 type: object
               imagePullSecret:
                 description: ImagePullSecret is the name of the secret to authenticate
