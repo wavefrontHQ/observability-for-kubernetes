@@ -39,8 +39,6 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 		return nil, nil, err
 	}
 
-	certJobNotFound := true
-	certJobSucceeded := false
 	var resourcesToApply, resourcesToDelete []client.Object
 	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
 	for _, resourceFile := range files {
@@ -93,7 +91,7 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 				certProvisionerJob, err := getJob(objClient, "cert-provisioner-job", "observability-system")
 				if err != nil {
 					if apierrors.IsNotFound(err) {
-						if resource.GetName() == "cert-provisioner-job" || resource.GetName() == "pl-cert-provisioner-service-account" {
+						if resource.GetName() == "cert-provisioner-job" || resource.GetName() == "pl-cert-provisioner-service-account" || resource.GetName() == "pl-cloud-config" || resource.GetName() == "pl-cluster-secrets" {
 							resourcesToApply = append(resourcesToApply, resource)
 						} else {
 							continue
@@ -103,16 +101,15 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 					}
 				}
 
-				//log.Log.Info("", "job", certProvisionerJob)
 				certProvisioningCompleted := false
-				for _, status := range certProvisionerJob.Status.Conditions {
-					if status.Type == batchv1.JobComplete && status.Status == corev1.ConditionTrue {
-						certProvisioningCompleted = true
+				if certProvisionerJob != nil {
+					for _, status := range certProvisionerJob.Status.Conditions {
+						if status.Type == batchv1.JobComplete && status.Status == corev1.ConditionTrue {
+							certProvisioningCompleted = true
+						}
 					}
 				}
 
-				//if resource.GetName() == "cert-provisioner-job" {
-				//	resourcesToApply = append(resourcesToApply, resource)
 				if certProvisioningCompleted {
 					resourcesToApply = append(resourcesToApply, resource)
 				}
