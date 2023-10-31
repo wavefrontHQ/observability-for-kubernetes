@@ -120,7 +120,7 @@ func main() {
 	if err != nil {
 		log.Log.Error(err, "error reading default namespace: %s")
 	} else {
-		log.Log.Info(fmt.Sprintf("*********************** Setting cluster uud: %s", clusterUUID))
+		log.Log.Info(fmt.Sprintf("Setting cluster uuid: %s", clusterUUID))
 	}
 
 	controller, err := controllers.NewWavefrontReconciler(
