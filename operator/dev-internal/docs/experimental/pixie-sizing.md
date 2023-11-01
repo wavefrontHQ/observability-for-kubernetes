@@ -1,6 +1,6 @@
 # Configuring the Size of the Pixie Deployment
 
-These instructions will guide you through configuring the size of your Pixie deployment. It covers [setting up the default sizing](#Configure Default Size), running the [Pixie Sizer tool](#Running the Pixie Sizer tool), and [validating that the chosen size is sufficient](#Validating Sizing).
+These instructions will guide you through configuring the size of your Pixie deployment. It covers [setting up the default sizing](#Configure Default Size) and [running the Pixie Sizer tool](#Running the Pixie Sizer tool).
 
 ## Prerequisites
 
@@ -14,16 +14,17 @@ A Kubernetes cluster with Pixie enabled:
    1. Medium (recommended for clusters with under 75 nodes)
    1. Large (recommended for clusters with more than 75 nodes)
 
-
-   **Note**: Number of nodes is a heuristic, and the actual needs of the cluster can vary depending on traffic and other factors.
+**Note**: Number of nodes is a heuristic, and the actual needs of the cluster can vary depending on traffic and other factors.
 
 
 2. Once you have chosen your preset size, specify it in the Wavefront CR yaml like this (selecting only one size):
-```yaml
-spec: 
-  clusterSize: small | medium | large
-```
-   **Note**: If you are happy with your sizing, this is all that is required. The rest of this guide will cover how to further customize the resources, and how to check to see if the chosen size is appropriate.
+    ```yaml
+    spec: 
+      clusterSize: small | medium | large
+    ```
+    If no size is specified, `medium` will be chosen as the default.
+
+**Note**: If you are happy with your sizing, this is all that is required. The rest of this guide will cover how to further customize the resources, and how to check to see if the chosen size is appropriate.
 
 
 ## Customizing Resources
@@ -43,11 +44,11 @@ There are two main categories of settings that are able to be customized. They a
     - Query scheduler
   - `pl-nats`
     - Internal Pixie message bus
-- An example yaml snippet overriding the resource requirements for `vizier-pem`:
+- An example showing how to modify the Wavefront CR to override resource requirements for `vizier-pem`:
 ```yaml
 spec: 
-  #clusterSize will only be overridden for vizier-pem
-  clusterSize: <small | medium | large>
+  clusterSize: small | medium | large
+  # This example will override the specified resources from the defaults set by clusterSize
   workloadResources: 
     vizier-pem: 
       requests: 
