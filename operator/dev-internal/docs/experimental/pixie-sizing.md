@@ -1,6 +1,6 @@
 # Configuring the Size of the Pixie Deployment
 
-These instructions will guide you through configuring the size of your Pixie deployment. It covers [setting up the default sizing](#Configure Default Size), running the [Pixie Sizer tool](#Running the Pixie Sizer tool), and [validating that the chosen size is sufficient](#Validating the Chosen Size).
+These instructions will guide you through configuring the size of your Pixie deployment. It covers [setting up the default sizing](#Configure Default Size), running the [Pixie Sizer tool](#Running the Pixie Sizer tool), and [validating that the chosen size is sufficient](#Validating Sizing).
 
 ## Prerequisites
 
@@ -10,10 +10,14 @@ A Kubernetes cluster with Pixie enabled:
 ## Configure Default Size
 
 1. In order to begin sizing your cluster's Pixie deployment, you must begin by choosing one of several presets. These are:
-   1. Small (recommended for clusters with TODO 3 nodes)
-   1. Medium (recommended for clusters with TODO 50 nodes)
-   1. Large (recommended for clusters with TODO 150 nodes)
-   
+   1. Small (recommended for clusters with under 10 nodes)
+   1. Medium (recommended for clusters with under 75 nodes)
+   1. Large (recommended for clusters with more than 75 nodes)
+
+
+   **Note**: Number of nodes is a heuristic, and the actual needs of the cluster can vary depending on traffic and other factors.
+
+
 2. Once you have chosen your preset size, specify it in the Wavefront CR yaml like this (selecting only one size):
 ```yaml
 spec: 
@@ -29,15 +33,15 @@ There are two main categories of settings that are able to be customized. They a
 1. Customizing Pod Resource Requirements
 - The resource requirements for any workload can be customized as described in this Readme (TODO: write this readme)
 - The specific Pixie workloads and their function are as follows:
-  - kelvin
+  - `kelvin`
     - Query aggregator and exporter
-  - vizier-pem
+  - `vizier-pem`
     - Data collection and short-term retention
-  - vizier-metadata
+  - `vizier-metadata`
     - Metadata cache used by Pixie
-  - vizier-query-broker
+  - `vizier-query-broker`
     - Query scheduler
-  - pl-nats
+  - `pl-nats`
     - Internal Pixie message bus
 - An example yaml snippet overriding the resource requirements for `vizier-pem`:
 ```yaml
@@ -56,14 +60,14 @@ spec:
 
 2. Customizing Pixie-specific Settings
 - There are two values exposed by Pixie to customize its internal resource limits: `total_mib` and `http_events_percent`, which are set in the Wavefront CR as follows:
-```yaml
-spec:
-  experimental: 
-    pixie: 
-        table_store_limits: 
-          total_mib: 100
-          http_events_percent: 20
-```
+    ```yaml
+    spec:
+      experimental: 
+        pixie: 
+            table_store_limits: 
+              total_mib: 100
+              http_events_percent: 20
+    ```
 - The `clusterSize` chosen will give a reasonable default for these settings, but they can be fine-tuned. Tuning these variables relies on knowledge of internal Pixie dynamics. The Pixie Sizer tool described in the next section will make a recommendation for what these values should be based on actual observed needs of the cluster.
 
 ## Running the Pixie Sizer tool
@@ -93,8 +97,7 @@ In order to see the Sizer's recommendation, run:
 kubectl --namespace observability-system logs --selector="app.kubernetes.io/component=pixie-sizer" --container=pixie-sizer --since=$PS_SAMPLE_PERIOD_MINUTES
 ```
 
-## Validating the Chosen Size
 
- 1. Checking for OOM Kills
-   (TODO)
-## Known Limitations
+## Validating Sizing
+
+The Pixie sizer tool only deals with internal configuration of Pixie memory parameters. For Kubernetes resource configuration, standard best practices should be followed to ensure that the chosen sizes are appropriate. This includes checking for OOM kills, historical memory trends, etc.
