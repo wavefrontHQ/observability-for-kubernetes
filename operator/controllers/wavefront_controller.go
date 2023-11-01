@@ -245,7 +245,7 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 		},
 	}
 
-	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wfToDelete)
+	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wfToDelete, r.Client)
 	if err != nil {
 		return err
 	}
@@ -288,7 +288,7 @@ func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Co
 		wavefront.Spec.Openshift = true
 	}
 
-	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wavefront)
+	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wavefront, r.Client)
 	if err != nil {
 		return err
 	}

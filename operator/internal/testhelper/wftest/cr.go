@@ -90,6 +90,7 @@ func NothingEnabledCR(options ...CROption) *wf.Wavefront {
 			ClusterName:          "testClusterName",
 			ControllerManagerUID: "controller-manager-uid",
 			ClusterUUID:          "cluster-uuid",
+			Namespace:            DefaultNamespace,
 		},
 	}
 	for _, option := range options {

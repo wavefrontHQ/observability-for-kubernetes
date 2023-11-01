@@ -6,6 +6,8 @@ metadata:
     component: vizier
   name: kelvin
   namespace: observability-system
+  annotations:
+    wavefront.com/conditionally-provision: '{{ .TLSCertsSecretExists }}'
 spec:
   selector:
     matchLabels:

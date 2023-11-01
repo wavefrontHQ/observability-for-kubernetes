@@ -16,6 +16,7 @@ const DeployDir = "pixie"
 
 type Config struct {
 	Enable               bool
+	TLSCertsSecretExists bool
 	ControllerManagerUID string
 	ClusterUUID          string
 	ClusterName          string

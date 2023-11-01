@@ -10,9 +10,10 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/logging"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/pixie"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/proxy"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func BuildComponents(componentsDir fs.FS, wf *wf.Wavefront) ([]components.Component, error) {
+func BuildComponents(componentsDir fs.FS, wf *wf.Wavefront, client client.Client) ([]components.Component, error) {
 	var created []components.Component
 
 	proxyDir, err := fs.Sub(componentsDir, proxy.DeployDir)
@@ -64,7 +65,7 @@ func BuildComponents(componentsDir fs.FS, wf *wf.Wavefront) ([]components.Compon
 		return nil, err
 	}
 
-	pixieComponent, err := pixie.NewComponent(pixieDir, pixie.FromWavefront(wf))
+	pixieComponent, err := pixie.NewComponent(pixieDir, pixie.FromWavefront(wf, client))
 	if err != nil {
 		return nil, err
 	}

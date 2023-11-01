@@ -5,16 +5,61 @@ import (
 
 	"github.com/stretchr/testify/require"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/clientFake"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestFromWavefront(t *testing.T) {
+	t.Run("when TLS Certs secret exists", func(t *testing.T) {
+		cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.Experimental.Hub.Enable = true
+			w.Spec.Experimental.Hub.Pixie.Enable = true
+		})
+
+		sslSecret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      util.PixieTLSCertsName,
+				Namespace: cr.Spec.Namespace,
+			},
+			StringData: map[string]string{
+				"server.key": "server-key-secret",
+				"ca.crt":     "ca-crt-secret",
+				"client.crt": "client-crt-secret",
+				"client.key": "client-key-secret",
+				"server.crt": "server-crt-secret",
+			},
+		}
+
+		client := clientFake.Setup(sslSecret)
+
+		config := FromWavefront(cr, client)
+
+		require.True(t, config.Enable)
+		require.True(t, config.TLSCertsSecretExists)
+	})
+
+	t.Run("when TLS Certs secret does not exist", func(t *testing.T) {
+		cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.Experimental.Hub.Enable = true
+			w.Spec.Experimental.Hub.Pixie.Enable = true
+		})
+
+		config := FromWavefront(cr, clientFake.Setup())
+
+		require.True(t, config.Enable)
+		require.False(t, config.TLSCertsSecretExists)
+	})
+
 	t.Run("valid wavefront spec config for hub enabled", func(t *testing.T) {
 		cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Hub.Enable = true
 			w.Spec.Experimental.Hub.Pixie.Enable = true
 		})
-		config := FromWavefront(cr)
+
+		config := FromWavefront(cr, clientFake.Setup())
 		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
@@ -25,7 +70,7 @@ func TestFromWavefront(t *testing.T) {
 
 	t.Run("component config enable should be set to false", func(t *testing.T) {
 		cr := wftest.CR()
-		config := FromWavefront(cr)
+		config := FromWavefront(cr, clientFake.Setup())
 
 		require.False(t, config.Enable)
 	})
@@ -35,7 +80,7 @@ func TestFromWavefront(t *testing.T) {
 			w.Spec.Experimental.Autotracing.Enable = true
 			w.Spec.ClusterName = "test-clusterName"
 		})
-		config := FromWavefront(cr)
+		config := FromWavefront(cr, clientFake.Setup())
 		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
@@ -51,7 +96,7 @@ func TestFromWavefront(t *testing.T) {
 			w.Spec.Experimental.Hub.Enable = true
 			w.Spec.Experimental.Hub.Pixie.Enable = true
 		})
-		config := FromWavefront(cr)
+		config := FromWavefront(cr, clientFake.Setup())
 		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
