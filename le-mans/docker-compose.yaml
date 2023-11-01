@@ -84,6 +84,7 @@ services:
     - "./scripts:/opt/le-mans/scripts"
   fdb:
     image: foundationdb/foundationdb:7.1.37
+    hostname: fdb
     ports:
     - $FDB_PORT:$FDB_PORT
     volumes:

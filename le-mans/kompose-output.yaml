@@ -169,6 +169,23 @@ status:
   loadBalancer: {}
 
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: wf-proxy
+  name: wf-proxy
+spec:
+  ports:
+  - name: "2878"
+    port: 2878
+    targetPort: 2878
+  selector:
+    io.kompose.service: wf-proxy
+status:
+  loadBalancer: {}
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -278,6 +295,10 @@ spec:
               hostPort: 4550
               protocol: TCP
           resources: {}
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/sh", "-c", "fdbcli --exec 'configure new single memory'" ]
       restartPolicy: Always
 status: {}
 
@@ -569,7 +590,7 @@ spec:
       containers:
         - env:
             - name: CXN
-              value: docker:docker@fdb.default:4550
+              value: docker:docker@fdb:4550
           image: uberserver
           imagePullPolicy: Never
           name: uberserver
@@ -578,6 +599,10 @@ spec:
               hostPort: 8082
               protocol: TCP
           resources: {}
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/sh", "-c", "/opt/wavefront/setup-wf-customers.sh" ]
       restartPolicy: Always
 status: {}
 
@@ -622,3 +647,61 @@ spec:
       restartPolicy: Always
 status: {}
 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: wf-proxy
+  name: wf-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: wf-proxy
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: wf-proxy
+    spec:
+      containers:
+      - env:
+        - name: WAVEFRONT_URL
+          value: "http://uberserver:8082/api"
+        - name: CSP_APP_ID
+          value: "YBwuhnoMeeLz4fs7guyyRBcQ5pI1ydvs2pF"
+        - name: CSP_APP_SECRET
+          value: "msOuVoREiEbb3wQyPjjiSA4peBp4681gR4Ppp4JGiODZUHt5T1"
+        - name: WAVEFRONT_PROXY_ARGS
+          value: "--le-mans-host http://lemans-gateway:8002 --le-mans-stream-name wf-test-stream --cspBaseUrl https://console-stg.cloud.vmware.com"
+        image: wf-proxy
+        imagePullPolicy: Never
+        name: wf-proxy
+        ports:
+        - containerPort: 2878
+          hostPort: 2878
+          protocol: TCP
+        resources: {}
+      restartPolicy: Always
+status: {}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - http:
+      paths:
+      - pathType: Prefix
+        path: /(.*)
+        backend:
+          service:
+            name: uberserver
+            port:
+              number: 8082
