@@ -28,7 +28,7 @@ pipeline {
           env.UNMERGED_PRS = sh(script: './ci/jenkins/show-unmerged-prs.sh', returnStdout: true).trim()
           int numPRs = sh(script: './ci/jenkins/show-unmerged-prs.sh | wc -l', returnStdout: true).trim().toInteger() - 2
           if (numPRs > 0) {
-            slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "Release pipeline triggered with unmerged PRs:\n\n${env.UNMERGED_PRS}")
+            slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "@k8po-eng-team\n\n${env.UNMERGED_PRS}")
           }
         }
         error("don't want to trigger release right now")

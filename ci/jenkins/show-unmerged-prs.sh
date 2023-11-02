@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-echo "Unmerged JIRA story PRs:"
-echo "-------------------------------"
+echo "Release pipeline triggered with unmerged PRs:"
+echo "-------------------------------------------------------"
 
 curl -sSL \
   -X GET \
