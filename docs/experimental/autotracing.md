@@ -20,8 +20,6 @@ A Kubernetes cluster:
 
 1. Install the Observability for Kubernetes Operator into the `observability-system` namespace.
 
-   **Note**: If you already have the deprecated Kubernetes Integration installed by using Helm or manual deployment, *uninstall* it before you install the Operator.
-
    ```
    kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
    ```
