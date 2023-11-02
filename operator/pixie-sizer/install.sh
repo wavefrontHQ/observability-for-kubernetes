@@ -14,7 +14,7 @@ sed "s/PS_TRAFFIC_SCALE_FACTOR_VALUE/$PS_TRAFFIC_SCALE_FACTOR/g" "$PIXIE_SIZER_Y
 # Give useful commands
 echo
 echo "Wait $PS_SAMPLE_PERIOD_MINUTES minutes, then run the following command to see the recommendation:"
-echo "    kubectl --namespace observability-system logs --selector=\"app.kubernetes.io/component=pixie-sizer\" --container=pixie-sizer --since=\"${PS_SAMPLE_PERIOD_MINUTES}m\" | grep 'recommended settings'"
+echo "    kubectl --namespace observability-system logs --selector=\"app.kubernetes.io/component=pixie-sizer\" --container=pixie-sizer --since=\"${PS_SAMPLE_PERIOD_MINUTES}m\""
 
 echo
 echo "Run the following command to completely remove the Pixie sizer installation:"

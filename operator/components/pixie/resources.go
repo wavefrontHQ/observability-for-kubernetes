@@ -18,31 +18,31 @@ func defaultResources(clusterSize string, config Config) Config {
 var PEMResources = map[string]v1alpha1.Resources{
 	v1alpha1.ClusterSizeSmall: {
 		Requests: v1alpha1.Resource{
-			CPU:    "50m",
+			CPU:    "100m",
 			Memory: "300Mi",
 		},
 		Limits: v1alpha1.Resource{
-			CPU:    "300m",
+			CPU:    "500m",
 			Memory: "500Mi",
 		},
 	},
 	v1alpha1.ClusterSizeMedium: {
 		Requests: v1alpha1.Resource{
-			CPU:    "300m",
+			CPU:    "500m",
 			Memory: "500Mi",
 		},
 		Limits: v1alpha1.Resource{
-			CPU:    "750m",
+			CPU:    "1",
 			Memory: "600Mi",
 		},
 	},
 	v1alpha1.ClusterSizeLarge: {
 		Requests: v1alpha1.Resource{
-			CPU:    "750m",
+			CPU:    "1",
 			Memory: "600Mi",
 		},
 		Limits: v1alpha1.Resource{
-			CPU:    "1",
+			CPU:    "2",
 			Memory: "750Mi",
 		},
 	},
@@ -103,27 +103,27 @@ var QueryBrokerResources = map[string]v1alpha1.Resources{
 			Memory: "50Mi",
 		},
 		Limits: v1alpha1.Resource{
-			CPU:    "250m",
+			CPU:    "500m",
 			Memory: "128Mi",
 		},
 	},
-	v1alpha1.ClusterSizeMedium: {
+	v1alpha1.ClusterSizeMedium: { // TODO update
 		Requests: v1alpha1.Resource{
-			CPU:    "250m",
+			CPU:    "500m",
 			Memory: "128Mi",
-		},
-		Limits: v1alpha1.Resource{
-			CPU:    "500m",
-			Memory: "256Mi",
-		},
-	},
-	v1alpha1.ClusterSizeLarge: {
-		Requests: v1alpha1.Resource{
-			CPU:    "500m",
-			Memory: "256Mi",
 		},
 		Limits: v1alpha1.Resource{
 			CPU:    "1",
+			Memory: "256Mi",
+		},
+	},
+	v1alpha1.ClusterSizeLarge: { // TODO update
+		Requests: v1alpha1.Resource{
+			CPU:    "1",
+			Memory: "256Mi",
+		},
+		Limits: v1alpha1.Resource{
+			CPU:    "2",
 			Memory: "512Mi",
 		},
 	},
@@ -132,31 +132,31 @@ var QueryBrokerResources = map[string]v1alpha1.Resources{
 var NATSResources = map[string]v1alpha1.Resources{
 	v1alpha1.ClusterSizeSmall: {
 		Requests: v1alpha1.Resource{
-			CPU:    "5m",
+			CPU:    "100m",
 			Memory: "5Mi",
 		},
 		Limits: v1alpha1.Resource{
-			CPU:    "25m",
+			CPU:    "500m",
 			Memory: "25Mi",
 		},
 	},
 	v1alpha1.ClusterSizeMedium: {
 		Requests: v1alpha1.Resource{
-			CPU:    "10m",
+			CPU:    "500m",
 			Memory: "10Mi",
 		},
 		Limits: v1alpha1.Resource{
-			CPU:    "50m",
+			CPU:    "1",
 			Memory: "250Mi",
 		},
 	},
 	v1alpha1.ClusterSizeLarge: {
 		Requests: v1alpha1.Resource{
-			CPU:    "50m",
+			CPU:    "1",
 			Memory: "250Mi",
 		},
 		Limits: v1alpha1.Resource{
-			CPU:    "100m",
+			CPU:    "2",
 			Memory: "500Mi",
 		},
 	},
