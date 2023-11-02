@@ -30,8 +30,6 @@ For example, Istio and MySQL metrics, Telegraf configuration, etc. are still sup
 
 # Installation
 
-**Note:**  The Observability for Kubernetes Operator Helm chart is deprecated and no longer supported. Use the deploy, upgrade, and removal instructions below instead.
-
 ## Prerequisites
 
 To install the integration, you must use the [kubectl](https://kubernetes.io/docs/tasks/tools/) tool.
@@ -41,8 +39,6 @@ To install the integration, you must use the [kubectl](https://kubernetes.io/doc
 
 1. Install the Observability for Kubernetes Operator into the `observability-system` namespace.
 
-   **Note**: If you already have the deprecated Kubernetes Integration installed by using Helm or manual deployment, *uninstall* it before you install the Operator.
- 
    ```
    kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
    ```
@@ -111,8 +107,6 @@ To install the integration, you must use the [kubectl](https://kubernetes.io/doc
    wavefront   Healthy   Running (1/1)   Running (1/1)       Running (3/3)    Running (3/3)  2m4s   All components are healthy
    ```
    If `STATUS` is `Unhealthy`, check [troubleshooting](docs/troubleshooting.md).
-
-**Note**: For details on migrating from existing helm chart or manual deploy, see [Migration](docs/operator/migration.md).
 
 # Configuration
 
@@ -220,7 +214,6 @@ Upgrade the Observability for Kubernetes Operator and underlying agents to a new
 kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
 ```
 
-Note: This command will not upgrade any existing deprecated Helm or manual installations. See [migration.md](docs/operator/migration.md) for migration instructions.
 
 # Downgrade
 
