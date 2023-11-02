@@ -10,4 +10,4 @@ curl -sSL \
   -H "X-GitHub-Api-Version: 2022-11-28" \
   https://api.github.com/repos/wavefrontHQ/observability-for-kubernetes/pulls?state=open \
   | jq -r '.[] | select(.head.ref | startswith("K8SSAAS-")) | {ref: .head.ref, url: .html_url}' \
-  | jq -r '"\(.url) | \(.ref)"'
+  | jq -r '"\(.url) \n  \(.ref)"'
