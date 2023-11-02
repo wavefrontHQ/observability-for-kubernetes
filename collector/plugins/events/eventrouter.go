@@ -131,20 +131,7 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 
 	e = e.DeepCopy()
 
-	if e.ObjectMeta.Annotations == nil {
-		e.ObjectMeta.Annotations = map[string]string{}
-	}
-	e.ObjectMeta.Annotations["aria/cluster-name"] = er.clusterName
-	e.ObjectMeta.Annotations["aria/cluster-uuid"] = er.clusterUUID
-
-	if e.InvolvedObject.Kind == "Pod" {
-		workloadName, workloadKind, nodeName := er.workloadCache.GetWorkloadForPodName(e.InvolvedObject.Name, e.InvolvedObject.Namespace)
-		e.ObjectMeta.Annotations["aria/workload-name"] = workloadName
-		e.ObjectMeta.Annotations["aria/workload-kind"] = workloadKind
-		if len(nodeName) > 0 {
-			e.ObjectMeta.Annotations["aria/node-name"] = nodeName
-		}
-	}
+	annotateEvent(e, er)
 
 	ns := e.InvolvedObject.Namespace
 	if len(ns) == 0 {
