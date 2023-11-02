@@ -26,12 +26,12 @@ pipeline {
       steps {
         script {
           env.UNMERGED_PRS = sh(script: './ci/jenkins/show-unmerged-prs.sh', returnStdout: true).trim()
-          int numPRs = sh(script: 'echo $UNMERGED_PRS | wc -l').trim().toInteger() - 2
+          int numPRs = sh(script: './ci/jenkins/show-unmerged-prs.sh | wc -l', returnStdout: true).trim().toInteger() - 2
           if (numPRs > 0) {
             slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "Release pipeline triggered with unmerged PRs:\n\n${env.UNMERGED_PRS}")
           }
-          error("don't want to trigger release right now")
         }
+        error("don't want to trigger release right now")
       }
     }
 
@@ -63,15 +63,15 @@ pipeline {
     }
   }
 
-  post {
-    regression {
-      slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
-    }
-    success {
-        script {
-          BUILD_VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
-          slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "Success!! `observability-for-kubernetes:v${BUILD_VERSION}` is released!")
-        }
-    }
-  }
+//   post {
+//     regression {
+//       slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "RELEASE BUILD FAILED: <${env.BUILD_URL}|${env.JOB_NAME} [${env.BUILD_NUMBER}]>")
+//     }
+//     success {
+//         script {
+//           BUILD_VERSION = readFile('./operator/release/OPERATOR_VERSION').trim()
+//           slackSend (channel: '#tobs-k8po-team', color: '#008000', message: "Success!! `observability-for-kubernetes:v${BUILD_VERSION}` is released!")
+//         }
+//     }
+//   }
 }
