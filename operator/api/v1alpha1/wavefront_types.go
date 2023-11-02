@@ -23,10 +23,25 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+const (
+	ClusterSizeSmall  = "small"
+	ClusterSizeMedium = "medium"
+	ClusterSizeLarge  = "large"
+)
+
+var ClusterSizes = []string{ClusterSizeSmall, ClusterSizeMedium, ClusterSizeLarge}
+
 // WavefrontSpec defines the desired state of Wavefront
 type WavefrontSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make build" in the operator directory to regenerate code after modifying this file
+
+	// +kubebuilder:validation:Enum:=small;medium;large
+	// +kubebuilder:default:=medium
+	ClusterSize string `json:"clusterSize,omitempty"`
+
+	// WorkloadResources are a map from workload name (i.e. Deployment, StatefulSet, DaemonSet, or Job) to resource requests and limits
+	WorkloadResources map[string]Resources `json:"workloadResources,omitempty"`
 
 	// ClusterName is a unique name for the Kubernetes cluster to be identified via a metric tag on Wavefront (Required).
 	// +kubebuilder:validation:MinLength:=3
@@ -79,12 +94,20 @@ type WavefrontSpec struct {
 }
 
 type Experimental struct {
+	// Pixie contains performance tuning settings for Pixie workloads
+	Pixie Pixie `json:"pixie,omitempty"`
+
 	Autotracing AutoTracingPixie `json:"autotracing,omitempty"`
 
 	// Insights
 	Insights Insights `json:"insights,omitempty"`
 
 	Hub Hub `json:"hub,omitempty"`
+}
+
+type Pixie struct {
+	// TableStoreLimits Limits on queryable data for the PEM containers.
+	TableStoreLimits TableStoreLimits `json:"table_store_limits"`
 }
 
 type AutoTracingPixie struct {
@@ -97,18 +120,12 @@ type AutoTracingPixie struct {
 type Hub struct {
 	Enable bool `json:"enable,omitempty"`
 	// +kubebuilder:default:={enable: true}
-	Pixie HubPixie `json:"pixie,omitempty"`
-}
-
-type HubPixie struct {
-	PixieShared `json:",inline"`
+	Pixie PixieShared `json:"pixie,omitempty"`
 }
 
 type PixieShared struct {
 	// +kubebuilder:default:=true
 	Enable bool `json:"enable,omitempty"`
-	// +kubebuilder:default:={resources: {requests: {cpu: "100m", memory: "300Mi"}, limits: {cpu: "1000m", memory: "750Mi"}}, table_store_limits: {total_mib: 150, http_events_percent: 20}}
-	Pem Pem `json:"pem,omitempty"`
 }
 
 type Metrics struct {
@@ -358,6 +375,10 @@ type Resource struct {
 	EphemeralStorage string `json:"ephemeral-storage,omitempty" yaml:"ephemeral-storage,omitempty"`
 }
 
+func (r *Resource) IsEmpty() bool {
+	return r.CPU == "" && r.Memory == "" && r.EphemeralStorage == ""
+}
+
 type Toleration struct {
 	// Key is the taint key that the toleration applies to. Empty means match all taint keys.
 	// If the key is empty, operator must be Exists; this combination means to match all values and all keys.
@@ -424,21 +445,16 @@ type Collector struct {
 	Resources Resources `json:"resources,omitempty"`
 }
 
-type Pem struct {
-	// Resources Compute resources required by the PEM containers.
-	Resources Resources `json:"resources,omitempty"`
-
-	// TableStoreLimits Limits for queryable data for the PEM containers.
-	// +kubebuilder:default:={total_mib: 150, http_events_percent: 20}
-	TableStoreLimits TableStoreLimits `json:"table_store_limits,omitempty"`
-}
-
 type TableStoreLimits struct {
 	// TotalMiB Total MiB of memory allocated to all tables
 	TotalMiB int `json:"total_mib"`
 
 	// HttpEventsPercent Percent of TotalMiB allocated to the http_events table
 	HttpEventsPercent int `json:"http_events_percent"`
+}
+
+func (t *TableStoreLimits) IsEmpty() bool {
+	return t.TotalMiB == 0 && t.HttpEventsPercent == 0
 }
 
 type Logging struct {

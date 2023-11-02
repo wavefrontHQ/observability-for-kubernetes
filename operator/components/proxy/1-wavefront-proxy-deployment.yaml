@@ -177,8 +177,6 @@ spec:
             failureThreshold: 10
             tcpSocket:
               port: {{ .MetricPort }}
-          resources:
-{{ .Resources | toYaml | indent 12 }}
           securityContext:
             privileged: false
             readOnlyRootFilesystem: true

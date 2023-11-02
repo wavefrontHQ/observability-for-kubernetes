@@ -191,7 +191,7 @@ func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront) validation.Resul
 
 // Read, Create, Update and Delete Resources.
 func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) error {
-	toApply, toDelete, err := r.readAndInterpolateResources()
+	toApply, toDelete, err := r.readAndInterpolateResources(spec)
 	if err != nil {
 		return err
 	}
@@ -209,10 +209,11 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 	return nil
 }
 
-func (r *WavefrontReconciler) readAndInterpolateResources() ([]client.Object, []client.Object, error) {
+func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]client.Object, []client.Object, error) {
 	var resourcesToApply, resourcesToDelete []client.Object
+	builder := components.NewK8sResourceBuilder(spec.WorkloadResources)
 	for _, component := range r.components {
-		toApply, toDelete, err := component.Resources()
+		toApply, toDelete, err := component.Resources(builder)
 		if err != nil {
 			log.Log.Error(err, "could not get resources", "component", component.Name())
 		}
@@ -248,7 +249,7 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 	if err != nil {
 		return err
 	}
-	resourcesToApply, resourcesToDelete, err := r.readAndInterpolateResources()
+	resourcesToApply, resourcesToDelete, err := r.readAndInterpolateResources(wfToDelete.Spec)
 	if err != nil {
 		return err
 	}

@@ -68,16 +68,6 @@ func TestReconcileAll(t *testing.T) {
 	t.Run("does not create other services until the proxy is running", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
-			wavefront.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
-				Requests: wf.Resource{
-					CPU:    "100m",
-					Memory: "600Mi",
-				},
-				Limits: wf.Resource{
-					CPU:    "1000m",
-					Memory: "600Mi",
-				},
-			}
 		}), nil, wftest.Proxy(wftest.WithReplicas(0, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -105,16 +95,6 @@ func TestReconcileAll(t *testing.T) {
 	t.Run("creates other components after the proxy is running", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
-			wavefront.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
-				Requests: wf.Resource{
-					CPU:    "100m",
-					Memory: "600Mi",
-				},
-				Limits: wf.Resource{
-					CPU:    "1000m",
-					Memory: "600Mi",
-				},
-			}
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -323,6 +303,42 @@ func TestReconcileAll(t *testing.T) {
 		require.False(t, mockKM.AppliedContains("security.openshift.io/v1", "SecurityContextConstraints", "wavefront", "collector", "wavefront-collector-scc"))
 		require.False(t, mockKM.AppliedContains("security.openshift.io/v1", "SecurityContextConstraints", "wavefront", "proxy", "wavefront-proxy-scc"))
 	})
+
+	t.Run("can override workload resources", func(t *testing.T) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.Autotracing.Enable = true
+			wavefront.Spec.WorkloadResources = map[string]wf.Resources{
+				"wavefront-proxy": {
+					Requests: wf.Resource{
+						CPU:    "50m",
+						Memory: "50Mi",
+					},
+					Limits: wf.Resource{
+						CPU:    "100m",
+						Memory: "100Mi",
+					},
+				},
+			}
+		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.NoError(t, err)
+
+		proxy, err := mockKM.GetProxyDeployment()
+
+		require.NoError(t, err)
+
+		require.Equal(t, "50m", proxy.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "50Mi", proxy.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		require.Equal(t, "2Gi", proxy.Spec.Template.Spec.Containers[0].Resources.Requests.StorageEphemeral().String())
+
+		require.Equal(t, "100m", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
+		require.Equal(t, "100Mi", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		require.Equal(t, "8Gi", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.StorageEphemeral().String())
+	})
 }
 
 func TestReconcileCollector(t *testing.T) {
@@ -521,21 +537,6 @@ func TestReconcileCollector(t *testing.T) {
 		require.NoError(t, err)
 
 		require.True(t, mockKM.NodeCollectorDaemonSetContains("memory: 10Mi"))
-	})
-
-	t.Run("no resources set for node and cluster collector", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(), nil)
-
-		_, err := r.Reconcile(context.Background(), defaultRequest())
-		require.NoError(t, err)
-
-		/* DaemonSet wavefront-node-collector */
-		require.True(t, mockKM.NodeCollectorDaemonSetContains("resources:"))
-		require.False(t, mockKM.NodeCollectorDaemonSetContains("limits:", "requests:"))
-
-		/* Deployment wavefront-cluster-collector */
-		require.True(t, mockKM.ClusterCollectorDeploymentContains("resources:"))
-		require.False(t, mockKM.ClusterCollectorDeploymentContains("limits:", "requests:"))
 	})
 
 	t.Run("Values from metrics.filters is propagated to default collector configmap", func(t *testing.T) {
@@ -1352,16 +1353,6 @@ func TestReconcileAutoTracing(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Autotracing.Enable = true
 			w.Spec.ClusterName = "test-clusterName"
-			w.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
-				Requests: wf.Resource{
-					CPU:    "100m",
-					Memory: "600Mi",
-				},
-				Limits: wf.Resource{
-					CPU:    "1000m",
-					Memory: "600Mi",
-				},
-			}
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -1380,13 +1371,6 @@ func TestReconcileAutoTracing(t *testing.T) {
 			"name: PL_TABLE_STORE_DATA_LIMIT_MB",
 			"name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT",
 			"name: PL_STIRLING_SOURCES",
-		))
-		require.True(t, mockKM.PixieComponentContains(
-			"apps/v1", "DaemonSet", "vizier-pem",
-			"cpu: 100m",
-			"cpu: 1000m",
-			"memory: 600Mi",
-			"memory: 600Mi",
 		))
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "kelvin"))
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "vizier-query-broker"))
@@ -1465,16 +1449,6 @@ func TestReconcileAutoTracing(t *testing.T) {
 		}
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
-			wavefront.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
-				Requests: wf.Resource{
-					CPU:    "100m",
-					Memory: "600Mi",
-				},
-				Limits: wf.Resource{
-					CPU:    "1000m",
-					Memory: "600Mi",
-				},
-			}
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)), daemonset)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -1498,16 +1472,6 @@ func TestReconcileHubPixie(t *testing.T) {
 			w.Spec.ClusterName = "test-clusterName"
 			w.Spec.Experimental.Hub.Enable = true
 			w.Spec.Experimental.Hub.Pixie.Enable = true
-			w.Spec.Experimental.Hub.Pixie.Pem.Resources = wf.Resources{
-				Requests: wf.Resource{
-					CPU:    "100m",
-					Memory: "600Mi",
-				},
-				Limits: wf.Resource{
-					CPU:    "1000m",
-					Memory: "600Mi",
-				},
-			}
 		})
 		r, mockKM := emptyScenario(wfCR, nil)
 
@@ -1643,7 +1607,9 @@ func TestReconcileInsightsByCR(t *testing.T) {
 				Name:      "wavefront",
 				Namespace: wftest.DefaultNamespace,
 			},
-			Spec: wf.WavefrontSpec{ClusterName: "a-cluster",
+			Spec: wf.WavefrontSpec{
+				ClusterName: "a-cluster",
+				ClusterSize: wf.ClusterSizeMedium,
 				DataCollection: wf.DataCollection{
 					Metrics: wf.Metrics{
 						Enable: false,

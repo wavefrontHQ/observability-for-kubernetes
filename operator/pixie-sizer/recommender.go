@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -33,10 +32,6 @@ type Recommender struct {
 func (r *Recommender) Run() {
 	for {
 		time.Sleep(time.Duration(r.ReportMinutes) * time.Minute)
-		settingsPrefix, err := GetPrefixForPEMSettings(r.DynamicClient, r.Namespace)
-		if err != nil {
-			log.Fatalf("error determining settings prefix: %s", err)
-		}
 		cronScripts, err := GetConfigMapsByLabel(r.Client, r.Namespace, "purpose=cron-script")
 		if err != nil {
 			log.Fatalf("error fetching cron scripts: %s", err.Error())
@@ -48,11 +43,6 @@ func (r *Recommender) Run() {
 			log.Fatalf("error listing PEMs: %s", err.Error())
 		}
 		maxMissedRowBatchSize := GetMaxMissedRowBatchSize(pemPods, int64(r.SamplePeriodMinutes*60), r.Client)
-
-		pemResourceRequirements, err := GetPEMResourceRequirements(r.Client, r.Namespace)
-		if err != nil {
-			log.Fatalf("error getting PEM resource requirements: %s", err.Error())
-		}
 
 		httpAvgRowBatchSize := MiB(math.Ceil(float64(r.StatsStore.TableBytes(HTTPEventsTable).Sum()) / float64(r.StatsStore.TableRowBatches(HTTPEventsTable).Sum()) / (1024.0 * 1024.0)))
 		otherAvgRowBatchSize := MiB(math.Ceil(float64(r.StatsStore.TableBytes(UnknownTable).Sum()) / float64(r.StatsStore.TableRowBatches(UnknownTable).Sum()) / (1024.0 * 1024.0)))
@@ -73,7 +63,7 @@ func (r *Recommender) Run() {
 			0,
 			MaxNumber(httpMinTableSize, CalculatePerTableSize(r.StatsStore.TableRate(HTTPEventsTable).MaxValue(), scaledRetentionTime)),
 		)
-		log.Printf("recommended settings:\n%s", tableStoreLimit.YAMLSnippet(settingsPrefix, pemResourceRequirements))
+		log.Printf("recommended settings:\n%s", tableStoreLimit.YAMLSnippet())
 	}
 }
 
@@ -102,24 +92,15 @@ func (l PEMLimits) MemoryLimit() MiB {
 	return MaxNumber(0, l.Total-200) + 750
 }
 
-func (l PEMLimits) YAMLSnippet(prefix string, pemResourceRequirements corev1.ResourceRequirements) string {
+func (l PEMLimits) YAMLSnippet() string {
 	buf := bytes.NewBuffer(nil)
-	segments := strings.Split(prefix, ".")
-	for i, segment := range segments {
-		FprintlnWithIndent(buf, i, "%s:", segment)
-	}
-	baseTab := len(segments)
-	FprintlnWithIndent(buf, baseTab, "resources:")
-	FprintlnWithIndent(buf, baseTab+1, "limits:")
-	FprintlnWithIndent(buf, baseTab+2, "cpu: %s", pemResourceRequirements.Limits.Cpu().String())
-	FprintlnWithIndent(buf, baseTab+2, "memory: %dMi", l.MemoryLimit())
-	FprintlnWithIndent(buf, baseTab+1, "requests:")
-	FprintlnWithIndent(buf, baseTab+2, "cpu: %s", pemResourceRequirements.Requests.Cpu().String())
-	FprintlnWithIndent(buf, baseTab+2, "memory: %s", pemResourceRequirements.Requests.Memory().String())
 
-	FprintlnWithIndent(buf, baseTab, "table_store_limits:")
-	FprintlnWithIndent(buf, baseTab+1, "total_mib: %d", l.Total)
-	FprintlnWithIndent(buf, baseTab+1, "http_events_percent: %d", l.HTTP)
+	FprintlnWithIndent(buf, 0, "spec:")
+	FprintlnWithIndent(buf, 1, "experimental:")
+	FprintlnWithIndent(buf, 2, "pixie:")
+	FprintlnWithIndent(buf, 3, "table_store_limits:")
+	FprintlnWithIndent(buf, 4, "total_mib: %d", l.Total)
+	FprintlnWithIndent(buf, 4, "http_events_percent: %d", l.HTTP)
 
 	return buf.String()
 }

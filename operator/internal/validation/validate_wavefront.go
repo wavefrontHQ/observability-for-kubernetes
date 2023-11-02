@@ -3,6 +3,7 @@ package validation
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -83,7 +84,7 @@ func ValidateResources(resources *wf.Resources, resourceName string) Result {
 		return NewErrorResult(utilerrors.NewAggregate(errs))
 	}
 
-	errs = append(errs, validateResources(resources, resourceName)...)
+	errs = append(errs, validateResources(resources, resourceName+".resources")...)
 
 	err := utilerrors.NewAggregate(errs)
 	if err != nil {
@@ -118,6 +119,17 @@ func validateWavefrontSpec(wavefront *wf.Wavefront) error {
 	var errs []error
 	//TODO: Component Refactor - move all non cross component validation to individual components
 
+	if !validClusterSize(wavefront) {
+		errs = append(errs, fmt.Errorf("clusterSize must be %s", strings.Join(wf.ClusterSizes, ", ")))
+	}
+
+	for name, resources := range wavefront.Spec.WorkloadResources {
+		resourceErrs := validateResources(&resources, fmt.Sprintf("workloadResources.%s", name))
+		if len(resourceErrs) > 0 {
+			errs = append(errs, resourceErrs...)
+		}
+	}
+
 	if wavefront.Spec.DataExport.WavefrontProxy.Enable {
 		errs = append(errs, validateWavefrontProxyConfig(wavefront)...)
 	} else if len(wavefront.Spec.DataExport.ExternalWavefrontProxy.Url) == 0 && (wavefront.Spec.DataCollection.Metrics.Enable || wavefront.Spec.DataCollection.Logging.Enable) {
@@ -134,6 +146,15 @@ func validateWavefrontSpec(wavefront *wf.Wavefront) error {
 	return utilerrors.NewAggregate(errs)
 }
 
+func validClusterSize(wavefront *wf.Wavefront) bool {
+	for _, clusterSize := range wf.ClusterSizes {
+		if clusterSize == wavefront.Spec.ClusterSize {
+			return true
+		}
+	}
+	return false
+}
+
 func validateWavefrontProxyConfig(wavefront *wf.Wavefront) []error {
 	var errs []error
 	if len(wavefront.Spec.WavefrontUrl) == 0 {
@@ -148,27 +169,27 @@ func validateWavefrontProxyConfig(wavefront *wf.Wavefront) []error {
 func validateResources(resources *wf.Resources, resourcePath string) []error {
 	var errs []error
 
-	if err := validateResourceQuantity(resources.Requests.CPU, resourcePath+".resources.requests.cpu"); err != nil {
+	if err := validateResourceQuantity(resources.Requests.CPU, resourcePath+".requests.cpu"); err != nil {
 		errs = append(errs, err)
 	}
 
-	if err := validateResourceQuantity(resources.Requests.Memory, resourcePath+".resources.requests.memory"); err != nil {
+	if err := validateResourceQuantity(resources.Requests.Memory, resourcePath+".requests.memory"); err != nil {
 		errs = append(errs, err)
 	}
 
-	if err := validateResourceQuantity(resources.Requests.EphemeralStorage, resourcePath+".resources.requests.ephemeral-storage"); err != nil {
+	if err := validateResourceQuantity(resources.Requests.EphemeralStorage, resourcePath+".requests.ephemeral-storage"); err != nil {
 		errs = append(errs, err)
 	}
 
-	if err := validateResourceQuantity(resources.Limits.CPU, resourcePath+".resources.limits.cpu"); err != nil {
+	if err := validateResourceQuantity(resources.Limits.CPU, resourcePath+".limits.cpu"); err != nil {
 		errs = append(errs, err)
 	}
 
-	if err := validateResourceQuantity(resources.Limits.Memory, resourcePath+".resources.limits.memory"); err != nil {
+	if err := validateResourceQuantity(resources.Limits.Memory, resourcePath+".limits.memory"); err != nil {
 		errs = append(errs, err)
 	}
 
-	if err := validateResourceQuantity(resources.Limits.EphemeralStorage, resourcePath+".resources.limits.ephemeral-storage"); err != nil {
+	if err := validateResourceQuantity(resources.Limits.EphemeralStorage, resourcePath+".limits.ephemeral-storage"); err != nil {
 		errs = append(errs, err)
 	}
 
@@ -177,13 +198,13 @@ func validateResources(resources *wf.Resources, resourcePath string) []error {
 	}
 
 	if compareQuantities(resources.Requests.CPU, resources.Limits.CPU) > 0 {
-		errs = append(errs, fmt.Errorf("invalid %s.resources.requests.cpu: %s must be less than or equal to cpu limit", resourcePath, resources.Requests.CPU))
+		errs = append(errs, fmt.Errorf("invalid %s.requests.cpu: %s must be less than or equal to cpu limit", resourcePath, resources.Requests.CPU))
 	}
 	if compareQuantities(resources.Requests.Memory, resources.Limits.Memory) > 0 {
-		errs = append(errs, fmt.Errorf("invalid %s.resources.requests.memory: %s must be less than or equal to memory limit", resourcePath, resources.Requests.Memory))
+		errs = append(errs, fmt.Errorf("invalid %s.requests.memory: %s must be less than or equal to memory limit", resourcePath, resources.Requests.Memory))
 	}
 	if compareQuantities(resources.Requests.EphemeralStorage, resources.Limits.EphemeralStorage) > 0 {
-		errs = append(errs, fmt.Errorf("invalid %s.resources.requests.ephemeral-storage: %s must be less than or equal to ephemeral-storage limit", resourcePath, resources.Requests.EphemeralStorage))
+		errs = append(errs, fmt.Errorf("invalid %s.requests.ephemeral-storage: %s must be less than or equal to ephemeral-storage limit", resourcePath, resources.Requests.EphemeralStorage))
 	}
 	return errs
 }

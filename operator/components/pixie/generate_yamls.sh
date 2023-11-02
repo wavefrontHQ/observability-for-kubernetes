@@ -81,12 +81,6 @@ do
   yq -i '.metadata.labels["app.kubernetes.io/component"] |= "pixie"' "$f"
 done
 
-yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "100m", "memory": "100Mi"}, "limits": {"cpu": "2000m", "memory": "10Gi"}}' "${REPO_ROOT}"/operator/components/pixie/12-deployment-kelvin.yaml
-yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "100m", "memory": "50Mi"}, "limits": {"cpu": "1000m", "memory": "512Mi"}}' "${REPO_ROOT}"/operator/components/pixie/14-deployment-vizier-query-broker.yaml
-yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "1000m", "memory": "2Gi"}}' "${REPO_ROOT}"/operator/components/pixie/15-statefulset-vizier-metadata.yaml
-yq -i '(.spec.template.spec.containers[] | select(.name == "provisioner") | .resources) = {"requests": {"cpu": "50m", "memory": "10Mi"}, "limits": {"cpu": "100m", "memory": "100Mi"}}' "${REPO_ROOT}"/operator/components/pixie/17-job-cert-provisioner-job.yaml
-yq -i '(.spec.template.spec.containers[] | select(.name == "pl-nats") | .resources) = {"requests": {"cpu": "50m", "memory": "50Mi"}, "limits": {"cpu": "1000m", "memory": "2Gi"}}' "${REPO_ROOT}"/operator/components/pixie/23-statefulset-pl-nats.yaml
-
 yq -i '(.spec.template.spec.containers[] | select(.name == "pem") | .env) += {"name": "PL_TABLE_STORE_DATA_LIMIT_MB", "value": "{{ .TableStoreLimits.TotalMiB }}"}' "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 yq -i '(.spec.template.spec.containers[] | select(.name == "pem") | .env) += {"name": "PL_TABLE_STORE_HTTP_EVENTS_PERCENT", "value": "{{ .TableStoreLimits.HttpEventsPercent }}"}' "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 yq -i '(.spec.template.spec.containers[] | select(.name == "pem") | .env) += {"name": "PL_TABLE_STORE_STIRLING_ERROR_LIMIT_BYTES", "value": "0"}' "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
@@ -102,7 +96,6 @@ sed -i "s/:${PIXIE_VERSION}/:${PIXIE_VERSION}-multi/" "${REPO_ROOT}"/operator/co
 sed -i 's/@sha256:.*//' "${REPO_ROOT}"/operator/components/pixie/*.yaml
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/components/pixie/00-secret-pl-cluster-secrets.yaml"
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/components/pixie/00-secret-pl-cluster-secrets.yaml"
-sed -i "s/resources: {}/resources:\n{{ .PemResources | toYaml | indent 12 }}/" "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 #sed -i "s/value: default/value: default\n{{- if (not .Experimental.Hub.Pixie.Enable) }}\n        - name: PL_TABLE_STORE_DATA_LIMIT_MB\n          value: \"150\"\n        - name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT\n          value: \"90\"\n        - name: PL_STIRLING_SOURCES\n          value: \"kTracers\"\n{{- end }}/" "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 sed -i 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/components/pixie/18-configmap-pl-cloud-config.yaml"
 

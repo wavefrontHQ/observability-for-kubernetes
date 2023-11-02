@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
@@ -26,7 +27,7 @@ func TestNewPixieComponent(t *testing.T) {
 
 	t.Run("default configuration", func(t *testing.T) {
 		component, _ := NewComponent(ComponentDir, validComponentConfig())
-		toApply, toDelete, err := component.Resources()
+		toApply, toDelete, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 		require.NotEmpty(t, toApply)
@@ -100,38 +101,28 @@ func TestValidate(t *testing.T) {
 		require.False(t, result.IsValid())
 		require.Equal(t, "pixie: missing cluster name", result.Message())
 	})
-
-	t.Run("no pem resources set is not valid", func(t *testing.T) {
-		config := validComponentConfig()
-		config.PemResources = wf.Resources{}
-		component, err := NewComponent(ComponentDir, config)
-		result := component.Validate()
-		require.NoError(t, err)
-		require.False(t, result.IsValid())
-		require.Equal(t, "pixie: [invalid vizier-pem.resources.limits.memory must be set, invalid vizier-pem.resources.limits.cpu must be set]", result.Message())
-	})
 }
 
 func TestResources(t *testing.T) {
 	t.Run("pem resources are configurable", func(t *testing.T) {
 		config := validComponentConfig()
-		config.PemResources.Requests.Memory = "500Mi"
-		config.PemResources.Requests.CPU = "50Mi"
-		config.PemResources.Limits.Memory = "1Gi"
-		config.PemResources.Limits.CPU = "100Mi"
+		config.PEMResources.Requests.Memory = "500Mi"
+		config.PEMResources.Requests.CPU = "50m"
+		config.PEMResources.Limits.Memory = "1Gi"
+		config.PEMResources.Limits.CPU = "100m"
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
 		// vizier pem daemon set
-		ds, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
+		res, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
-		require.Equal(t, "500Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
-		require.Equal(t, "50Mi", ds.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
-		require.Equal(t, "1Gi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
-		require.Equal(t, "100Mi", ds.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
+		require.Equal(t, "500Mi", res.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		require.Equal(t, "50m", res.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "1Gi", res.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		require.Equal(t, "100m", res.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
 	})
 
 	t.Run("table store limits are configurable", func(t *testing.T) {
@@ -139,14 +130,14 @@ func TestResources(t *testing.T) {
 		config.StirlingSources = []string{"a", "b", "c"}
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
 		// vizier pem daemon set
-		ds, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
+		res, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
-		pemContainer := test.GetContainer("pem", ds.Spec.Template.Spec.Containers)
+		pemContainer := test.GetContainer("pem", res.Spec.Template.Spec.Containers)
 		test.RequireEnv(t, "a,b,c", "PL_STIRLING_SOURCES", pemContainer)
 		test.RequireEnv(t, "1", "PL_TABLE_STORE_HTTP_EVENTS_PERCENT", pemContainer)
 		test.RequireEnv(t, "2", "PL_TABLE_STORE_DATA_LIMIT_MB", pemContainer)
@@ -157,16 +148,116 @@ func TestResources(t *testing.T) {
 		config.MaxHTTPBodyBytes = 128
 
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
 		// vizier pem daemon set
-		ds, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
+		res, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
 		require.NoError(t, err)
-		pemContainer := test.GetContainer("pem", ds.Spec.Template.Spec.Containers)
+		pemContainer := test.GetContainer("pem", res.Spec.Template.Spec.Containers)
 		test.RequireEnv(t, "128", "PX_STIRLING_HTTP_BODY_LIMIT_BYTES", pemContainer)
 		test.RequireEnv(t, "128", "PL_STIRLING_MAX_BODY_BYTES", pemContainer)
+	})
+
+	t.Run("Query Broker resources are configurable", func(t *testing.T) {
+		config := validComponentConfig()
+		config.QueryBrokerResources.Requests.Memory = "500Mi"
+		config.QueryBrokerResources.Requests.CPU = "50m"
+		config.QueryBrokerResources.Limits.Memory = "1Gi"
+		config.QueryBrokerResources.Limits.CPU = "100m"
+
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
+
+		require.NoError(t, err)
+
+		res, err := test.GetDeployment(util.PixieVizierQueryBrokerName, toApply)
+		require.NoError(t, err)
+		require.Equal(t, "500Mi", res.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		require.Equal(t, "50m", res.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "1Gi", res.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		require.Equal(t, "100m", res.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
+	})
+
+	t.Run("NATS resources are configurable", func(t *testing.T) {
+		config := validComponentConfig()
+		config.NATSResources.Requests.Memory = "500Mi"
+		config.NATSResources.Requests.CPU = "50m"
+		config.NATSResources.Limits.Memory = "1Gi"
+		config.NATSResources.Limits.CPU = "100m"
+
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
+
+		require.NoError(t, err)
+
+		res, err := test.GetStatefulSet(util.PixieNatsName, toApply)
+		require.NoError(t, err)
+		require.Equal(t, "500Mi", res.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		require.Equal(t, "50m", res.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "1Gi", res.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		require.Equal(t, "100m", res.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
+	})
+
+	t.Run("Metadata resources are configurable", func(t *testing.T) {
+		config := validComponentConfig()
+		config.MetadataResources.Requests.Memory = "500Mi"
+		config.MetadataResources.Requests.CPU = "50m"
+		config.MetadataResources.Limits.Memory = "1Gi"
+		config.MetadataResources.Limits.CPU = "100m"
+
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
+
+		require.NoError(t, err)
+
+		res, err := test.GetStatefulSet(util.PixieVizierMetadataName, toApply)
+		require.NoError(t, err)
+		require.Equal(t, "500Mi", res.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		require.Equal(t, "50m", res.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "1Gi", res.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		require.Equal(t, "100m", res.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
+	})
+
+	t.Run("Kelvin resources are configurable", func(t *testing.T) {
+		config := validComponentConfig()
+		config.KelvinResources.Requests.Memory = "500Mi"
+		config.KelvinResources.Requests.CPU = "50m"
+		config.KelvinResources.Limits.Memory = "1Gi"
+		config.KelvinResources.Limits.CPU = "100m"
+
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
+
+		require.NoError(t, err)
+
+		res, err := test.GetDeployment(util.PixieKelvinName, toApply)
+		require.NoError(t, err)
+		require.Equal(t, "500Mi", res.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		require.Equal(t, "50m", res.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "1Gi", res.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		require.Equal(t, "100m", res.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
+	})
+
+	t.Run("Job Cert Provisioner resources are configurable", func(t *testing.T) {
+		config := validComponentConfig()
+		config.CertProvisionerJobResources.Requests.Memory = "50Mi"
+		config.CertProvisionerJobResources.Requests.CPU = "50m"
+		config.CertProvisionerJobResources.Limits.Memory = "100Mi"
+		config.CertProvisionerJobResources.Limits.CPU = "100m"
+
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
+
+		require.NoError(t, err)
+
+		res, err := test.GetJob(util.PixieCertProvisionerJobName, toApply)
+		require.NoError(t, err)
+		require.Equal(t, "50Mi", res.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		require.Equal(t, "50m", res.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		require.Equal(t, "100Mi", res.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		require.Equal(t, "100m", res.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
 	})
 }
 
@@ -176,10 +267,46 @@ func validComponentConfig() Config {
 		ControllerManagerUID: "controller-manager-uid",
 		ClusterUUID:          "cluster-uuid",
 		ClusterName:          wftest.DefaultClusterName,
-		PemResources: wf.Resources{Limits: wf.Resource{
-			CPU:    "100Mi",
-			Memory: "1Gi",
-		}},
+		PEMResources: wf.Resources{
+			Limits: wf.Resource{
+				CPU:    "100m",
+				Memory: "1Gi",
+			},
+			Requests: wf.Resource{
+				CPU:    "50m",
+				Memory: "500Mi",
+			},
+		},
+		QueryBrokerResources: wf.Resources{
+			Limits: wf.Resource{
+				CPU:    "100m",
+				Memory: "1Gi",
+			},
+			Requests: wf.Resource{
+				CPU:    "50m",
+				Memory: "500Mi",
+			},
+		},
+		MetadataResources: wf.Resources{
+			Limits: wf.Resource{
+				CPU:    "100m",
+				Memory: "1Gi",
+			},
+			Requests: wf.Resource{
+				CPU:    "50m",
+				Memory: "500Mi",
+			},
+		},
+		KelvinResources: wf.Resources{
+			Limits: wf.Resource{
+				CPU:    "100m",
+				Memory: "1Gi",
+			},
+			Requests: wf.Resource{
+				CPU:    "50m",
+				Memory: "500Mi",
+			},
+		},
 		TableStoreLimits: wf.TableStoreLimits{
 			TotalMiB:          2,
 			HttpEventsPercent: 1,

@@ -53,6 +53,6 @@ func (component *Component) Validate() validation.Result {
 	return validation.NewValidationResult(errs)
 }
 
-func (autotracing *Component) Resources() ([]client.Object, []client.Object, error) {
-	return components.BuildResources(autotracing.dir, autotracing.Name(), autotracing.config.Enable, autotracing.config.ControllerManagerUID, autotracing.config)
+func (autotracing *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
+	return builder.Build(autotracing.dir, autotracing.Name(), autotracing.config.Enable, autotracing.config.ControllerManagerUID, nil, autotracing.config)
 }

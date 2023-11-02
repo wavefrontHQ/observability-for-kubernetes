@@ -2,13 +2,16 @@ package components
 
 import (
 	"bytes"
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"strings"
 	"text/template"
 
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	yaml2 "gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
@@ -19,13 +22,21 @@ import (
 
 type Component interface {
 	Validate() validation.Result
-	Resources() (resourcesToApply []client.Object, resourcesToDelete []client.Object, error error)
+	Resources(builder *K8sResourceBuilder) (resourcesToApply []client.Object, resourcesToDelete []client.Object, error error)
 	Name() string
 }
 
 const DeployDir = "components"
 
-func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID string, data any) ([]client.Object, []client.Object, error) {
+type K8sResourceBuilder struct {
+	containerResourceOverrides map[string]wf.Resources
+}
+
+func NewK8sResourceBuilder(containerResourceOverrides map[string]wf.Resources) *K8sResourceBuilder {
+	return &K8sResourceBuilder{containerResourceOverrides: containerResourceOverrides}
+}
+
+func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool, managerUID string, containerResourceDefaults map[string]wf.Resources, data any) ([]client.Object, []client.Object, error) {
 	files, err := resourceFiles(fs)
 	if err != nil {
 		return nil, nil, err
@@ -33,6 +44,7 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 
 	var resourcesToApply, resourcesToDelete []client.Object
 	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
+	mergedContainerResourceOverrides := mergeResources(containerResourceDefaults, rb.containerResourceOverrides)
 	for _, resourceFile := range files {
 		templateName := filepath.Base(resourceFile)
 		resourceTemplate, err := newTemplate(templateName).ParseFS(fs, resourceFile)
@@ -52,17 +64,13 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 			return nil, nil, err
 		}
 
-		labels := resource.GetLabels()
-		if labels == nil {
-			labels = map[string]string{}
-		}
-		labels["app.kubernetes.io/name"] = "wavefront"
-		if labels["app.kubernetes.io/component"] == "" {
-			labels["app.kubernetes.io/component"] = componentName
-		}
-		resource.SetLabels(labels)
-		if resource.GetKind() == "DaemonSet" || resource.GetKind() == "Deployment" || resource.GetKind() == "StatefulSet" {
+		setResourceComponentLabels(resource, componentName)
+		_, hasTemplate, _ := unstructured.NestedMap(resource.Object, "spec", "template")
+		if hasTemplate {
 			setTemplateComponentLabels(resource, componentName)
+			if err := setTemplateResources(resource, mergedContainerResourceOverrides); err != nil {
+				return nil, nil, err
+			}
 		}
 		resource.SetOwnerReferences([]v1.OwnerReference{{
 			APIVersion: "apps/v1",
@@ -80,18 +88,85 @@ func BuildResources(fs fs.FS, componentName string, enabled bool, managerUID str
 	return resourcesToApply, resourcesToDelete, nil
 }
 
+func mergeResources(defaults map[string]wf.Resources, overrides map[string]wf.Resources) map[string]wf.Resources {
+	merged := map[string]wf.Resources{}
+	for name, resources := range defaults {
+		merged[name] = resources
+	}
+	for name, resources := range overrides {
+		defaultResources := merged[name]
+		defaultResources.Requests = mergeResource(defaultResources.Requests, resources.Requests)
+		defaultResources.Limits = mergeResource(defaultResources.Limits, resources.Limits)
+		merged[name] = defaultResources
+	}
+	return merged
+}
+
+func mergeResource(a, b wf.Resource) wf.Resource {
+	if b.CPU != "" {
+		a.CPU = b.CPU
+	}
+	if b.Memory != "" {
+		a.Memory = b.Memory
+	}
+	if b.EphemeralStorage != "" {
+		a.EphemeralStorage = b.EphemeralStorage
+	}
+	return a
+}
+
+func setTemplateResources(workload *unstructured.Unstructured, workloadResources map[string]wf.Resources) error {
+	override, exists := workloadResources[workload.GetName()]
+	if !exists {
+		return fmt.Errorf("workload resource not specified for %s", workload.GetName())
+	}
+
+	r := map[string]any{
+		"limits": map[string]any{
+			corev1.ResourceCPU.String():    override.Limits.CPU,
+			corev1.ResourceMemory.String(): override.Limits.Memory,
+		},
+		"requests": map[string]any{
+			corev1.ResourceCPU.String():    override.Requests.CPU,
+			corev1.ResourceMemory.String(): override.Requests.Memory,
+		},
+	}
+
+	if override.Limits.EphemeralStorage != "" {
+		r["limits"].(map[string]any)[corev1.ResourceEphemeralStorage.String()] = override.Limits.EphemeralStorage
+	}
+	if override.Requests.EphemeralStorage != "" {
+		r["requests"].(map[string]any)[corev1.ResourceEphemeralStorage.String()] = override.Requests.EphemeralStorage
+	}
+
+	containers, _, _ := unstructured.NestedSlice(workload.Object, "spec", "template", "spec", "containers")
+	container := containers[0].(map[string]any)
+	container["resources"] = r
+	_ = unstructured.SetNestedSlice(workload.Object, containers, "spec", "template", "spec", "containers")
+	return nil
+}
+
+func setResourceComponentLabels(resource *unstructured.Unstructured, componentName string) {
+	labels := resource.GetLabels()
+	labels = updateComponentLabels(componentName, labels)
+	resource.SetLabels(labels)
+}
+
 func setTemplateComponentLabels(resource *unstructured.Unstructured, componentName string) {
 	labels, _, _ := unstructured.NestedStringMap(resource.Object, "spec", "template", "metadata", "labels")
+	labels = updateComponentLabels(componentName, labels)
+	_ = unstructured.SetNestedStringMap(resource.Object, labels, "spec", "template", "metadata", "labels")
+}
+
+func updateComponentLabels(componentName string, labels map[string]string) map[string]string {
 	if labels == nil {
 		labels = map[string]string{}
 	}
-
 	labels["app.kubernetes.io/name"] = "wavefront"
 	if labels["app.kubernetes.io/component"] == "" {
 		labels["app.kubernetes.io/component"] = componentName
 	}
-
-	_ = unstructured.SetNestedStringMap(resource.Object, labels, "spec", "template", "metadata", "labels")
+	return labels
 }
 
 func resourceFiles(dir fs.FS) ([]string, error) {

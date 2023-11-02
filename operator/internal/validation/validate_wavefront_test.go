@@ -224,6 +224,25 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://external-wf-proxy"
 		require.Empty(t, validateWavefrontSpec(wfCR))
 	})
+
+	t.Run("must have a valid ClusterSize", func(t *testing.T) {
+		wfCR := defaultWFCR()
+		wfCR.Spec.ClusterSize += "_bad"
+		err := validateWavefrontSpec(wfCR)
+		require.ErrorContains(t, err, "clusterSize must be small, medium, large")
+	})
+
+	t.Run("workloadResources is validated", func(t *testing.T) {
+		wfCR := defaultWFCR()
+		wfCR.Spec.WorkloadResources = map[string]wf.Resources{
+			"some-deployment": {
+				Requests: wf.Resource{
+					CPU: "not_a_valid_cpu_quantity",
+				},
+			},
+		}
+		require.ErrorContains(t, validateWavefrontSpec(wfCR), "invalid workloadResources.some-deployment.requests.cpu: 'not_a_valid_cpu_quantity'")
+	})
 }
 
 func TestValidateEnvironment(t *testing.T) {
@@ -505,6 +524,7 @@ func defaultWFCR() *wf.Wavefront {
 			Name:      "wavefront",
 		},
 		Spec: wf.WavefrontSpec{
+			ClusterSize:  wf.ClusterSizeSmall,
 			ClusterName:  "testClusterName",
 			WavefrontUrl: "testWavefrontUrl",
 			DataExport: wf.DataExport{

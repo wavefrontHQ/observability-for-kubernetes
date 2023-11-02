@@ -13,20 +13,6 @@ func TestFromWavefront(t *testing.T) {
 		cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Hub.Enable = true
 			w.Spec.Experimental.Hub.Pixie.Enable = true
-			w.Spec.Experimental.Hub.Pixie.Pem.Resources = wf.Resources{
-				Requests: wf.Resource{
-					CPU:    "100m",
-					Memory: "600Mi",
-				},
-				Limits: wf.Resource{
-					CPU:    "1000m",
-					Memory: "600Mi",
-				},
-			}
-			w.Spec.Experimental.Hub.Pixie.Pem.TableStoreLimits = wf.TableStoreLimits{
-				TotalMiB:          1,
-				HttpEventsPercent: 2,
-			}
 		})
 		config := FromWavefront(cr)
 		component, _ := NewComponent(ComponentDir, config)
@@ -35,8 +21,6 @@ func TestFromWavefront(t *testing.T) {
 		require.Equal(t, "", component.Validate().Message())
 		require.True(t, component.Validate().IsValid())
 		require.Equal(t, HubSources, config.StirlingSources)
-		require.Equal(t, cr.Spec.Experimental.Hub.Pixie.Pem.Resources, config.PemResources)
-		require.Equal(t, cr.Spec.Experimental.Hub.Pixie.Pem.TableStoreLimits, config.TableStoreLimits)
 	})
 
 	t.Run("component config enable should be set to false", func(t *testing.T) {
@@ -50,20 +34,6 @@ func TestFromWavefront(t *testing.T) {
 		cr := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Autotracing.Enable = true
 			w.Spec.ClusterName = "test-clusterName"
-			w.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
-				Requests: wf.Resource{
-					CPU:    "100m",
-					Memory: "600Mi",
-				},
-				Limits: wf.Resource{
-					CPU:    "1000m",
-					Memory: "600Mi",
-				},
-			}
-			w.Spec.Experimental.Autotracing.Pem.TableStoreLimits = wf.TableStoreLimits{
-				TotalMiB:          1,
-				HttpEventsPercent: 2,
-			}
 		})
 		config := FromWavefront(cr)
 		component, _ := NewComponent(ComponentDir, config)
@@ -72,44 +42,14 @@ func TestFromWavefront(t *testing.T) {
 		require.Equal(t, "", component.Validate().Message())
 		require.True(t, component.Validate().IsValid())
 		require.Equal(t, AutoTracingSources, config.StirlingSources)
-		require.Equal(t, cr.Spec.Experimental.Autotracing.Pem.Resources, config.PemResources)
-		require.Equal(t, cr.Spec.Experimental.Autotracing.Pem.TableStoreLimits, config.TableStoreLimits)
 	})
 
 	t.Run("wavefront spec with autotracing and hub enabled", func(t *testing.T) {
 		cr := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Autotracing.Enable = true
 			w.Spec.ClusterName = "test-clusterName"
-			w.Spec.Experimental.Autotracing.Pem.Resources = wf.Resources{
-				Requests: wf.Resource{
-					CPU:    "100m",
-					Memory: "600Mi",
-				},
-				Limits: wf.Resource{
-					CPU:    "1000m",
-					Memory: "600Mi",
-				},
-			}
-			w.Spec.Experimental.Autotracing.Pem.TableStoreLimits = wf.TableStoreLimits{
-				TotalMiB:          1,
-				HttpEventsPercent: 2,
-			}
 			w.Spec.Experimental.Hub.Enable = true
 			w.Spec.Experimental.Hub.Pixie.Enable = true
-			w.Spec.Experimental.Hub.Pixie.Pem.Resources = wf.Resources{
-				Requests: wf.Resource{
-					CPU:    "999m",
-					Memory: "500Mi",
-				},
-				Limits: wf.Resource{
-					CPU:    "99999m",
-					Memory: "900Mi",
-				},
-			}
-			w.Spec.Experimental.Hub.Pixie.Pem.TableStoreLimits = wf.TableStoreLimits{
-				TotalMiB:          4,
-				HttpEventsPercent: 3,
-			}
 		})
 		config := FromWavefront(cr)
 		component, _ := NewComponent(ComponentDir, config)
@@ -118,8 +58,37 @@ func TestFromWavefront(t *testing.T) {
 		require.Equal(t, "", component.Validate().Message())
 		require.True(t, component.Validate().IsValid())
 		require.Equal(t, HubSources, config.StirlingSources)
-		require.Equal(t, cr.Spec.Experimental.Hub.Pixie.Pem.Resources, config.PemResources)
-		require.Equal(t, cr.Spec.Experimental.Hub.Pixie.Pem.TableStoreLimits, config.TableStoreLimits)
 		require.Equal(t, 0, config.MaxHTTPBodyBytes)
+	})
+
+	t.Run("sizing", func(t *testing.T) {
+		for _, clusterSize := range wf.ClusterSizes {
+			t.Run(clusterSize, func(t *testing.T) {
+				cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+					w.Spec.ClusterSize = clusterSize
+				})
+
+				config := FromWavefront(cr)
+
+				require.Equal(t, PEMResources[clusterSize], config.PEMResources)
+				require.Equal(t, TableStoreLimits[clusterSize], config.TableStoreLimits)
+				require.Equal(t, KelvinResources[clusterSize], config.KelvinResources)
+				require.Equal(t, QueryBrokerResources[clusterSize], config.QueryBrokerResources)
+				require.Equal(t, NATSResources[clusterSize], config.NATSResources)
+				require.Equal(t, MetadataResources[clusterSize], config.MetadataResources)
+				require.Equal(t, CertProvisionerJobResources[clusterSize], config.CertProvisionerJobResources)
+			})
+		}
+
+		t.Run("config.TableStoreLimits matches table_store_limits when it is configured", func(t *testing.T) {
+			cr := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+				w.Spec.ClusterSize = wf.ClusterSizeSmall
+				w.Spec.Experimental.Pixie.TableStoreLimits = wf.TableStoreLimits{TotalMiB: 9, HttpEventsPercent: 10}
+			})
+
+			config := FromWavefront(cr)
+
+			require.Equal(t, cr.Spec.Experimental.Pixie.TableStoreLimits, config.TableStoreLimits)
+		})
 	})
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
@@ -94,7 +95,7 @@ func TestValidate(t *testing.T) {
 func TestResources(t *testing.T) {
 	t.Run("default configuration", func(t *testing.T) {
 		component, _ := NewComponent(ComponentDir, minimalComponentConfig())
-		toApply, toDelete, err := component.Resources()
+		toApply, toDelete, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 		require.Equal(t, 4, len(toApply))
@@ -149,14 +150,26 @@ func minimalComponentConfig() ComponentConfig {
 		ProxyAvailableReplicas:    1,
 		ImageRegistry:             wftest.DefaultImageRegistry,
 		CollectorVersion:          "1.23",
-		ClusterCollectorResources: wf.Resources{Limits: wf.Resource{
-			CPU:    "100Mi",
-			Memory: "50Mi",
-		}},
-		NodeCollectorResources: wf.Resources{Limits: wf.Resource{
-			CPU:    "100Mi",
-			Memory: "50Mi",
-		}},
+		ClusterCollectorResources: wf.Resources{
+			Requests: wf.Resource{
+				CPU:    "100m",
+				Memory: "50Mi",
+			},
+			Limits: wf.Resource{
+				CPU:    "100m",
+				Memory: "50Mi",
+			},
+		},
+		NodeCollectorResources: wf.Resources{
+			Requests: wf.Resource{
+				CPU:    "100m",
+				Memory: "50Mi",
+			},
+			Limits: wf.Resource{
+				CPU:    "100Mi",
+				Memory: "50Mi",
+			},
+		},
 		CollectorConfigName: "collector-config-name",
 	}
 }
