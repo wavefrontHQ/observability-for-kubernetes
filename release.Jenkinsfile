@@ -22,6 +22,19 @@ pipeline {
   }
 
   stages {
+    stage("Check for Unmerged JIRA Story PRs") {
+      steps {
+        script {
+          env.UNMERGED_PRS = sh(script: './ci/jenkins/show-unmerged-prs.sh', returnStdout: true).trim()
+          int numPRs = sh(script: 'echo $UNMERGED_PRS | wc -l').trim().toInteger() - 2
+          if (numPRs > 0) {
+            slackSend (channel: '#tobs-k8po-team', color: '#FF0000', message: "Release pipeline triggered with unmerged PRs:\n\n${env.UNMERGED_PRS}")
+          }
+          error("don't want to trigger release right now")
+        }
+      }
+    }
+
     stage("Promote release images and test") {
       options {
         timeout(time: 40, unit: 'MINUTES')
