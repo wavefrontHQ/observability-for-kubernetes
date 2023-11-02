@@ -1,6 +1,6 @@
 # Configuring the Size of the Pixie Deployment
 
-These instructions will guide you through configuring the size of your Pixie deployment. It covers [setting up the default sizing](#Configure Default Size) and [running the Pixie Sizer tool](#Running the Pixie Sizer tool).
+These instructions will guide you through configuring the size of your Pixie deployment. It covers [setting up the default sizing](#configure-default-size) and [running the Pixie Sizer tool](#running-the-pixie-sizer-tool).
 
 ## Prerequisites
 
@@ -80,7 +80,7 @@ mkdir /tmp/pixie-sizer
 cd /tmp/pixie-sizer
 
 # Download the install script
-curl -O install.sh https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/pixie-sizer/install.sh
+curl -o install.sh https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/pixie-sizer/install.sh
 chmod +x install.sh
 
 # Install the sizer into a cluster that has Pixie enabled

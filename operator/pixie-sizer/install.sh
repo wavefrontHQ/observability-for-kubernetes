@@ -19,5 +19,5 @@ echo "    kubectl --namespace observability-system logs --selector=\"app.kuberne
 
 echo
 echo "Run the following command to completely remove the Pixie sizer installation:"
-echo "    kubectl --namespace observability-system delete --all --selector=\"app.kubernetes.io/component=pixie-sizer\""
+echo "    kubectl --namespace observability-system delete all --selector=\"app.kubernetes.io/component=pixie-sizer\""
 
