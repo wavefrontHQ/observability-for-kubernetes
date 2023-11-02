@@ -11,6 +11,7 @@ func defaultResources(clusterSize string, config Config) Config {
 	config.QueryBrokerResources = QueryBrokerResources[clusterSize]
 	config.NATSResources = NATSResources[clusterSize]
 	config.MetadataResources = MetadataResources[clusterSize]
+	config.CertProvisionerJobResources = CertProvisionerJobResources[clusterSize]
 	return config
 }
 

@@ -76,6 +76,7 @@ func TestFromWavefront(t *testing.T) {
 				require.Equal(t, QueryBrokerResources[clusterSize], config.QueryBrokerResources)
 				require.Equal(t, NATSResources[clusterSize], config.NATSResources)
 				require.Equal(t, MetadataResources[clusterSize], config.MetadataResources)
+				require.Equal(t, CertProvisionerJobResources[clusterSize], config.CertProvisionerJobResources)
 			})
 		}
 
