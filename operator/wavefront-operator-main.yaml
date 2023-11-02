@@ -74,6 +74,13 @@ spec:
                   to be identified via a metric tag on Wavefront (Required).
                 minLength: 3
                 type: string
+              clusterSize:
+                default: medium
+                enum:
+                - small
+                - medium
+                - large
+                type: string
               dataCollection:
                 description: DataCollection options
                 properties:
@@ -605,76 +612,6 @@ spec:
                       enable:
                         default: true
                         type: boolean
-                      pem:
-                        default:
-                          resources:
-                            limits:
-                              cpu: 1000m
-                              memory: 750Mi
-                            requests:
-                              cpu: 100m
-                              memory: 300Mi
-                          table_store_limits:
-                            http_events_percent: 20
-                            total_mib: 150
-                        properties:
-                          resources:
-                            description: Resources Compute resources required by the
-                              PEM containers.
-                            properties:
-                              limits:
-                                description: Limits CPU and Memory requirements
-                                properties:
-                                  cpu:
-                                    description: CPU is for specifying CPU requirements
-                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                    type: string
-                                  ephemeral-storage:
-                                    description: Memory is for specifying Memory requirements
-                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                    type: string
-                                  memory:
-                                    description: Memory is for specifying Memory requirements
-                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                    type: string
-                                type: object
-                              requests:
-                                description: Requests CPU and Memory requirements
-                                properties:
-                                  cpu:
-                                    description: CPU is for specifying CPU requirements
-                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                    type: string
-                                  ephemeral-storage:
-                                    description: Memory is for specifying Memory requirements
-                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                    type: string
-                                  memory:
-                                    description: Memory is for specifying Memory requirements
-                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                    type: string
-                                type: object
-                            type: object
-                          table_store_limits:
-                            default:
-                              http_events_percent: 20
-                              total_mib: 150
-                            description: TableStoreLimits Limits for queryable data
-                              for the PEM containers.
-                            properties:
-                              http_events_percent:
-                                description: HttpEventsPercent Percent of TotalMiB
-                                  allocated to the http_events table
-                                type: integer
-                              total_mib:
-                                description: TotalMiB Total MiB of memory allocated
-                                  to all tables
-                                type: integer
-                            required:
-                            - http_events_percent
-                            - total_mib
-                            type: object
-                        type: object
                     type: object
                   hub:
                     properties:
@@ -687,80 +624,6 @@ spec:
                           enable:
                             default: true
                             type: boolean
-                          pem:
-                            default:
-                              resources:
-                                limits:
-                                  cpu: 1000m
-                                  memory: 750Mi
-                                requests:
-                                  cpu: 100m
-                                  memory: 300Mi
-                              table_store_limits:
-                                http_events_percent: 20
-                                total_mib: 150
-                            properties:
-                              resources:
-                                description: Resources Compute resources required
-                                  by the PEM containers.
-                                properties:
-                                  limits:
-                                    description: Limits CPU and Memory requirements
-                                    properties:
-                                      cpu:
-                                        description: CPU is for specifying CPU requirements
-                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                        type: string
-                                      ephemeral-storage:
-                                        description: Memory is for specifying Memory
-                                          requirements
-                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                        type: string
-                                      memory:
-                                        description: Memory is for specifying Memory
-                                          requirements
-                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                        type: string
-                                    type: object
-                                  requests:
-                                    description: Requests CPU and Memory requirements
-                                    properties:
-                                      cpu:
-                                        description: CPU is for specifying CPU requirements
-                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                        type: string
-                                      ephemeral-storage:
-                                        description: Memory is for specifying Memory
-                                          requirements
-                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                        type: string
-                                      memory:
-                                        description: Memory is for specifying Memory
-                                          requirements
-                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                        type: string
-                                    type: object
-                                type: object
-                              table_store_limits:
-                                default:
-                                  http_events_percent: 20
-                                  total_mib: 150
-                                description: TableStoreLimits Limits for queryable
-                                  data for the PEM containers.
-                                properties:
-                                  http_events_percent:
-                                    description: HttpEventsPercent Percent of TotalMiB
-                                      allocated to the http_events table
-                                    type: integer
-                                  total_mib:
-                                    description: TotalMiB Total MiB of memory allocated
-                                      to all tables
-                                    type: integer
-                                required:
-                                - http_events_percent
-                                - total_mib
-                                type: object
-                            type: object
                         type: object
                     type: object
                   insights:
@@ -778,6 +641,29 @@ spec:
                         type: string
                     required:
                     - ingestionUrl
+                    type: object
+                  pixie:
+                    description: Pixie contains performance tuning settings for Pixie
+                      workloads
+                    properties:
+                      table_store_limits:
+                        description: TableStoreLimits Limits on queryable data for
+                          the PEM containers.
+                        properties:
+                          http_events_percent:
+                            description: HttpEventsPercent Percent of TotalMiB allocated
+                              to the http_events table
+                            type: integer
+                          total_mib:
+                            description: TotalMiB Total MiB of memory allocated to
+                              all tables
+                            type: integer
+                        required:
+                        - http_events_percent
+                        - total_mib
+                        type: object
+                    required:
+                    - table_store_limits
                     type: object
                 type: object
               imagePullSecret:
@@ -797,6 +683,46 @@ spec:
                 description: Wavefront URL for your cluster
                 pattern: ^https:\/\/.*.wavefront.com
                 type: string
+              workloadResources:
+                additionalProperties:
+                  properties:
+                    limits:
+                      description: Limits CPU and Memory requirements
+                      properties:
+                        cpu:
+                          description: CPU is for specifying CPU requirements
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          type: string
+                        ephemeral-storage:
+                          description: Memory is for specifying Memory requirements
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          type: string
+                        memory:
+                          description: Memory is for specifying Memory requirements
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          type: string
+                      type: object
+                    requests:
+                      description: Requests CPU and Memory requirements
+                      properties:
+                        cpu:
+                          description: CPU is for specifying CPU requirements
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          type: string
+                        ephemeral-storage:
+                          description: Memory is for specifying Memory requirements
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          type: string
+                        memory:
+                          description: Memory is for specifying Memory requirements
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          type: string
+                      type: object
+                  type: object
+                description: WorkloadResources are a map from workload name (i.e.
+                  Deployment, StatefulSet, DaemonSet, or Job) to resource requests
+                  and limits
+                type: object
             required:
             - clusterName
             type: object
@@ -1487,7 +1413,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.28.0-alpha-c1b484b8
+  collector: 1.28.0-alpha-31fbd0e8
   logging: 2.1.10
   proxy: "13.3"
 kind: ConfigMap
@@ -1559,7 +1485,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.16.0-alpha-c1b484b8
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.16.0-alpha-31fbd0e8
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
