@@ -3,8 +3,8 @@ DOCKER_IMAGE?=pixie-sizer
 ifeq ($(origin VERSION_POSTFIX), undefined)
 VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
-NEXT_RELEASE_VERSION?=0.1.0
-VERSION?=$(NEXT_RELEASE_VERSION)$(VERSION_POSTFIX)
+RELEASE_VERSION?=0.1.0
+VERSION?=$(RELEASE_VERSION)$(VERSION_POSTFIX)
 IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 
 IMG_ARCHES:=amd64 arm64
@@ -18,12 +18,22 @@ build-image: $(IMG_DEPS)
 
 .PHONY: build-deployment
 build-deployment: build-image
-	sed 's%image: projects.registry.vmware.com/tanzu_observability/pixie-sizer:VERSION%image: $(IMG)%g' pixie-sizer.yaml > build/pixie-sizer.yaml
+	sed 's%image: projects.registry.vmware.com/tanzu_observability/pixie-sizer:.*%image: $(IMG)%g' pixie-sizer.yaml > build/pixie-sizer.yaml
 
 .PHONY: deploy
 deploy: build-deployment
 	kubectl delete -f build/pixie-sizer.yaml || true
-	PIXIE_SIZER_YAML=build/pixie-sizer.yaml ./install.sh
+	PIXIE_SIZER_YAML=file://$(shell realpath build/pixie-sizer.yaml) ./install.sh
+
+.PHONY: release
+release: build-deployment
+	test -n "$(NEXT_RELEASE_VERSION)" # $$NEXT_RELEASE_VERSION must be set
+	cp build/pixie-sizer.yaml pixie-sizer-$(VERSION).yaml
+	git add pixie-sizer-$(VERSION).yaml
+	sed -i '0,/RELEASE_VERSION?=.*/{s//RELEASE_VERSION?=$(NEXT_RELEASE_VERSION)/}' Makefile
+ifeq ($(VERSION_POSTFIX),) # this is a full release
+	sed -i 's%pixie-sizer-.*\.yaml%pixie-sizer-$(VERSION).yaml%g' install.sh
+endif
 
 .PRECIOUS: build/%/pixie-sizer
 build/%/pixie-sizer: always_out_of_date

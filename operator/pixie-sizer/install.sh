@@ -4,10 +4,11 @@ set -euo pipefail
 # Default the environment variables if they are not already set
 : "${PS_TRAFFIC_SCALE_FACTOR:=1.5}"
 : "${PS_SAMPLE_PERIOD_MINUTES:=60}"
-: "${PIXIE_SIZER_YAML:=TODO_URL_OF_LATEST_RELEASED_PIXIE_SIZER_YAML}"
+: "${PIXIE_SIZER_YAML:=https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/operator/pixie-sizer/pixie-sizer-0.1.0.yaml}"
 
 # Deploy Pixie Sizer
-sed "s/PS_TRAFFIC_SCALE_FACTOR_VALUE/$PS_TRAFFIC_SCALE_FACTOR/g" "$PIXIE_SIZER_YAML" | \
+curl --silent -o - "$PIXIE_SIZER_YAML" | \
+  sed "s/PS_TRAFFIC_SCALE_FACTOR_VALUE/$PS_TRAFFIC_SCALE_FACTOR/g" | \
   sed "s/PS_SAMPLE_PERIOD_MINUTES_VALUE/$PS_SAMPLE_PERIOD_MINUTES/g" | \
   kubectl apply -f -
 
