@@ -32,19 +32,7 @@ A Kubernetes cluster with Pixie enabled:
 There are two main categories of settings that are able to be customized. They are the general Kubernetes pod resource requirements, and internal Pixie-specific memory settings.
 
 1. Customizing Pod Resource Requirements
-- The resource requirements for any workload can be customized as described in this Readme (TODO: write this readme)
-- The specific Pixie workloads and their function are as follows:
-  - `kelvin`
-    - Query aggregator and exporter
-  - `vizier-pem`
-    - Data collection and short-term retention
-  - `vizier-metadata`
-    - Metadata cache used by Pixie
-  - `vizier-query-broker`
-    - Query scheduler
-  - `pl-nats`
-    - Internal Pixie message bus
-- An example showing how to modify the Wavefront CR to override resource requirements for `vizier-pem`:
+- The resource requirements for any workload can be customized through yaml configuration. Here is an example showing how to modify the Wavefront CR to override resource requirements for `vizier-pem`:
 ```yaml
 spec: 
   clusterSize: small | medium | large
@@ -58,6 +46,17 @@ spec:
         cpu: 2
         memory: 2Gi
 ```
+- The specific Pixie workloads and their function are as follows:
+  - `kelvin`
+    - Query aggregator and exporter
+  - `vizier-pem`
+    - Data collection and short-term retention
+  - `vizier-metadata`
+    - Metadata cache used by Pixie
+  - `vizier-query-broker`
+    - Query scheduler
+  - `pl-nats`
+    - Internal Pixie message bus
 
 2. Customizing Pixie-specific Settings
 - There are two values exposed by Pixie to customize its internal resource limits: `total_mib` and `http_events_percent`, which are set in the Wavefront CR as follows:
