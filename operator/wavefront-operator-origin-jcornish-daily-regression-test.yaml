@@ -1441,7 +1441,7 @@ subjects:
 ---
 apiVersion: v1
 data:
-  collector: 1.26.0-regression-test-2210b9dc
+  collector: 1.26.0-regression-test-5a464936
   logging: 2.1.9
   proxy: "13.2"
 kind: ConfigMap
@@ -1513,7 +1513,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.14.0-regression-test-2210b9dc
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:2.14.0-regression-test-5a464936
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
