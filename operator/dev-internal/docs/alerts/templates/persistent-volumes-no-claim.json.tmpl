@@ -13,7 +13,7 @@
     },
     {
       "name": "B",
-      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Available\"), sources, cluster, cluster_uuid, pv_name, phase, metrics)",
+      "query": "count(ts(\"kubernetes.pv.status.phase\", cluster=\"K8S_CLUSTER_NAME\" AND phase=\"Available\"), sources, cluster, cluster_uuid, pv_name, phase, metrics, type)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

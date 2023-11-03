@@ -6,7 +6,7 @@
   "alertSources": [
     {
       "name": "A",
-      "query": "retainDimension(ts(\"kubernetes.controlplane.etcd.server.has.leader.gauge\", cluster=\"K8S_CLUSTER_NAME\"), sources, cluster, cluster_uuid, namespace, pod, metrics)",
+      "query": "retainDimension(ts(\"kubernetes.controlplane.etcd.server.has.leader.gauge\", cluster=\"K8S_CLUSTER_NAME\"), sources, cluster, cluster_uuid, namespace, pod, metrics, type)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

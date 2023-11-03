@@ -72,11 +72,7 @@ func (converter *pointConverter) Process(batch *metrics.Batch) (*metrics.Batch, 
 		converter.addLabelTags(ms, tags)
 		hostname := tags["hostname"]
 		metricType := tags["type"]
-		// This is a temporary change we tried, but didn't work as expected.
-		//if workloadKind, ok := tags["workload_kind"]; ok {
-		//	// TODO this is hacky; we should refactor our usage of type for creating workload submetrics
-		//	tags["type"] = workloadKind
-		//}
+
 		if strings.Contains(tags["container_name"], sysSubContainerName) {
 			//don't send system subcontainers
 			continue
