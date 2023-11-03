@@ -13,7 +13,7 @@
     },
     {
       "name": "B",
-      "query": "sum(ts(\"kubernetes.workload.status\", cluster=\"K8S_CLUSTER_NAME\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, metrics) = 0",
+      "query": "sum(ts(\"kubernetes.workload.status\", cluster=\"K8S_CLUSTER_NAME\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, metrics, type) = 0",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
