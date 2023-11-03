@@ -68,7 +68,7 @@ spec:
               total_mib: 100
               http_events_percent: 20
     ```
-- The `clusterSize` chosen will give a reasonable default for these settings, but they can be fine-tuned. Tuning these variables relies on knowledge of internal Pixie dynamics. The Pixie Sizer tool described in the next section will make a recommendation for what these values should be based on actual observed needs of the cluster.
+- The `clusterSize` chosen will give a reasonable default for these settings, but they can be fine-tuned to reduce memory consumption or to add more to avoid losing observations due to memory overruns. Tuning these variables relies on knowledge of internal Pixie dynamics. The Pixie Sizer tool described in the next section will make a recommendation for what these values should be based on actual observed needs of the cluster.
 
 ## Running the Pixie Sizer tool
 
