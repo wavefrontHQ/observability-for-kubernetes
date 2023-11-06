@@ -3,13 +3,23 @@
 package events
 
 import (
+	"strings"
+
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	v1 "k8s.io/api/core/v1"
 )
 
+// category
 const (
 	CREATION = "Creation"
 	RUNTIME  = "Runtime"
+)
+
+// subcategory
+const (
+	IMAGEPULLERR     = "ImagePullErr"
+	CRASHLOOPBACKOFF = "CrashLoopBackOff"
+	FAILEDMOUNT      = "FailedMount"
 )
 
 func annotateEvent(event *v1.Event, workloadCache util.WorkloadCache, clusterName, clusterUUID string) {
@@ -26,6 +36,20 @@ func annotateEvent(event *v1.Event, workloadCache util.WorkloadCache, clusterNam
 		if len(nodeName) > 0 {
 			event.ObjectMeta.Annotations["aria/node-name"] = nodeName
 		}
+		categorizePodEvent(event)
+	}
+}
+
+func categorizePodEvent(event *v1.Event) {
+	if event.Reason == "Failed" && strings.Contains(strings.ToLower(event.Message), "image") {
 		event.ObjectMeta.Annotations["aria/category"] = CREATION
+		event.ObjectMeta.Annotations["aria/subcategory"] = IMAGEPULLERR
+
+	} else if event.Reason == "BackOff" && strings.Contains(event.Message, "Back-off restarting") {
+		event.ObjectMeta.Annotations["aria/category"] = RUNTIME
+		event.ObjectMeta.Annotations["aria/subcategory"] = CRASHLOOPBACKOFF
+	} else if event.Reason == "FailedMount" {
+		event.ObjectMeta.Annotations["aria/category"] = CREATION
+		event.ObjectMeta.Annotations["aria/subcategory"] = FAILEDMOUNT
 	}
 }

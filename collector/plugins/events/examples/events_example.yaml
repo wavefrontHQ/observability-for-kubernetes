@@ -1,0 +1,1185 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-8lph4
+    namespace: collector-targets
+    resourceVersion: "16337"
+    uid: 91d9e934-9ad8-46db-abf0-3b795eb692a2
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:48Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: daemonset-not-ready-8lph4.179526446ee92ca4
+    namespace: collector-targets
+    resourceVersion: "601"
+    uid: b0c8a3b1-8922-48bb-85ff-39d5e5f3b6e5
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-8lph4
+    namespace: collector-targets
+    resourceVersion: "16337"
+    uid: 91d9e934-9ad8-46db-abf0-3b795eb692a2
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:48Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: daemonset-not-ready-8lph4.179526446ee978ec
+    namespace: collector-targets
+    resourceVersion: "602"
+    uid: d87aafc2-8e25-459f-8933-c0c0b8efd845
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:10Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-8lph4
+    namespace: collector-targets
+    resourceVersion: "16337"
+    uid: 91d9e934-9ad8-46db-abf0-3b795eb692a2
+  kind: Event
+  lastTimestamp: "2023-11-06T21:36:02Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:10Z"
+    name: daemonset-not-ready-8lph4.17952644943454eb
+    namespace: collector-targets
+    resourceVersion: "652"
+    uid: a81a9281-68f1-4a89-8bd0-b1c4373280cf
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-fm2ld
+    namespace: collector-targets
+    resourceVersion: "16346"
+    uid: 4968cd6c-7088-49ab-bf7e-6c61a73000f3
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:51Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: daemonset-not-ready-fm2ld.179526446e1f6496
+    namespace: collector-targets
+    resourceVersion: "613"
+    uid: 149457e2-8cda-466f-9742-5b11bb566ee5
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-fm2ld
+    namespace: collector-targets
+    resourceVersion: "16346"
+    uid: 4968cd6c-7088-49ab-bf7e-6c61a73000f3
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:51Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: daemonset-not-ready-fm2ld.179526446e1fbe75
+    namespace: collector-targets
+    resourceVersion: "614"
+    uid: a2c778f0-7cf7-4064-8cf7-e821dab2cc24
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 2
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:10Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-fm2ld
+    namespace: collector-targets
+    resourceVersion: "16346"
+    uid: 4968cd6c-7088-49ab-bf7e-6c61a73000f3
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:36Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:10Z"
+    name: daemonset-not-ready-fm2ld.17952644848e1187
+    namespace: collector-targets
+    resourceVersion: "574"
+    uid: 141ac0d5-8f82-4ddd-9a73-c0fea3e59131
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-jtlmt
+    namespace: collector-targets
+    resourceVersion: "16347"
+    uid: 215c017c-bb2b-4465-b846-9c78b18f8570
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:57Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: daemonset-not-ready-jtlmt.1795264464707897
+    namespace: collector-targets
+    resourceVersion: "638"
+    uid: a0850df6-8ab2-45a9-88b7-6b3e246a175c
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-rwlb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-jtlmt
+    namespace: collector-targets
+    resourceVersion: "16347"
+    uid: 215c017c-bb2b-4465-b846-9c78b18f8570
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:57Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: daemonset-not-ready-jtlmt.179526446470e93c
+    namespace: collector-targets
+    resourceVersion: "639"
+    uid: bf746b7c-7097-441e-934a-1641a4062a77
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-rwlb
+  type: Warning
+- apiVersion: v1
+  count: 2
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-jtlmt
+    namespace: collector-targets
+    resourceVersion: "16347"
+    uid: 215c017c-bb2b-4465-b846-9c78b18f8570
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:41Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: daemonset-not-ready-jtlmt.179526446d9d7b02
+    namespace: collector-targets
+    resourceVersion: "590"
+    uid: 153855c2-0892-4f2b-a934-6d40969ef532
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-rwlb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{deployment-not-ready}
+    kind: Pod
+    name: deployment-not-ready-6b8894b74f-9thss
+    namespace: collector-targets
+    resourceVersion: "16318"
+    uid: fc50ef12-3156-4aea-ba04-5fbc26a1be4c
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:51Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: deployment-not-ready-6b8894b74f-9thss.179526444d789314
+    namespace: collector-targets
+    resourceVersion: "611"
+    uid: 2e86bac2-ffa8-40f7-a5c4-fbc1ea83193b
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{deployment-not-ready}
+    kind: Pod
+    name: deployment-not-ready-6b8894b74f-9thss
+    namespace: collector-targets
+    resourceVersion: "16318"
+    uid: fc50ef12-3156-4aea-ba04-5fbc26a1be4c
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:51Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: deployment-not-ready-6b8894b74f-9thss.179526444d78e9af
+    namespace: collector-targets
+    resourceVersion: "612"
+    uid: b0d9de76-7fd7-42d4-ba6d-c5ad8e211c9b
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{deployment-not-ready}
+    kind: Pod
+    name: deployment-not-ready-6b8894b74f-9thss
+    namespace: collector-targets
+    resourceVersion: "16318"
+    uid: fc50ef12-3156-4aea-ba04-5fbc26a1be4c
+  kind: Event
+  lastTimestamp: "2023-11-06T21:36:03Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: deployment-not-ready-6b8894b74f-9thss.17952644583951be
+    namespace: collector-targets
+    resourceVersion: "654"
+    uid: 6ba8d686-6d26-4172-8506-5c8694b0d6c8
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{deployment-not-ready}
+    kind: Pod
+    name: deployment-not-ready-6b8894b74f-bwfcz
+    namespace: collector-targets
+    resourceVersion: "16317"
+    uid: 44afb01c-ea6c-429e-a825-f0b7052a5442
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:55Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: deployment-not-ready-6b8894b74f-bwfcz.17952644437199fa
+    namespace: collector-targets
+    resourceVersion: "633"
+    uid: ee1e98d5-15a3-478b-994b-52b36714b1ea
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-rwlb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{deployment-not-ready}
+    kind: Pod
+    name: deployment-not-ready-6b8894b74f-bwfcz
+    namespace: collector-targets
+    resourceVersion: "16317"
+    uid: 44afb01c-ea6c-429e-a825-f0b7052a5442
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:55Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: deployment-not-ready-6b8894b74f-bwfcz.179526444371e8cd
+    namespace: collector-targets
+    resourceVersion: "635"
+    uid: 1b08a05e-4be2-41c1-9113-74d61152f29f
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-rwlb
+  type: Warning
+- apiVersion: v1
+  count: 2
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{deployment-not-ready}
+    kind: Pod
+    name: deployment-not-ready-6b8894b74f-bwfcz
+    namespace: collector-targets
+    resourceVersion: "16317"
+    uid: 44afb01c-ea6c-429e-a825-f0b7052a5442
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:35Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: deployment-not-ready-6b8894b74f-bwfcz.179526446d988c30
+    namespace: collector-targets
+    resourceVersion: "569"
+    uid: 61065986-a079-45f6-b8fe-24e833d39b64
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-rwlb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{deployment-not-ready}
+    kind: Pod
+    name: deployment-not-ready-6b8894b74f-nc8vx
+    namespace: collector-targets
+    resourceVersion: "16310"
+    uid: 9a4d5023-c83b-4a21-a4c9-1ca97106b758
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:50Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: deployment-not-ready-6b8894b74f-nc8vx.179526444483aa71
+    namespace: collector-targets
+    resourceVersion: "609"
+    uid: b3b7d76d-2ce3-40a0-ab19-23c5eee5e215
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{deployment-not-ready}
+    kind: Pod
+    name: deployment-not-ready-6b8894b74f-nc8vx
+    namespace: collector-targets
+    resourceVersion: "16310"
+    uid: 9a4d5023-c83b-4a21-a4c9-1ca97106b758
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:50Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: deployment-not-ready-6b8894b74f-nc8vx.1795264444840a4f
+    namespace: collector-targets
+    resourceVersion: "610"
+    uid: e8cafb9e-9277-46b2-97eb-ad15045631bf
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{deployment-not-ready}
+    kind: Pod
+    name: deployment-not-ready-6b8894b74f-nc8vx
+    namespace: collector-targets
+    resourceVersion: "16310"
+    uid: 9a4d5023-c83b-4a21-a4c9-1ca97106b758
+  kind: Event
+  lastTimestamp: "2023-11-06T21:36:04Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: deployment-not-ready-6b8894b74f-nc8vx.1795264448523bc4
+    namespace: collector-targets
+    resourceVersion: "657"
+    uid: f8f2f7e7-ca2c-491e-a87c-df1f1ccfd3e9
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:19Z"
+  involvedObject:
+    apiVersion: batch/v1
+    kind: Job
+    name: job-failure-fixed-completion-count
+    namespace: collector-targets
+    resourceVersion: "16588"
+    uid: b0f76b41-41a5-4bd5-ab66-b06706cc20b2
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:19Z"
+  message: Job has reached the specified backoff limit
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:19Z"
+    name: job-failure-fixed-completion-count.17952646b1a3c00a
+    namespace: collector-targets
+    resourceVersion: "497"
+    uid: 6bebf9f2-62d9-4998-89ee-1341edb2e348
+  reason: BackoffLimitExceeded
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: job-controller
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:35Z"
+  involvedObject:
+    apiVersion: batch/v1
+    kind: Job
+    name: job-failure-work-queue
+    namespace: collector-targets
+    resourceVersion: "16822"
+    uid: f68d123d-b914-45ba-a9c9-94b6d22a2ec7
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:35Z"
+  message: Job has reached the specified backoff limit
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:35Z"
+    name: job-failure-work-queue.1795264a73478079
+    namespace: collector-targets
+    resourceVersion: "572"
+    uid: a91d00e9-f3d3-41ce-a037-72d78c3f2b7f
+  reason: BackoffLimitExceeded
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: job-controller
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:34Z"
+  involvedObject:
+    apiVersion: batch/v1
+    kind: Job
+    name: job-failure
+    namespace: collector-targets
+    resourceVersion: "16808"
+    uid: f408f6b7-5c87-4594-b733-cf2f72e7b93d
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:34Z"
+  message: Job has reached the specified backoff limit
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:34Z"
+    name: job-failure.1795264a4ed385d8
+    namespace: collector-targets
+    resourceVersion: "567"
+    uid: fb42a12e-e242-471e-be68-3f0afd81f4c5
+  reason: BackoffLimitExceeded
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: job-controller
+  type: Warning
+- apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:38Z"
+  involvedObject:
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    name: memcached-release-74776df4d
+    namespace: collector-targets
+    resourceVersion: "16650"
+    uid: c7a9800b-df2e-4191-954d-607cdece8780
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:53Z"
+  message: No recommendation
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:38Z"
+    name: memcached-release-74776df4d.1795264b0d6023fe
+    namespace: collector-targets
+    resourceVersion: "622"
+    uid: 6514f343-2253-4b73-bebd-1adb6afcc399
+  reason: FailedGetResourceMetric
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: horizontal-pod-autoscaler
+  type: Warning
+- apiVersion: v1
+  count: 6
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:02Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: pod-cannot-be-scheduled
+    namespace: collector-targets
+    resourceVersion: "16226"
+    uid: 557e30eb-7a22-4386-a6da-5243424c49f4
+  kind: Event
+  lastTimestamp: "2023-11-06T21:36:03Z"
+  message: '0/3 nodes are available: 3 Insufficient memory. preemption: 0/3 nodes
+    are available: 3 No preemption victims found for incoming pod..'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:02Z"
+    name: pod-cannot-be-scheduled.17952642b64bb20b
+    namespace: collector-targets
+    resourceVersion: "655"
+    uid: ba7c9601-4316-4b05-b48a-40306f6a473f
+  reason: FailedScheduling
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Warning
+- apiVersion: v1
+  count: 5
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:06Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{pod-crash-loop-backoff}
+    kind: Pod
+    name: pod-crash-loop-backoff
+    namespace: collector-targets
+    resourceVersion: "16247"
+    uid: 89499431-d508-460e-8bf2-0169c6077cbd
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:59Z"
+  message: Back-off restarting failed container pod-crash-loop-backoff in pod pod-crash-loop-backoff_collector-targets(89499431-d508-460e-8bf2-0169c6077cbd)
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:06Z"
+    name: pod-crash-loop-backoff.17952643b8eb85a3
+    namespace: collector-targets
+    resourceVersion: "642"
+    uid: ba218981-0ac2-4420-a22d-f23ca223e697
+  reason: BackOff
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-rwlb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:04Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{pod-image-cannot-be-loaded}
+    kind: Pod
+    name: pod-image-cannot-be-loaded
+    namespace: collector-targets
+    resourceVersion: "16237"
+    uid: b8cd73e3-497b-4939-990b-912fd7a1bd1a
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:47Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:04Z"
+    name: pod-image-cannot-be-loaded.17952643310615b6
+    namespace: collector-targets
+    resourceVersion: "596"
+    uid: f272c354-19fa-4929-b9c3-02a08b66900b
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:04Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{pod-image-cannot-be-loaded}
+    kind: Pod
+    name: pod-image-cannot-be-loaded
+    namespace: collector-targets
+    resourceVersion: "16237"
+    uid: b8cd73e3-497b-4939-990b-912fd7a1bd1a
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:47Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:04Z"
+    name: pod-image-cannot-be-loaded.179526433106f5e7
+    namespace: collector-targets
+    resourceVersion: "597"
+    uid: 750e2a58-4d66-4c1a-b40a-bf68dbaa7762
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:05Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{pod-image-cannot-be-loaded}
+    kind: Pod
+    name: pod-image-cannot-be-loaded
+    namespace: collector-targets
+    resourceVersion: "16237"
+    uid: b8cd73e3-497b-4939-990b-912fd7a1bd1a
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:57Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:05Z"
+    name: pod-image-cannot-be-loaded.1795264367e9fc72
+    namespace: collector-targets
+    resourceVersion: "637"
+    uid: 9814928b-a505-4cd2-946b-33aed9f842aa
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:06Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: pod-stuck-in-terminating
+    namespace: collector-targets
+    resourceVersion: "16290"
+    uid: 2d2e4e87-7fbf-42c2-9145-4cf78b5614a7
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:06Z"
+  message: '0/3 nodes are available: 3 Insufficient memory. preemption: 0/3 nodes
+    are available: 3 No preemption victims found for incoming pod..'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:06Z"
+    name: pod-stuck-in-terminating.179526439f1764de
+    namespace: collector-targets
+    resourceVersion: "333"
+    uid: 04fb9e74-0c54-406e-931e-6767cec5a9b6
+  reason: FailedScheduling
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:07Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: pod-stuck-in-terminating
+    namespace: collector-targets
+    resourceVersion: "16321"
+    uid: 2d2e4e87-7fbf-42c2-9145-4cf78b5614a7
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:07Z"
+  message: 'skip schedule deleting pod: collector-targets/pod-stuck-in-terminating'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:07Z"
+    name: pod-stuck-in-terminating.17952643f075c3ec
+    namespace: collector-targets
+    resourceVersion: "357"
+    uid: d73deffd-4002-4b9f-bd56-ab0f0af0656f
+  reason: FailedScheduling
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:10Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{replicaset-not-ready}
+    kind: Pod
+    name: replicaset-not-ready-bx6l5
+    namespace: collector-targets
+    resourceVersion: "16359"
+    uid: 017f74b3-053e-4dc4-9a6f-a029bf9b9763
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:58Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:10Z"
+    name: replicaset-not-ready-bx6l5.1795264485d3a122
+    namespace: collector-targets
+    resourceVersion: "640"
+    uid: 245c33f1-21a7-4fb3-a08a-7be6869ecc75
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-rwlb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:10Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{replicaset-not-ready}
+    kind: Pod
+    name: replicaset-not-ready-bx6l5
+    namespace: collector-targets
+    resourceVersion: "16359"
+    uid: 017f74b3-053e-4dc4-9a6f-a029bf9b9763
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:58Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:10Z"
+    name: replicaset-not-ready-bx6l5.1795264485d40370
+    namespace: collector-targets
+    resourceVersion: "641"
+    uid: 95da88a5-054e-4444-9f11-9d74471fe0e4
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-rwlb
+  type: Warning
+- apiVersion: v1
+  count: 2
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:10Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{replicaset-not-ready}
+    kind: Pod
+    name: replicaset-not-ready-bx6l5
+    namespace: collector-targets
+    resourceVersion: "16359"
+    uid: 017f74b3-053e-4dc4-9a6f-a029bf9b9763
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:39Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:10Z"
+    name: replicaset-not-ready-bx6l5.17952644a9dccf21
+    namespace: collector-targets
+    resourceVersion: "585"
+    uid: b2b01828-1ffc-4770-a5e9-831547e55363
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-rwlb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:10Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{replicaset-not-ready}
+    kind: Pod
+    name: replicaset-not-ready-j7s5j
+    namespace: collector-targets
+    resourceVersion: "16354"
+    uid: a97c13ca-67d4-4b45-b260-5c7e5ab0abb8
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:51Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:10Z"
+    name: replicaset-not-ready-j7s5j.1795264494f85609
+    namespace: collector-targets
+    resourceVersion: "615"
+    uid: 2f4c1765-a138-419d-9341-292f70dfc60b
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:10Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{replicaset-not-ready}
+    kind: Pod
+    name: replicaset-not-ready-j7s5j
+    namespace: collector-targets
+    resourceVersion: "16354"
+    uid: a97c13ca-67d4-4b45-b260-5c7e5ab0abb8
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:51Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:10Z"
+    name: replicaset-not-ready-j7s5j.1795264494f8b084
+    namespace: collector-targets
+    resourceVersion: "616"
+    uid: 71bf9ec6-3960-4544-a559-79efe92730bb
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 2
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:11Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{replicaset-not-ready}
+    kind: Pod
+    name: replicaset-not-ready-j7s5j
+    namespace: collector-targets
+    resourceVersion: "16354"
+    uid: a97c13ca-67d4-4b45-b260-5c7e5ab0abb8
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:38Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:11Z"
+    name: replicaset-not-ready-j7s5j.17952644c0e96f4a
+    namespace: collector-targets
+    resourceVersion: "580"
+    uid: ad67033f-c22e-4529-9595-ef1be80d39c7
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:10Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{replicaset-not-ready}
+    kind: Pod
+    name: replicaset-not-ready-s5pzx
+    namespace: collector-targets
+    resourceVersion: "16365"
+    uid: a449e1f8-ddc3-4696-8860-8b29c22c782a
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:48Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:10Z"
+    name: replicaset-not-ready-s5pzx.17952644910a740d
+    namespace: collector-targets
+    resourceVersion: "603"
+    uid: 7f12c994-652f-4bea-aeaf-25dc7e52e036
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:10Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{replicaset-not-ready}
+    kind: Pod
+    name: replicaset-not-ready-s5pzx
+    namespace: collector-targets
+    resourceVersion: "16365"
+    uid: a449e1f8-ddc3-4696-8860-8b29c22c782a
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:48Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:10Z"
+    name: replicaset-not-ready-s5pzx.17952644910ae40b
+    namespace: collector-targets
+    resourceVersion: "604"
+    uid: 5610901b-a38c-449b-a960-4b88518d1fed
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:10Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{replicaset-not-ready}
+    kind: Pod
+    name: replicaset-not-ready-s5pzx
+    namespace: collector-targets
+    resourceVersion: "16365"
+    uid: a449e1f8-ddc3-4696-8860-8b29c22c782a
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:59Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:10Z"
+    name: replicaset-not-ready-s5pzx.17952644943644bd
+    namespace: collector-targets
+    resourceVersion: "644"
+    uid: f43ad437-5dfe-48cf-bf69-e79718ec50fe
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:11Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{statefulset-not-ready}
+    kind: Pod
+    name: statefulset-not-ready-0
+    namespace: collector-targets
+    resourceVersion: "16386"
+    uid: f5a4d8c2-353c-4c7b-993f-cd83e8df6cda
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:53Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:11Z"
+    name: statefulset-not-ready-0.17952644f295e915
+    namespace: collector-targets
+    resourceVersion: "623"
+    uid: d61a588e-9031-4675-af56-bcaadf4e894e
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:11Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{statefulset-not-ready}
+    kind: Pod
+    name: statefulset-not-ready-0
+    namespace: collector-targets
+    resourceVersion: "16386"
+    uid: f5a4d8c2-353c-4c7b-993f-cd83e8df6cda
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:53Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:11Z"
+    name: statefulset-not-ready-0.17952644f2964843
+    namespace: collector-targets
+    resourceVersion: "624"
+    uid: 2e46b9d9-a880-4d79-83c9-533961122590
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+- apiVersion: v1
+  count: 2
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:12Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{statefulset-not-ready}
+    kind: Pod
+    name: statefulset-not-ready-0
+    namespace: collector-targets
+    resourceVersion: "16386"
+    uid: f5a4d8c2-353c-4c7b-993f-cd83e8df6cda
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:40Z"
+  message: 'Error: ImagePullBackOff'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:12Z"
+    name: statefulset-not-ready-0.17952644fcff94fb
+    namespace: collector-targets
+    resourceVersion: "588"
+    uid: ec2adcd9-e398-4b52-901a-743d8fadfc6f
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-jyuqi-cluster-default-pool-99d62efe-snwq
+  type: Warning
+kind: List
+metadata:
+  resourceVersion: ""
