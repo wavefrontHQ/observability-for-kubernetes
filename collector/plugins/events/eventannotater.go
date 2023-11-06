@@ -2,21 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 package events
 
-import v1 "k8s.io/api/core/v1"
+import (
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
+	v1 "k8s.io/api/core/v1"
+)
 
-func annotateEvent(e *v1.Event, er *EventRouter) {
-	if e.ObjectMeta.Annotations == nil {
-		e.ObjectMeta.Annotations = map[string]string{}
+func annotateEvent(event *v1.Event, workloadCache util.WorkloadCache, clusterName, clusterUUID string) {
+	if event.ObjectMeta.Annotations == nil {
+		event.ObjectMeta.Annotations = map[string]string{}
 	}
-	e.ObjectMeta.Annotations["aria/cluster-name"] = er.clusterName
-	e.ObjectMeta.Annotations["aria/cluster-uuid"] = er.clusterUUID
+	event.ObjectMeta.Annotations["aria/cluster-name"] = clusterName
+	event.ObjectMeta.Annotations["aria/cluster-uuid"] = clusterUUID
 
-	if e.InvolvedObject.Kind == "Pod" {
-		workloadName, workloadKind, nodeName := er.workloadCache.GetWorkloadForPodName(e.InvolvedObject.Name, e.InvolvedObject.Namespace)
-		e.ObjectMeta.Annotations["aria/workload-name"] = workloadName
-		e.ObjectMeta.Annotations["aria/workload-kind"] = workloadKind
+	if event.InvolvedObject.Kind == "Pod" {
+		workloadName, workloadKind, nodeName := workloadCache.GetWorkloadForPodName(event.InvolvedObject.Name, event.InvolvedObject.Namespace)
+		event.ObjectMeta.Annotations["aria/workload-name"] = workloadName
+		event.ObjectMeta.Annotations["aria/workload-kind"] = workloadKind
 		if len(nodeName) > 0 {
-			e.ObjectMeta.Annotations["aria/node-name"] = nodeName
+			event.ObjectMeta.Annotations["aria/node-name"] = nodeName
 		}
 	}
 }

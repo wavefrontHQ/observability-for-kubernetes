@@ -131,7 +131,7 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 
 	e = e.DeepCopy()
 
-	annotateEvent(e, er)
+	annotateEvent(e, er.workloadCache, er.clusterName, er.clusterUUID)
 
 	ns := e.InvolvedObject.Namespace
 	if len(ns) == 0 {
