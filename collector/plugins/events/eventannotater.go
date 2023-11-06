@@ -7,6 +7,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+const CREATION = "Creation"
+
 func annotateEvent(event *v1.Event, workloadCache util.WorkloadCache, clusterName, clusterUUID string) {
 	if event.ObjectMeta.Annotations == nil {
 		event.ObjectMeta.Annotations = map[string]string{}
@@ -21,5 +23,6 @@ func annotateEvent(event *v1.Event, workloadCache util.WorkloadCache, clusterNam
 		if len(nodeName) > 0 {
 			event.ObjectMeta.Annotations["aria/node-name"] = nodeName
 		}
+		event.ObjectMeta.Annotations["aria/category"] = CREATION
 	}
 }

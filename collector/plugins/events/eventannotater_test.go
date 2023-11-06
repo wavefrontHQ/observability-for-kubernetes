@@ -1,7 +1,6 @@
 package events
 
 import (
-	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"os"
@@ -34,9 +33,14 @@ func TestAnnotateEventNonCategory(t *testing.T) {
 
 func TestAnnotateCategories(t *testing.T) {
 	t.Run("Failed to pull image", func(t *testing.T) {
+		workloadCache := &testWorkloadCache{
+			workloadName: "daemonset-not-ready",
+			workloadKind: "DaemonSet",
+			nodeName:     "gke-cluster-default-pool-0816c2b3-zwkx",
+		}
 		event := getEvent(t, "examples/failed_to_pull.yaml")
-		fmt.Printf("failedtopull contents: %+v", event)
-		//require.Equal(t, "Creation", event.ObjectMeta.Annotations["aria/category"])
+		annotateEvent(&event, workloadCache, "some-cluster-name", "some-cluster-uuid")
+		require.Equal(t, CREATION, event.ObjectMeta.Annotations["aria/category"])
 	})
 }
 
