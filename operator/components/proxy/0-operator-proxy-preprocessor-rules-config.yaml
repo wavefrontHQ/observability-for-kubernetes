@@ -48,6 +48,24 @@ data:
         startsWith:
           scope: metricName
           value: "kubernetes.cadvisor"
+    - rule: add-cluster-type-to-etcd-leader
+      action: addTag
+      tag: type
+      value: cluster
+      if:
+        equals:
+          scope: metricName
+          value: "kubernetes.controlplane.etcd.server.has.leader.gauge"
+    - rule: add-type-from-workload-kind-tag
+      action: extractTag
+      source: workload_kind
+      tag: type
+      search: "(.*)"
+      replace: "$1"
+      if:
+        equals:
+          scope: metricName
+          value: "kubernetes.workload.status"
     - rule: span-drop-cluster-uuid
       action: spanDropTag
       key: cluster_uuid

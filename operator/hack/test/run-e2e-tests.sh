@@ -631,7 +631,6 @@ function main() {
       "validation-errors-preprocessor-rules"
       "allow-legacy-install"
       "basic"
-      "proxy-preprocessor"
       "advanced"
       "logging-integration"
       "with-http-proxy"

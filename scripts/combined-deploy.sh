@@ -42,7 +42,8 @@ function main() {
     popd
   fi
 
-  sed -i.bak "s%collector:.*$%collector: ${COLLECTOR_VERSION}%" "${OPERATOR_BUILD_DIR}/wavefront-operator.yaml"
+  sed -i.bak "s%collector:.*$%collector: '${COLLECTOR_VERSION}'%" "${OPERATOR_BUILD_DIR}/wavefront-operator.yaml"
+  sed -i.bak "s%kubernetes-collector:.*$%kubernetes-collector:${COLLECTOR_VERSION}%" "${OPERATOR_BUILD_DIR}/wavefront-operator.yaml"
 
   kubectl apply -k ${OPERATOR_BUILD_DIR}
   kubectl create -n ${NS} secret generic wavefront-secret --from-literal token=${WAVEFRONT_TOKEN} || true

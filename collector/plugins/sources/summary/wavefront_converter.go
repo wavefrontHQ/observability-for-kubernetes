@@ -72,6 +72,7 @@ func (converter *pointConverter) Process(batch *metrics.Batch) (*metrics.Batch, 
 		converter.addLabelTags(ms, tags)
 		hostname := tags["hostname"]
 		metricType := tags["type"]
+
 		if strings.Contains(tags["container_name"], sysSubContainerName) {
 			//don't send system subcontainers
 			continue
@@ -98,7 +99,6 @@ func (converter *pointConverter) Process(batch *metrics.Batch) (*metrics.Batch, 
 					source = hostname
 				}
 			}
-
 			// convert to a point and add it to the data batch
 			point := wf.NewPoint(converter.cleanMetricName(metricType, metricName), value, ts, source, tags)
 			batch.Metrics = wf.FilterAppend(converter.filters, converter.filteredPoints, batch.Metrics, point)

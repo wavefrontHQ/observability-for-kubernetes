@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 
 	corev1 "k8s.io/api/core/v1"
@@ -42,6 +43,7 @@ func buildPVPhase(persistentVolume *corev1.PersistentVolume, transforms configur
 	tags := make(map[string]string, len(sharedTags))
 	copyTags(sharedTags, tags)
 
+	tags[metrics.LabelMetricSetType.Key] = metrics.MetricSetTypePersistentVolume
 	tags["phase"] = string(persistentVolume.Status.Phase)
 	phaseValue := util.ConvertPVPhase(persistentVolume.Status.Phase)
 

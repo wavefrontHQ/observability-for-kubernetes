@@ -24,12 +24,13 @@ var (
 		Key:         "type",
 		Description: "Type of the metrics set (container, pod, namespace, node, cluster)",
 	}
-	MetricSetTypeSystemContainer = "sys_container"
-	MetricSetTypePodContainer    = "pod_container"
-	MetricSetTypePod             = "pod"
-	MetricSetTypeNamespace       = "ns"
-	MetricSetTypeNode            = "node"
-	MetricSetTypeCluster         = "cluster"
+	MetricSetTypeSystemContainer  = "sys_container"
+	MetricSetTypePodContainer     = "pod_container"
+	MetricSetTypePod              = "pod"
+	MetricSetTypeNamespace        = "ns"
+	MetricSetTypeNode             = "node"
+	MetricSetTypeCluster          = "cluster"
+	MetricSetTypePersistentVolume = "persistent_volume"
 
 	LabelCluster = LabelDescriptor{
 		Key:         "cluster",

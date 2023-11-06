@@ -13,7 +13,7 @@
     },
     {
       "name": "B",
-      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND condition=\"Ready\" AND status!=\"True\"), sources, cluster, cluster_uuid, nodename, node_role, condition, status)",
+      "query": "count(ts(\"kubernetes.node.status.condition\", cluster=\"K8S_CLUSTER_NAME\" AND condition=\"Ready\" AND status!=\"True\"), sources, cluster, cluster_uuid, nodename, node_role, condition, status, type, metrics)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true
