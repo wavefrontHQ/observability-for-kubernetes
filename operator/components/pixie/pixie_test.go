@@ -104,6 +104,53 @@ func TestValidate(t *testing.T) {
 }
 
 func TestResources(t *testing.T) {
+	t.Run("TLSCertsSecretExists set to true", func(t *testing.T) {
+		config := validComponentConfig()
+		config.TLSCertsSecretExists = true
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
+
+		require.NoError(t, err)
+
+		for _, deploymentName := range []string{util.PixieKelvinName, util.PixieVizierQueryBrokerName} {
+			deployment, err := test.GetDeployment(deploymentName, toApply)
+			require.NoError(t, err)
+			require.Equal(t, "true", deployment.GetAnnotations()["wavefront.com/conditionally-provision"])
+		}
+
+		for _, statefulSetName := range []string{util.PixieVizierMetadataName, util.PixieNatsName} {
+			statefulSet, err := test.GetStatefulSet(statefulSetName, toApply)
+			require.NoError(t, err)
+			require.Equal(t, "true", statefulSet.GetAnnotations()["wavefront.com/conditionally-provision"])
+		}
+
+		daemonSet, err := test.GetDaemonSet(util.PixieVizierPEMName, toApply)
+		require.NoError(t, err)
+		require.Equal(t, "true", daemonSet.GetAnnotations()["wavefront.com/conditionally-provision"])
+	})
+
+	t.Run("TLSCertsSecretExists set to false", func(t *testing.T) {
+		config := validComponentConfig()
+		config.TLSCertsSecretExists = false
+		component, _ := NewComponent(ComponentDir, config)
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
+
+		require.NoError(t, err)
+
+		for _, deploymentName := range []string{util.PixieKelvinName, util.PixieVizierQueryBrokerName} {
+			_, err := test.GetDeployment(deploymentName, toApply)
+			require.ErrorContains(t, err, "not found")
+		}
+
+		for _, statefulSetName := range []string{util.PixieVizierMetadataName, util.PixieNatsName} {
+			_, err := test.GetStatefulSet(statefulSetName, toApply)
+			require.ErrorContains(t, err, "not found")
+		}
+
+		_, err = test.GetDaemonSet(util.PixieVizierPEMName, toApply)
+		require.ErrorContains(t, err, "not found")
+	})
+
 	t.Run("pem resources are configurable", func(t *testing.T) {
 		config := validComponentConfig()
 		config.PEMResources.Requests.Memory = "500Mi"
@@ -264,6 +311,7 @@ func TestResources(t *testing.T) {
 func validComponentConfig() Config {
 	return Config{
 		Enable:               true,
+		TLSCertsSecretExists: true,
 		ControllerManagerUID: "controller-manager-uid",
 		ClusterUUID:          "cluster-uuid",
 		ClusterName:          wftest.DefaultClusterName,
@@ -298,6 +346,16 @@ func validComponentConfig() Config {
 			},
 		},
 		KelvinResources: wf.Resources{
+			Limits: wf.Resource{
+				CPU:    "100m",
+				Memory: "1Gi",
+			},
+			Requests: wf.Resource{
+				CPU:    "50m",
+				Memory: "500Mi",
+			},
+		},
+		NATSResources: wf.Resources{
 			Limits: wf.Resource{
 				CPU:    "100m",
 				Memory: "1Gi",

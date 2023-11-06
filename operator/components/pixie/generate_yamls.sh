@@ -81,6 +81,12 @@ do
   yq -i '.metadata.labels["app.kubernetes.io/component"] |= "pixie"' "$f"
 done
 
+yq -i '.metadata.annotations["wavefront.com/conditionally-provision"] = "{{ .TLSCertsSecretExists }}"' "${REPO_ROOT}"/operator/components/pixie/12-deployment-kelvin.yaml
+yq -i '.metadata.annotations["wavefront.com/conditionally-provision"] = "{{ .TLSCertsSecretExists }}"' "${REPO_ROOT}"/operator/components/pixie/14-deployment-vizier-query-broker.yaml
+yq -i '.metadata.annotations["wavefront.com/conditionally-provision"] = "{{ .TLSCertsSecretExists }}"' "${REPO_ROOT}"/operator/components/pixie/15-statefulset-vizier-metadata.yaml
+yq -i '.metadata.annotations["wavefront.com/conditionally-provision"] = "{{ .TLSCertsSecretExists }}"' "${REPO_ROOT}"/operator/components/pixie/16-daemonset-vizier-pem.yaml
+yq -i '.metadata.annotations["wavefront.com/conditionally-provision"] = "{{ .TLSCertsSecretExists }}"' "${REPO_ROOT}"/operator/components/pixie/23-statefulset-pl-nats.yaml
+
 yq -i '(.spec.template.spec.containers[] | select(.name == "pem") | .env) += {"name": "PL_TABLE_STORE_DATA_LIMIT_MB", "value": "{{ .TableStoreLimits.TotalMiB }}"}' "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 yq -i '(.spec.template.spec.containers[] | select(.name == "pem") | .env) += {"name": "PL_TABLE_STORE_HTTP_EVENTS_PERCENT", "value": "{{ .TableStoreLimits.HttpEventsPercent }}"}' "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 yq -i '(.spec.template.spec.containers[] | select(.name == "pem") | .env) += {"name": "PL_TABLE_STORE_STIRLING_ERROR_LIMIT_BYTES", "value": "0"}' "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"

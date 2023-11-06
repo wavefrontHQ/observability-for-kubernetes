@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
-
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric"
@@ -66,9 +65,7 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("does not create other services until the proxy is running", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.Autotracing.Enable = true
-		}), nil, wftest.Proxy(wftest.WithReplicas(0, 1)))
+		r, mockKM := emptyScenario(wftest.CR(), nil, wftest.Proxy(wftest.WithReplicas(0, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -82,9 +79,6 @@ func TestReconcileAll(t *testing.T) {
 		require.False(t, mockKM.NodeCollectorDaemonSetContains())
 		require.False(t, mockKM.ClusterCollectorDeploymentContains())
 		require.False(t, mockKM.LoggingDaemonSetContains())
-		require.False(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-cluster-spans-script"))
-		require.False(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-egress-spans-script"))
-		require.False(t, mockKM.AutotracingComponentContains("v1", "ConfigMap", "wavefront-ingress-spans-script"))
 
 		require.True(t, mockKM.ProxyServiceContains("port: 2878"))
 		require.True(t, mockKM.ProxyDeploymentContains("value: testWavefrontUrl/api/", "name: testToken", "containerPort: 2878"))
@@ -93,9 +87,7 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("creates other components after the proxy is running", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.Autotracing.Enable = true
-		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
+		r, mockKM := emptyScenario(wftest.CR(), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -112,10 +104,6 @@ func TestReconcileAll(t *testing.T) {
 		require.True(t, mockKM.ClusterCollectorDeploymentContains(fmt.Sprintf("kubernetes-collector:%s", r.Versions.CollectorVersion), "OperatorUUID"))
 		require.True(t, mockKM.LoggingDaemonSetContains(fmt.Sprintf("kubernetes-operator-fluentbit:%s", r.Versions.LoggingVersion), "OperatorUUID"))
 		require.True(t, mockKM.ProxyDeploymentContains(fmt.Sprintf("proxy:%s", r.Versions.ProxyVersion), "OperatorUUID"))
-		//auto instrumentation tests
-		require.True(t, mockKM.PixieComponentContains("apps/v1", "StatefulSet", "pl-nats"))
-		require.True(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
-		require.True(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "kelvin"))
 
 		require.Greater(t, len(mockSender.SentMetrics), 0, "should not have sent metrics")
 		require.Equal(t, 99.9999, VersionSent(mockSender), "should send OperatorVersion")
@@ -1368,10 +1356,26 @@ func TestReconcileLogging(t *testing.T) {
 
 func TestReconcileAutoTracing(t *testing.T) {
 	t.Run("creates Pixie components when AutoTracing is enabled", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Autotracing.Enable = true
 			w.Spec.ClusterName = "test-clusterName"
-		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
+		})
+
+		sslSecret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      util.PixieTLSCertsName,
+				Namespace: wfCR.Spec.Namespace,
+			},
+			StringData: map[string]string{
+				"server.key": "server-key-secret",
+				"ca.crt":     "ca-crt-secret",
+				"client.crt": "client-crt-secret",
+				"client.key": "client-key-secret",
+				"server.crt": "server-crt-secret",
+			},
+		}
+
+		r, mockKM := emptyScenario(wfCR, nil, wftest.Proxy(wftest.WithReplicas(1, 1)), sslSecret)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 		r.ClusterUUID = "12345"
@@ -1382,6 +1386,8 @@ func TestReconcileAutoTracing(t *testing.T) {
 		r.MetricConnection.Flush()
 
 		require.Equal(t, ctrl.Result{Requeue: true}, results)
+
+		require.True(t, mockKM.PixieComponentContains("batch/v1", "Job", "cert-provisioner-job"))
 
 		require.True(t, mockKM.PixieComponentContains("apps/v1", "StatefulSet", "pl-nats"))
 		require.True(t, mockKM.PixieComponentContains(
@@ -1421,6 +1427,8 @@ func TestReconcileAutoTracing(t *testing.T) {
 
 		require.Equal(t, ctrl.Result{Requeue: true}, results)
 
+		require.False(t, mockKM.PixieComponentContains("batch/v1", "Job", "cert-provisioner-job"))
+
 		require.False(t, mockKM.PixieComponentContains("apps/v1", "StatefulSet", "pl-nats"))
 		require.False(t, mockKM.PixieComponentContains("apps/v1", "DaemonSet", "vizier-pem"))
 		require.False(t, mockKM.PixieComponentContains("apps/v1", "Deployment", "kelvin"))
@@ -1428,8 +1436,6 @@ func TestReconcileAutoTracing(t *testing.T) {
 		require.False(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ServiceAccount", "metadata-service-account"))
-
-		require.False(t, mockKM.PixieComponentContains("v1", "ConfigMap", "wavefront-cluster-spans-script"))
 
 		doesNotContainPortInContainers(t, "otlpGrpcListenerPorts", *mockKM, 4317)
 		doesNotContainPortInServicePort(t, 4317, *mockKM)
@@ -1491,7 +1497,22 @@ func TestReconcileHubPixie(t *testing.T) {
 			w.Spec.Experimental.Hub.Enable = true
 			w.Spec.Experimental.Hub.Pixie.Enable = true
 		})
-		r, mockKM := emptyScenario(wfCR, nil)
+
+		sslSecret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      util.PixieTLSCertsName,
+				Namespace: wfCR.Spec.Namespace,
+			},
+			StringData: map[string]string{
+				"server.key": "server-key-secret",
+				"ca.crt":     "ca-crt-secret",
+				"client.crt": "client-crt-secret",
+				"client.key": "client-key-secret",
+				"server.crt": "server-crt-secret",
+			},
+		}
+
+		r, mockKM := emptyScenario(wfCR, nil, sslSecret)
 
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
@@ -1515,6 +1536,8 @@ func TestReconcileHubPixie(t *testing.T) {
 		require.True(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config", "PL_CLUSTER_NAME: test-clusterName"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-name: test-clusterName"))
 		require.True(t, mockKM.PixieComponentContains("v1", "Secret", "pl-cluster-secrets", "cluster-id: 12345"))
+
+		require.True(t, mockKM.PixieComponentContains("batch/v1", "Job", "cert-provisioner-job"))
 
 		require.False(t, mockKM.ProxyDeploymentContains(""))
 	})
@@ -1543,6 +1566,7 @@ func TestReconcileHubPixie(t *testing.T) {
 		require.False(t, mockKM.PixieComponentContains("v1", "Secret", "pl-deploy-secrets"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ConfigMap", "pl-cloud-config"))
 		require.False(t, mockKM.PixieComponentContains("v1", "ServiceAccount", "metadata-service-account"))
+		require.False(t, mockKM.PixieComponentContains("batch/v1", "Job", "cert-provisioner-job"))
 	})
 }
 
