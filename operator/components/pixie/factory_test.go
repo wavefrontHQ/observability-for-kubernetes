@@ -113,7 +113,7 @@ func TestFromWavefront(t *testing.T) {
 					w.Spec.ClusterSize = clusterSize
 				})
 
-				config := FromWavefront(cr)
+				config := FromWavefront(cr, clientFake.Setup())
 
 				require.Equal(t, PEMResources[clusterSize], config.PEMResources)
 				require.Equal(t, TableStoreLimits[clusterSize], config.TableStoreLimits)
@@ -131,7 +131,7 @@ func TestFromWavefront(t *testing.T) {
 				w.Spec.Experimental.Pixie.TableStoreLimits = wf.TableStoreLimits{TotalMiB: 9, HttpEventsPercent: 10}
 			})
 
-			config := FromWavefront(cr)
+			config := FromWavefront(cr, clientFake.Setup())
 
 			require.Equal(t, cr.Spec.Experimental.Pixie.TableStoreLimits, config.TableStoreLimits)
 		})

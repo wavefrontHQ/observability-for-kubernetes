@@ -108,7 +108,7 @@ func TestResources(t *testing.T) {
 		config := validComponentConfig()
 		config.TLSCertsSecretExists = true
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
@@ -133,7 +133,7 @@ func TestResources(t *testing.T) {
 		config := validComponentConfig()
 		config.TLSCertsSecretExists = false
 		component, _ := NewComponent(ComponentDir, config)
-		toApply, _, err := component.Resources()
+		toApply, _, err := component.Resources(components.NewK8sResourceBuilder(nil))
 
 		require.NoError(t, err)
 
@@ -346,6 +346,16 @@ func validComponentConfig() Config {
 			},
 		},
 		KelvinResources: wf.Resources{
+			Limits: wf.Resource{
+				CPU:    "100m",
+				Memory: "1Gi",
+			},
+			Requests: wf.Resource{
+				CPU:    "50m",
+				Memory: "500Mi",
+			},
+		},
+		NATSResources: wf.Resources{
 			Limits: wf.Resource{
 				CPU:    "100m",
 				Memory: "1Gi",
