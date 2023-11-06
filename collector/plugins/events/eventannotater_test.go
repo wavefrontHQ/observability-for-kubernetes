@@ -34,13 +34,26 @@ func TestAnnotateEventNonCategory(t *testing.T) {
 
 func TestAnnotateCategories(t *testing.T) {
 	t.Run("Failed to pull image", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/failed_to_pull.yaml", CREATION, IMAGEPULLERR)
+		validateCategorySubcategory(t, "examples/failed_to_pull.yaml", Creation, ImagePullBackOff)
 	})
 	t.Run("Crash loop backoff", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/crash_loop_backoff.yaml", RUNTIME, CRASHLOOPBACKOFF)
+		validateCategorySubcategory(t, "examples/crash_loop_backoff.yaml", Runtime, CrashLoopBackOff)
 	})
 	t.Run("Failed Mount", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/failed_mount.yaml", CREATION, FAILEDMOUNT)
+		validateCategorySubcategory(t, "examples/failed_mount.yaml", Creation, FailedMount)
+	})
+	t.Run("Unhealthy", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/unhealthy.yaml", Runtime, Unhealthy)
+	})
+	t.Run("FailedScheduling", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/failed_scheduling.yaml", Scheduling, InsufficientResources)
+	})
+	t.Run("FailedCreate", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/failed_create.yaml", Storage, FailedCreate)
+	})
+	t.Run("Stuck in Terminating", func(t *testing.T) {
+		// TODO: check pod status to differentiate this scenario with FailedScheduling
+		validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Scheduling, Terminating)
 	})
 }
 

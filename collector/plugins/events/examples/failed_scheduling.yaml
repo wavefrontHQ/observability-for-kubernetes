@@ -1,0 +1,29 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 12
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:02Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: pod-cannot-be-scheduled
+    namespace: collector-targets
+    resourceVersion: "16226"
+    uid: 557e30eb-7a22-4386-a6da-5243424c49f4
+  kind: Event
+  lastTimestamp: "2023-11-06T21:42:03Z"
+  message: '0/3 nodes are available: 3 Insufficient memory. preemption: 0/3 nodes
+    are available: 3 No preemption victims found for incoming pod..'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:02Z"
+    name: pod-cannot-be-scheduled.17952642b64bb20b
+    namespace: collector-targets
+    resourceVersion: "865"
+    uid: ba7c9601-4316-4b05-b48a-40306f6a473f
+  reason: FailedScheduling
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Warning

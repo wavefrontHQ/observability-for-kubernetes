@@ -1,0 +1,30 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 22
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:47:31Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: mysql-invalid-pc
+    namespace: default
+    resourceVersion: "22900"
+    uid: 13067332-bb1c-4da3-a78c-3d29b1db5bdb
+  kind: Event
+  lastTimestamp: "2023-11-06T22:59:23Z"
+  message: 'create Pod mysql-invalid-pc-0 in StatefulSet mysql-invalid-pc failed error:
+    Pod "mysql-invalid-pc-0" is invalid: spec.containers[0].volumeMounts[0].name:
+    Not found: "data-foo"'
+  metadata:
+    creationTimestamp: "2023-11-06T21:47:31Z"
+    name: mysql-invalid-pc.179526f13ae7c5e1
+    namespace: default
+    resourceVersion: "2033"
+    uid: 4b98b1c3-09ca-40d7-ad0d-78c94cf15b39
+  reason: FailedCreate
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: statefulset-controller
+  type: Warning
