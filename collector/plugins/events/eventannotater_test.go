@@ -42,6 +42,16 @@ func TestAnnotateCategories(t *testing.T) {
 		annotateEvent(&event, workloadCache, "some-cluster-name", "some-cluster-uuid")
 		require.Equal(t, CREATION, event.ObjectMeta.Annotations["aria/category"])
 	})
+	t.Run("Crash loop backoff", func(t *testing.T) {
+		workloadCache := &testWorkloadCache{
+			workloadName: "pod-crash-loop-backoff",
+			workloadKind: "Pod",
+			nodeName:     "gke-cluster-default-pool-0816c2b3-jt7j",
+		}
+		event := getEvent(t, "examples/crash_loop_backoff.yaml")
+		annotateEvent(&event, workloadCache, "some-cluster-name", "some-cluster-uuid")
+		require.Equal(t, RUNTIME, event.ObjectMeta.Annotations["aria/category"])
+	})
 }
 
 func getEvent(t *testing.T, fileName string) v1.Event {

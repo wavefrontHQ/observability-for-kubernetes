@@ -1,0 +1,28 @@
+apiVersion: v1
+count: 26
+eventTime: null
+firstTimestamp: "2023-11-06T18:24:32Z"
+involvedObject:
+  apiVersion: v1
+  fieldPath: spec.containers{pod-crash-loop-backoff}
+  kind: Pod
+  name: pod-crash-loop-backoff
+  namespace: collector-targets
+  resourceVersion: "35713"
+  uid: 4f2b0194-3b3c-4751-94d1-70429d8310ae
+kind: Event
+lastTimestamp: "2023-11-06T18:29:35Z"
+message: Back-off restarting failed container pod-crash-loop-backoff in pod pod-crash-loop-backoff_collector-targets(4f2b0194-3b3c-4751-94d1-70429d8310ae)
+metadata:
+  creationTimestamp: "2023-11-06T18:24:32Z"
+  name: pod-crash-loop-backoff.17951bdd67dfd4c0
+  namespace: collector-targets
+  resourceVersion: "850"
+  uid: d4388ad1-ddf4-4725-a041-222918f97ff3
+reason: BackOff
+reportingComponent: ""
+reportingInstance: ""
+source:
+  component: kubelet
+  host: gke-cluster-default-pool-0816c2b3-jt7j
+type: Warning

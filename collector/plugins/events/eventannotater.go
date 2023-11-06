@@ -7,7 +7,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-const CREATION = "Creation"
+const (
+	CREATION = "Creation"
+	RUNTIME  = "Runtime"
+)
 
 func annotateEvent(event *v1.Event, workloadCache util.WorkloadCache, clusterName, clusterUUID string) {
 	if event.ObjectMeta.Annotations == nil {
