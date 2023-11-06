@@ -1,7 +1,7 @@
 .PHONY=dockerize-lemans start-lemans clean stop-lemans tmp/dbconfig create-wf-users
 LM_VERSION=1.0.11-SNAPSHOT
 FDB_PORT=4550
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home
 
 tmp:
 	mkdir -p tmp
@@ -120,3 +120,11 @@ create-wf-users:
 
 start-echo-server:
 	docker compose up echo-server
+
+setup-kind-cluster:
+	kind create cluster --config kind-cluster.yaml
+	kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
+	kubectl patch daemonsets -n projectcontour envoy -p '{"spec":{"template":{"spec":{"nodeSelector":{"ingress-ready":"true"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Equal","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/master","operator":"Equal","effect":"NoSchedule"}]}}}}'
+
+load-kind-images:
+	kind load docker-image wf-proxy lemans/lemans-gateway lemans/lemans-resources uberserver
