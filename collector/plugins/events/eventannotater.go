@@ -11,15 +11,21 @@ import (
 
 // category
 const (
-	CREATION = "Creation"
-	RUNTIME  = "Runtime"
+	Creation   = "Creation"
+	Runtime    = "Runtime"
+	Scheduling = "Scheduling"
+	Storage    = "Storage"
 )
 
 // subcategory
 const (
-	IMAGEPULLERR     = "ImagePullErr"
-	CRASHLOOPBACKOFF = "CrashLoopBackOff"
-	FAILEDMOUNT      = "FailedMount"
+	ImagePullBackOff      = "ImagePullBackOff"
+	CrashLoopBackOff      = "CrashLoopBackOff"
+	FailedMount           = "FailedMount"
+	Unhealthy             = "Unhealthy"
+	InsufficientResources = "InsufficientResources"
+	FailedCreate          = "FailedCreate"
+	Terminating           = "Terminating"
 )
 
 func annotateEvent(event *v1.Event, workloadCache util.WorkloadCache, clusterName, clusterUUID string) {
@@ -36,20 +42,28 @@ func annotateEvent(event *v1.Event, workloadCache util.WorkloadCache, clusterNam
 		if len(nodeName) > 0 {
 			event.ObjectMeta.Annotations["aria/node-name"] = nodeName
 		}
-		categorizePodEvent(event)
 	}
+	categorizeEvent(event)
 }
 
-func categorizePodEvent(event *v1.Event) {
+func categorizeEvent(event *v1.Event) {
 	if event.Reason == "Failed" && strings.Contains(strings.ToLower(event.Message), "image") {
-		event.ObjectMeta.Annotations["aria/category"] = CREATION
-		event.ObjectMeta.Annotations["aria/subcategory"] = IMAGEPULLERR
-
+		event.ObjectMeta.Annotations["aria/category"] = Creation
+		event.ObjectMeta.Annotations["aria/subcategory"] = ImagePullBackOff
 	} else if event.Reason == "BackOff" && strings.Contains(event.Message, "Back-off restarting") {
-		event.ObjectMeta.Annotations["aria/category"] = RUNTIME
-		event.ObjectMeta.Annotations["aria/subcategory"] = CRASHLOOPBACKOFF
+		event.ObjectMeta.Annotations["aria/category"] = Runtime
+		event.ObjectMeta.Annotations["aria/subcategory"] = CrashLoopBackOff
 	} else if event.Reason == "FailedMount" {
-		event.ObjectMeta.Annotations["aria/category"] = CREATION
-		event.ObjectMeta.Annotations["aria/subcategory"] = FAILEDMOUNT
+		event.ObjectMeta.Annotations["aria/category"] = Creation
+		event.ObjectMeta.Annotations["aria/subcategory"] = FailedMount
+	} else if event.Reason == "Unhealthy" {
+		event.ObjectMeta.Annotations["aria/category"] = Runtime
+		event.ObjectMeta.Annotations["aria/subcategory"] = Unhealthy
+	} else if event.Reason == "FailedScheduling" && strings.Contains(strings.ToLower(event.Message), "insufficient") {
+		event.ObjectMeta.Annotations["aria/category"] = Scheduling
+		event.ObjectMeta.Annotations["aria/subcategory"] = InsufficientResources
+	} else if event.Reason == "FailedCreate" {
+		event.ObjectMeta.Annotations["aria/category"] = Storage
+		event.ObjectMeta.Annotations["aria/subcategory"] = FailedCreate
 	}
 }

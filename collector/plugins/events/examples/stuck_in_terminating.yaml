@@ -1,0 +1,29 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:48:18Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: pod-stuck-in-terminating
+    namespace: collector-targets
+    resourceVersion: "23632"
+    uid: 4303d7ba-f659-4883-8da3-1293c0010da8
+  kind: Event
+  lastTimestamp: "2023-11-06T21:48:18Z"
+  message: '0/3 nodes are available: 3 Insufficient memory. preemption: 0/3 nodes
+    are available: 3 No preemption victims found for incoming pod..'
+  metadata:
+    creationTimestamp: "2023-11-06T21:48:18Z"
+    name: pod-stuck-in-terminating.179526fc128a845d
+    namespace: collector-targets
+    resourceVersion: "569"
+    uid: bf0af976-34bc-4788-b9c6-21fbc286fbc7
+  reason: FailedScheduling
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: default-scheduler
+  type: Warning
