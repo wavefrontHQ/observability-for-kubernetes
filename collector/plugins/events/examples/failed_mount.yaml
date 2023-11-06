@@ -1,0 +1,86 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 8
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:46:53Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: kelvin-9c5798965-bwpct
+    namespace: observability-system
+    resourceVersion: "22507"
+    uid: a00e4a23-25b3-4c5c-83d9-159af4560e7d
+  kind: Event
+  lastTimestamp: "2023-11-06T21:47:56Z"
+  message: 'MountVolume.SetUp failed for volume "certs" : secret "service-tls-certs"
+    not found'
+  metadata:
+    creationTimestamp: "2023-11-06T21:46:53Z"
+    name: kelvin-9c5798965-bwpct.179526e833b170db
+    namespace: observability-system
+    resourceVersion: "454"
+    uid: 66502f61-d5fb-4d13-9fee-bf90920d7ec4
+  reason: FailedMount
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-default-pool-e5f96192-nm5s
+  type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:48:55Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: kelvin-9c5798965-bwpct
+    namespace: observability-system
+    resourceVersion: "22507"
+    uid: a00e4a23-25b3-4c5c-83d9-159af4560e7d
+  kind: Event
+  lastTimestamp: "2023-11-06T21:48:55Z"
+  message: 'Unable to attach or mount volumes: unmounted volumes=[certs], unattached
+    volumes=[kube-api-access-6nl5x certs sys]: timed out waiting for the condition'
+  metadata:
+    creationTimestamp: "2023-11-06T21:48:55Z"
+    name: kelvin-9c5798965-bwpct.17952704cd484972
+    namespace: observability-system
+    resourceVersion: "801"
+    uid: 33e3b71e-16d7-4715-9439-34adde007303
+  reason: FailedMount
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-default-pool-e5f96192-nm5s
+  type: Warning
+- apiVersion: v1
+  count: 8
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:46:51Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: wavefront-cluster-collector-7dccd6c77-7gvrg
+    namespace: observability-system
+    resourceVersion: "22451"
+    uid: d78415e6-0bb8-4ce4-8ee2-8837810a7b4d
+  kind: Event
+  lastTimestamp: "2023-11-06T21:47:55Z"
+  message: 'MountVolume.SetUp failed for volume "config" : configmap "default-wavefront-collector-config"
+    not found'
+  metadata:
+    creationTimestamp: "2023-11-06T21:46:51Z"
+    name: wavefront-cluster-collector-7dccd6c77-7gvrg.179526e7cb80a194
+    namespace: observability-system
+    resourceVersion: "441"
+    uid: 634f03d8-6536-4e45-8539-cce9a2b5d12a
+  reason: FailedMount
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-default-pool-e5f96192-knr0
+  type: Warning
