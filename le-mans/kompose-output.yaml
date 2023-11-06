@@ -428,6 +428,10 @@ spec:
               hostPort: 8002
               protocol: TCP
           resources: {}
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/sh", "-c", "/opt/le-mans/create-lemans-buffered-pipelines.sh" ]
       hostname: gateway
       restartPolicy: Always
 status: {}
