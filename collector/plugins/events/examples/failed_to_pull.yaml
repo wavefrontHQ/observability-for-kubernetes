@@ -28,5 +28,5 @@ reportingComponent: ""
 reportingInstance: ""
 source:
   component: kubelet
-  host: gke-pselvaganesa-cluster-default-pool-0816c2b3-zwkx
+  host: gke-cluster-default-pool-0816c2b3-zwkx
 type: Warning
