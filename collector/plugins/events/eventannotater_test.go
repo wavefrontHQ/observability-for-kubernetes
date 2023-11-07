@@ -23,7 +23,8 @@ func TestAnnotateEventNonCategory(t *testing.T) {
 	event.InvolvedObject.Kind = fakePod.Kind
 	event.InvolvedObject.Namespace = fakePod.Namespace
 	event.InvolvedObject.Name = fakePod.Name
-	annotateEvent(event, workloadCache, "some-cluster-name", "some-cluster-uuid")
+	ea := NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
+	ea.annotateEvent(event)
 
 	require.Equal(t, "some-cluster-name", event.ObjectMeta.Annotations["aria/cluster-name"])
 	require.Equal(t, "some-cluster-uuid", event.ObjectMeta.Annotations["aria/cluster-uuid"])
@@ -52,8 +53,7 @@ func TestAnnotateCategories(t *testing.T) {
 		validateCategorySubcategory(t, "examples/failed_create.yaml", Storage, FailedCreate)
 	})
 	t.Run("Stuck in Terminating", func(t *testing.T) {
-		// TODO: check pod status to differentiate this scenario with FailedScheduling
-		validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Scheduling, Terminating)
+		validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Runtime, Terminating)
 	})
 }
 
@@ -64,8 +64,9 @@ func validateCategorySubcategory(t *testing.T, file, category, subcategory strin
 		nodeName:     "some-node-name",
 	}
 	eventList := getEventList(t, file)
+	ea := NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
 	for _, event := range eventList.Items {
-		annotateEvent(&event, workloadCache, "some-cluster-name", "some-cluster-uuid")
+		ea.annotateEvent(&event)
 		require.Equal(t, category, event.ObjectMeta.Annotations["aria/category"])
 		require.Equal(t, subcategory, event.ObjectMeta.Annotations["aria/subcategory"])
 	}

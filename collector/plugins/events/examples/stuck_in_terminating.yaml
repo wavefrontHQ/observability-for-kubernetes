@@ -3,27 +3,31 @@ items:
 - apiVersion: v1
   count: 1
   eventTime: null
-  firstTimestamp: "2023-11-06T21:48:18Z"
+  firstTimestamp: "2023-11-07T21:50:49Z"
   involvedObject:
     apiVersion: v1
+    fieldPath: spec.containers{pod-stuck-in-terminating}
     kind: Pod
     name: pod-stuck-in-terminating
     namespace: collector-targets
-    resourceVersion: "23632"
-    uid: 4303d7ba-f659-4883-8da3-1293c0010da8
+    resourceVersion: "7725"
+    uid: aa9e80f5-a4f1-46f9-b2ab-dfe07956571d
   kind: Event
-  lastTimestamp: "2023-11-06T21:48:18Z"
-  message: '0/3 nodes are available: 3 Insufficient memory. preemption: 0/3 nodes
-    are available: 3 No preemption victims found for incoming pod..'
+  lastTimestamp: "2023-11-07T21:50:49Z"
+  message: Stopping container pod-stuck-in-terminating
   metadata:
-    creationTimestamp: "2023-11-06T21:48:18Z"
-    name: pod-stuck-in-terminating.179526fc128a845d
+    creationTimestamp: "2023-11-07T21:50:49Z"
+    name: pod-stuck-in-terminating.179575b3e52617c4
     namespace: collector-targets
-    resourceVersion: "569"
-    uid: bf0af976-34bc-4788-b9c6-21fbc286fbc7
-  reason: FailedScheduling
+    resourceVersion: "8232"
+    uid: 618f5fc5-5a4e-4927-ac7d-9646b39bc074
+  reason: Killing
   reportingComponent: ""
   reportingInstance: ""
   source:
-    component: default-scheduler
-  type: Warning
+    component: kubelet
+    host: kind-control-plane
+  type: Normal
+kind: List
+metadata:
+  resourceVersion: ""

@@ -30,6 +30,7 @@ const (
 )
 
 type match func(event *v1.Event) bool
+
 type eventMatcher struct {
 	match       match
 	category    string
@@ -37,19 +38,19 @@ type eventMatcher struct {
 	podLister   corev1listers.PodLister
 }
 
-type eventAnnotater struct {
+func (em *eventMatcher) matches(event *v1.Event) bool {
+	return em.match(event)
+}
+
+type EventAnnotater struct {
 	workloadCache util.WorkloadCache
 	clusterName   string
 	clusterUUID   string
 	eventMatchers []eventMatcher
 }
 
-func (em *eventMatcher) matches(event *v1.Event) bool {
-	return em.match(event)
-}
-
-func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUID string) eventAnnotater {
-	matchers := make([]eventMatcher, 5)
+func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUID string) *EventAnnotater {
+	matchers := make([]eventMatcher, 0)
 
 	imageMatcher := eventMatcher{
 		match: func(event *v1.Event) bool {
@@ -63,7 +64,7 @@ func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUI
 
 	backoffMatcher := eventMatcher{
 		match: func(event *v1.Event) bool {
-			return event.Reason == "BackOff" && strings.Contains(event.Message, "Back-off restarting")
+			return event.Reason == "BackOff" && strings.Contains(strings.ToLower(event.Message), "back-off restarting")
 		},
 		category:    Runtime,
 		subcategory: CrashLoopBackOff,
@@ -81,6 +82,8 @@ func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUI
 		podLister:   nil,
 	}
 
+	matchers = append(matchers, failedMount)
+
 	unhealthy := eventMatcher{
 		match: func(event *v1.Event) bool {
 			return event.Reason == "Unhealthy"
@@ -91,6 +94,17 @@ func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUI
 	}
 
 	matchers = append(matchers, unhealthy)
+
+	terminating := eventMatcher{
+		match: func(event *v1.Event) bool {
+			return event.Reason == "Killing" && strings.Contains(strings.ToLower(event.Message), "stopping")
+		},
+		category:    Runtime,
+		subcategory: Terminating,
+		podLister:   nil,
+	}
+
+	matchers = append(matchers, terminating)
 
 	scheduling := eventMatcher{
 		match: func(event *v1.Event) bool {
@@ -107,14 +121,14 @@ func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUI
 		match: func(event *v1.Event) bool {
 			return event.Reason == "FailedCreate"
 		},
-		category:    Scheduling,
-		subcategory: InsufficientResources,
+		category:    Storage,
+		subcategory: FailedCreate,
 		podLister:   nil,
 	}
 
 	matchers = append(matchers, failedCreate)
 
-	return eventAnnotater{
+	return &EventAnnotater{
 		workloadCache: workloadCache,
 		clusterName:   clusterName,
 		clusterUUID:   clusterUUID,
@@ -122,42 +136,30 @@ func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUI
 	}
 }
 
-func annotateEvent(event *v1.Event, workloadCache util.WorkloadCache, clusterName, clusterUUID string) {
+func (ea *EventAnnotater) annotateEvent(event *v1.Event) {
 	if event.ObjectMeta.Annotations == nil {
 		event.ObjectMeta.Annotations = map[string]string{}
 	}
-	event.ObjectMeta.Annotations["aria/cluster-name"] = clusterName
-	event.ObjectMeta.Annotations["aria/cluster-uuid"] = clusterUUID
+	event.ObjectMeta.Annotations["aria/cluster-name"] = ea.clusterName
+	event.ObjectMeta.Annotations["aria/cluster-uuid"] = ea.clusterUUID
 
 	if event.InvolvedObject.Kind == "Pod" {
-		workloadName, workloadKind, nodeName := workloadCache.GetWorkloadForPodName(event.InvolvedObject.Name, event.InvolvedObject.Namespace)
+		workloadName, workloadKind, nodeName := ea.workloadCache.GetWorkloadForPodName(event.InvolvedObject.Name, event.InvolvedObject.Namespace)
 		event.ObjectMeta.Annotations["aria/workload-name"] = workloadName
 		event.ObjectMeta.Annotations["aria/workload-kind"] = workloadKind
 		if len(nodeName) > 0 {
 			event.ObjectMeta.Annotations["aria/node-name"] = nodeName
 		}
 	}
-	categorizeEvent(event)
+	ea.categorizeEvent(event)
 }
 
-func categorizeEvent(event *v1.Event) {
-	if event.Reason == "Failed" && strings.Contains(strings.ToLower(event.Message), "image") {
-		event.ObjectMeta.Annotations["aria/category"] = Creation
-		event.ObjectMeta.Annotations["aria/subcategory"] = ImagePullBackOff
-	} else if event.Reason == "BackOff" && strings.Contains(event.Message, "Back-off restarting") {
-		event.ObjectMeta.Annotations["aria/category"] = Runtime
-		event.ObjectMeta.Annotations["aria/subcategory"] = CrashLoopBackOff
-	} else if event.Reason == "FailedMount" {
-		event.ObjectMeta.Annotations["aria/category"] = Creation
-		event.ObjectMeta.Annotations["aria/subcategory"] = FailedMount
-	} else if event.Reason == "Unhealthy" {
-		event.ObjectMeta.Annotations["aria/category"] = Runtime
-		event.ObjectMeta.Annotations["aria/subcategory"] = Unhealthy
-	} else if event.Reason == "FailedScheduling" && strings.Contains(strings.ToLower(event.Message), "insufficient") {
-		event.ObjectMeta.Annotations["aria/category"] = Scheduling
-		event.ObjectMeta.Annotations["aria/subcategory"] = InsufficientResources
-	} else if event.Reason == "FailedCreate" {
-		event.ObjectMeta.Annotations["aria/category"] = Storage
-		event.ObjectMeta.Annotations["aria/subcategory"] = FailedCreate
+func (ea *EventAnnotater) categorizeEvent(event *v1.Event) {
+	for _, matcher := range ea.eventMatchers {
+		if matcher.matches(event) {
+			event.ObjectMeta.Annotations["aria/category"] = matcher.category
+			event.ObjectMeta.Annotations["aria/subcategory"] = matcher.subcategory
+			break
+		}
 	}
 }

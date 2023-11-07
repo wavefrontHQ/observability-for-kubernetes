@@ -14,5 +14,12 @@ spec:
     image: projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest
     resources:
       requests:
-        cpu: 100m
-        memory: 50G
+        memory: 50Mi
+        cpu: 50m
+        ephemeral-storage: 256Mi
+      limits:
+        memory: 75Mi
+        cpu: 75m
+        ephemeral-storage: 512Mi
+    args: [ /bin/sh, -c,
+            'i=0; while true; do echo "$i: $(date)\n"; echo "nextline"; i=$((i+1)); sleep 1; done' ]
