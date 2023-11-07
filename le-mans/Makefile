@@ -21,8 +21,8 @@ dockerize-lemans: le-mans/le-mans-resources/target/le-mans-resources-${LM_VERSIO
 start-wf-proxy: tmp/wavefront_csp_client_id tmp/wavefront_csp_client_secret dockerize-wf-proxy tmp/lemans_stream_name
 	docker run --tty --interactive --rm --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="https://nimba.wavefront.com/api" --env CSP_APP_ID="$(shell cat tmp/wavefront_csp_client_id)" --env CSP_APP_SECRET="$(shell cat tmp/wavefront_csp_client_secret)" --env WAVEFRONT_PROXY_ARGS="--le-mans-host http://gateway:8002 --le-mans-stream-name $(shell cat tmp/lemans_stream_name) --cspBaseUrl https://console-stg.cloud.vmware.com" --network le-mans_default wf-proxy
 
-start-wf-proxy-local: tmp/local_wavefront_token
-	docker run --tty --interactive --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="http://uberserver:8082/api" --env CSP_APP_ID="$(shell cat tmp/wavefront_csp_client_id)" --env CSP_APP_SECRET="$(shell cat tmp/wavefront_csp_client_secret)" --env WAVEFRONT_PROXY_ARGS="--le-mans-host http://gateway:8002 --le-mans-stream-name $(shell cat tmp/lemans_stream_name) --cspBaseUrl https://console-stg.cloud.vmware.com" --network le-mans_default wf-proxy
+start-wf-proxy-local: dockerize-wf-proxy tmp/local_wavefront_token tmp/lemans_stream_name
+	docker run --tty --interactive --rm --publish 2878:2878 --expose 2878 --env WAVEFRONT_URL="http://uberserver:8082/api" --env CSP_APP_ID="$(shell cat tmp/wavefront_csp_client_id)" --env CSP_APP_SECRET="$(shell cat tmp/wavefront_csp_client_secret)" --env WAVEFRONT_PROXY_ARGS="--le-mans-host http://gateway:8002 --le-mans-stream-name $(shell cat tmp/lemans_stream_name) --cspBaseUrl https://console-stg.cloud.vmware.com" --network le-mans_default wf-proxy
 
 dockerize-wf-proxy: wavefront-proxy
 	docker build -t wf-proxy -f wavefront-proxy/docker/Dockerfile ./wavefront-proxy
@@ -106,7 +106,13 @@ setup-wf-customers: system/cli/target/wfcli.sh
 	docker exec le-mans-uberserver-1 /scripts/setup-wf-customers.sh
 
 system/cli/target/wfcli.sh: system
-	cd system && mvn install -DskipTests=true -Duse.github.diff=none
+	cd system && mvn install -am -pl cli -DskipTests=true -Duse.github.diff=none
+
+dockerize-wf-backend: system/uberserver/target/fedevserver.jar
+	cd system && docker build . -t uberserver
+
+system/uberserver/target/fedevserver.jar: system
+	cd system && mvn install -am -pl uberserver -DskipTests=true -Duse.github.diff=none
 
 system:
 	git clone --branch k8ssaas-2427-ingest-from-le-mans git@github.com:sunnylabs/system.git
