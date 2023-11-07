@@ -46,6 +46,7 @@ type EventRouter struct {
 	clusterUUID       string
 	workloadCache     util.WorkloadCache
 	informerSynced    atomic.Bool
+	eventAnnotater    *EventAnnotater
 }
 
 func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink sinks.Sink, scrapeCluster bool, workloadCache util.WorkloadCache) *EventRouter {
@@ -61,6 +62,7 @@ func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConf
 		clusterName:     cfg.ClusterName,
 		clusterUUID:     cfg.ClusterUUID,
 		workloadCache:   workloadCache,
+		eventAnnotater:  NewEventAnnotator(workloadCache, cfg.ClusterName, cfg.ClusterUUID),
 	}
 
 	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -131,7 +133,7 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 
 	e = e.DeepCopy()
 
-	annotateEvent(e, er.workloadCache, er.clusterName, er.clusterUUID)
+	er.eventAnnotater.annotateEvent(e)
 
 	ns := e.InvolvedObject.Namespace
 	if len(ns) == 0 {
