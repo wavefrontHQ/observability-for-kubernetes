@@ -36,6 +36,7 @@ func init() {
 
 func main() {
 	log.Printf("traffic scale factor: %f", trafficScaleFactor)
+	log.Printf("First recommendation ready in %d minutes...", reportMinutes)
 	statsStore := NewStatsStore(samplePeriodMinutes, KnownTables)
 	metricStream, err := NewMetricStream(natsServer, clientTLSCertFile, clientTLSKeyFile, tlsCAFile)
 	if err != nil {
