@@ -42,30 +42,58 @@ func (em *eventMatcher) matches(event *v1.Event) bool {
 	return em.match(event)
 }
 
-type EventAnnotater struct {
+type EventAnnotator struct {
 	workloadCache util.WorkloadCache
 	clusterName   string
 	clusterUUID   string
 	eventMatchers []eventMatcher
 }
 
-func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUID string) *EventAnnotater {
-	eventAnnotater := &EventAnnotater{
+func (ea *EventAnnotator) annotate(event *v1.Event) {
+	if event.ObjectMeta.Annotations == nil {
+		event.ObjectMeta.Annotations = map[string]string{}
+	}
+	event.ObjectMeta.Annotations["aria/cluster-name"] = ea.clusterName
+	event.ObjectMeta.Annotations["aria/cluster-uuid"] = ea.clusterUUID
+
+	if event.InvolvedObject.Kind == "Pod" {
+		workloadName, workloadKind, nodeName := ea.workloadCache.GetWorkloadForPodName(event.InvolvedObject.Name, event.InvolvedObject.Namespace)
+		event.ObjectMeta.Annotations["aria/workload-name"] = workloadName
+		event.ObjectMeta.Annotations["aria/workload-kind"] = workloadKind
+		if len(nodeName) > 0 {
+			event.ObjectMeta.Annotations["aria/node-name"] = nodeName
+		}
+	}
+	ea.categorizeEvent(event)
+}
+
+func (ea *EventAnnotator) categorizeEvent(event *v1.Event) {
+	for _, matcher := range ea.eventMatchers {
+		if matcher.matches(event) {
+			event.ObjectMeta.Annotations["aria/category"] = matcher.category
+			event.ObjectMeta.Annotations["aria/subcategory"] = matcher.subcategory
+			break
+		}
+	}
+}
+
+func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUID string) *EventAnnotator {
+	annotator := &EventAnnotator{
 		workloadCache: workloadCache,
 		clusterName:   clusterName,
 		clusterUUID:   clusterUUID,
 		eventMatchers: make([]eventMatcher, 0),
 	}
 
-	eventAnnotater.eventMatchers = append(eventAnnotater.eventMatchers, eventAnnotater.schedulingMatchers()...)
-	eventAnnotater.eventMatchers = append(eventAnnotater.eventMatchers, eventAnnotater.creationMatchers()...)
-	eventAnnotater.eventMatchers = append(eventAnnotater.eventMatchers, eventAnnotater.runtimeMatchers()...)
-	eventAnnotater.eventMatchers = append(eventAnnotater.eventMatchers, eventAnnotater.storageMatchers()...)
+	annotator.eventMatchers = append(annotator.eventMatchers, annotator.schedulingMatchers()...)
+	annotator.eventMatchers = append(annotator.eventMatchers, annotator.creationMatchers()...)
+	annotator.eventMatchers = append(annotator.eventMatchers, annotator.runtimeMatchers()...)
+	annotator.eventMatchers = append(annotator.eventMatchers, annotator.storageMatchers()...)
 
-	return eventAnnotater
+	return annotator
 }
 
-func (ea *EventAnnotater) schedulingMatchers() []eventMatcher {
+func (ea *EventAnnotator) schedulingMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
@@ -78,7 +106,7 @@ func (ea *EventAnnotater) schedulingMatchers() []eventMatcher {
 	}
 }
 
-func (ea *EventAnnotater) creationMatchers() []eventMatcher {
+func (ea *EventAnnotator) creationMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
@@ -99,7 +127,7 @@ func (ea *EventAnnotater) creationMatchers() []eventMatcher {
 	}
 }
 
-func (ea *EventAnnotater) runtimeMatchers() []eventMatcher {
+func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
@@ -128,7 +156,7 @@ func (ea *EventAnnotater) runtimeMatchers() []eventMatcher {
 	}
 }
 
-func (ea *EventAnnotater) storageMatchers() []eventMatcher {
+func (ea *EventAnnotator) storageMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
@@ -138,33 +166,5 @@ func (ea *EventAnnotater) storageMatchers() []eventMatcher {
 			subcategory: FailedCreate,
 			podLister:   nil,
 		},
-	}
-}
-
-func (ea *EventAnnotater) annotateEvent(event *v1.Event) {
-	if event.ObjectMeta.Annotations == nil {
-		event.ObjectMeta.Annotations = map[string]string{}
-	}
-	event.ObjectMeta.Annotations["aria/cluster-name"] = ea.clusterName
-	event.ObjectMeta.Annotations["aria/cluster-uuid"] = ea.clusterUUID
-
-	if event.InvolvedObject.Kind == "Pod" {
-		workloadName, workloadKind, nodeName := ea.workloadCache.GetWorkloadForPodName(event.InvolvedObject.Name, event.InvolvedObject.Namespace)
-		event.ObjectMeta.Annotations["aria/workload-name"] = workloadName
-		event.ObjectMeta.Annotations["aria/workload-kind"] = workloadKind
-		if len(nodeName) > 0 {
-			event.ObjectMeta.Annotations["aria/node-name"] = nodeName
-		}
-	}
-	ea.categorizeEvent(event)
-}
-
-func (ea *EventAnnotater) categorizeEvent(event *v1.Event) {
-	for _, matcher := range ea.eventMatchers {
-		if matcher.matches(event) {
-			event.ObjectMeta.Annotations["aria/category"] = matcher.category
-			event.ObjectMeta.Annotations["aria/subcategory"] = matcher.subcategory
-			break
-		}
 	}
 }
