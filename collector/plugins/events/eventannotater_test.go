@@ -24,7 +24,7 @@ func TestAnnotateEventNonCategory(t *testing.T) {
 	event.InvolvedObject.Namespace = fakePod.Namespace
 	event.InvolvedObject.Name = fakePod.Name
 	ea := NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
-	ea.annotateEvent(event)
+	ea.annotate(event)
 
 	require.Equal(t, "some-cluster-name", event.ObjectMeta.Annotations["aria/cluster-name"])
 	require.Equal(t, "some-cluster-uuid", event.ObjectMeta.Annotations["aria/cluster-uuid"])
@@ -66,7 +66,7 @@ func validateCategorySubcategory(t *testing.T, file, category, subcategory strin
 	eventList := getEventList(t, file)
 	ea := NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
 	for _, event := range eventList.Items {
-		ea.annotateEvent(&event)
+		ea.annotate(&event)
 		require.Equal(t, category, event.ObjectMeta.Annotations["aria/category"])
 		require.Equal(t, subcategory, event.ObjectMeta.Annotations["aria/subcategory"])
 	}
