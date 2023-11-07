@@ -185,6 +185,8 @@ spec:
             mountPath: /wavefront-proxy
           - name: preprocessor
             mountPath: /etc/wavefront/preprocessor
+          - name: log4j2
+            mountPath: /etc/wavefront/wavefront-proxy
           {{- if .HttpProxy.UseHttpProxyCAcert }}
           - name: http-proxy-keystores
             mountPath: /tmp/secrets/keystores
@@ -195,6 +197,9 @@ spec:
       - name: preprocessor
         configMap:
           name: operator-proxy-preprocessor-rules-config
+      - name: log4j2
+        configMap:
+          name: custom-proxy-log4j2
       {{- if .HttpProxy.UseHttpProxyCAcert }}
       - name: http-proxy-keystores
         emptyDir: {}
