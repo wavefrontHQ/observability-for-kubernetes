@@ -3,7 +3,7 @@ DOCKER_IMAGE?=pixie-sizer
 ifeq ($(origin VERSION_POSTFIX), undefined)
 VERSION_POSTFIX:=-alpha-$(shell whoami)-$(shell date +"%y%m%d%H%M%S")
 endif
-RELEASE_VERSION?=0.1.0
+RELEASE_VERSION?=0.2.0
 VERSION?=$(RELEASE_VERSION)$(VERSION_POSTFIX)
 IMG?=$(PREFIX)/$(DOCKER_IMAGE):$(VERSION)
 
