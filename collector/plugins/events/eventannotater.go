@@ -50,89 +50,94 @@ type EventAnnotater struct {
 }
 
 func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUID string) *EventAnnotater {
-	matchers := make([]eventMatcher, 0)
-
-	imageMatcher := eventMatcher{
-		match: func(event *v1.Event) bool {
-			return event.Reason == "Failed" && strings.Contains(strings.ToLower(event.Message), "image")
-		},
-		category:    Creation,
-		subcategory: ImagePullBackOff,
-		podLister:   nil,
-	}
-	matchers = append(matchers, imageMatcher)
-
-	backoffMatcher := eventMatcher{
-		match: func(event *v1.Event) bool {
-			return event.Reason == "BackOff" && strings.Contains(strings.ToLower(event.Message), "back-off restarting")
-		},
-		category:    Runtime,
-		subcategory: CrashLoopBackOff,
-		podLister:   nil,
-	}
-
-	matchers = append(matchers, backoffMatcher)
-
-	failedMount := eventMatcher{
-		match: func(event *v1.Event) bool {
-			return event.Reason == "FailedMount"
-		},
-		category:    Creation,
-		subcategory: FailedMount,
-		podLister:   nil,
-	}
-
-	matchers = append(matchers, failedMount)
-
-	unhealthy := eventMatcher{
-		match: func(event *v1.Event) bool {
-			return event.Reason == "Unhealthy"
-		},
-		category:    Runtime,
-		subcategory: Unhealthy,
-		podLister:   nil,
-	}
-
-	matchers = append(matchers, unhealthy)
-
-	terminating := eventMatcher{
-		match: func(event *v1.Event) bool {
-			return event.Reason == "Killing" && strings.Contains(strings.ToLower(event.Message), "stopping")
-		},
-		category:    Runtime,
-		subcategory: Terminating,
-		podLister:   nil,
-	}
-
-	matchers = append(matchers, terminating)
-
-	scheduling := eventMatcher{
-		match: func(event *v1.Event) bool {
-			return event.Reason == "FailedScheduling" && strings.Contains(strings.ToLower(event.Message), "insufficient")
-		},
-		category:    Scheduling,
-		subcategory: InsufficientResources,
-		podLister:   nil,
-	}
-
-	matchers = append(matchers, scheduling)
-
-	failedCreate := eventMatcher{
-		match: func(event *v1.Event) bool {
-			return event.Reason == "FailedCreate"
-		},
-		category:    Storage,
-		subcategory: FailedCreate,
-		podLister:   nil,
-	}
-
-	matchers = append(matchers, failedCreate)
-
-	return &EventAnnotater{
+	eventAnnotater := &EventAnnotater{
 		workloadCache: workloadCache,
 		clusterName:   clusterName,
 		clusterUUID:   clusterUUID,
-		eventMatchers: matchers,
+		eventMatchers: make([]eventMatcher, 0),
+	}
+
+	eventAnnotater.eventMatchers = append(eventAnnotater.eventMatchers, eventAnnotater.schedulingMatchers()...)
+	eventAnnotater.eventMatchers = append(eventAnnotater.eventMatchers, eventAnnotater.creationMatchers()...)
+	eventAnnotater.eventMatchers = append(eventAnnotater.eventMatchers, eventAnnotater.runtimeMatchers()...)
+	eventAnnotater.eventMatchers = append(eventAnnotater.eventMatchers, eventAnnotater.storageMatchers()...)
+
+	return eventAnnotater
+}
+
+func (ea *EventAnnotater) schedulingMatchers() []eventMatcher {
+	return []eventMatcher{
+		{
+			match: func(event *v1.Event) bool {
+				return event.Reason == "FailedScheduling" && strings.Contains(strings.ToLower(event.Message), "insufficient")
+			},
+			category:    Scheduling,
+			subcategory: InsufficientResources,
+			podLister:   nil,
+		},
+	}
+}
+
+func (ea *EventAnnotater) creationMatchers() []eventMatcher {
+	return []eventMatcher{
+		{
+			match: func(event *v1.Event) bool {
+				return event.Reason == "Failed" && strings.Contains(strings.ToLower(event.Message), "image")
+			},
+			category:    Creation,
+			subcategory: ImagePullBackOff,
+			podLister:   nil,
+		},
+		{
+			match: func(event *v1.Event) bool {
+				return event.Reason == "FailedMount"
+			},
+			category:    Creation,
+			subcategory: FailedMount,
+			podLister:   nil,
+		},
+	}
+}
+
+func (ea *EventAnnotater) runtimeMatchers() []eventMatcher {
+	return []eventMatcher{
+		{
+			match: func(event *v1.Event) bool {
+				return event.Reason == "BackOff" && strings.Contains(strings.ToLower(event.Message), "back-off restarting")
+			},
+			category:    Runtime,
+			subcategory: CrashLoopBackOff,
+			podLister:   nil,
+		},
+		{
+			match: func(event *v1.Event) bool {
+				return event.Reason == "Unhealthy"
+			},
+			category:    Runtime,
+			subcategory: Unhealthy,
+			podLister:   nil,
+		},
+		{
+			match: func(event *v1.Event) bool {
+				return event.Reason == "Killing" && strings.Contains(strings.ToLower(event.Message), "stopping")
+			},
+			category:    Runtime,
+			subcategory: Terminating,
+			podLister:   nil,
+		},
+	}
+}
+
+func (ea *EventAnnotater) storageMatchers() []eventMatcher {
+	return []eventMatcher{
+		{
+			match: func(event *v1.Event) bool {
+				return event.Reason == "FailedCreate"
+			},
+			category:    Storage,
+			subcategory: FailedCreate,
+			podLister:   nil,
+		},
 	}
 }
 
