@@ -65,6 +65,9 @@ func TestAnnotateCategories(t *testing.T) {
 	t.Run("FailedCreate", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/failed_create.yaml", Storage, FailedCreate)
 	})
+	t.Run("Provisioning failed", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/pv_provisioning_failed.yaml", Storage, ProvisioningFailed)
+	})
 
 	// Other
 	t.Run("HPA", func(t *testing.T) {
