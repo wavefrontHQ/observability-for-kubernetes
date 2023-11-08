@@ -27,6 +27,7 @@ const (
 	FailedCreate          = "FailedCreate"
 	Terminating           = "Terminating"
 	OOMKilled             = "OOMKilled"
+	ProvisioningFailed    = "ProvisioningFailed"
 )
 
 type match func(event *v1.Event) bool
@@ -178,10 +179,17 @@ func (ea *EventAnnotator) storageMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "FailedCreate"
+				return event.Reason == "FailedCreate" && strings.Contains(strings.ToLower(event.Message), "volumemounts")
 			},
 			category:    Storage,
 			subcategory: FailedCreate,
+		},
+		{
+			match: func(event *v1.Event) bool {
+				return event.Reason == "ProvisioningFailed"
+			},
+			category:    Storage,
+			subcategory: ProvisioningFailed,
 		},
 	}
 }

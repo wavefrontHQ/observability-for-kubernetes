@@ -1,0 +1,18 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  involvedObject:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: data-mysql-pvc-error-0
+    namespace: default
+  message: 'failed to provision volume with StorageClass "standard-rwo": rpc error:
+    code = InvalidArgument desc = VolumeCapabilities is invalid: specified multi writer
+    with mount access type'
+  metadata:
+    name: data-mysql-pvc-error-0.178fa08b920f4f09
+    namespace: default
+  reason: ProvisioningFailed
+  source:
+    component: pd.csi.storage.gke.io_gke-38f5b10eb9584c848a0f-16ab-e18a-vm_a1324519-152e-4b38-b888-1e8a3b23adc5
+  type: Warning
