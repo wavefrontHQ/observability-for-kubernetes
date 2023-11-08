@@ -37,8 +37,27 @@ type eventMatcher struct {
 	subcategory string
 }
 
-func (em *eventMatcher) matches(event *v1.Event) bool {
-	return em.match(event)
+func (em *eventMatcher) categorize(event *v1.Event) bool {
+	if em.match(event) {
+		event.ObjectMeta.Annotations["aria/category"] = em.getCategory(event)
+		event.ObjectMeta.Annotations["aria/subcategory"] = em.getSubcategory(event)
+		return true
+	}
+	return false
+}
+
+func (em *eventMatcher) getCategory(event *v1.Event) string {
+	if len(em.category) > 0 {
+		return em.category
+	}
+	return event.InvolvedObject.Kind
+}
+
+func (em *eventMatcher) getSubcategory(event *v1.Event) string {
+	if len(em.subcategory) > 0 {
+		return em.subcategory
+	}
+	return event.InvolvedObject.Kind
 }
 
 type EventAnnotator struct {
@@ -68,16 +87,9 @@ func (ea *EventAnnotator) annotate(event *v1.Event) {
 
 func (ea *EventAnnotator) categorize(event *v1.Event) {
 	for _, matcher := range ea.eventMatchers {
-		if matcher.matches(event) {
-			event.ObjectMeta.Annotations["aria/category"] = matcher.category
-			event.ObjectMeta.Annotations["aria/subcategory"] = matcher.subcategory
+		if matcher.categorize(event) {
 			break
 		}
-	}
-
-	if _, found := event.ObjectMeta.Annotations["aria/category"]; !found {
-		event.ObjectMeta.Annotations["aria/category"] = event.InvolvedObject.Kind
-		event.ObjectMeta.Annotations["aria/subcategory"] = event.InvolvedObject.Kind
 	}
 }
 
@@ -93,6 +105,7 @@ func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUI
 	annotator.eventMatchers = append(annotator.eventMatchers, annotator.creationMatchers()...)
 	annotator.eventMatchers = append(annotator.eventMatchers, annotator.runtimeMatchers()...)
 	annotator.eventMatchers = append(annotator.eventMatchers, annotator.storageMatchers()...)
+	annotator.eventMatchers = append(annotator.eventMatchers, annotator.defaultMatcher())
 
 	return annotator
 }
@@ -169,6 +182,14 @@ func (ea *EventAnnotator) storageMatchers() []eventMatcher {
 			},
 			category:    Storage,
 			subcategory: FailedCreate,
+		},
+	}
+}
+
+func (ea *EventAnnotator) defaultMatcher() eventMatcher {
+	return eventMatcher{
+		match: func(event *v1.Event) bool {
+			return true
 		},
 	}
 }
