@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_ROOT=$(git rev-parse --show-toplevel)
 rm -rf yamls
 
-PIXIE_VERSION="0.14.2"
+PIXIE_VERSION="0.14.7"
 
 curl -L "https://github.com/pixie-io/pixie/releases/download/release%2Fvizier%2Fv${PIXIE_VERSION}/vizier_yamls.tar" --output yamls.tar
 
@@ -97,8 +97,8 @@ yq -i '(.spec.template.spec.containers[] | select(.name == "pem") | .env) += {"n
 
 sed -i 's%image: gcr.io/pixie-oss/pixie-dev-public/curl:multiarch-7.87.0%image: projects.registry.vmware.com/tanzu_observability/bitnami/os-shell:11%' "${REPO_ROOT}"/operator/components/pixie/*.yaml
 sed -i 's%image: gcr.io%image: projects.registry.vmware.com/tanzu_observability%' "${REPO_ROOT}"/operator/components/pixie/*.yaml
-sed -i 's/image: projects.registry.vmware.com\/tanzu_observability\/pixie-oss\/pixie-prod\/vizier-deps\/nats:2.9.19-scratch/image: projects.registry.vmware.com\/tanzu_observability\/pixie-oss\/pixie-prod\/vizier-deps\/nats:2.9.19-scratch-multi/' "${REPO_ROOT}"/operator/components/pixie/23-statefulset-pl-nats.yaml
-sed -i "s/:${PIXIE_VERSION}/:${PIXIE_VERSION}-multi/" "${REPO_ROOT}"/operator/components/pixie/*.yaml
+sed -i 's/image: projects.registry.vmware.com\/tanzu_observability\/pixie-oss\/pixie-prod\/vizier-deps\/nats:2.9.19-scratch/image: projects.registry.vmware.com\/tanzu_observability\/pixie-oss\/pixie-prod\/vizier-deps\/nats:2.9.19-scratch/' "${REPO_ROOT}"/operator/components/pixie/23-statefulset-pl-nats.yaml
+sed -i "s/:${PIXIE_VERSION}/:${PIXIE_VERSION}/" "${REPO_ROOT}"/operator/components/pixie/*.yaml
 sed -i 's/@sha256:.*//' "${REPO_ROOT}"/operator/components/pixie/*.yaml
 echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/components/pixie/00-secret-pl-cluster-secrets.yaml"
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/components/pixie/00-secret-pl-cluster-secrets.yaml"

@@ -100,7 +100,7 @@ spec:
               value: '{{ .MaxHTTPBodyBytes }}'
             - name: PL_STIRLING_SOURCES
               value: '{{ .StirlingSourcesEnv }}'
-          image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier/pem_image:0.14.2-multi
+          image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier-pem_image:0.14.7
           name: pem
           resources: {}
           securityContext:
@@ -127,7 +127,7 @@ spec:
         - command:
             - sh
             - -c
-            - ' set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do echo "waiting for ${URL}" sleep 2; done; '
+            - 'set -x; URL="https://${SERVICE_NAME}:${SERVICE_PORT}/healthz"; until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do echo "waiting for ${URL}"; sleep 2; done; '
           env:
             - name: SERVICE_NAME
               value: vizier-query-broker-svc
