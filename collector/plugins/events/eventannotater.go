@@ -64,16 +64,21 @@ func (ea *EventAnnotator) annotate(event *v1.Event) {
 			event.ObjectMeta.Annotations["aria/node-name"] = nodeName
 		}
 	}
-	ea.categorizeEvent(event)
+	ea.categorize(event)
 }
 
-func (ea *EventAnnotator) categorizeEvent(event *v1.Event) {
+func (ea *EventAnnotator) categorize(event *v1.Event) {
 	for _, matcher := range ea.eventMatchers {
 		if matcher.matches(event) {
 			event.ObjectMeta.Annotations["aria/category"] = matcher.category
 			event.ObjectMeta.Annotations["aria/subcategory"] = matcher.subcategory
 			break
 		}
+	}
+
+	if _, found := event.ObjectMeta.Annotations["aria/category"]; !found {
+		event.ObjectMeta.Annotations["aria/category"] = event.InvolvedObject.Kind
+		event.ObjectMeta.Annotations["aria/subcategory"] = event.InvolvedObject.Kind
 	}
 }
 
