@@ -1,0 +1,16 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  involvedObject:
+    kind: Node
+    name: gke-bjerry-cluster-default-pool-7be959fb-nzhp
+  message: 'Memory cgroup out of memory: Killed process 34577 (mysqld) total-vm:491560kB,
+      anon-rss:43948kB, file-rss:30432kB, shmem-rss:0kB, UID:1001 pgtables:324kB oom_score_adj:994'
+  metadata:
+    name: gke-bjerry-cluster-default-pool-7be959fb-nzhp.178fa0c2baa1b6bf
+    namespace: default
+  reason: OOMKilling
+  source:
+    component: kernel-monitor
+    host: gke-bjerry-cluster-default-pool-7be959fb-nzhp
+  type: Warning

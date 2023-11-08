@@ -3,8 +3,10 @@ package events
 import (
 	"os"
 	"testing"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/stretchr/testify/require"
@@ -34,46 +36,62 @@ func TestAnnotateEventNonCategory(t *testing.T) {
 }
 
 func TestAnnotateCategories(t *testing.T) {
+	// Creation
 	t.Run("Failed to pull image", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/failed_to_pull.yaml", Creation, ImagePullBackOff)
-	})
-	t.Run("Crash loop backoff", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/crash_loop_backoff.yaml", Runtime, CrashLoopBackOff)
 	})
 	t.Run("Failed Mount", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/failed_mount.yaml", Creation, FailedMount)
 	})
+
+	// Runtime
+	t.Run("Crash loop backoff", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/crash_loop_backoff.yaml", Runtime, CrashLoopBackOff)
+	})
 	t.Run("Unhealthy", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/unhealthy.yaml", Runtime, Unhealthy)
-	})
-	t.Run("FailedScheduling", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/failed_scheduling.yaml", Scheduling, InsufficientResources)
-	})
-	t.Run("FailedCreate", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/failed_create.yaml", Storage, FailedCreate)
 	})
 	t.Run("Stuck in Terminating", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Runtime, Terminating)
 	})
-	// Default case
+	t.Run("Out-of-memory killed", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/oom_killed.yaml", Runtime, OOMKilled)
+	})
+
+	// Scheduling
+	t.Run("FailedScheduling", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/failed_scheduling.yaml", Scheduling, InsufficientResources)
+	})
+
+	// Storage
+	t.Run("FailedCreate", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/failed_create.yaml", Storage, FailedCreate)
+	})
+
+	// Other
 	t.Run("HPA", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/hpa.yaml", "HorizontalPodAutoscaler", "HorizontalPodAutoscaler")
 	})
 }
 
 func validateCategorySubcategory(t *testing.T, file, category, subcategory string) {
-	workloadCache := &testWorkloadCache{
-		workloadName: "some-workload-name",
-		workloadKind: "some-workload-kind",
-		nodeName:     "some-node-name",
-	}
+	ea := setupAnnotator()
 	eventList := getEventList(t, file)
-	ea := NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
+
 	for _, event := range eventList.Items {
 		ea.annotate(&event)
 		require.Equal(t, category, event.ObjectMeta.Annotations["aria/category"])
 		require.Equal(t, subcategory, event.ObjectMeta.Annotations["aria/subcategory"])
 	}
+}
+
+func setupAnnotator() *EventAnnotator {
+	workloadCache := &testWorkloadCache{
+		workloadName: "some-workload-name",
+		workloadKind: "some-workload-kind",
+		nodeName:     "some-node-name",
+	}
+	return NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
 }
 
 func getEventList(t *testing.T, fileName string) v1.EventList {
