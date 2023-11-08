@@ -55,6 +55,10 @@ func TestAnnotateCategories(t *testing.T) {
 	t.Run("Stuck in Terminating", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Runtime, Terminating)
 	})
+	// Default case
+	t.Run("HPA", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/hpa.yaml", "HorizontalPodAutoscaler", "HorizontalPodAutoscaler")
+	})
 }
 
 func validateCategorySubcategory(t *testing.T, file, category, subcategory string) {
