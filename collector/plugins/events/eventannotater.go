@@ -27,6 +27,7 @@ const (
 	InsufficientResources = "InsufficientResources"
 	FailedCreate          = "FailedCreate"
 	Terminating           = "Terminating"
+	OOMKilled             = "OOMKilled"
 )
 
 type match func(event *v1.Event) bool
@@ -156,6 +157,14 @@ func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 			},
 			category:    Runtime,
 			subcategory: Terminating,
+			podLister:   nil,
+		},
+		{
+			match: func(event *v1.Event) bool {
+				return event.Reason == "OOMKilling"
+			},
+			category:    Runtime,
+			subcategory: OOMKilled,
 			podLister:   nil,
 		},
 	}
