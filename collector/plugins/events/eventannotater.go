@@ -7,7 +7,6 @@ import (
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	v1 "k8s.io/api/core/v1"
-	corev1listers "k8s.io/client-go/listers/core/v1"
 )
 
 // category
@@ -36,7 +35,6 @@ type eventMatcher struct {
 	match       match
 	category    string
 	subcategory string
-	podLister   corev1listers.PodLister
 }
 
 func (em *eventMatcher) matches(event *v1.Event) bool {
@@ -107,7 +105,6 @@ func (ea *EventAnnotator) schedulingMatchers() []eventMatcher {
 			},
 			category:    Scheduling,
 			subcategory: InsufficientResources,
-			podLister:   nil,
 		},
 	}
 }
@@ -120,7 +117,6 @@ func (ea *EventAnnotator) creationMatchers() []eventMatcher {
 			},
 			category:    Creation,
 			subcategory: ImagePullBackOff,
-			podLister:   nil,
 		},
 		{
 			match: func(event *v1.Event) bool {
@@ -128,7 +124,6 @@ func (ea *EventAnnotator) creationMatchers() []eventMatcher {
 			},
 			category:    Creation,
 			subcategory: FailedMount,
-			podLister:   nil,
 		},
 	}
 }
@@ -141,7 +136,6 @@ func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 			},
 			category:    Runtime,
 			subcategory: CrashLoopBackOff,
-			podLister:   nil,
 		},
 		{
 			match: func(event *v1.Event) bool {
@@ -149,7 +143,6 @@ func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 			},
 			category:    Runtime,
 			subcategory: Unhealthy,
-			podLister:   nil,
 		},
 		{
 			match: func(event *v1.Event) bool {
@@ -157,7 +150,6 @@ func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 			},
 			category:    Runtime,
 			subcategory: Terminating,
-			podLister:   nil,
 		},
 		{
 			match: func(event *v1.Event) bool {
@@ -165,7 +157,6 @@ func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 			},
 			category:    Runtime,
 			subcategory: OOMKilled,
-			podLister:   nil,
 		},
 	}
 }
@@ -178,7 +169,6 @@ func (ea *EventAnnotator) storageMatchers() []eventMatcher {
 			},
 			category:    Storage,
 			subcategory: FailedCreate,
-			podLister:   nil,
 		},
 	}
 }
