@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testhelper"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
@@ -75,6 +76,21 @@ func TestAnnotateCategories(t *testing.T) {
 	})
 }
 
+func TestAnnotateEventInternalKeep(t *testing.T) {
+	t.Run("sets keep if the pod is stuck in terminating", func(t *testing.T) {
+		fakePod := util.GetPodStuckInTerminating()
+		workloadCache := testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", fakePod)
+		event := fakeEvent()
+		event.InvolvedObject.Kind = fakePod.Kind
+		event.InvolvedObject.Namespace = fakePod.Namespace
+		event.InvolvedObject.Name = fakePod.Name
+		ea := NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
+		ea.annotate(event)
+
+		require.Equal(t, "true", event.Annotations["internal/keep"])
+	})
+}
+
 func validateCategorySubcategory(t *testing.T, file, category, subcategory string) {
 	ea := setupAnnotator(t)
 	eventList := getEventList(t, file)
@@ -83,6 +99,7 @@ func validateCategorySubcategory(t *testing.T, file, category, subcategory strin
 		ea.annotate(&event)
 		require.Equal(t, category, event.ObjectMeta.Annotations["aria/category"])
 		require.Equal(t, subcategory, event.ObjectMeta.Annotations["aria/subcategory"])
+		require.Empty(t, event.ObjectMeta.Annotations["internal/keep"])
 	}
 }
 
