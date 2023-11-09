@@ -15,6 +15,7 @@ const (
 	Runtime    = "Runtime"
 	Scheduling = "Scheduling"
 	Storage    = "Storage"
+	Job        = "Job"
 )
 
 // subcategory
@@ -28,6 +29,7 @@ const (
 	Terminating           = "Terminating"
 	OOMKilled             = "OOMKilled"
 	ProvisioningFailed    = "ProvisioningFailed"
+	BackoffLimitExceeded  = "BackoffLimitExceeded"
 )
 
 type match func(event *v1.Event) bool
@@ -106,6 +108,7 @@ func NewEventAnnotator(workloadCache util.WorkloadCache, clusterName, clusterUUI
 	annotator.eventMatchers = append(annotator.eventMatchers, annotator.creationMatchers()...)
 	annotator.eventMatchers = append(annotator.eventMatchers, annotator.runtimeMatchers()...)
 	annotator.eventMatchers = append(annotator.eventMatchers, annotator.storageMatchers()...)
+	annotator.eventMatchers = append(annotator.eventMatchers, annotator.jobMatchers()...)
 	annotator.eventMatchers = append(annotator.eventMatchers, annotator.defaultMatcher())
 
 	return annotator
@@ -190,6 +193,18 @@ func (ea *EventAnnotator) storageMatchers() []eventMatcher {
 			},
 			category:    Storage,
 			subcategory: ProvisioningFailed,
+		},
+	}
+}
+
+func (ea *EventAnnotator) jobMatchers() []eventMatcher {
+	return []eventMatcher{
+		{
+			match: func(event *v1.Event) bool {
+				return event.InvolvedObject.Kind == "Job" && event.Reason == "BackoffLimitExceeded"
+			},
+			category:    Job,
+			subcategory: BackoffLimitExceeded,
 		},
 	}
 }

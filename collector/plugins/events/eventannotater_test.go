@@ -70,6 +70,11 @@ func TestAnnotateCategories(t *testing.T) {
 	t.Run("HPA", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/hpa.yaml", "HorizontalPodAutoscaler", "HorizontalPodAutoscaler")
 	})
+
+	// Job
+	t.Run("Failed Job", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/job_failed.yaml", Job, BackoffLimitExceeded)
+	})
 }
 
 func validateCategorySubcategory(t *testing.T, file, category, subcategory string) {
