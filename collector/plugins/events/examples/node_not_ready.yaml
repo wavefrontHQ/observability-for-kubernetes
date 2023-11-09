@@ -1,0 +1,28 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-09T18:22:28Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Pod
+    name: etcd-kind-control-plane
+    namespace: kube-system
+    resourceVersion: "303"
+    uid: 32ba511e-3a81-43c0-b3ef-faaa01a40fc0
+  kind: Event
+  lastTimestamp: "2023-11-09T18:22:28Z"
+  message: Node is not ready
+  metadata:
+    creationTimestamp: "2023-11-09T18:22:28Z"
+    name: etcd-kind-control-plane.1796077e4e88b3b0
+    namespace: kube-system
+    resourceVersion: "361"
+    uid: 5f0b4d33-7acb-401e-97cf-806e74345ae9
+  reason: NodeNotReady
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: node-controller
+  type: Warning

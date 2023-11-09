@@ -62,12 +62,25 @@ func TestCategorizeMatching(t *testing.T) {
 		validateCategorySubcategory(t, "examples/failed_scheduling.yaml", Scheduling, InsufficientResources, "true")
 	})
 
+	t.Run("Pod can't be scheduled as Node is not in ready state", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/node_not_ready.yaml", Scheduling, NodeNotReady, "true")
+	})
+
 	// Storage
 	t.Run("FailedCreate", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/failed_create.yaml", Storage, FailedCreate, "true")
 	})
 	t.Run("Provisioning failed", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/pv_provisioning_failed.yaml", Storage, ProvisioningFailed, "true")
+	})
+
+	// Job
+	t.Run("Failed Job", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/job_failed.yaml", Job, BackoffLimitExceeded, "true")
+	})
+
+	t.Run("Failed Job", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/job_failed_to_pull.yaml", Creation, ImagePullBackOff, "true")
 	})
 
 	// Other
@@ -84,7 +97,6 @@ func TestCategorizeNonMatching(t *testing.T) {
 	t.Run("When normal event that shouldn't match", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/normal_pulling_image.yaml", "", "", "false")
 	})
-
 }
 
 func validateCategorySubcategory(t *testing.T, file, category, subcategory, important string) {
