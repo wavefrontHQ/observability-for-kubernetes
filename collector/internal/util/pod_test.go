@@ -2,6 +2,7 @@ package util
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -142,6 +143,12 @@ status:
 
 func TestIsStuckInTerminating(t *testing.T) {
 	t.Run("Pod not stuck in terminating", func(t *testing.T) {
+		assert.False(t, IsStuckInTerminating(fakePod()))
+	})
+
+	t.Run("If gracefully deleted, pod not stuck in terminating", func(t *testing.T) {
+		pod := fakePod()
+		pod.ObjectMeta.DeletionTimestamp = &metav1.Time{time.Now()}
 		assert.False(t, IsStuckInTerminating(fakePod()))
 	})
 
