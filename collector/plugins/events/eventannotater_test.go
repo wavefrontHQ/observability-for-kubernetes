@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testhelper"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
@@ -14,11 +15,7 @@ import (
 func TestAnnotateEventNonCategory(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
 	fakePod := createFakePod(t, fakeClient, nil)
-	workloadCache := &testWorkloadCache{
-		workloadName: "some-workload-name",
-		workloadKind: "some-workload-kind",
-		nodeName:     "some-node-name",
-	}
+	workloadCache := testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", fakePod)
 	event := fakeEvent()
 	event.InvolvedObject.Kind = fakePod.Kind
 	event.InvolvedObject.Namespace = fakePod.Namespace
@@ -76,7 +73,7 @@ func TestAnnotateCategories(t *testing.T) {
 }
 
 func validateCategorySubcategory(t *testing.T, file, category, subcategory string) {
-	ea := setupAnnotator()
+	ea := setupAnnotator(t)
 	eventList := getEventList(t, file)
 
 	for _, event := range eventList.Items {
@@ -86,12 +83,10 @@ func validateCategorySubcategory(t *testing.T, file, category, subcategory strin
 	}
 }
 
-func setupAnnotator() *EventAnnotator {
-	workloadCache := &testWorkloadCache{
-		workloadName: "some-workload-name",
-		workloadKind: "some-workload-kind",
-		nodeName:     "some-node-name",
-	}
+func setupAnnotator(t *testing.T) *EventAnnotator {
+	fakeClient := fake.NewSimpleClientset()
+	fakePod := createFakePod(t, fakeClient, nil)
+	workloadCache := testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", fakePod)
 	return NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
 }
 

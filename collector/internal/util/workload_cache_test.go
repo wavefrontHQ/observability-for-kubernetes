@@ -190,6 +190,25 @@ func TestGetPodWorkloadForPodName(t *testing.T) {
 	})
 }
 
+func TestGetPod(t *testing.T) {
+	t.Run("finds pod with name", func(t *testing.T) {
+		wc, s := workloadCacheWithFakeListers()
+		fakePod := createFakePod(s.podStore, nil)
+
+		pod, err := wc.GetPod(fakePod.Name, fakePod.Namespace)
+		assert.NoError(t, err)
+		assert.Equal(t, fakePod, pod)
+	})
+
+	t.Run("Returns error is pod is not found", func(t *testing.T) {
+		wc, _ := workloadCacheWithFakeListers()
+
+		pod, err := wc.GetPod("not-exist", "default")
+		assert.Error(t, err)
+		assert.Nil(t, pod)
+	})
+}
+
 func createFakeJob(jobStore cache.Indexer, owner *metav1.OwnerReference) *batchv1.Job {
 	job := &batchv1.Job{
 		TypeMeta: metav1.TypeMeta{Kind: "Job"},
