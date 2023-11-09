@@ -46,8 +46,11 @@ func TestAnnotateCategories(t *testing.T) {
 	t.Run("Unhealthy", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/unhealthy.yaml", Runtime, Unhealthy)
 	})
-	t.Run("Stuck in Terminating", func(t *testing.T) {
+	t.Run("Pod stuck in Terminating", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Runtime, Terminating)
+	})
+	t.Run("Running pod gracefully terminating", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/running-pod-gracefully-terminating.yaml", Runtime, Terminating)
 	})
 	t.Run("Out-of-memory killed", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/oom_killed.yaml", Runtime, OOMKilled)
