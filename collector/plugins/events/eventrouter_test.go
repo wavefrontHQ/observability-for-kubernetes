@@ -10,6 +10,7 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/configuration"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/events"
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/metrics"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testhelper"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -19,7 +20,7 @@ import (
 func TestAddEvent(t *testing.T) {
 	t.Run("forwards the event to the sink", func(t *testing.T) {
 		sink := &MockExport{}
-		er := NewEventRouter(fake.NewSimpleClientset(), configuration.EventsConfig{}, sink, true, testWorkloadCache{})
+		er := NewEventRouter(fake.NewSimpleClientset(), configuration.EventsConfig{}, sink, true, testhelper.NewEmptyFakeWorkloadCache())
 		event := fakeEvent()
 
 		er.addEvent(event, false)
@@ -39,9 +40,8 @@ func TestAddEvent(t *testing.T) {
 	t.Run("does not send add events for events that already existed prior to startup", func(t *testing.T) {
 		event := fakeEvent()
 		client := fake.NewSimpleClientset(event)
-		workloadCache := testWorkloadCache{}
 		sink := &MockExport{}
-		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, workloadCache)
+		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, testhelper.NewEmptyFakeWorkloadCache())
 		go er.Resume()
 		defer er.Stop()
 
@@ -55,9 +55,8 @@ func TestAddEvent(t *testing.T) {
 	t.Run("sends events for updates", func(t *testing.T) {
 		event := fakeEvent()
 		client := fake.NewSimpleClientset(event)
-		workloadCache := testWorkloadCache{}
 		sink := &MockExport{}
-		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, workloadCache)
+		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, testhelper.NewEmptyFakeWorkloadCache())
 		go er.Resume()
 		defer er.Stop()
 		cache.WaitForCacheSync(make(chan struct{}), er.eListerSynced)
@@ -74,9 +73,8 @@ func TestAddEvent(t *testing.T) {
 	t.Run("does not send events when the update has not changed anything", func(t *testing.T) {
 		event := fakeEvent()
 		client := fake.NewSimpleClientset(event)
-		workloadCache := testWorkloadCache{}
 		sink := &MockExport{}
-		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, workloadCache)
+		er := NewEventRouter(client, configuration.EventsConfig{}, sink, true, testhelper.NewEmptyFakeWorkloadCache())
 		go er.Resume()
 		defer er.Stop()
 		cache.WaitForCacheSync(make(chan struct{}), er.eListerSynced)
@@ -93,11 +91,7 @@ func TestAddEvent(t *testing.T) {
 func TestAddEventHasWorkload(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
 	fakePod := createFakePod(t, fakeClient, nil)
-	workloadCache := &testWorkloadCache{
-		workloadName: "some-workload-name",
-		workloadKind: "some-workload-kind",
-		nodeName:     "some-node-name",
-	}
+	workloadCache := testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", fakePod)
 	sink := &MockExport{}
 	cfg := configuration.EventsConfig{ClusterName: "some-cluster-name", ClusterUUID: "some-cluster-uuid"}
 	event := fakeEvent()
@@ -128,10 +122,7 @@ func TestAddEventHasWorkload(t *testing.T) {
 func TestEmptyNodeNameExcludesAnnotation(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
 	sink := &MockExport{}
-	workloadCache := &testWorkloadCache{
-		workloadName: "some-workload-name",
-		workloadKind: "some-workload-kind",
-	}
+	workloadCache := testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", &v1.Pod{})
 	cfg := configuration.EventsConfig{ClusterName: "some-cluster-name", ClusterUUID: "some-cluster-uuid"}
 	event := fakeEvent()
 	er := NewEventRouter(fakeClient, cfg, sink, true, workloadCache)
@@ -160,19 +151,6 @@ func fakeEvent() *v1.Event {
 		Type:   "Normal",
 		Reason: "some-reason",
 	}
-}
-
-type testWorkloadCache struct {
-	workloadName string
-	workloadKind string
-	nodeName     string
-}
-
-func (wc testWorkloadCache) GetWorkloadForPodName(podName, ns string) (name, kind, nodeName string) {
-	return wc.workloadName, wc.workloadKind, wc.nodeName
-}
-func (wc testWorkloadCache) GetWorkloadForPod(pod *v1.Pod) (string, string) {
-	return wc.workloadName, wc.workloadKind
 }
 
 type MockExport struct {

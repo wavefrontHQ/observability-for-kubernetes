@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testhelper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -225,7 +226,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 
 	t.Run("test for pending pod", func(t *testing.T) {
 		testPod := setupPendingPod()
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 1, len(actualWFPoints))
 		point := actualWFPoints[0].(*wf.Point)
@@ -242,7 +243,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 	t.Run("test for terminating pod without nodename", func(t *testing.T) {
 		deletionTime := "2023-06-08T18:35:37Z"
 		testPod := setupTerminatingPod(t, deletionTime, "")
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 2, len(actualWFPoints))
 		point := actualWFPoints[1].(*wf.Point)
@@ -258,7 +259,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 	t.Run("test for terminating pod with nodename", func(t *testing.T) {
 		deletionTime := "2023-06-08T18:35:37Z"
 		testPod := setupTerminatingPod(t, deletionTime, "some-node")
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 2, len(actualWFPoints))
 		point := actualWFPoints[1].(*wf.Point)
@@ -273,7 +274,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 
 	t.Run("test for completed pod", func(t *testing.T) {
 		testPod := setupCompletedPod()
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 2, len(actualWFPoints))
 
@@ -296,7 +297,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 
 	t.Run("test for failed pod", func(t *testing.T) {
 		testPod := setupFailedPod()
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 2, len(actualWFPoints))
 
@@ -321,7 +322,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 
 	t.Run("test for container creating pod", func(t *testing.T) {
 		testPod := setupContainerCreatingPod()
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.Equal(t, 2, len(actualWFPoints))
 
@@ -344,7 +345,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 
 	t.Run("metrics should have workload name and type", func(t *testing.T) {
 		testPod := setupContainerCreatingPod()
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 
 		podMetric := actualWFPoints[0].(*wf.Point)
@@ -360,7 +361,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod := setupBasicPod()
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.NotEmpty(t, actualWFPoints)
@@ -377,7 +378,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod := setupCompletedPod()
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.NotEmpty(t, actualWFPoints)
@@ -393,7 +394,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod := setupFailedPod()
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 		expectedReason := testPod.Status.ContainerStatuses[0].State.Terminated.Reason
 		expectedMessage := testPod.Status.ContainerStatuses[0].State.Terminated.Message
 
@@ -414,7 +415,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
 		expectedWorkloadName := testPod.Name
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.NotNil(t, actualWFPoints)
@@ -434,7 +435,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
 		expectedWorkloadName := testPod.Name
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 
 		expectedReason := "ImagePullBackOff"
 		expectedMessage := "Back-off pulling image busybox123."
@@ -459,7 +460,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
 		expectedWorkloadName := testPod.Name
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.NotNil(t, actualWFPoints)
@@ -483,7 +484,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
 		expectedWorkloadName := testPod.Name
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.NotNil(t, actualWFPoints)
@@ -508,7 +509,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod.Status.Phase = corev1.PodFailed
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
 		expectedWorkloadName := testPod.Name
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.NotNil(t, actualWFPoints)
@@ -531,7 +532,7 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		testPod.OwnerReferences = nil
 		expectedMetric := testTransform.Prefix + workloadStatusMetric
 		expectedWorkloadName := testPod.Name
-		workloadCache := fakeWorkloadCache{}
+		workloadCache := fakeWorkloadCache()
 
 		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
 		assert.NotNil(t, actualWFPoints)
@@ -545,12 +546,6 @@ func TestPointsForNonRunningPods(t *testing.T) {
 	})
 }
 
-type fakeWorkloadCache struct{}
-
-func (f fakeWorkloadCache) GetWorkloadForPod(pod *corev1.Pod) (string, string) {
-	return "some-workload-name", "some-workload-kind"
-}
-
-func (f fakeWorkloadCache) GetWorkloadForPodName(podName, ns string) (string, string, string) {
-	return "some-workload", "some-workload-kind", "some-node-name"
+func fakeWorkloadCache() util.WorkloadCache {
+	return testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", &corev1.Pod{})
 }

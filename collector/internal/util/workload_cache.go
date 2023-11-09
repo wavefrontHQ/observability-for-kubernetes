@@ -18,6 +18,7 @@ import (
 type WorkloadCache interface {
 	GetWorkloadForPodName(podName, ns string) (name, kind, nodeName string)
 	GetWorkloadForPod(pod *corev1.Pod) (string, string)
+	GetPod(podName, ns string) (pod *corev1.Pod, err error)
 }
 
 type workloadCache struct {
@@ -62,8 +63,12 @@ func getJobLister(kubeClient kubernetes.Interface) (batchv1listers.JobLister, er
 	return jobLister, nil
 }
 
+func (wc workloadCache) GetPod(podName, ns string) (pod *corev1.Pod, err error) {
+	return wc.podLister.Pods(ns).Get(podName)
+}
+
 func (wc workloadCache) GetWorkloadForPodName(podName, ns string) (name, kind, nodeName string) {
-	pod, err := wc.podLister.Pods(ns).Get(podName)
+	pod, err := wc.GetPod(podName, ns)
 	if err != nil {
 		return "", "", ""
 	}
