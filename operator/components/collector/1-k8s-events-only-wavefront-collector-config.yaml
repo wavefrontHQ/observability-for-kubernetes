@@ -22,12 +22,8 @@ data:
         tagAllowListSets:
         - type:
           - "Warning"
-        - type:
-          - "Normal"
-          kind:
-          - "Pod"
-          reason:
-          - "Backoff"
+        - keep:
+          - "true"
         tagDenyList:
           kind:
           - "Job"
