@@ -182,6 +182,20 @@ func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 			category:    Runtime,
 			subcategory: OOMKilled,
 		},
+		{
+			match: func(event *v1.Event) bool {
+				if event.Type == v1.EventTypeNormal && event.Reason == "Killing" {
+					pod, err := ea.workloadCache.GetPod(event.InvolvedObject.Name, event.InvolvedObject.Namespace)
+					if err != nil {
+						return false
+					}
+					return util.IsStuckInTerminating(pod)
+				}
+				return false
+			},
+			category:    Runtime,
+			subcategory: Terminating,
+		},
 	}
 }
 

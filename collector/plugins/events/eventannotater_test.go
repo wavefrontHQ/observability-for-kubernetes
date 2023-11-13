@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testhelper"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/stretchr/testify/require"
@@ -51,9 +53,13 @@ func TestCategorizeMatching(t *testing.T) {
 	t.Run("Unhealthy", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/unhealthy.yaml", Runtime, Unhealthy, "true")
 	})
-	//t.Run("Pod stuck in Terminating", func(t *testing.T) {
-	//	validateCategorySubcategory(t, "examples/pod_terminating.yaml", Runtime, Terminating, "true")
-	//})
+
+	t.Run("Pod stuck in Terminating", func(t *testing.T) {
+		ea := setupAnnotator(t)
+		ea.workloadCache = testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", util.GetPodStuckInTerminating())
+		validateAnnotations(t, ea, "examples/pod_terminating.yaml", Runtime, Terminating, "true")
+	})
+
 	t.Run("Out-of-memory killed", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/oom_killed.yaml", Runtime, OOMKilled, "true")
 	})
@@ -85,10 +91,25 @@ func TestCategorizeNonMatching(t *testing.T) {
 	t.Run("When normal event that shouldn't match", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/normal_pulling_image.yaml", "", "", "false")
 	})
+
+	t.Run("Pod Terminating Gracefully", func(t *testing.T) {
+		ea := setupAnnotator(t)
+		ea.workloadCache = testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", fakePod())
+		validateAnnotations(t, ea, "examples/pod_terminating.yaml", "", "", "false")
+	})
+
+	t.Run("Pod Terminating event, pod not found", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/pod_terminating.yaml", "", "", "false")
+	})
+
 }
 
 func validateCategorySubcategory(t *testing.T, file, category, subcategory, important string) {
 	ea := setupAnnotator(t)
+	validateAnnotations(t, ea, file, category, subcategory, important)
+}
+
+func validateAnnotations(t *testing.T, ea *EventAnnotator, file, category, subcategory, important string) {
 	eventList := getEventList(t, file)
 
 	for _, event := range eventList.Items {
@@ -113,4 +134,15 @@ func getEventList(t *testing.T, fileName string) v1.EventList {
 	err = yaml.Unmarshal(failedToPull, &event)
 	require.NotNil(t, event)
 	return event
+}
+
+func fakePod() *v1.Pod {
+	pod := &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "a-pod",
+			Namespace: "a-ns",
+		},
+		Spec: v1.PodSpec{NodeName: "some-node-name"},
+	}
+	return pod
 }
