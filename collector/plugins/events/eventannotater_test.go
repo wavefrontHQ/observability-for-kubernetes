@@ -75,6 +75,10 @@ func TestAnnotateCategories(t *testing.T) {
 	t.Run("Failed Job", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/job_failed.yaml", Job, BackoffLimitExceeded)
 	})
+
+	t.Run("Failed Job", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/job_failed_to_pull.yaml", Creation, ImagePullBackOff)
+	})
 }
 
 func validateCategorySubcategory(t *testing.T, file, category, subcategory string) {
