@@ -52,10 +52,7 @@ func TestCategorizeMatching(t *testing.T) {
 		validateCategorySubcategory(t, "examples/unhealthy.yaml", Runtime, Unhealthy, "true")
 	})
 	//t.Run("Pod stuck in Terminating", func(t *testing.T) {
-	//	validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Runtime, Terminating, "true")
-	//})
-	//t.Run("Running pod gracefully terminating", func(t *testing.T) {
-	//	validateCategorySubcategory(t, "examples/running-pod-gracefully-terminating.yaml", Runtime, Terminating, "true")
+	//	validateCategorySubcategory(t, "examples/pod_terminating.yaml", Runtime, Terminating, "true")
 	//})
 	t.Run("Out-of-memory killed", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/oom_killed.yaml", Runtime, OOMKilled, "true")

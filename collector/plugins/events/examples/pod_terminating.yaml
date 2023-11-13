@@ -6,18 +6,18 @@ items:
   firstTimestamp: "2023-11-07T21:50:49Z"
   involvedObject:
     apiVersion: v1
-    fieldPath: spec.containers{pod-stuck-in-terminating}
+    fieldPath: spec.containers{pod-terminating}
     kind: Pod
-    name: pod-stuck-in-terminating
+    name: pod-terminating
     namespace: collector-targets
     resourceVersion: "7725"
     uid: aa9e80f5-a4f1-46f9-b2ab-dfe07956571d
   kind: Event
   lastTimestamp: "2023-11-07T21:50:49Z"
-  message: Stopping container pod-stuck-in-terminating
+  message: Stopping container pod-terminating
   metadata:
     creationTimestamp: "2023-11-07T21:50:49Z"
-    name: pod-stuck-in-terminating.179575b3e52617c4
+    name: pod-terminating.179575b3e52617c4
     namespace: collector-targets
     resourceVersion: "8232"
     uid: 618f5fc5-5a4e-4927-ac7d-9646b39bc074
