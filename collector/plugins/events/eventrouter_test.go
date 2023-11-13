@@ -86,6 +86,42 @@ func TestAddEvent(t *testing.T) {
 			require.Empty(t, sink.Message)
 		})
 	})
+
+	t.Run("does not send events when filters don't match", func(t *testing.T) {
+		sink, er := fakeEventRouter()
+		event := fakeEvent()
+		event.Type = v1.EventTypeNormal
+		er.addEvent(event, false)
+		require.Empty(t, sink.Message)
+	})
+
+	t.Run("does not send events when filters match tagDenyList - Job event", func(t *testing.T) {
+		sink, er := fakeEventRouter()
+		event := fakeEvent()
+		event.InvolvedObject.Kind = "Job"
+		er.addEvent(event, false)
+		require.Empty(t, sink.Message)
+	})
+
+	t.Run("send events when filters match tagAllowListSets - warning event", func(t *testing.T) {
+		sink, er := fakeEventRouter()
+		event := fakeEvent()
+		event.Type = v1.EventTypeWarning
+		er.addEvent(event, false)
+
+		require.Equal(t, "Warning", sink.Annotations["type"])
+	})
+
+	t.Run("send events when filters matches tagAllowListSets - normal pod backoff event", func(t *testing.T) {
+		sink, er := fakeEventRouter()
+		event := fakeEvent()
+		event.Type = v1.EventTypeNormal
+		event.InvolvedObject.Kind = "Pod"
+		event.Reason = "Backoff"
+		er.addEvent(event, false)
+
+		require.Equal(t, "Normal", sink.Annotations["type"])
+	})
 }
 
 func TestAddEventHasWorkload(t *testing.T) {
@@ -130,6 +166,28 @@ func TestEmptyNodeNameExcludesAnnotation(t *testing.T) {
 	er.addEvent(event, false)
 
 	require.NotContains(t, event.ObjectMeta.Annotations, "aria/node-name")
+}
+
+func fakeEventRouter() (*MockExport, *EventRouter) {
+	sink := &MockExport{}
+	eventsConfig := configuration.EventsConfig{
+		Filters: configuration.EventsFilter{
+			TagAllowListSets: []map[string][]string{
+				{
+					"type": {"Warning"},
+				},
+				{
+					"type":   {"Normal"},
+					"kind":   {"Pod"},
+					"reason": {"Backoff"},
+				},
+			},
+			TagDenyList: map[string][]string{
+				"kind": {"Job"},
+			},
+		}}
+	er := NewEventRouter(fake.NewSimpleClientset(), eventsConfig, sink, true, testhelper.NewEmptyFakeWorkloadCache())
+	return sink, er
 }
 
 func fakeEvent() *v1.Event {

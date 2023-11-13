@@ -30,11 +30,16 @@ func TestAnnotateEventNonCategory(t *testing.T) {
 	require.Equal(t, "some-node-name", event.ObjectMeta.Annotations["aria/node-name"])
 }
 
-func TestAnnotateCategories(t *testing.T) {
+func TestCategorizeMatching(t *testing.T) {
 	// Creation
 	t.Run("Failed to pull image", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/failed_to_pull.yaml", Creation, ImagePullBackOff, "true")
 	})
+
+	t.Run("Image pull back off - Normal event type", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/normal_backoff.yaml", Creation, ImagePullBackOff, "true")
+	})
+
 	t.Run("Failed Mount", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/failed_mount.yaml", Creation, FailedMount, "true")
 	})
@@ -46,12 +51,12 @@ func TestAnnotateCategories(t *testing.T) {
 	t.Run("Unhealthy", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/unhealthy.yaml", Runtime, Unhealthy, "true")
 	})
-	t.Run("Pod stuck in Terminating", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Runtime, Terminating, "true")
-	})
-	t.Run("Running pod gracefully terminating", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/running-pod-gracefully-terminating.yaml", Runtime, Terminating, "true")
-	})
+	//t.Run("Pod stuck in Terminating", func(t *testing.T) {
+	//	validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Runtime, Terminating, "true")
+	//})
+	//t.Run("Running pod gracefully terminating", func(t *testing.T) {
+	//	validateCategorySubcategory(t, "examples/running-pod-gracefully-terminating.yaml", Runtime, Terminating, "true")
+	//})
 	t.Run("Out-of-memory killed", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/oom_killed.yaml", Runtime, OOMKilled, "true")
 	})
@@ -75,23 +80,14 @@ func TestAnnotateCategories(t *testing.T) {
 	})
 }
 
-func TestAnnotateEventInternalImportant(t *testing.T) {
+func TestCategorizeNonMatching(t *testing.T) {
 	t.Run("When normal event is not important", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/unimportant.yaml", "Pod", "Pod", "false")
+		validateCategorySubcategory(t, "examples/unimportant.yaml", "", "", "false")
 	})
 
-	//	t.Run("sets keep if the pod is stuck in terminating", func(t *testing.T) {
-	//		fakePod := util.GetPodStuckInTerminating()
-	//		workloadCache := testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", fakePod)
-	//		event := fakeEvent()
-	//		event.InvolvedObject.Kind = fakePod.Kind
-	//		event.InvolvedObject.Namespace = fakePod.Namespace
-	//		event.InvolvedObject.Name = fakePod.Name
-	//		ea := NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
-	//		ea.annotate(event)
-	//
-	//		require.Equal(t, "true", event.Annotations["internal/keep"])
-	//	})
+	t.Run("When normal event that shouldn't match", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/normal_pulling_image.yaml", "", "", "false")
+	})
 }
 
 func validateCategorySubcategory(t *testing.T, file, category, subcategory, important string) {

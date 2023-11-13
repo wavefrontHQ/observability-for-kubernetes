@@ -44,8 +44,10 @@ func (em *eventMatcher) categorize(event *v1.Event) bool {
 		event.ObjectMeta.Annotations["aria/subcategory"] = em.getSubcategory(event)
 		event.ObjectMeta.Annotations["internal/important"] = "true"
 		return true
+	} else {
+		event.ObjectMeta.Annotations["internal/important"] = "false"
+		return false
 	}
-	return false
 }
 
 func (em *eventMatcher) getCategory(event *v1.Event) string {
@@ -116,7 +118,7 @@ func (ea *EventAnnotator) schedulingMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "FailedScheduling" && strings.Contains(strings.ToLower(event.Message), "insufficient")
+				return event.Type == v1.EventTypeWarning && event.Reason == "FailedScheduling" && strings.Contains(strings.ToLower(event.Message), "insufficient")
 			},
 			category:    Scheduling,
 			subcategory: InsufficientResources,
@@ -128,14 +130,21 @@ func (ea *EventAnnotator) creationMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "Failed" && strings.Contains(strings.ToLower(event.Message), "image")
+				return event.Type == v1.EventTypeWarning && event.Reason == "Failed" && strings.Contains(strings.ToLower(event.Message), "image")
 			},
 			category:    Creation,
 			subcategory: ImagePullBackOff,
 		},
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "FailedMount"
+				return event.Type == v1.EventTypeNormal && event.Reason == "BackOff" && strings.Contains(strings.ToLower(event.Message), "back-off pulling image")
+			},
+			category:    Creation,
+			subcategory: ImagePullBackOff,
+		},
+		{
+			match: func(event *v1.Event) bool {
+				return event.Type == v1.EventTypeWarning && event.Reason == "FailedMount"
 			},
 			category:    Creation,
 			subcategory: FailedMount,
@@ -147,28 +156,28 @@ func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "BackOff" && strings.Contains(strings.ToLower(event.Message), "back-off restarting")
+				return event.Type == v1.EventTypeWarning && event.Reason == "BackOff" && strings.Contains(strings.ToLower(event.Message), "back-off restarting")
 			},
 			category:    Runtime,
 			subcategory: CrashLoopBackOff,
 		},
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "Unhealthy"
+				return event.Type == v1.EventTypeWarning && event.Reason == "Unhealthy"
 			},
 			category:    Runtime,
 			subcategory: Unhealthy,
 		},
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "Killing" && strings.Contains(strings.ToLower(event.Message), "stopping")
+				return event.Type == v1.EventTypeWarning && event.Reason == "Killing" && strings.Contains(strings.ToLower(event.Message), "stopping")
 			},
 			category:    Runtime,
 			subcategory: Terminating,
 		},
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "OOMKilling"
+				return event.Type == v1.EventTypeWarning && event.Reason == "OOMKilling"
 			},
 			category:    Runtime,
 			subcategory: OOMKilled,
@@ -180,14 +189,14 @@ func (ea *EventAnnotator) storageMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "FailedCreate" && strings.Contains(strings.ToLower(event.Message), "volumemounts")
+				return event.Type == v1.EventTypeWarning && event.Reason == "FailedCreate" && strings.Contains(strings.ToLower(event.Message), "volumemounts")
 			},
 			category:    Storage,
 			subcategory: FailedCreate,
 		},
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "ProvisioningFailed"
+				return event.Type == v1.EventTypeWarning && event.Reason == "ProvisioningFailed"
 			},
 			category:    Storage,
 			subcategory: ProvisioningFailed,
@@ -198,7 +207,7 @@ func (ea *EventAnnotator) storageMatchers() []eventMatcher {
 func (ea *EventAnnotator) defaultMatcher() eventMatcher {
 	return eventMatcher{
 		match: func(event *v1.Event) bool {
-			return true
+			return event.Type == v1.EventTypeWarning
 		},
 	}
 }

@@ -133,7 +133,7 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 
 	e = e.DeepCopy()
 
-	er.annotator.annotate(e) // TODO: add tag "keep" with value "true" when special case scenario
+	er.annotator.annotate(e)
 
 	ns := e.InvolvedObject.Namespace
 	if len(ns) == 0 {
