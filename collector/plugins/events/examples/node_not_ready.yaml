@@ -26,3 +26,27 @@ items:
   source:
     component: node-controller
   type: Warning
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-13T22:28:01Z"
+  involvedObject:
+    apiVersion: v1
+    kind: Node
+    name: kind-worker
+    uid: 951c99cf-7070-422b-9ff1-3447e5350ed2
+  kind: Event
+  lastTimestamp: "2023-11-13T22:28:01Z"
+  message: 'Node kind-worker status is now: NodeNotReady'
+  metadata:
+    creationTimestamp: "2023-11-13T22:28:01Z"
+    name: kind-worker.17974f36de98e26b
+    namespace: default
+    resourceVersion: "936"
+    uid: 8c3e1cf7-8252-405e-b486-bcf1f8a0884c
+  reason: NodeNotReady
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: node-controller
+  type: Normal
