@@ -1,0 +1,29 @@
+apiVersion: v1
+count: 1
+eventTime: null
+firstTimestamp: "2023-11-13T20:56:22Z"
+involvedObject:
+  apiVersion: v1
+  fieldPath: spec.containers{container2}
+  kind: Pod
+  name: pod-small-init-container
+  namespace: collector-targets
+  resourceVersion: "92323"
+  uid: b4fad707-83b2-475d-845e-5eb0f3fb80c0
+kind: Event
+lastTimestamp: "2023-11-13T20:56:22Z"
+message: Successfully pulled image "projects.registry.vmware.com/tanzu_observability_keights_saas/busybox:latest"
+  in 86.518078ms (86.528341ms including waiting)
+metadata:
+  creationTimestamp: "2023-11-13T20:56:22Z"
+  name: pod-small-init-container.17974a36a14fd457
+  namespace: collector-targets
+  resourceVersion: "465"
+  uid: fb77262d-9f37-4302-9313-d1ddae02cf8d
+reason: Pulled
+reportingComponent: ""
+reportingInstance: ""
+source:
+  component: kubelet
+  host: gke-cluster-default-pool-59cc33dc-6b9c
+type: Normal

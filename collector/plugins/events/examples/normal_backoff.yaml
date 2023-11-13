@@ -26,5 +26,5 @@ items:
   reportingInstance: ""
   source:
     component: kubelet
-    host: gke-pselvaganesa-cluster-default-pool-59cc33dc-rpjw
+    host: gke-cluster-default-pool-59cc33dc-rpjw
   type: Normal
