@@ -20,9 +20,7 @@ data:
     events:
       filters:
         tagAllowListSets:
-        - type:
-          - "Warning"
-        - keep:
+        - important:
           - "true"
         tagDenyList:
           kind:

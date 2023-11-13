@@ -1,0 +1,30 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-13T18:21:48Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{manager}
+    kind: Pod
+    name: wavefront-controller-manager-6559577b47-dndvb
+    namespace: observability-system
+    resourceVersion: "18509"
+    uid: 83c6fdde-945f-4022-be80-a2facf13e025
+  kind: Event
+  lastTimestamp: "2023-11-13T18:21:48Z"
+  message: Pulling image "projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.16.0"
+  metadata:
+    creationTimestamp: "2023-11-13T18:21:48Z"
+    name: wavefront-controller-manager-6559577b47-dndvb.179741c755c77b51
+    namespace: observability-system
+    resourceVersion: "316"
+    uid: 33cb21a1-d7be-452b-90af-e1101740ab4f
+  reason: Pulling
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-pselvaganesa-cluster-default-pool-59cc33dc-rpjw
+  type: Normal

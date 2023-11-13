@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testhelper"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
@@ -34,64 +33,68 @@ func TestAnnotateEventNonCategory(t *testing.T) {
 func TestAnnotateCategories(t *testing.T) {
 	// Creation
 	t.Run("Failed to pull image", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/failed_to_pull.yaml", Creation, ImagePullBackOff)
+		validateCategorySubcategory(t, "examples/failed_to_pull.yaml", Creation, ImagePullBackOff, "true")
 	})
 	t.Run("Failed Mount", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/failed_mount.yaml", Creation, FailedMount)
+		validateCategorySubcategory(t, "examples/failed_mount.yaml", Creation, FailedMount, "true")
 	})
 
 	// Runtime
 	t.Run("Crash loop backoff", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/crash_loop_backoff.yaml", Runtime, CrashLoopBackOff)
+		validateCategorySubcategory(t, "examples/crash_loop_backoff.yaml", Runtime, CrashLoopBackOff, "true")
 	})
 	t.Run("Unhealthy", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/unhealthy.yaml", Runtime, Unhealthy)
+		validateCategorySubcategory(t, "examples/unhealthy.yaml", Runtime, Unhealthy, "true")
 	})
 	t.Run("Pod stuck in Terminating", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Runtime, Terminating)
+		validateCategorySubcategory(t, "examples/stuck_in_terminating.yaml", Runtime, Terminating, "true")
 	})
 	t.Run("Running pod gracefully terminating", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/running-pod-gracefully-terminating.yaml", Runtime, Terminating)
+		validateCategorySubcategory(t, "examples/running-pod-gracefully-terminating.yaml", Runtime, Terminating, "true")
 	})
 	t.Run("Out-of-memory killed", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/oom_killed.yaml", Runtime, OOMKilled)
+		validateCategorySubcategory(t, "examples/oom_killed.yaml", Runtime, OOMKilled, "true")
 	})
 
 	// Scheduling
 	t.Run("FailedScheduling", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/failed_scheduling.yaml", Scheduling, InsufficientResources)
+		validateCategorySubcategory(t, "examples/failed_scheduling.yaml", Scheduling, InsufficientResources, "true")
 	})
 
 	// Storage
 	t.Run("FailedCreate", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/failed_create.yaml", Storage, FailedCreate)
+		validateCategorySubcategory(t, "examples/failed_create.yaml", Storage, FailedCreate, "true")
 	})
 	t.Run("Provisioning failed", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/pv_provisioning_failed.yaml", Storage, ProvisioningFailed)
+		validateCategorySubcategory(t, "examples/pv_provisioning_failed.yaml", Storage, ProvisioningFailed, "true")
 	})
 
 	// Other
 	t.Run("HPA", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/hpa.yaml", "HorizontalPodAutoscaler", "HorizontalPodAutoscaler")
+		validateCategorySubcategory(t, "examples/hpa.yaml", "HorizontalPodAutoscaler", "HorizontalPodAutoscaler", "true")
 	})
 }
 
-func TestAnnotateEventInternalKeep(t *testing.T) {
-	t.Run("sets keep if the pod is stuck in terminating", func(t *testing.T) {
-		fakePod := util.GetPodStuckInTerminating()
-		workloadCache := testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", fakePod)
-		event := fakeEvent()
-		event.InvolvedObject.Kind = fakePod.Kind
-		event.InvolvedObject.Namespace = fakePod.Namespace
-		event.InvolvedObject.Name = fakePod.Name
-		ea := NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
-		ea.annotate(event)
-
-		require.Equal(t, "true", event.Annotations["internal/keep"])
+func TestAnnotateEventInternalImportant(t *testing.T) {
+	t.Run("When normal event is not important", func(t *testing.T) {
+		validateCategorySubcategory(t, "examples/unimportant.yaml", "Pod", "Pod", "false")
 	})
+
+	//	t.Run("sets keep if the pod is stuck in terminating", func(t *testing.T) {
+	//		fakePod := util.GetPodStuckInTerminating()
+	//		workloadCache := testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", fakePod)
+	//		event := fakeEvent()
+	//		event.InvolvedObject.Kind = fakePod.Kind
+	//		event.InvolvedObject.Namespace = fakePod.Namespace
+	//		event.InvolvedObject.Name = fakePod.Name
+	//		ea := NewEventAnnotator(workloadCache, "some-cluster-name", "some-cluster-uuid")
+	//		ea.annotate(event)
+	//
+	//		require.Equal(t, "true", event.Annotations["internal/keep"])
+	//	})
 }
 
-func validateCategorySubcategory(t *testing.T, file, category, subcategory string) {
+func validateCategorySubcategory(t *testing.T, file, category, subcategory, important string) {
 	ea := setupAnnotator(t)
 	eventList := getEventList(t, file)
 
@@ -99,7 +102,7 @@ func validateCategorySubcategory(t *testing.T, file, category, subcategory strin
 		ea.annotate(&event)
 		require.Equal(t, category, event.ObjectMeta.Annotations["aria/category"])
 		require.Equal(t, subcategory, event.ObjectMeta.Annotations["aria/subcategory"])
-		require.Empty(t, event.ObjectMeta.Annotations["internal/keep"])
+		require.Equal(t, important, event.ObjectMeta.Annotations["internal/important"])
 	}
 }
 

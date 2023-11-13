@@ -42,6 +42,7 @@ func (em *eventMatcher) categorize(event *v1.Event) bool {
 	if em.match(event) {
 		event.ObjectMeta.Annotations["aria/category"] = em.getCategory(event)
 		event.ObjectMeta.Annotations["aria/subcategory"] = em.getSubcategory(event)
+		event.ObjectMeta.Annotations["internal/important"] = "true"
 		return true
 	}
 	return false
