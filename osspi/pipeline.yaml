@@ -90,7 +90,7 @@ jobs:
         - get: observability-for-kubernetes
           trigger: true
           params: { submodules: all }
-      - in_parallel:
+      - do:
         - task: osspi-scan-packages
           attempts: 3
           file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
@@ -135,6 +135,7 @@ jobs:
             VERSION: Latest
             PREPARE: |
               go mod tidy && go mod vendor
+            OSM_PACKAGE_GROUP_NAME: pixie-sizer
             OSSPI_SCANNING_PARAMS: |
               enable: true
               include_bomtools: "go_mod"
