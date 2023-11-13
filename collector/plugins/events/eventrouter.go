@@ -146,7 +146,7 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 		"reason":         e.Reason,
 		"component":      e.Source.Component,
 		"type":           e.Type,
-		"keep":           e.Annotations["keep"],
+		"important":      e.Annotations["internal/important"],
 	}
 
 	resourceName := e.InvolvedObject.Name

@@ -19,8 +19,8 @@ data:
       externalEndpointURL: "{{ .KubernetesEvents.IngestionUrl }}"
     events:
       filters:
-        tagAllowListSets:
-        - important:
+        tagAllowList:
+          important:
           - "true"
         tagDenyList:
           kind:

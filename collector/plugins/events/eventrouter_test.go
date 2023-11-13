@@ -103,24 +103,19 @@ func TestAddEvent(t *testing.T) {
 		require.Empty(t, sink.Message)
 	})
 
-	t.Run("send events when filters match tagAllowListSets - warning event", func(t *testing.T) {
+	t.Run("send events when filters match tagAllowList - important is true event", func(t *testing.T) {
 		sink, er := fakeEventRouter()
 		event := fakeEvent()
 		event.Type = v1.EventTypeWarning
 		er.addEvent(event, false)
+		require.Equal(t, "Warning", sink.Annotations["type"], "Always send warning type events")
 
-		require.Equal(t, "Warning", sink.Annotations["type"])
-	})
-
-	t.Run("send events when filters matches tagAllowListSets - normal pod backoff event", func(t *testing.T) {
-		sink, er := fakeEventRouter()
-		event := fakeEvent()
-		event.Type = v1.EventTypeNormal
-		event.InvolvedObject.Kind = "Pod"
-		event.Reason = "Backoff"
-		er.addEvent(event, false)
-
-		require.Equal(t, "Normal", sink.Annotations["type"])
+		secondEvent := fakeEvent()
+		secondEvent.Type = v1.EventTypeNormal
+		secondEvent.Reason = "BackOff"
+		secondEvent.Message = "Back-off pulling image \"busybox123\""
+		er.addEvent(secondEvent, false)
+		require.Equal(t, "Normal", sink.Annotations["type"], "Send special case normal type events")
 	})
 }
 
@@ -172,15 +167,8 @@ func fakeEventRouter() (*MockExport, *EventRouter) {
 	sink := &MockExport{}
 	eventsConfig := configuration.EventsConfig{
 		Filters: configuration.EventsFilter{
-			TagAllowListSets: []map[string][]string{
-				{
-					"type": {"Warning"},
-				},
-				{
-					"type":   {"Normal"},
-					"kind":   {"Pod"},
-					"reason": {"Backoff"},
-				},
+			TagAllowList: map[string][]string{
+				"important": {"true"},
 			},
 			TagDenyList: map[string][]string{
 				"kind": {"Job"},
