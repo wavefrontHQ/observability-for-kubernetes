@@ -166,6 +166,8 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 		filteredEvents.Inc(1)
 		return
 	}
+	delete(e.Annotations, "internal/important")
+	delete(tags, "important")
 	sentEvents.Inc(1)
 
 	er.sink.ExportEvent(newEvent(

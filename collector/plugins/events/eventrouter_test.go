@@ -117,6 +117,15 @@ func TestAddEvent(t *testing.T) {
 		er.addEvent(secondEvent, false)
 		require.Equal(t, "Normal", sink.Annotations["type"], "Send special case normal type events")
 	})
+
+	t.Run("does not send internal tags/annotation", func(t *testing.T) {
+		sink, er := fakeEventRouter()
+		event := fakeEvent()
+		event.Type = v1.EventTypeWarning
+		er.addEvent(event, false)
+		require.Empty(t, sink.Annotations["important"])
+		require.Empty(t, event.Annotations["internal/important"])
+	})
 }
 
 func TestAddEventHasWorkload(t *testing.T) {
