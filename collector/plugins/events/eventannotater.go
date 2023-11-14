@@ -25,7 +25,6 @@ const (
 	Unhealthy             = "Unhealthy"
 	InsufficientResources = "InsufficientResources"
 	FailedCreate          = "FailedCreate"
-	Terminating           = "Terminating"
 	OOMKilled             = "OOMKilled"
 	ProvisioningFailed    = "ProvisioningFailed"
 )
@@ -167,13 +166,6 @@ func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 			},
 			category:    Runtime,
 			subcategory: Unhealthy,
-		},
-		{
-			match: func(event *v1.Event) bool {
-				return event.Type == v1.EventTypeWarning && event.Reason == "Killing" && strings.Contains(strings.ToLower(event.Message), "stopping")
-			},
-			category:    Runtime,
-			subcategory: Terminating,
 		},
 		{
 			match: func(event *v1.Event) bool {
