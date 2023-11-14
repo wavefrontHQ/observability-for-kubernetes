@@ -7,8 +7,8 @@ require (
 	github.com/nats-io/nats.go v1.30.1
 	github.com/prometheus/client_model v0.3.0
 	github.com/prometheus/common v0.42.0
-	k8s.io/api v0.26.2
-	k8s.io/apimachinery v0.26.2
+	k8s.io/api v0.26.10
+	k8s.io/apimachinery v0.26.10
 	k8s.io/client-go v0.26.2
 	px.dev/pixie v0.0.0-20230923183323-f974c7045734
 )
