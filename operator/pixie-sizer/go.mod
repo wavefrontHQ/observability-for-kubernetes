@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/gogo/protobuf v1.3.2
-	github.com/nats-io/nats.go v1.30.1
+	github.com/nats-io/nats.go v1.31.0
 	github.com/prometheus/client_model v0.3.0
 	github.com/prometheus/common v0.42.0
 	k8s.io/api v0.26.2
