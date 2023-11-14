@@ -42,10 +42,10 @@ func (em *eventMatcher) categorize(event *v1.Event) bool {
 	if em.match(event) {
 		event.ObjectMeta.Annotations["aria/category"] = em.getCategory(event)
 		event.ObjectMeta.Annotations["aria/subcategory"] = em.getSubcategory(event)
-		event.ObjectMeta.Annotations["internal/important"] = "true"
+		event.ObjectMeta.Annotations["important"] = "true"
 		return true
 	} else {
-		event.ObjectMeta.Annotations["internal/important"] = "false"
+		event.ObjectMeta.Annotations["important"] = "false"
 		return false
 	}
 }
@@ -181,20 +181,6 @@ func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 			},
 			category:    Runtime,
 			subcategory: OOMKilled,
-		},
-		{
-			match: func(event *v1.Event) bool {
-				if event.Type == v1.EventTypeNormal && event.Reason == "Killing" {
-					pod, err := ea.workloadCache.GetPod(event.InvolvedObject.Name, event.InvolvedObject.Namespace)
-					if err != nil {
-						return false
-					}
-					return util.IsStuckInTerminating(pod)
-				}
-				return false
-			},
-			category:    Runtime,
-			subcategory: Terminating,
 		},
 	}
 }

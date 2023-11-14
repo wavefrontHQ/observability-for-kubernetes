@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testhelper"
-	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -54,12 +53,6 @@ func TestCategorizeMatching(t *testing.T) {
 		validateCategorySubcategory(t, "examples/unhealthy.yaml", Runtime, Unhealthy, "true")
 	})
 
-	t.Run("Pod stuck in Terminating", func(t *testing.T) {
-		ea := setupAnnotator(t)
-		ea.workloadCache = testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", util.GetPodStuckInTerminating())
-		validateAnnotations(t, ea, "examples/pod_terminating.yaml", Runtime, Terminating, "true")
-	})
-
 	t.Run("Out-of-memory killed", func(t *testing.T) {
 		validateCategorySubcategory(t, "examples/oom_killed.yaml", Runtime, OOMKilled, "true")
 	})
@@ -92,16 +85,6 @@ func TestCategorizeNonMatching(t *testing.T) {
 		validateCategorySubcategory(t, "examples/normal_pulling_image.yaml", "", "", "false")
 	})
 
-	t.Run("Pod Terminating Gracefully", func(t *testing.T) {
-		ea := setupAnnotator(t)
-		ea.workloadCache = testhelper.NewFakeWorkloadCache("some-workload-name", "some-workload-kind", "some-node-name", fakePod())
-		validateAnnotations(t, ea, "examples/pod_terminating.yaml", "", "", "false")
-	})
-
-	t.Run("Pod Terminating event, pod not found", func(t *testing.T) {
-		validateCategorySubcategory(t, "examples/pod_terminating.yaml", "", "", "false")
-	})
-
 }
 
 func validateCategorySubcategory(t *testing.T, file, category, subcategory, important string) {
@@ -116,7 +99,7 @@ func validateAnnotations(t *testing.T, ea *EventAnnotator, file, category, subca
 		ea.annotate(&event)
 		require.Equal(t, category, event.ObjectMeta.Annotations["aria/category"])
 		require.Equal(t, subcategory, event.ObjectMeta.Annotations["aria/subcategory"])
-		require.Equal(t, important, event.ObjectMeta.Annotations["internal/important"])
+		require.Equal(t, important, event.ObjectMeta.Annotations["important"])
 	}
 }
 

@@ -146,7 +146,7 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 		"reason":         e.Reason,
 		"component":      e.Source.Component,
 		"type":           e.Type,
-		"important":      e.Annotations["internal/important"],
+		"important":      e.Annotations["important"],
 	}
 
 	resourceName := e.InvolvedObject.Name
@@ -166,7 +166,7 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 		filteredEvents.Inc(1)
 		return
 	}
-	delete(e.Annotations, "internal/important")
+	delete(e.Annotations, "important")
 	delete(tags, "important")
 	sentEvents.Inc(1)
 

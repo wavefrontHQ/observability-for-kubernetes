@@ -124,7 +124,7 @@ func TestAddEvent(t *testing.T) {
 		event.Type = v1.EventTypeWarning
 		er.addEvent(event, false)
 		require.Empty(t, sink.Annotations["important"])
-		require.Empty(t, event.Annotations["internal/important"])
+		require.Empty(t, event.Annotations["important"])
 	})
 }
 
