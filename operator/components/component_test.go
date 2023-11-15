@@ -28,36 +28,13 @@ spec:
     spec:
       containers:
       - image: some:image
-        buildResources:
+        resources:
           requests:
             cpu: 1m
             memory: 1Ki
           limits:
             cpu: 1m
             memory: 1Ki
-`
-
-const fakeDeployment = `
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    name: fake-deployment
-  name: fake-deployment
-  namespace: observability-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      name: fake-deployment
-  template:
-    metadata:
-      labels:
-        name: fake-deployment
-    spec:
-      containers:
-        - image: some:image
-          buildResources: {}
 `
 
 func TestK8sResourceBuilder(t *testing.T) {
