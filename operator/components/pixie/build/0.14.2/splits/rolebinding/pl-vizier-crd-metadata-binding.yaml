@@ -1,0 +1,17 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+  name: pl-vizier-crd-metadata-binding
+  namespace: pl
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pl-vizier-crd-role
+subjects:
+  - kind: ServiceAccount
+    name: metadata-service-account
+    namespace: pl

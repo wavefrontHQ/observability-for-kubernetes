@@ -1,7 +1,7 @@
 package patch
 
 import (
-	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )

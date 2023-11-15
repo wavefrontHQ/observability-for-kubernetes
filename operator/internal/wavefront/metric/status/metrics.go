@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 
-	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
 )
 

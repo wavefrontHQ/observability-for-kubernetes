@@ -1,7 +1,7 @@
 package pixie
 
 import (
-	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"

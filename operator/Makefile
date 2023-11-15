@@ -63,15 +63,27 @@ help: ## Display this help.
 ##@ Development
 .PHONY: manifests
 manifests: config/crd/bases/wavefront.com_wavefronts.yaml
+manifests: config/crd/bases/wavefront.com_operatorsettings.yaml
+manifests: config/rbac/role.yaml
 
-config/crd/bases/wavefront.com_wavefronts.yaml: api/v1alpha1/wavefront_types.go controllers/wavefront_controller.go
-	controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+config/rbac/role.yaml: controllers/wavefront_controller.go
+	controller-gen rbac:roleName=manager-role paths="./..."
+controller-gen rbac:roleName=manager-role paths="./..."
+
+config/crd/bases/wavefront.com_wavefronts.yaml: api/wavefront/v1alpha1
+	controller-gen crd paths="./$</..." output:crd:stdout > $@
+
+config/crd/bases/wavefront.com_operatorsettings.yaml: api/operator_settings/v1alpha1
+	controller-gen crd paths="./$</..." output:crd:stdout > $@
 
 .PHONY: generate
-generate: api/v1alpha1/zz_generated.deepcopy.go
+generate: api/wavefront/v1alpha1/zz_generated.deepcopy.go api/operator_settings/v1alpha1/zz_generated.deepcopy.go
 
-api/v1alpha1/zz_generated.deepcopy.go: hack/boilerplate.go.txt api/v1alpha1/wavefront_types.go
-	controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./..."
+api/wavefront/v1alpha1/zz_generated.deepcopy.go: api/wavefront/v1alpha1/wavefront_types.go hack/boilerplate.go.txt
+	controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./$(dir $<)..."
+
+api/operator_settings/v1alpha1/zz_generated.deepcopy.go: api/operator_settings/v1alpha1/operator_settings_type.go hack/boilerplate.go.txt
+	controller-gen object:headerFile="hack/boilerplate.go.txt" paths="./$(dir $<)..."
 
 FIND_GOIMPORTS_FILES:=find . -type f -name '*.go' -not -path "./vendor/*" -not -path "./pixie-sizer/vendor/*"
 

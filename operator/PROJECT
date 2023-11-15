@@ -14,6 +14,14 @@ resources:
   controller: true
   domain: wavefront.com
   kind: Wavefront
-  path: github.com/wavefrontHQ/observability-for-kubernetes/operator/api/v1alpha1
+  path: github.com/wavefrontHQ/observability-for-kubernetes/operator/api/wavefront/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: false
+  domain: wavefront.com
+  kind: OperatorCustomizations
+  path: github.com/wavefrontHQ/observability-for-kubernetes/operator/api/operator_customizations/v1alpha1
   version: v1alpha1
 version: "3"

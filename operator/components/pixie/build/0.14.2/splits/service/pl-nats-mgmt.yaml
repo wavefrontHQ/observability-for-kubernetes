@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pl-monitoring
+    name: pl-nats
+  name: pl-nats-mgmt
+  namespace: pl
+spec:
+  clusterIP: None
+  ports:
+    - name: cluster
+      port: 6222
+    - name: monitor
+      port: 8222
+    - name: metrics
+      port: 7777
+    - name: leafnodes
+      port: 7422
+    - name: gateways
+      port: 7522
+  selector:
+    app: pl-monitoring
+    name: pl-nats

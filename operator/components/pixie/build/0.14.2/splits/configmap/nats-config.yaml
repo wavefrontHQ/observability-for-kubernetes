@@ -1,0 +1,19 @@
+apiVersion: v1
+data:
+  nats.conf: |
+    pid_file: "/var/run/nats/nats.pid"
+    http: 8222
+
+    tls {
+      ca_file: "/etc/nats-server-tls-certs/ca.crt",
+      cert_file: "/etc/nats-server-tls-certs/server.crt",
+      key_file: "/etc/nats-server-tls-certs/server.key",
+      timeout: 3
+      verify: true
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    app: pl-monitoring
+  name: nats-config
+  namespace: pl

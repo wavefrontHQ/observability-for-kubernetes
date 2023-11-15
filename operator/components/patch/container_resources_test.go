@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )

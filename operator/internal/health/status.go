@@ -7,6 +7,7 @@ import (
 	strings "strings"
 	"time"
 
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -14,8 +15,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
-
-	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 )
 
 const (

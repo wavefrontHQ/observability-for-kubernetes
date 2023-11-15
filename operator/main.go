@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"k8s.io/client-go/discovery"
 
 	"go.uber.org/zap/zapcore"
@@ -36,7 +37,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	wavefrontcomv1alpha1 "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
@@ -50,7 +50,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(wavefrontcomv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(wf.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

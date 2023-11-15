@@ -1,6 +1,8 @@
 package proxy
 
-import wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+import (
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
+)
 
 func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 	config := ComponentConfig{

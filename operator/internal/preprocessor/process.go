@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	baseYaml "gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"

@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pl-monitoring
+    component: vizier
+    vizier-bootstrap: "true"
+  name: vizier-cloud-connector-svc
+  namespace: pl
+spec:
+  ports:
+    - name: tcp-http2
+      port: 50800
+      protocol: TCP
+      targetPort: 50800
+  selector:
+    app: pl-monitoring
+    component: vizier
+    name: vizier-cloud-connector
+    vizier-bootstrap: "true"
+  type: ClusterIP

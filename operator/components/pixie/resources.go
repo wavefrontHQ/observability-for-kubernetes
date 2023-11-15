@@ -1,7 +1,7 @@
 package pixie
 
 import (
-	"github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 )
 
 func defaultResources(clusterSize string, config Config) Config {
