@@ -3,7 +3,7 @@
 package events
 
 import (
-	"strings"
+	"regexp"
 
 	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	v1 "k8s.io/api/core/v1"
@@ -46,10 +46,9 @@ func (em *eventMatcher) categorize(event *v1.Event) bool {
 		event.ObjectMeta.Annotations["aria/subcategory"] = em.getSubcategory(event)
 		event.ObjectMeta.Annotations["important"] = "true"
 		return true
-	} else {
-		event.ObjectMeta.Annotations["important"] = "false"
-		return false
 	}
+	event.ObjectMeta.Annotations["important"] = "false"
+	return false
 }
 
 func (em *eventMatcher) getCategory(event *v1.Event) string {
@@ -77,6 +76,7 @@ func (ea *EventAnnotator) annotate(event *v1.Event) {
 	if event.ObjectMeta.Annotations == nil {
 		event.ObjectMeta.Annotations = map[string]string{}
 	}
+
 	event.ObjectMeta.Annotations["aria/cluster-name"] = ea.clusterName
 	event.ObjectMeta.Annotations["aria/cluster-uuid"] = ea.clusterUUID
 
@@ -88,6 +88,7 @@ func (ea *EventAnnotator) annotate(event *v1.Event) {
 			event.ObjectMeta.Annotations["aria/node-name"] = nodeName
 		}
 	}
+
 	ea.categorize(event)
 }
 
@@ -121,14 +122,16 @@ func (ea *EventAnnotator) schedulingMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
-				return event.Type == v1.EventTypeWarning && event.Reason == "FailedScheduling" && strings.Contains(strings.ToLower(event.Message), "insufficient")
+				re := regexp.MustCompile("[iI]nsufficient")
+				return event.Type == v1.EventTypeWarning && event.Reason == "FailedScheduling" && re.MatchString(event.Message)
 			},
 			category:    Scheduling,
 			subcategory: InsufficientResources,
 		},
 		{
 			match: func(event *v1.Event) bool {
-				return event.Reason == "NodeNotReady" && event.InvolvedObject.Kind == "Pod" && strings.Contains(strings.ToLower(event.Message), "not ready")
+				re := regexp.MustCompile("not ready")
+				return event.Reason == "NodeNotReady" && event.InvolvedObject.Kind == "Pod" && re.MatchString(event.Message)
 			},
 			category:    Scheduling,
 			subcategory: NodeNotReady,
@@ -140,14 +143,16 @@ func (ea *EventAnnotator) creationMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
-				return event.Type == v1.EventTypeWarning && event.Reason == "Failed" && strings.Contains(strings.ToLower(event.Message), "image")
+				re := regexp.MustCompile("[iI]mage")
+				return event.Type == v1.EventTypeWarning && event.Reason == "Failed" && re.MatchString(event.Message)
 			},
 			category:    Creation,
 			subcategory: ImagePullBackOff,
 		},
 		{
 			match: func(event *v1.Event) bool {
-				return event.Type == v1.EventTypeNormal && event.Reason == "BackOff" && strings.Contains(strings.ToLower(event.Message), "back-off pulling image")
+				re := regexp.MustCompile("[bB]ack-off pulling image")
+				return event.Type == v1.EventTypeNormal && event.Reason == "BackOff" && re.MatchString(event.Message)
 			},
 			category:    Creation,
 			subcategory: ImagePullBackOff,
@@ -166,7 +171,8 @@ func (ea *EventAnnotator) runtimeMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
-				return event.Type == v1.EventTypeWarning && event.Reason == "BackOff" && strings.Contains(strings.ToLower(event.Message), "back-off restarting")
+				re := regexp.MustCompile("[bB]ack-off restarting")
+				return event.Type == v1.EventTypeWarning && event.Reason == "BackOff" && re.MatchString(event.Message)
 			},
 			category:    Runtime,
 			subcategory: CrashLoopBackOff,
@@ -192,7 +198,8 @@ func (ea *EventAnnotator) storageMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
-				return event.Type == v1.EventTypeWarning && event.Reason == "FailedCreate" && strings.Contains(strings.ToLower(event.Message), "volume")
+				re := regexp.MustCompile("[vV]olume")
+				return event.Type == v1.EventTypeWarning && event.Reason == "FailedCreate" && re.MatchString(event.Message)
 			},
 			category:    Storage,
 			subcategory: FailedCreate,
