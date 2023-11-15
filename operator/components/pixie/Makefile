@@ -43,6 +43,27 @@ $(eval $(call yaml-rule,21,service,pl-nats))
 $(eval $(call yaml-rule,22,service,pl-nats-mgmt))
 $(eval $(call yaml-rule,23,statefulset,pl-nats))
 
+define rbac-rule
+all: ../../config/rbac/components/pixie/$1-$2-$3.yaml
+
+../../config/rbac/components/pixie/$1-$2-$3.yaml: $(BUILD_DIR)/splits/$2/$3.yaml $(PREPROCESS_DIR)/common-rbac.sh $(if $(wildcard $(PREPROCESS_DIR)/$1-$2-$3.sh),$(PREPROCESS_DIR)/$1-$2-$3.sh)
+	$(PREPROCESS_DIR)/common-rbac.sh < $$< \
+	$$(if $$(word 3, $$^),| $$(word 3, $$^)) \
+	> $$@
+endef
+
+$(eval $(call rbac-rule,00,role,pl-cert-provisioner-role))
+$(eval $(call rbac-rule,04,role,pl-vizier-metadata-role))
+$(eval $(call rbac-rule,05,role,pl-vizier-query-broker-role))
+$(eval $(call rbac-rule,07,clusterrole,pl-node-view))
+$(eval $(call rbac-rule,09,clusterrole,pl-vizier-metadata))
+$(eval $(call rbac-rule,10,rolebinding,pl-cert-provisioner-binding))
+$(eval $(call rbac-rule,15,rolebinding,pl-vizier-metadata-binding))
+$(eval $(call rbac-rule,16,rolebinding,pl-vizier-query-broker-binding))
+$(eval $(call rbac-rule,21,clusterrolebinding,pl-vizier-metadata-cluster-binding))
+$(eval $(call rbac-rule,22,clusterrolebinding,pl-vizier-metadata-node-view-cluster-binding))
+
+
 .PRECIOUS: $(BUILD_DIR)/splits/%
 $(BUILD_DIR)/splits/%: $(BUILD_DIR)/yamls
 	mkdir -p $(BUILD_DIR)/splits/{configmap,secret,deployment,statefulset,daemonset,job,serviceaccount,service,role,rolebinding,clusterrole,clusterrolebinding,persistentvolumeclaim}

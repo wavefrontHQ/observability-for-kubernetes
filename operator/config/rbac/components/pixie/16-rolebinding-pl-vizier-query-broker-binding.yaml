@@ -1,17 +1,19 @@
+---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
   labels:
     app: pl-monitoring
     component: vizier
     app.kubernetes.io/name: wavefront
     app.kubernetes.io/component: pixie
-  name: pl-vizier-metadata-cluster-binding
+  name: pl-vizier-query-broker-binding
+  namespace: observability-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: pl-vizier-metadata
+  kind: Role
+  name: pl-vizier-query-broker-role
 subjects:
   - kind: ServiceAccount
-    name: metadata-service-account
-    namespace: observability-system
+    name: query-broker-service-account
+    namespace: pl
