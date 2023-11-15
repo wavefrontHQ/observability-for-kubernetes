@@ -63,9 +63,11 @@ spec:
 func TestK8sResourceBuilder(t *testing.T) {
 	t.Run("resource overrides", func(t *testing.T) {
 		t.Run("resource overrides are applied", func(t *testing.T) {
-			builder := NewK8sResourceBuilder(patch.ByName{"fake-daemonset": func(resource *unstructured.Unstructured) {
-				resource.SetAnnotations(map[string]string{"foo": "1"})
-			}})
+			builder := NewK8sResourceBuilder(patch.ByName{
+				"fake-daemonset": patch.ApplyFn(func(resource *unstructured.Unstructured) {
+					resource.SetAnnotations(map[string]string{"foo": "1"})
+				}),
+			})
 			fakeFS := fstest.MapFS{
 				"fake-daemonset.yaml": &fstest.MapFile{
 					Data: []byte(fakeDaemonset),
@@ -90,9 +92,11 @@ func TestK8sResourceBuilder(t *testing.T) {
 				},
 			}
 
-			toApply, _, err := builder.Build(fakeFS, "some-component", true, "manager-uuid", map[string]patch.Patch{"fake-daemonset": func(resource *unstructured.Unstructured) {
-				resource.SetAnnotations(map[string]string{"foo": "2"})
-			}}, nil)
+			toApply, _, err := builder.Build(fakeFS, "some-component", true, "manager-uuid", patch.ByName{
+				"fake-daemonset": patch.ApplyFn(func(resource *unstructured.Unstructured) {
+					resource.SetAnnotations(map[string]string{"foo": "2"})
+				}),
+			}, nil)
 
 			require.NoError(t, err)
 
@@ -103,18 +107,22 @@ func TestK8sResourceBuilder(t *testing.T) {
 		})
 
 		t.Run("resource overrides are applied on top of component defaults", func(t *testing.T) {
-			builder := NewK8sResourceBuilder(patch.ByName{"fake-daemonset": func(resource *unstructured.Unstructured) {
-				resource.SetAnnotations(map[string]string{"foo": "1"})
-			}})
+			builder := NewK8sResourceBuilder(patch.ByName{
+				"fake-daemonset": patch.ApplyFn(func(resource *unstructured.Unstructured) {
+					resource.SetAnnotations(map[string]string{"foo": "1"})
+				}),
+			})
 			fakeFS := fstest.MapFS{
 				"fake-daemonset.yaml": &fstest.MapFile{
 					Data: []byte(fakeDaemonset),
 				},
 			}
 
-			toApply, _, err := builder.Build(fakeFS, "some-component", true, "manager-uuid", patch.ByName{"fake-daemonset": func(resource *unstructured.Unstructured) {
-				resource.SetAnnotations(map[string]string{"foo": "2"})
-			}}, nil)
+			toApply, _, err := builder.Build(fakeFS, "some-component", true, "manager-uuid", patch.ByName{
+				"fake-daemonset": patch.ApplyFn(func(resource *unstructured.Unstructured) {
+					resource.SetAnnotations(map[string]string{"foo": "2"})
+				}),
+			}, nil)
 
 			require.NoError(t, err)
 			require.Len(t, toApply, 1)
@@ -134,9 +142,9 @@ func TestK8sResourceBuilder(t *testing.T) {
 			}
 
 			toApply, _, err := builder.Build(fakeFS, "some-component", true, "manager-uuid", patch.ByName{
-				"fake-daemonset": func(r *unstructured.Unstructured) {
+				"fake-daemonset": patch.ApplyFn(func(r *unstructured.Unstructured) {
 					r.SetLabels(map[string]string{"app.kubernetes.io/name": "overridden"})
-				},
+				}),
 			}, nil)
 
 			require.NoError(t, err)

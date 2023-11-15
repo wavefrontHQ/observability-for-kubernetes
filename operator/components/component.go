@@ -27,16 +27,16 @@ type Component interface {
 const DeployDir = "components"
 
 type K8sResourceBuilder struct {
-	crResourcePatches patch.ByName
+	crResourcePatches patch.Patch
 }
 
-func NewK8sResourceBuilder(overridePatches patch.ByName) *K8sResourceBuilder {
+func NewK8sResourceBuilder(crResourcePatches patch.Patch) *K8sResourceBuilder {
 	return &K8sResourceBuilder{
-		crResourcePatches: overridePatches,
+		crResourcePatches: crResourcePatches,
 	}
 }
 
-func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool, managerUID string, componentResourcePatches patch.ByName, data any) ([]client.Object, []client.Object, error) {
+func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool, managerUID string, componentResourcePatches patch.Patch, data any) ([]client.Object, []client.Object, error) {
 	return rb.buildResources(fs, data, enabled, patch.Composed{
 		ownerRefPatch(managerUID),
 		rb.componentLabelsPatch(componentName),

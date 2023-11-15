@@ -26,6 +26,7 @@ import (
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/factory"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/util/workqueue"
@@ -211,7 +212,11 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 
 func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]client.Object, []client.Object, error) {
 	var resourcesToApply, resourcesToDelete []client.Object
-	builder := components.NewK8sResourceBuilder(spec.WorkloadResources)
+	resourcePatches := patch.ByName{}
+	for workloadName, resources := range spec.WorkloadResources {
+		resourcePatches[workloadName] = patch.ContainerResources(resources)
+	}
+	builder := components.NewK8sResourceBuilder(resourcePatches)
 	for _, component := range r.components {
 		toApply, toDelete, err := component.Resources(builder)
 		if err != nil {
