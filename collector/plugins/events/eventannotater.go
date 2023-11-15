@@ -192,7 +192,7 @@ func (ea *EventAnnotator) storageMatchers() []eventMatcher {
 	return []eventMatcher{
 		{
 			match: func(event *v1.Event) bool {
-				return event.Type == v1.EventTypeWarning && event.Reason == "FailedCreate" && strings.Contains(strings.ToLower(event.Message), "volumemounts")
+				return event.Type == v1.EventTypeWarning && event.Reason == "FailedCreate" && strings.Contains(strings.ToLower(event.Message), "volume")
 			},
 			category:    Storage,
 			subcategory: FailedCreate,

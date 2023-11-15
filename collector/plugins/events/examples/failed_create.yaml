@@ -57,3 +57,32 @@ items:
   source:
     component: statefulset-controller
   type: Warning
+- apiVersion: v1
+  count: 18
+  eventTime: null
+  firstTimestamp: "2023-11-14T22:33:40Z"
+  involvedObject:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: mysql-oomkilled
+    namespace: default
+    resourceVersion: "147928"
+    uid: bc146fc8-0e80-4137-afc7-b40200ef68f7
+  kind: Event
+  lastTimestamp: "2023-11-14T22:44:35Z"
+  message: 'create Claim data-mysql-oomkilled-0 for Pod mysql-oomkilled-0 in StatefulSet
+    mysql-oomkilled failed error: PersistentVolumeClaim "data-mysql-oomkilled-0" is
+    invalid: spec.accessModes: Unsupported value: "ReadOnMany": supported values:
+    "ReadOnlyMany", "ReadWriteMany", "ReadWriteOnce"'
+  metadata:
+    creationTimestamp: "2023-11-14T22:33:40Z"
+    name: mysql-oomkilled.17979e1a4e959f86
+    namespace: default
+    resourceVersion: "3792"
+    uid: d7de332e-e63a-4464-836d-8dc237263a75
+  reason: FailedCreate
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: statefulset-controller
+  type: Warning
