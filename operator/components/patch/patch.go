@@ -2,20 +2,28 @@ package patch
 
 import "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-type Patch func(resource *unstructured.Unstructured)
+type Patch interface {
+	Apply(resource *unstructured.Unstructured)
+}
 
-type ResourcesByName map[string]Patch
+type ApplyFn func(resource *unstructured.Unstructured)
 
-func (patches ResourcesByName) Apply(resource *unstructured.Unstructured) {
+func (a ApplyFn) Apply(resource *unstructured.Unstructured) {
+	a(resource)
+}
+
+type ByName map[string]Patch
+
+func (patches ByName) Apply(resource *unstructured.Unstructured) {
 	if patch, exists := patches[resource.GetName()]; exists {
-		patch(resource)
+		patch.Apply(resource)
 	}
 }
 
-type AllResources []Patch
+type Composed []Patch
 
-func (patches AllResources) Apply(resource *unstructured.Unstructured) {
+func (patches Composed) Apply(resource *unstructured.Unstructured) {
 	for _, patch := range patches {
-		patch(resource)
+		patch.Apply(resource)
 	}
 }

@@ -27,26 +27,22 @@ type Component interface {
 const DeployDir = "components"
 
 type K8sResourceBuilder struct {
-	crResourcePatches patch.ResourcesByName
+	crResourcePatches patch.ByName
 }
 
-func NewK8sResourceBuilder(overridePatches patch.ResourcesByName) *K8sResourceBuilder {
+func NewK8sResourceBuilder(overridePatches patch.ByName) *K8sResourceBuilder {
 	return &K8sResourceBuilder{
 		crResourcePatches: overridePatches,
 	}
 }
 
-func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool, managerUID string, componentResourcePatches patch.ResourcesByName, data any) ([]client.Object, []client.Object, error) {
-	allResourcePatches := patch.AllResources{
+func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool, managerUID string, componentResourcePatches patch.ByName, data any) ([]client.Object, []client.Object, error) {
+	return rb.buildResources(fs, data, enabled, patch.Composed{
 		ownerRefPatch(managerUID),
 		rb.componentLabelsPatch(componentName),
-	}
-	resourcePatch := func(resource *unstructured.Unstructured) {
-		allResourcePatches.Apply(resource)
-		componentResourcePatches.Apply(resource)
-		rb.crResourcePatches.Apply(resource)
-	}
-	return rb.buildResources(fs, data, enabled, resourcePatch)
+		componentResourcePatches,
+		rb.crResourcePatches,
+	})
 }
 
 func (rb *K8sResourceBuilder) buildResources(fs fs.FS, data any, enabled bool, patch patch.Patch) ([]client.Object, []client.Object, error) {
@@ -76,7 +72,7 @@ func (rb *K8sResourceBuilder) buildResources(fs fs.FS, data any, enabled bool, p
 			return nil, nil, err
 		}
 
-		patch(resource)
+		patch.Apply(resource)
 
 		if enabled && resource.GetAnnotations()["wavefront.com/conditionally-provision"] != "false" {
 			resourcesToApply = append(resourcesToApply, resource)
@@ -87,25 +83,25 @@ func (rb *K8sResourceBuilder) buildResources(fs fs.FS, data any, enabled bool, p
 	return resourcesToApply, resourcesToDelete, nil
 }
 
-func (rb *K8sResourceBuilder) componentLabelsPatch(componentName string) func(r *unstructured.Unstructured) {
-	return func(resource *unstructured.Unstructured) {
+func (rb *K8sResourceBuilder) componentLabelsPatch(componentName string) patch.Patch {
+	return patch.ApplyFn(func(resource *unstructured.Unstructured) {
 		setResourceComponentLabels(resource, componentName)
 		_, hasTemplate, _ := unstructured.NestedMap(resource.Object, "spec", "template")
 		if hasTemplate {
 			setTemplateComponentLabels(resource, componentName)
 		}
-	}
+	})
 }
 
 func ownerRefPatch(managerUID string) patch.Patch {
-	return func(resource *unstructured.Unstructured) {
+	return patch.ApplyFn(func(resource *unstructured.Unstructured) {
 		resource.SetOwnerReferences([]metav1.OwnerReference{{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
 			Name:       "wavefront-controller-manager",
 			UID:        types.UID(managerUID),
 		}})
-	}
+	})
 }
 
 func setResourceComponentLabels(resource *unstructured.Unstructured, componentName string) {
