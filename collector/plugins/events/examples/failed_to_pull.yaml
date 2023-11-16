@@ -1,0 +1,62 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 3
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:09Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-8lph4
+    namespace: collector-targets
+    resourceVersion: "16337"
+    uid: 91d9e934-9ad8-46db-abf0-3b795eb692a2
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:48Z"
+  message: 'Error: ErrImagePull'
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:09Z"
+    name: daemonset-not-ready-8lph4.179526446ee978ec
+    namespace: collector-targets
+    resourceVersion: "602"
+    uid: d87aafc2-8e25-459f-8933-c0c0b8efd845
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-cluster-default-pool-99d62efe-zlbb
+  type: Warning
+- apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2023-11-06T18:24:36Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{daemonset-not-ready}
+    kind: Pod
+    name: daemonset-not-ready-29jwl
+    namespace: collector-targets
+    resourceVersion: "35809"
+    uid: 0485c874-6908-4f57-95d3-6661d6f5dce9
+  kind: Event
+  lastTimestamp: "2023-11-06T18:26:11Z"
+  message: 'Failed to pull image "busybox123": rpc error: code = Unknown desc = failed
+    to pull and unpack image "docker.io/library/busybox123:latest": failed to resolve
+    reference "docker.io/library/busybox123:latest": pull access denied, repository
+    does not exist or may require authorization: server message: insufficient_scope:
+    authorization failed'
+  metadata:
+    creationTimestamp: "2023-11-06T18:24:36Z"
+    name: daemonset-not-ready-29jwl.17951bde6168a5a5
+    namespace: collector-targets
+    resourceVersion: "774"
+    uid: 61080b33-078f-498b-8f83-975a88e20f3e
+  reason: Failed
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-cluster-default-pool-0816c2b3-zwkx
+  type: Warning

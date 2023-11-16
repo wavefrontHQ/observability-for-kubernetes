@@ -1,0 +1,28 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:35:38Z"
+  involvedObject:
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    name: memcached-release-74776df4d
+    namespace: collector-targets
+    resourceVersion: "16650"
+    uid: c7a9800b-df2e-4191-954d-607cdece8780
+  kind: Event
+  lastTimestamp: "2023-11-06T21:35:53Z"
+  message: "failed to get cpu utilization: unable to get metrics for resource cpu: unable to fetch metrics from resource metrics API: the server could not find the requested resource (get pods.metrics.k8s.io)"
+  metadata:
+    creationTimestamp: "2023-11-06T21:35:38Z"
+    name: memcached-release-74776df4d.1795264b0d6023fe
+    namespace: collector-targets
+    resourceVersion: "622"
+    uid: 6514f343-2253-4b73-bebd-1adb6afcc399
+  reason: FailedGetResourceMetric
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: horizontal-pod-autoscaler
+  type: Warning

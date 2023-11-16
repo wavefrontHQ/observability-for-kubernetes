@@ -46,6 +46,7 @@ type EventRouter struct {
 	clusterUUID       string
 	workloadCache     util.WorkloadCache
 	informerSynced    atomic.Bool
+	annotator         *EventAnnotator
 }
 
 func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConfig, sink sinks.Sink, scrapeCluster bool, workloadCache util.WorkloadCache) *EventRouter {
@@ -61,6 +62,7 @@ func NewEventRouter(clientset kubernetes.Interface, cfg configuration.EventsConf
 		clusterName:     cfg.ClusterName,
 		clusterUUID:     cfg.ClusterUUID,
 		workloadCache:   workloadCache,
+		annotator:       NewEventAnnotator(workloadCache, cfg.ClusterName, cfg.ClusterUUID),
 	}
 
 	eventsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -131,20 +133,7 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 
 	e = e.DeepCopy()
 
-	if e.ObjectMeta.Annotations == nil {
-		e.ObjectMeta.Annotations = map[string]string{}
-	}
-	e.ObjectMeta.Annotations["aria/cluster-name"] = er.clusterName
-	e.ObjectMeta.Annotations["aria/cluster-uuid"] = er.clusterUUID
-
-	if e.InvolvedObject.Kind == "Pod" {
-		workloadName, workloadKind, nodeName := er.workloadCache.GetWorkloadForPodName(e.InvolvedObject.Name, e.InvolvedObject.Namespace)
-		e.ObjectMeta.Annotations["aria/workload-name"] = workloadName
-		e.ObjectMeta.Annotations["aria/workload-kind"] = workloadKind
-		if len(nodeName) > 0 {
-			e.ObjectMeta.Annotations["aria/node-name"] = nodeName
-		}
-	}
+	er.annotator.annotate(e)
 
 	ns := e.InvolvedObject.Namespace
 	if len(ns) == 0 {
@@ -157,6 +146,7 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 		"reason":         e.Reason,
 		"component":      e.Source.Component,
 		"type":           e.Type,
+		"important":      e.Annotations["important"],
 	}
 
 	resourceName := e.InvolvedObject.Name
@@ -176,6 +166,8 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 		filteredEvents.Inc(1)
 		return
 	}
+	delete(e.Annotations, "important")
+	delete(tags, "important")
 	sentEvents.Inc(1)
 
 	er.sink.ExportEvent(newEvent(

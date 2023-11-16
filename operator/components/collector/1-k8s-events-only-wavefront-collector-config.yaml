@@ -19,15 +19,9 @@ data:
       externalEndpointURL: "{{ .KubernetesEvents.IngestionUrl }}"
     events:
       filters:
-        tagAllowListSets:
-        - type:
-          - "Warning"
-        - type:
-          - "Normal"
-          kind:
-          - "Pod"
-          reason:
-          - "Backoff"
+        tagAllowList:
+          important:
+          - "true"
         tagDenyList:
           kind:
           - "Job"
