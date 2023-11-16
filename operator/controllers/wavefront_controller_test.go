@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
+	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
@@ -36,8 +36,19 @@ import (
 )
 
 func TestReconcileAll(t *testing.T) {
+	t.Run("returns an error if there is more than 1 wavefront resource", func(t *testing.T) {
+		r, _ := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.Autotracing.Enable = true
+		}), nil, wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.ObjectMeta.Name += "-other"
+		}))
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.Error(t, err)
+	})
+
 	t.Run("produces well formed YAML", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(wavefront *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
@@ -111,7 +122,7 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("transitions status when sub-components change (even if overall health is still unhealthy)", func(t *testing.T) {
-		wfCR := wftest.CR(func(w *v1alpha1.Wavefront) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Status.Status = health.Unhealthy
 		})
 		r, _ := componentScenario(wfCR, nil)
@@ -121,7 +132,7 @@ func TestReconcileAll(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
-		var reconciledWFCR v1alpha1.Wavefront
+		var reconciledWFCR wf.Wavefront
 
 		require.NoError(t, r.Client.Get(
 			context.Background(),
@@ -130,11 +141,11 @@ func TestReconcileAll(t *testing.T) {
 		))
 
 		require.Contains(t, reconciledWFCR.Status.Status, health.Unhealthy)
-		require.Contains(t, reconciledWFCR.Status.ResourceStatuses, v1alpha1.ResourceStatus{Status: "Running (1/1)", Name: "wavefront-proxy"})
+		require.Contains(t, reconciledWFCR.Status.ResourceStatuses, wf.ResourceStatus{Status: "Running (1/1)", Name: "wavefront-proxy"})
 	})
 
 	t.Run("doesn't create any resources if wavefront spec is invalid", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Enable = true
 			w.Spec.DataExport.ExternalWavefrontProxy.Url = "http://some_url.com"
 		}), nil)
@@ -207,7 +218,7 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("Can configure imagePullSecrets for a private Custom Registry", func(t *testing.T) {
-		wfCR := wftest.CR(func(w *v1alpha1.Wavefront) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.ImagePullSecret = "private-reg-cred"
 		})
 		r, mockKM := componentScenario(wfCR, nil)
@@ -226,7 +237,7 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("Child components inherits controller's namespace", func(t *testing.T) {
-		wfCR := wftest.CR(func(w *v1alpha1.Wavefront) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Namespace = "customNamespace"
 		})
 		r, mockKM := componentScenario(wfCR, nil)
@@ -245,11 +256,11 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("Can configure additional data collection daemonset tolerations", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Logging.Enable = true
 			w.Spec.DataCollection.Metrics.Enable = true
-			w.Spec.DataCollection.Tolerations = []v1alpha1.Toleration{
-				v1alpha1.Toleration{
+			w.Spec.DataCollection.Tolerations = []wf.Toleration{
+				wf.Toleration{
 					Key:    "my-toleration",
 					Value:  "my-value",
 					Effect: "NoSchedule",
@@ -293,15 +304,15 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("can override workload resources", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(wavefront *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
-			wavefront.Spec.WorkloadResources = map[string]v1alpha1.Resources{
+			wavefront.Spec.WorkloadResources = map[string]wf.Resources{
 				"wavefront-proxy": {
-					Requests: v1alpha1.Resource{
+					Requests: wf.Resource{
 						CPU:    "50m",
 						Memory: "50Mi",
 					},
-					Limits: v1alpha1.Resource{
+					Limits: wf.Resource{
 						CPU:    "100m",
 						Memory: "100Mi",
 					},
@@ -331,7 +342,7 @@ func TestReconcileAll(t *testing.T) {
 
 func TestReconcileCollector(t *testing.T) {
 	t.Run("does not create configmap if user specified one", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.CustomConfig = "myconfig"
 		}), nil)
 
@@ -343,7 +354,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("can change the default collection interval", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.DefaultCollectionInterval = "90s"
 		}), nil)
 
@@ -355,7 +366,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("can disable discovery", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.EnableDiscovery = false
 		}), nil)
 
@@ -367,7 +378,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("control plane metrics are propagated to default collector configmap", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Enable = true
 		}), nil)
 
@@ -399,7 +410,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("control plane metrics can be enabled when not on an openshift environment", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Enable = true
 			w.Spec.DataCollection.Metrics.ControlPlane.Enable = true
 		}), nil)
@@ -414,7 +425,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("control plane metrics can be enabled when on an openshift environment", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Enable = true
 			w.Spec.DataCollection.Metrics.ControlPlane.Enable = true
 		}), []string{"security.openshift.io"})
@@ -429,7 +440,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("control plane metrics can be disabled", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Enable = true
 			w.Spec.DataCollection.Metrics.ControlPlane.Enable = false
 		}), nil)
@@ -445,7 +456,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("control plane metrics can be disabled when on openshift", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Enable = true
 			w.Spec.DataCollection.Metrics.ControlPlane.Enable = false
 		}), []string{"security.openshift.io"})
@@ -461,7 +472,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("can add custom metric filters", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Filters.AllowList = []string{"allowSomeTag", "allowOtherTag"}
 			w.Spec.DataCollection.Metrics.Filters.DenyList = []string{"denyAnotherTag", "denyThisTag"}
 		}), nil)
@@ -475,7 +486,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("can add custom metric tag filters", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Filters.TagAllowList = map[string][]string{"env1": {"prod", "staging"}}
 			w.Spec.DataCollection.Metrics.Filters.TagDenyList = map[string][]string{"env2": {"test"}}
 			w.Spec.DataCollection.Metrics.Filters.TagInclude = []string{"includeSomeTag"}
@@ -493,7 +504,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("can add custom metric filter with tag guarantee list", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Filters.TagGuaranteeList = []string{"someTagToAlwaysProtect", "someOtherTagToAlwaysProtect"}
 		}), nil)
 
@@ -505,7 +516,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("can add custom tags", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Tags = map[string]string{"env": "non-production"}
 		}), nil)
 
@@ -517,7 +528,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("resources set for cluster collector", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.ClusterCollector.Resources.Requests.CPU = "200m"
 			w.Spec.DataCollection.Metrics.ClusterCollector.Resources.Requests.Memory = "10Mi"
 			w.Spec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU = "200m"
@@ -532,7 +543,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("resources set for node collector", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.NodeCollector.Resources.Requests.CPU = "200m"
 			w.Spec.DataCollection.Metrics.NodeCollector.Resources.Requests.Memory = "10Mi"
 			w.Spec.DataCollection.Metrics.NodeCollector.Resources.Limits.CPU = "200m"
@@ -546,8 +557,8 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("Values from metrics.filters is propagated to default collector configmap", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
-			w.Spec.DataCollection.Metrics.Filters = v1alpha1.Filters{
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Filters = wf.Filters{
 				DenyList:  []string{"first_deny", "second_deny"},
 				AllowList: []string{"first_allow", "second_allow"},
 			}
@@ -583,7 +594,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("Tags can be set for default collector configmap", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Tags = map[string]string{"key1": "value1", "key2": "value2"}
 		}), nil)
 
@@ -594,7 +605,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("Empty tags map should not populate in default collector configmap", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Tags = map[string]string{}
 		}), nil)
 
@@ -606,7 +617,7 @@ func TestReconcileCollector(t *testing.T) {
 
 	t.Run("can be disabled", func(t *testing.T) {
 		CanBeDisabled(t,
-			wftest.CR(func(w *v1alpha1.Wavefront) {
+			wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataCollection.Metrics.Enable = false
 			}),
 			&appsv1.DaemonSet{
@@ -683,7 +694,7 @@ func TestReconcileCollector(t *testing.T) {
 
 	t.Run("does not add the etcd secrets as a volume for the node collector or create the etcd auto-discovery configmap when control plane metrics are disabled", func(t *testing.T) {
 		r, mockKM := componentScenario(
-			wftest.CR(func(w *v1alpha1.Wavefront) {
+			wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataCollection.Metrics.ControlPlane.Enable = false
 			}),
 			nil,
@@ -783,7 +794,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("does not create proxy when it is configured to use an external proxy", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Enable = false
 			w.Spec.DataExport.ExternalWavefrontProxy.Url = "https://example.com"
 		}), nil, wftest.Proxy(wftest.WithReplicas(0, 1)))
@@ -801,7 +812,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("updates proxy and service", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.WavefrontTokenSecret = "updatedToken"
 			w.Spec.WavefrontUrl = "updatedUrl"
 		}), nil)
@@ -816,7 +827,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("updates proxy when the wavefront secret is updated", func(t *testing.T) {
-		wfCR := wftest.CR(func(w *v1alpha1.Wavefront) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.WavefrontTokenSecret = "some-token"
 		})
 		secret := &v1.Secret{
@@ -848,7 +859,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("updates proxy when the wavefront secret is updated", func(t *testing.T) {
-		wfCR := wftest.CR(func(w *v1alpha1.Wavefront) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.WavefrontTokenSecret = "some-token"
 		})
 		secret := &v1.Secret{
@@ -889,7 +900,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with a user defined metric port", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.MetricPort = 1234
 		}), nil)
 
@@ -903,7 +914,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with a user defined delta counter port", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.DeltaCounterPort = 50000
 		}), nil)
 
@@ -915,9 +926,9 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with a user defined Wavefront tracing", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
-			w.Spec.DataExport.WavefrontProxy.Tracing = v1alpha1.Tracing{
-				Wavefront: v1alpha1.WavefrontTracing{
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataExport.WavefrontProxy.Tracing = wf.Tracing{
+				Wavefront: wf.WavefrontTracing{
 					Port:             30000,
 					SamplingRate:     ".1",
 					SamplingDuration: 45,
@@ -936,9 +947,9 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with a user defined Jaeger distributed tracing", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
-			w.Spec.DataExport.WavefrontProxy.Tracing = v1alpha1.Tracing{
-				Jaeger: v1alpha1.JaegerTracing{
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataExport.WavefrontProxy.Tracing = wf.Tracing{
+				Jaeger: wf.JaegerTracing{
 					Port:            30001,
 					GrpcPort:        14250,
 					HttpPort:        30080,
@@ -963,7 +974,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with a user defined ZipKin distributed tracing", func(t *testing.T) {
-		wfSpec := wftest.CR(func(w *v1alpha1.Wavefront) {
+		wfSpec := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Tracing.Zipkin.Port = 9411
 			w.Spec.DataExport.WavefrontProxy.Tracing.Zipkin.ApplicationName = "zipkin"
 		})
@@ -980,8 +991,8 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with OTLP enabled", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
-			w.Spec.DataExport.WavefrontProxy.OTLP = v1alpha1.OTLP{
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataExport.WavefrontProxy.OTLP = wf.OTLP{
 				GrpcPort:                       4317,
 				HttpPort:                       4318,
 				ResourceAttrsOnMetricsIncluded: true,
@@ -1001,7 +1012,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with histogram ports enabled", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Histogram.Port = 40000
 			w.Spec.DataExport.WavefrontProxy.Histogram.MinutePort = 40001
 			w.Spec.DataExport.WavefrontProxy.Histogram.HourPort = 40002
@@ -1025,7 +1036,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with a user defined proxy args", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Args = "--prefix dev \r\n --customSourceTags mySource"
 		}), nil)
 
@@ -1038,7 +1049,7 @@ func TestReconcileProxy(t *testing.T) {
 
 	t.Run("can create proxy with the default cluster_uuid and cluster preprocessor rules", func(t *testing.T) {
 		clusterName := "my_cluster_name"
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) { w.Spec.ClusterName = clusterName }), nil)
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) { w.Spec.ClusterName = clusterName }), nil)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1063,7 +1074,7 @@ func TestReconcileProxy(t *testing.T) {
 
 	t.Run("can create proxy with the default cluster_uuid and cluster preprocessor rules for OTLP", func(t *testing.T) {
 		clusterName := "my_cluster_name"
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.ClusterName = clusterName
 			w.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort = 4317
 			w.Spec.DataExport.WavefrontProxy.OTLP.HttpPort = 4318
@@ -1080,7 +1091,7 @@ func TestReconcileProxy(t *testing.T) {
 	t.Run("can merge 'global' user proxy rules with operator preprocessor rules", func(t *testing.T) {
 		rules := "    '2878':\n      - rule: tag1\n        action: addTag\n        tag: tag1\n        value: \"true\"\n      - rule: tag2\n        action: addTag\n        tag: tag2\n        value: \"true\"\n    'global':\n      - rule: tag3\n        action: addTag\n        tag: tag3\n        value: \"true\"\n"
 		r, mockKM := emptyScenario(
-			wftest.CR(func(w *v1alpha1.Wavefront) {
+			wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataExport.WavefrontProxy.Preprocessor = "user-preprocessor-rules"
 			}), nil,
 			&v1.ConfigMap{
@@ -1117,7 +1128,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can't create proxy if user preprocessor rules have a rule for cluster or cluster_uuid", func(t *testing.T) {
-		wfCR := wftest.CR(func(w *v1alpha1.Wavefront) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Preprocessor = "preprocessor-rules"
 		})
 		r, _ := emptyScenario(
@@ -1141,7 +1152,7 @@ func TestReconcileProxy(t *testing.T) {
 
 		require.NoError(t, err)
 
-		var reconciledWFCR v1alpha1.Wavefront
+		var reconciledWFCR wf.Wavefront
 
 		require.NoError(t, r.Client.Get(
 			context.Background(),
@@ -1154,7 +1165,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("resources set for the proxy", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Resources.Requests.CPU = "100m"
 			w.Spec.DataExport.WavefrontProxy.Resources.Requests.Memory = "1Gi"
 			w.Spec.DataExport.WavefrontProxy.Resources.Limits.CPU = "1000m"
@@ -1173,7 +1184,7 @@ func TestReconcileProxy(t *testing.T) {
 
 	t.Run("adjusting proxy replicas", func(t *testing.T) {
 		t.Run("changes the number of desired replicas", func(t *testing.T) {
-			r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+			r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataExport.WavefrontProxy.Replicas = 2
 			}), nil)
 
@@ -1187,7 +1198,7 @@ func TestReconcileProxy(t *testing.T) {
 		})
 
 		t.Run("updates available replicas when based availability", func(t *testing.T) {
-			r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+			r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataExport.WavefrontProxy.Replicas = 2
 			}), nil, wftest.Proxy(wftest.WithReplicas(2, 2)))
 
@@ -1201,7 +1212,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with HTTP configurations", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.HttpProxy.Secret = "testHttpProxySecret"
 		}), nil, &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1234,7 +1245,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with HTTP configurations only contains http-url", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.HttpProxy.Secret = "testHttpProxySecret"
 		}), nil, &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1254,7 +1265,7 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("can create proxy with HTTP configuration where url is a service", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.HttpProxy.Secret = "testHttpProxySecret"
 		}), nil, &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1280,7 +1291,7 @@ func TestReconcileProxy(t *testing.T) {
 
 	t.Run("can be disabled", func(t *testing.T) {
 		CanBeDisabled(t,
-			wftest.CR(func(w *v1alpha1.Wavefront) {
+			wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataExport.WavefrontProxy.Enable = false
 			}),
 			&appsv1.Deployment{
@@ -1319,7 +1330,7 @@ func TestReconcileLogging(t *testing.T) {
 
 	t.Run("can be disabled", func(t *testing.T) {
 		CanBeDisabled(t,
-			wftest.CR(func(w *v1alpha1.Wavefront) {
+			wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataCollection.Logging.Enable = false
 			}),
 			&appsv1.DaemonSet{
@@ -1342,7 +1353,7 @@ func TestReconcileLogging(t *testing.T) {
 	//TODO - Component Refactor remove once url logic is moved to build components
 
 	t.Run("Verify external wavefront proxy url without http specified in URL", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(func(w *v1alpha1.Wavefront) {
+		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Enable = false
 			w.Spec.DataExport.ExternalWavefrontProxy.Url = "my-proxy:8888"
 		}), nil)
@@ -1356,7 +1367,7 @@ func TestReconcileLogging(t *testing.T) {
 
 func TestReconcileAutoTracing(t *testing.T) {
 	t.Run("creates Pixie components when AutoTracing is enabled", func(t *testing.T) {
-		wfCR := wftest.CR(func(w *v1alpha1.Wavefront) {
+		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Autotracing.Enable = true
 			w.Spec.ClusterName = "test-clusterName"
 		})
@@ -1414,7 +1425,7 @@ func TestReconcileAutoTracing(t *testing.T) {
 	})
 
 	t.Run("does not create Pixie components when AutoTracing is not enabled", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(wavefront *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = false
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
@@ -1442,7 +1453,7 @@ func TestReconcileAutoTracing(t *testing.T) {
 	})
 
 	t.Run("does not deploy OpApps pxl scripts when canExportAutotracingScripts is false", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(wavefront *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
 		mockSender := &testhelper.MockSender{}
@@ -1471,7 +1482,7 @@ func TestReconcileAutoTracing(t *testing.T) {
 				NumberReady:            3,
 			},
 		}
-		r, mockKM := emptyScenario(wftest.CR(func(wavefront *v1alpha1.Wavefront) {
+		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
 		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)), daemonset)
 		mockSender := &testhelper.MockSender{}
@@ -1492,7 +1503,7 @@ func TestReconcileAutoTracing(t *testing.T) {
 
 func TestReconcileHubPixie(t *testing.T) {
 	t.Run("creates Pixie components when Hub Pixie is enabled", func(t *testing.T) {
-		wfCR := wftest.NothingEnabledCR(func(w *v1alpha1.Wavefront) {
+		wfCR := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
 			w.Spec.ClusterName = "test-clusterName"
 			w.Spec.Experimental.Hub.Enable = true
 			w.Spec.Experimental.Hub.Pixie.Enable = true
@@ -1543,7 +1554,7 @@ func TestReconcileHubPixie(t *testing.T) {
 	})
 
 	t.Run("does not create Pixie components when Hub Pixie is not enabled", func(t *testing.T) {
-		wfCR := wftest.NothingEnabledCR(func(wfCR *v1alpha1.Wavefront) {
+		wfCR := wftest.NothingEnabledCR(func(wfCR *wf.Wavefront) {
 			wfCR.Spec.Experimental.Hub.Enable = true
 			wfCR.Spec.Experimental.Hub.Pixie.Enable = false
 		})
@@ -1572,7 +1583,7 @@ func TestReconcileHubPixie(t *testing.T) {
 
 func TestReconcileInsightsByCR(t *testing.T) {
 	t.Run("can enable K8s events only", func(t *testing.T) {
-		cr := wftest.CR(func(wavefront *v1alpha1.Wavefront) {
+		cr := wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Insights.Enable = true
 			wavefront.Spec.Experimental.Insights.IngestionUrl = "https://example.com"
 			wavefront.Spec.DataExport.WavefrontProxy.Enable = false
@@ -1611,7 +1622,7 @@ func TestReconcileInsightsByCR(t *testing.T) {
 	})
 
 	t.Run("can enable external K8s events and WF metrics with yaml spec", func(t *testing.T) {
-		cr := wftest.CR(func(w *v1alpha1.Wavefront) {
+		cr := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Insights.Enable = true
 			w.Spec.Experimental.Insights.IngestionUrl = "https://example.com"
 		})
@@ -1644,26 +1655,26 @@ func TestReconcileInsightsByCR(t *testing.T) {
 	})
 
 	t.Run("can enable external K8s events only with resource limits", func(t *testing.T) {
-		cr := &v1alpha1.Wavefront{
+		cr := &wf.Wavefront{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "wavefront",
 				Namespace: wftest.DefaultNamespace,
 			},
-			Spec: v1alpha1.WavefrontSpec{
+			Spec: wf.WavefrontSpec{
 				ClusterName: "a-cluster",
-				ClusterSize: v1alpha1.ClusterSizeMedium,
-				DataCollection: v1alpha1.DataCollection{
-					Metrics: v1alpha1.Metrics{
+				ClusterSize: wf.ClusterSizeMedium,
+				DataCollection: wf.DataCollection{
+					Metrics: wf.Metrics{
 						Enable: false,
-						ClusterCollector: v1alpha1.Collector{
-							Resources: v1alpha1.Resources{
-								Requests: v1alpha1.Resource{CPU: "100m", Memory: "10Mi"},
-								Limits:   v1alpha1.Resource{CPU: "250Mi", Memory: "200Mi"},
+						ClusterCollector: wf.Collector{
+							Resources: wf.Resources{
+								Requests: wf.Resource{CPU: "100m", Memory: "10Mi"},
+								Limits:   wf.Resource{CPU: "250Mi", Memory: "200Mi"},
 							},
 						},
 					},
 				},
-				Experimental: v1alpha1.Experimental{Insights: v1alpha1.Insights{
+				Experimental: wf.Experimental{Insights: wf.Insights{
 					Enable:       true,
 					IngestionUrl: "https://example.com",
 				}},
@@ -1719,7 +1730,7 @@ func StatusMetricsSent(mockSender *testhelper.MockSender) int {
 	return statusMetricsSent
 }
 
-func CanBeDisabled(t *testing.T, wfCR *v1alpha1.Wavefront, existingResources ...runtime.Object) {
+func CanBeDisabled(t *testing.T, wfCR *wf.Wavefront, existingResources ...runtime.Object) {
 	t.Run("on CR creation", func(t *testing.T) {
 		r, mockKM := emptyScenario(wfCR, nil)
 
@@ -1914,9 +1925,9 @@ func containsProxyArg(t *testing.T, proxyArg string, mockKM testhelper.MockKuber
 	require.Contains(t, value, proxyArg)
 }
 
-func emptyScenario(wfCR *v1alpha1.Wavefront, apiGroups []string, initObjs ...runtime.Object) (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
+func emptyScenario(wfCR *wf.Wavefront, apiGroups []string, initObjs ...runtime.Object) (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
 	s := scheme.Scheme
-	s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.Wavefront{})
+	wf.AddToScheme(s)
 
 	namespace := wftest.DefaultNamespace
 	if wfCR != nil {
@@ -1957,7 +1968,7 @@ func emptyScenario(wfCR *v1alpha1.Wavefront, apiGroups []string, initObjs ...run
 	return r, mockKM
 }
 
-func componentScenario(wfCR *v1alpha1.Wavefront, apiGroups []string, initObjs ...runtime.Object) (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
+func componentScenario(wfCR *wf.Wavefront, apiGroups []string, initObjs ...runtime.Object) (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
 	if !containsObject(initObjs, proxyInNamespace(wfCR.Namespace)) {
 		proxy := wftest.Proxy(wftest.WithReplicas(1, 1))
 		proxy.SetNamespace(wfCR.Namespace)

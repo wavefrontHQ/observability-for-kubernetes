@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	stderrors "errors"
+
 	ops "github.com/wavefronthq/observability-for-kubernetes/operator/api/operator_settings/v1alpha1"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
@@ -33,6 +35,8 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/wavefront/metric/version"
@@ -44,7 +48,6 @@ import (
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
 
-	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -93,7 +96,7 @@ func NewWavefrontReconciler(versions Versions, client client.Client, discoveryCl
 func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&wf.Wavefront{}).
-		Owns(&ops.OperatorSettings{}).
+		Watches(&source.Kind{Type: &ops.OperatorSettings{}}, &handler.EnqueueRequestForObject{}).
 		WithOptions(controller.Options{
 			RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(1*time.Second, maxReconcileInterval),
 		}).
@@ -104,7 +107,7 @@ func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts/finalizers,verbs=update
 
-// +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=operator_settings,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=operatorsettings,verbs=get;list;watch;create;update;patch;delete
 
 // Permissions for creating Kubernetes resources from internal files.
 // Possible point of confusion: the collector itself watches resources,
@@ -132,15 +135,13 @@ const maxReconcileInterval = 60 * time.Second
 
 func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.namespace = req.Namespace
-	wavefront := &wf.Wavefront{}
-	err := r.Client.Get(ctx, req.NamespacedName, wavefront)
-	if err != nil && !errors.IsNotFound(err) {
-		return errorCRTLResult(err)
-	}
-
-	if errors.IsNotFound(err) {
+	wavefront, err := r.fetchWavefrontCR(ctx, req.Namespace)
+	if stderrors.Is(err, CRNotFoundErr) {
 		_ = r.readAndDeleteResources()
 		return ctrl.Result{}, nil
+	}
+	if err != nil {
+		return errorCRTLResult(err)
 	}
 
 	var validationResult validation.Result
@@ -174,6 +175,24 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		Requeue:      true,
 		RequeueAfter: maxReconcileInterval,
 	}, nil
+}
+
+var CRNotFoundErr = fmt.Errorf("CR is not found")
+
+func (r *WavefrontReconciler) fetchWavefrontCR(ctx context.Context, namespace string) (*wf.Wavefront, error) {
+	wavefrontList := &wf.WavefrontList{}
+	err := r.Client.List(ctx, wavefrontList, client.InNamespace(namespace))
+	if err != nil {
+		return nil, err
+	}
+	if len(wavefrontList.Items) == 0 {
+		return nil, CRNotFoundErr
+	}
+	if len(wavefrontList.Items) > 1 {
+		kind := wavefrontList.Items[0].Kind
+		return nil, fmt.Errorf("cannot have more than 1 %s CR (have %d)", kind, len(wavefrontList.Items))
+	}
+	return &wavefrontList.Items[0], nil
 }
 
 // Validating Wavefront CR
