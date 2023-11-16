@@ -92,7 +92,8 @@ jobs:
           params: { submodules: all }
       - do:
         - task: osspi-scan-packages
-          attempts: 3
+          timeout: 30m
+          attempts: 2
           file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
           input_mapping:
             ci_repo: observability-for-kubernetes
@@ -101,11 +102,14 @@ jobs:
             SCAN_PATH: operator
             REPO: project_repo
             API_KEY: ((osspi.osm-prod-api-key))
+            OSM_PACKAGE_GROUP_NAME: operator
             USERNAME: ((osspi.osm-prod-username))
             PRODUCT: Wavefront_K8_Operator
             VERSION: Latest
             PREPARE: |
-              go mod vendor
+              GOMOD_VERSION=$(go list -m -f '{{.GoVersion}}') \
+              && go env -w GOTOOLCHAIN=go$GOMOD_VERSION \
+              && go mod vendor
             OSSPI_SCANNING_PARAMS: |
               enable: true
               include_bomtools: "go_mod"
@@ -121,7 +125,8 @@ jobs:
               - name_regex: gomega
                 version_regex: .*
         - task: osspi-scan-pixie-sizer
-          attempts: 3
+          timeout: 30m
+          attempts: 2
           file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-source.yaml
           input_mapping:
             ci_repo: observability-for-kubernetes
@@ -134,7 +139,9 @@ jobs:
             PRODUCT: Wavefront_K8_Operator
             VERSION: Latest
             PREPARE: |
-              go mod tidy && go mod vendor
+              GOMOD_VERSION=$(go list -m -f '{{.GoVersion}}') \
+              && go env -w GOTOOLCHAIN=go$GOMOD_VERSION \
+              && go mod vendor
             OSM_PACKAGE_GROUP_NAME: pixie-sizer
             OSSPI_SCANNING_PARAMS: |
               enable: true
@@ -151,6 +158,7 @@ jobs:
               - name_regex: gomega
                 version_regex: .*
         - task: osspi-scan-fluentbit
+          timeout: 10m
           file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
           input_mapping:
             ci_repo: observability-for-kubernetes
