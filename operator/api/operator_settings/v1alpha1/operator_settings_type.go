@@ -1,6 +1,9 @@
 package v1alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 func init() {
 	SchemeBuilder.Register(&OperatorSettings{}, &OperatorSettingsList{})
@@ -24,5 +27,16 @@ type OperatorSettings struct {
 }
 
 type OperatorSettingSpec struct {
+	ByName     ByName
 	DoesItWork bool `json:"does_it_work"`
+}
+
+type ByName map[string]ResourceCustomization
+
+type TolerationsCustomization struct {
+	Add []corev1.Toleration
+}
+
+type ResourceCustomization struct {
+	Tolerations TolerationsCustomization
 }
