@@ -119,17 +119,17 @@ pipeline {
           }
         }
 
-//         stage("Test Openshift build") {
-//           agent {
-//             label "worker-5"
-//           }
-//           options {
-//             timeout(time: 60, unit: 'MINUTES')
-//           }
-//           steps {
-//             sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
-//           }
-//         }
+        stage("Test Openshift build") {
+          agent {
+            label "worker-5"
+          }
+          options {
+            timeout(time: 60, unit: 'MINUTES')
+          }
+          steps {
+            sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
+          }
+        }
       }
     }
 
