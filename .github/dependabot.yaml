@@ -4,8 +4,8 @@
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 version: 2
 updates:
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/collector" # Location of package manifests
+  - directory: "/collector"
+    package-ecosystem: "gomod"
     schedule:
       interval: "daily"
       time: "13:00" # 6am MST
@@ -15,8 +15,13 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "sigs.k8s.io/*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/operator" # Location of package manifests
+    groups:
+      k8s.io:
+        patterns: ["k8s.io/*"]
+        update-types: ["patch"]
+
+  - directory: "/operator"
+    package-ecosystem: "gomod"
     schedule:
       interval: "daily"
       time: "14:00" # 7am MST
@@ -26,8 +31,13 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "sigs.k8s.io/*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/operator/pixie-sizer" # Location of package manifests
+    groups:
+      k8s.io:
+        patterns: ["k8s.io/*"]
+        update-types: ["patch"]
+
+  - directory: "/operator/pixie-sizer"
+    package-ecosystem: "gomod"
     schedule:
       interval: "daily"
       time: "14:30" # 7:30am MST
@@ -37,8 +47,13 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "sigs.k8s.io/*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/test-proxy" # Location of package manifests
+    groups:
+      k8s.io:
+        patterns: ["k8s.io/*"]
+        update-types: ["patch"]
+
+  - directory: "/test-proxy"
+    package-ecosystem: "gomod"
     schedule:
       interval: "daily"
       time: "15:00" # 8am MST
@@ -48,7 +63,12 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "sigs.k8s.io/*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
-  - package-ecosystem: "docker"
-    directory: "/.github/docker-dependabot"
+    groups:
+      k8s.io:
+        patterns: ["k8s.io/*"]
+        update-types: ["patch"]
+
+  - directory: "/.github/docker-dependabot"
+    package-ecosystem: "docker"
     schedule:
       interval: "daily"
