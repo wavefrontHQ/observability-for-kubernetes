@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 
+	ops "github.com/wavefronthq/observability-for-kubernetes/operator/api/operator_settings/v1alpha1"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"k8s.io/client-go/discovery"
 
@@ -51,6 +52,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(wf.AddToScheme(scheme))
+	utilruntime.Must(ops.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

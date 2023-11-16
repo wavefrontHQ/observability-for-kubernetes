@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	ops "github.com/wavefronthq/observability-for-kubernetes/operator/api/operator_settings/v1alpha1"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/factory"
@@ -92,6 +93,7 @@ func NewWavefrontReconciler(versions Versions, client client.Client, discoveryCl
 func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&wf.Wavefront{}).
+		Owns(&ops.OperatorSettings{}).
 		WithOptions(controller.Options{
 			RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(1*time.Second, maxReconcileInterval),
 		}).
