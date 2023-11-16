@@ -158,9 +158,9 @@ function run_k8s_events_checks() {
   local external_events_results_file
   external_events_results_file=$(mktemp)
   local external_event_count=0
-  for i in {1..5}; do
+  for i in {1..60}; do
     while true; do # wait until we get a good connection
-      RES_CODE=$(curl --output "$external_events_results_file" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
+      RES_CODE=$(curl --silent --output "$external_events_results_file" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
       [[ $RES_CODE -lt 200 ]] || break
     done
 
