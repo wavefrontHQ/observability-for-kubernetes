@@ -23,67 +23,67 @@ spec:
         plane: control
     spec:
       containers:
-      - command:
-        - nats-server
-        - --config
-        - /etc/nats-config/nats.conf
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: CLUSTER_ADVERTISE
-          value: $(POD_NAME).pl-nats.$(POD_NAMESPACE).svc
-        image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier-deps/nats:2.9.19-scratch-multi
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - /nats-server -sl=ldm=/var/run/nats/nats.pid && /bin/sleep 60
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8222
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
-        name: pl-nats
-        ports:
-        - containerPort: 4222
-          name: client
-        - containerPort: 7422
-          name: leafnodes
-        - containerPort: 6222
-          name: cluster
-        - containerPort: 8222
-          name: monitor
-        - containerPort: 7777
-          name: metrics
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 8222
-          initialDelaySeconds: 10
-          timeoutSeconds: 5
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          seccompProfile:
-            type: RuntimeDefault
-        volumeMounts:
-        - mountPath: /etc/nats-config
-          name: config-volume
-        - mountPath: /etc/nats-server-tls-certs
-          name: nats-server-tls-volume
-        - mountPath: /var/run/nats
-          name: pid
+        - command:
+            - nats-server
+            - --config
+            - /etc/nats-config/nats.conf
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: CLUSTER_ADVERTISE
+              value: $(POD_NAME).pl-nats.$(POD_NAMESPACE).svc
+          image: projects.registry.vmware.com/tanzu_observability/pixie-oss/pixie-prod/vizier-deps/nats:2.9.19-scratch
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - /nats-server -sl=ldm=/var/run/nats/nats.pid && /bin/sleep 60
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8222
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          name: pl-nats
+          ports:
+            - containerPort: 4222
+              name: client
+            - containerPort: 7422
+              name: leafnodes
+            - containerPort: 6222
+              name: cluster
+            - containerPort: 8222
+              name: monitor
+            - containerPort: 7777
+              name: metrics
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8222
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - mountPath: /etc/nats-config
+              name: config-volume
+            - mountPath: /etc/nats-server-tls-certs
+              name: nats-server-tls-volume
+            - mountPath: /var/run/nats
+              name: pid
       securityContext:
         fsGroup: 10100
         runAsGroup: 10100
@@ -94,28 +94,28 @@ spec:
       shareProcessNamespace: true
       terminationGracePeriodSeconds: 60
       tolerations:
-      - effect: NoSchedule
-        key: kubernetes.io/arch
-        operator: Equal
-        value: amd64
-      - effect: NoExecute
-        key: kubernetes.io/arch
-        operator: Equal
-        value: amd64
-      - effect: NoSchedule
-        key: kubernetes.io/arch
-        operator: Equal
-        value: arm64
-      - effect: NoExecute
-        key: kubernetes.io/arch
-        operator: Equal
-        value: arm64
+        - effect: NoSchedule
+          key: kubernetes.io/arch
+          operator: Equal
+          value: amd64
+        - effect: NoExecute
+          key: kubernetes.io/arch
+          operator: Equal
+          value: amd64
+        - effect: NoSchedule
+          key: kubernetes.io/arch
+          operator: Equal
+          value: arm64
+        - effect: NoExecute
+          key: kubernetes.io/arch
+          operator: Equal
+          value: arm64
       volumes:
-      - name: nats-server-tls-volume
-        secret:
-          secretName: service-tls-certs
-      - configMap:
-          name: nats-config
-        name: config-volume
-      - emptyDir: {}
-        name: pid
+        - name: nats-server-tls-volume
+          secret:
+            secretName: service-tls-certs
+        - configMap:
+            name: nats-config
+          name: config-volume
+        - emptyDir: {}
+          name: pid
