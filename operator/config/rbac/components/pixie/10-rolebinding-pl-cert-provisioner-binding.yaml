@@ -17,4 +17,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: pl-cert-provisioner-service-account
-    namespace: pl
+    namespace: observability-system
