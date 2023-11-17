@@ -38,11 +38,8 @@ type ResourceCustomization struct {
 }
 
 type Tolerations struct {
-	Add []corev1.Toleration `json:"add,omitempty"`
-}
-
-func (t Tolerations) Empty() bool {
-	return len(t.Add) > 0
+	Add    []corev1.Toleration `json:"add,omitempty"`
+	Remove []corev1.Toleration `json:"remove,omitempty"`
 }
 
 type Resources struct {

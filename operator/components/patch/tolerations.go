@@ -17,17 +17,20 @@ func (t Tolerations) Apply(resource *unstructured.Unstructured) {
 		return
 	}
 	tolerations, _, _ := unstructured.NestedSlice(resource.Object, "spec", "template", "spec", "tolerations")
-	tolerationExists := tolerationIndex(tolerations)
+	tm := tolerationMap(tolerations)
 	for _, toleration := range t.Add {
 		obj := tolerationObj(toleration)
 		lookupKey := tolerationLookupKey(obj)
-		if tolerationExists[lookupKey] {
+		if _, exists := tm[lookupKey]; exists {
 			continue
 		}
-		tolerationExists[lookupKey] = true
-		tolerations = append(tolerations, obj)
+		tm[lookupKey] = obj
 	}
-	_ = unstructured.SetNestedSlice(resource.Object, tolerations, "spec", "template", "spec", "tolerations")
+	for _, toleration := range t.Remove {
+		obj := tolerationObj(toleration)
+		delete(tm, tolerationLookupKey(obj))
+	}
+	_ = unstructured.SetNestedSlice(resource.Object, tolerationMapToSlice(tm), "spec", "template", "spec", "tolerations")
 }
 
 func hasTemplateSpec(resource *unstructured.Unstructured) bool {
@@ -35,12 +38,20 @@ func hasTemplateSpec(resource *unstructured.Unstructured) bool {
 	return exists
 }
 
-func tolerationIndex(tolerations []any) map[string]bool {
-	tolerationExists := map[string]bool{}
+func tolerationMap(tolerations []any) map[string]map[string]any {
+	tolerationExists := map[string]map[string]any{}
 	for _, toleration := range tolerations {
-		tolerationExists[tolerationLookupKey(toleration.(map[string]any))] = true
+		tolerationExists[tolerationLookupKey(toleration.(map[string]any))] = toleration.(map[string]any)
 	}
 	return tolerationExists
+}
+
+func tolerationMapToSlice(tm map[string]map[string]any) []any {
+	tolerations := make([]any, 0, len(tm))
+	for _, toleration := range tm {
+		tolerations = append(tolerations, toleration)
+	}
+	return tolerations
 }
 
 func tolerationLookupKey(obj map[string]any) string {
