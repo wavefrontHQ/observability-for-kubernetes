@@ -172,6 +172,11 @@ func (pbe *PodBasedEnricher) addPodInfo(podMs *metrics.Set, pod *kube_api.Pod, b
 		pbe.addWorkloadStatusMetric(podMs, pod, newMs)
 	}
 
+	// Add terminating metric for pods stuck in terminating
+	if util.IsStuckInTerminating(pod) {
+		pbe.addPodTerminatingMetric(podMs, pod, newMs)
+	}
+
 	// Add cpu/mem requests and limits to containers
 	for _, container := range pod.Spec.Containers {
 		containerKey := metrics.PodContainerKey(pod.Namespace, pod.Name, container.Name)
@@ -239,6 +244,19 @@ func (pbe *PodBasedEnricher) addWorkloadStatusMetric(podMs *metrics.Set, pod *ku
 
 	addLabeledIntMetric(workloadMs, &metrics.MetricWorkloadStatus, nil, int64(workloadStatus))
 	newMs[metrics.WorkloadStatusPodKey(pod.Namespace, pod.Name)] = workloadMs
+}
+
+func (pbe *PodBasedEnricher) addPodTerminatingMetric(podMs *metrics.Set, pod *kube_api.Pod, newMs map[metrics.ResourceKey]*metrics.Set) {
+	// We expect to see following tags: DeletionTimestamp, reason: Terminating
+	podTerminatingMs := &metrics.Set{
+		Values: make(map[string]metrics.Value),
+		Labels: map[string]string{
+			metrics.LabelNamespaceName.Key: pod.Namespace,
+			metrics.LabelPodName.Key:       pod.Name,
+		},
+	}
+	addLabeledIntMetric(podTerminatingMs, &metrics.MetricPodStuckInTerminating, nil, 1)
+	newMs[metrics.PodStuckInTerminatingKey(pod.Namespace, pod.Name)] = podTerminatingMs
 }
 
 func updateContainerResourcesAndLimits(metricSet *metrics.Set, container kube_api.Container) {

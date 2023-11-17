@@ -759,6 +759,16 @@ var MetricWorkloadStatus = Metric{
 	},
 }
 
+var MetricPodStuckInTerminating = Metric{
+	MetricDescriptor: MetricDescriptor{
+		Name:        "pod/terminating",
+		Description: "Stuck in terminating status of pods",
+		Type:        Gauge,
+		ValueType:   ValueInt64,
+		Units:       Count,
+	},
+}
+
 var MetricContainerStatus = Metric{
 	MetricDescriptor: MetricDescriptor{
 		Name:        "status",

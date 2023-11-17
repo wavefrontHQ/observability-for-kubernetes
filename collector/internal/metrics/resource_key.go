@@ -46,6 +46,10 @@ func WorkloadStatusPodKey(namespace, podName string) ResourceKey {
 	return ResourceKey(fmt.Sprintf("workloadStatus/namespace:%s/pod:%s", namespace, podName))
 }
 
+func PodStuckInTerminatingKey(namespace, podName string) ResourceKey {
+	return ResourceKey(fmt.Sprintf("podTerminating/namespace:%s/pod:%s", namespace, podName))
+}
+
 func NamespaceKey(namespace string) ResourceKey {
 	return ResourceKey(fmt.Sprintf("namespace:%s", namespace))
 }
