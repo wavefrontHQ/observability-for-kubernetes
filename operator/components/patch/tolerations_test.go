@@ -142,6 +142,16 @@ func TestTolerations(t *testing.T) {
 		require.Equal(t, []string{"effect"}, keys(tolerations[3].(map[string]any)))
 		require.Equal(t, []string{"tolerationSeconds"}, keys(tolerations[4].(map[string]any)))
 	})
+
+	t.Run("does not change resources which do not have tolerations", func(t *testing.T) {
+		p := patch.Tolerations{Add: []corev1.Toleration{tolerationToAdd}}
+		resource := &unstructured.Unstructured{Object: map[string]any{"spec": map[string]any{}}}
+
+		p.Apply(resource)
+
+		_, exists, _ := unstructured.NestedSlice(resource.Object, "spec", "template", "spec", "tolerations")
+		require.False(t, exists, "tolerations should not be added")
+	})
 }
 
 func keys(m map[string]any) []string {

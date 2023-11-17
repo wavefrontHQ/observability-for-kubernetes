@@ -13,6 +13,9 @@ import (
 type Tolerations rc.Tolerations
 
 func (t Tolerations) Apply(resource *unstructured.Unstructured) {
+	if !hasTemplateSpec(resource) {
+		return
+	}
 	tolerations, _, _ := unstructured.NestedSlice(resource.Object, "spec", "template", "spec", "tolerations")
 	tolerationExists := tolerationIndex(tolerations)
 	for _, toleration := range t.Add {
@@ -25,6 +28,11 @@ func (t Tolerations) Apply(resource *unstructured.Unstructured) {
 		tolerations = append(tolerations, obj)
 	}
 	_ = unstructured.SetNestedSlice(resource.Object, tolerations, "spec", "template", "spec", "tolerations")
+}
+
+func hasTemplateSpec(resource *unstructured.Unstructured) bool {
+	_, exists, _ := unstructured.NestedFieldNoCopy(resource.Object, "spec", "template", "spec")
+	return exists
 }
 
 func tolerationIndex(tolerations []any) map[string]bool {
