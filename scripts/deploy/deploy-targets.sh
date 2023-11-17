@@ -37,7 +37,6 @@ kubectl apply -f running-pod.yaml >/dev/null
 kubectl apply -f running-pod-large-init-container.yaml >/dev/null
 kubectl apply -f running-pod-small-init-container.yaml >/dev/null
 kubectl apply -f pod-stuck-in-terminating.yaml >/dev/null
-kubectl delete -f pod-stuck-in-terminating.yaml >/dev/null &
 kubectl apply -f deployment-not-ready.yaml >/dev/null
 kubectl apply -f daemonset-not-ready.yaml >/dev/null
 kubectl apply -f replicaset-not-ready.yaml >/dev/null
@@ -71,5 +70,7 @@ if [ "${OPERATOR_TEST}" != "true" ]; then
   --set image.debug=true \
   --namespace collector-targets >/dev/null
 fi
+
+kubectl delete -f pod-stuck-in-terminating.yaml >/dev/null &
 
 echo "Finished deploying targets"

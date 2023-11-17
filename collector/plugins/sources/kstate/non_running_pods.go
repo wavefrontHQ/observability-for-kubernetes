@@ -163,6 +163,7 @@ func buildPodTerminatingMetrics(pod *v1.Pod, sharedTags map[string]string, trans
 	tags["reason"] = "Terminating"
 
 	for _, condition := range pod.Status.Conditions {
+		// TODO: remove terminating logic from non_running_pods and put them under pod_based_enricher
 		if condition.Type == v1.PodScheduled && condition.Status == "False" {
 			tags[metrics.LabelNodename.Key] = "none"
 		}

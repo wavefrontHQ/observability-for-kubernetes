@@ -1,0 +1,59 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 4
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:47:31Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{wavefront-proxy}
+    kind: Pod
+    name: wavefront-proxy-59fcdbdf95-vfjfv
+    namespace: observability-system
+    resourceVersion: "22459"
+    uid: 158feb96-74df-4550-8c2c-b9f2dc8a3842
+  kind: Event
+  lastTimestamp: "2023-11-06T21:47:41Z"
+  message: 'Readiness probe failed: dial tcp 10.88.2.4:2878: connect: connection refused'
+  metadata:
+    creationTimestamp: "2023-11-06T21:47:31Z"
+    name: wavefront-proxy-59fcdbdf95-vfjfv.179526f10e609604
+    namespace: observability-system
+    resourceVersion: "437"
+    uid: c0691ed7-3350-42c2-9e47-5aac223c5490
+  reason: Unhealthy
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-mamichael-default-pool-e5f96192-c8lg
+  type: Warning
+- apiVersion: v1
+  count: 2
+  eventTime: null
+  firstTimestamp: "2023-11-06T21:53:13Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{carts}
+    kind: Pod
+    name: carts-77f4b688b9-f586l
+    namespace: px-sock-shop
+    resourceVersion: "23141"
+    uid: 93757530-1d0d-49b4-b6a9-8a31a1950857
+  kind: Event
+  lastTimestamp: "2023-11-06T21:53:16Z"
+  message: 'Liveness probe failed: Get "http://10.88.0.5:8080/health": context deadline
+    exceeded (Client.Timeout exceeded while awaiting headers)'
+  metadata:
+    creationTimestamp: "2023-11-06T21:53:13Z"
+    name: carts-77f4b688b9-f586l.17952740a79a912e
+    namespace: px-sock-shop
+    resourceVersion: "1319"
+    uid: dae88406-3776-41c4-8025-644e7b1b0a6d
+  reason: Unhealthy
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-mamichael-default-pool-e5f96192-knr0
+  type: Warning

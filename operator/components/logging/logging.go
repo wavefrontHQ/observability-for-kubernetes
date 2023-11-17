@@ -9,6 +9,7 @@ import (
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -101,9 +102,9 @@ func (component *Component) Validate() validation.Result {
 	return validation.NewValidationResult(errs)
 }
 
-func (logging *Component) defaultWorkloadResources() map[string]wf.Resources {
-	return map[string]wf.Resources{
-		util.LoggingName: logging.config.Resources,
+func (logging *Component) defaultWorkloadResources() patch.Patch {
+	return patch.ByName{
+		util.LoggingName: patch.ContainerResources(logging.config.Resources),
 	}
 }
 

@@ -228,6 +228,7 @@ func (pbe *PodBasedEnricher) addWorkloadStatusMetric(podMs *metrics.Set, pod *ku
 			} else if containerStatus.State.Terminated != nil {
 				workloadStatus = 0
 				workloadMs.Labels[metrics.LabelReason.Key] = containerStatus.State.Terminated.Reason
+				// TODO: add message for pod stuck in terminating
 				workloadMs.Labels[metrics.LabelMessage.Key] = containerStatus.State.Terminated.Message
 				break
 			}

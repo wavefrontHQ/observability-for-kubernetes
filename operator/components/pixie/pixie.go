@@ -7,6 +7,7 @@ import (
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,47 +51,47 @@ func NewComponent(dir fs.FS, config Config) (Component, error) {
 	}, nil
 }
 
-func (pc *Component) Name() string {
+func (component *Component) Name() string {
 	return "pixie"
 }
 
-func (pc *Component) Validate() validation.Result {
+func (component *Component) Validate() validation.Result {
 	var errs []error
 
-	if !pc.config.Enable {
+	if !component.config.Enable {
 		return validation.Result{}
 	}
 
-	if len(pc.config.ControllerManagerUID) == 0 {
-		errs = append(errs, fmt.Errorf("%s: missing controller manager uid", pc.Name()))
+	if len(component.config.ControllerManagerUID) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing controller manager uid", component.Name()))
 	}
 
-	if len(pc.config.ClusterUUID) == 0 {
-		errs = append(errs, fmt.Errorf("%s: missing cluster uuid", pc.Name()))
+	if len(component.config.ClusterUUID) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing cluster uuid", component.Name()))
 	}
 
-	if len(pc.config.ClusterName) == 0 {
-		errs = append(errs, fmt.Errorf("%s: missing cluster name", pc.Name()))
+	if len(component.config.ClusterName) == 0 {
+		errs = append(errs, fmt.Errorf("%s: missing cluster name", component.Name()))
 	}
 
-	if result := validation.ValidateResources(&pc.config.PEMResources, util.PixieVizierPEMName); result.IsError() {
-		errs = append(errs, fmt.Errorf("%s: %s", pc.Name(), result.Message()))
+	if result := validation.ValidateResources(&component.config.PEMResources, util.PixieVizierPEMName); result.IsError() {
+		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 
 	return validation.NewValidationResult(errs)
 }
 
-func (pc *Component) containerResourceDefaults() map[string]wf.Resources {
-	return map[string]wf.Resources{
-		util.PixieVizierPEMName:          pc.config.PEMResources,
-		util.PixieVizierQueryBrokerName:  pc.config.QueryBrokerResources,
-		util.PixieNatsName:               pc.config.NATSResources,
-		util.PixieKelvinName:             pc.config.KelvinResources,
-		util.PixieVizierMetadataName:     pc.config.MetadataResources,
-		util.PixieCertProvisionerJobName: pc.config.CertProvisionerJobResources,
+func (component *Component) patch() patch.Patch {
+	return patch.ByName{
+		util.PixieVizierPEMName:          patch.ContainerResources(component.config.PEMResources),
+		util.PixieVizierQueryBrokerName:  patch.ContainerResources(component.config.QueryBrokerResources),
+		util.PixieNatsName:               patch.ContainerResources(component.config.NATSResources),
+		util.PixieKelvinName:             patch.ContainerResources(component.config.KelvinResources),
+		util.PixieVizierMetadataName:     patch.ContainerResources(component.config.MetadataResources),
+		util.PixieCertProvisionerJobName: patch.ContainerResources(component.config.CertProvisionerJobResources),
 	}
 }
 
-func (pc *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
-	return builder.Build(pc.dir, pc.Name(), pc.config.Enable, pc.config.ControllerManagerUID, pc.containerResourceDefaults(), pc.config)
+func (component *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
+	return builder.Build(component.dir, component.Name(), component.config.Enable, component.config.ControllerManagerUID, component.patch(), component.config)
 }

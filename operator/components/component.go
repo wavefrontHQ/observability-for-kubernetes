@@ -2,17 +2,15 @@ package components
 
 import (
 	"bytes"
-	"fmt"
 	"io/fs"
 	"path/filepath"
 	"strings"
 	"text/template"
 
-	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	yaml2 "gopkg.in/yaml.v2"
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	"k8s.io/apimachinery/pkg/types"
@@ -29,14 +27,25 @@ type Component interface {
 const DeployDir = "components"
 
 type K8sResourceBuilder struct {
-	containerResourceOverrides map[string]wf.Resources
+	crResourcePatches patch.Patch
 }
 
-func NewK8sResourceBuilder(containerResourceOverrides map[string]wf.Resources) *K8sResourceBuilder {
-	return &K8sResourceBuilder{containerResourceOverrides: containerResourceOverrides}
+func NewK8sResourceBuilder(crResourcePatches patch.Patch) *K8sResourceBuilder {
+	return &K8sResourceBuilder{
+		crResourcePatches: crResourcePatches,
+	}
 }
 
-func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool, managerUID string, containerResourceDefaults map[string]wf.Resources, data any) ([]client.Object, []client.Object, error) {
+func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool, managerUID string, componentResourcePatches patch.Patch, data any) ([]client.Object, []client.Object, error) {
+	return rb.buildResources(fs, data, enabled, patch.Composed{
+		ownerRefPatch(managerUID),
+		rb.componentLabelsPatch(componentName),
+		componentResourcePatches,
+		rb.crResourcePatches,
+	})
+}
+
+func (rb *K8sResourceBuilder) buildResources(fs fs.FS, data any, enabled bool, patch patch.Patch) ([]client.Object, []client.Object, error) {
 	files, err := resourceFiles(fs)
 	if err != nil {
 		return nil, nil, err
@@ -44,7 +53,6 @@ func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool
 
 	var resourcesToApply, resourcesToDelete []client.Object
 	var resourceDecoder = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
-	mergedContainerResourceOverrides := mergeResources(containerResourceDefaults, rb.containerResourceOverrides)
 	for _, resourceFile := range files {
 		templateName := filepath.Base(resourceFile)
 		resourceTemplate, err := newTemplate(templateName).ParseFS(fs, resourceFile)
@@ -64,20 +72,7 @@ func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool
 			return nil, nil, err
 		}
 
-		setResourceComponentLabels(resource, componentName)
-		_, hasTemplate, _ := unstructured.NestedMap(resource.Object, "spec", "template")
-		if hasTemplate {
-			setTemplateComponentLabels(resource, componentName)
-			if err := setTemplateResources(resource, mergedContainerResourceOverrides); err != nil {
-				return nil, nil, err
-			}
-		}
-		resource.SetOwnerReferences([]v1.OwnerReference{{
-			APIVersion: "apps/v1",
-			Kind:       "Deployment",
-			Name:       "wavefront-controller-manager",
-			UID:        types.UID(managerUID),
-		}})
+		patch.Apply(resource)
 
 		if enabled && resource.GetAnnotations()["wavefront.com/conditionally-provision"] != "false" {
 			resourcesToApply = append(resourcesToApply, resource)
@@ -88,62 +83,25 @@ func (rb *K8sResourceBuilder) Build(fs fs.FS, componentName string, enabled bool
 	return resourcesToApply, resourcesToDelete, nil
 }
 
-func mergeResources(defaults map[string]wf.Resources, overrides map[string]wf.Resources) map[string]wf.Resources {
-	merged := map[string]wf.Resources{}
-	for name, resources := range defaults {
-		merged[name] = resources
-	}
-	for name, resources := range overrides {
-		defaultResources := merged[name]
-		defaultResources.Requests = mergeResource(defaultResources.Requests, resources.Requests)
-		defaultResources.Limits = mergeResource(defaultResources.Limits, resources.Limits)
-		merged[name] = defaultResources
-	}
-	return merged
+func (rb *K8sResourceBuilder) componentLabelsPatch(componentName string) patch.Patch {
+	return patch.ApplyFn(func(resource *unstructured.Unstructured) {
+		setResourceComponentLabels(resource, componentName)
+		_, hasTemplate, _ := unstructured.NestedMap(resource.Object, "spec", "template")
+		if hasTemplate {
+			setTemplateComponentLabels(resource, componentName)
+		}
+	})
 }
 
-func mergeResource(a, b wf.Resource) wf.Resource {
-	if b.CPU != "" {
-		a.CPU = b.CPU
-	}
-	if b.Memory != "" {
-		a.Memory = b.Memory
-	}
-	if b.EphemeralStorage != "" {
-		a.EphemeralStorage = b.EphemeralStorage
-	}
-	return a
-}
-
-func setTemplateResources(workload *unstructured.Unstructured, workloadResources map[string]wf.Resources) error {
-	override, exists := workloadResources[workload.GetName()]
-	if !exists {
-		return fmt.Errorf("workload resource not specified for %s", workload.GetName())
-	}
-
-	r := map[string]any{
-		"limits": map[string]any{
-			corev1.ResourceCPU.String():    override.Limits.CPU,
-			corev1.ResourceMemory.String(): override.Limits.Memory,
-		},
-		"requests": map[string]any{
-			corev1.ResourceCPU.String():    override.Requests.CPU,
-			corev1.ResourceMemory.String(): override.Requests.Memory,
-		},
-	}
-
-	if override.Limits.EphemeralStorage != "" {
-		r["limits"].(map[string]any)[corev1.ResourceEphemeralStorage.String()] = override.Limits.EphemeralStorage
-	}
-	if override.Requests.EphemeralStorage != "" {
-		r["requests"].(map[string]any)[corev1.ResourceEphemeralStorage.String()] = override.Requests.EphemeralStorage
-	}
-
-	containers, _, _ := unstructured.NestedSlice(workload.Object, "spec", "template", "spec", "containers")
-	container := containers[0].(map[string]any)
-	container["resources"] = r
-	_ = unstructured.SetNestedSlice(workload.Object, containers, "spec", "template", "spec", "containers")
-	return nil
+func ownerRefPatch(managerUID string) patch.Patch {
+	return patch.ApplyFn(func(resource *unstructured.Unstructured) {
+		resource.SetOwnerReferences([]metav1.OwnerReference{{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+			Name:       "wavefront-controller-manager",
+			UID:        types.UID(managerUID),
+		}})
+	})
 }
 
 func setResourceComponentLabels(resource *unstructured.Unstructured, componentName string) {

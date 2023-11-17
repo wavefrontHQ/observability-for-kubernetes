@@ -1,0 +1,30 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  count: 1
+  eventTime: null
+  firstTimestamp: "2023-11-13T18:10:43Z"
+  involvedObject:
+    apiVersion: v1
+    fieldPath: spec.containers{pod-image-pull-backoff}
+    kind: Pod
+    name: pod-image-pull-backoff
+    namespace: collector-targets
+    resourceVersion: "13202"
+    uid: 80708a69-f64d-4265-862b-f52f29f770fe
+  kind: Event
+  lastTimestamp: "2023-11-13T18:10:43Z"
+  message: Back-off pulling image "busybox123"
+  metadata:
+    creationTimestamp: "2023-11-13T18:10:43Z"
+    name: pod-image-pull-backoff.1797412c59b95586
+    namespace: collector-targets
+    resourceVersion: "303"
+    uid: f0538c44-4b47-4d5c-89d1-5abc86dce27c
+  reason: BackOff
+  reportingComponent: ""
+  reportingInstance: ""
+  source:
+    component: kubelet
+    host: gke-cluster-default-pool-59cc33dc-rpjw
+  type: Normal

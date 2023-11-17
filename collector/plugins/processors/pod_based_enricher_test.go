@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/testhelper"
 	kube_api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -157,10 +158,8 @@ func TestPodWorkloadStatus(t *testing.T) {
 		tc := setup()
 		tc.pod.OwnerReferences = nil
 		tc.pod.Name = testWorkloadName
-		tc.workloadCache = testWorkloadCache{
-			workloadName: testWorkloadName,
-			workloadKind: testWorkloadKind,
-		}
+		tc.workloadCache = testhelper.NewFakeWorkloadCache(testWorkloadName, testWorkloadKind, tc.pod.Namespace, tc.pod)
+
 		tc.pod.Status.ContainerStatuses = []kube_api.ContainerStatus{{
 			ContainerID: "container id",
 			Name:        "pod-container",
@@ -201,10 +200,7 @@ func TestPodWorkloadStatus(t *testing.T) {
 		tc := setup()
 		tc.pod.OwnerReferences = nil
 		tc.pod.Name = testWorkloadName
-		tc.workloadCache = testWorkloadCache{
-			workloadName: testWorkloadName,
-			workloadKind: testWorkloadKind,
-		}
+		tc.workloadCache = testhelper.NewFakeWorkloadCache(testWorkloadName, testWorkloadKind, tc.pod.Namespace, tc.pod)
 		expectedReason := "CrashLoopBackOff"
 		expectedMessage := "back-off 5m0s restarting failed container=pod-container"
 		tc.pod.Status.ContainerStatuses = []kube_api.ContainerStatus{{
@@ -251,10 +247,7 @@ func TestPodWorkloadStatus(t *testing.T) {
 		tc := setup()
 		tc.pod.OwnerReferences = nil
 		tc.pod.Name = testWorkloadName
-		tc.workloadCache = testWorkloadCache{
-			workloadName: testWorkloadName,
-			workloadKind: testWorkloadKind,
-		}
+		tc.workloadCache = testhelper.NewFakeWorkloadCache(testWorkloadName, testWorkloadKind, tc.pod.Namespace, tc.pod)
 		expectedReason := "Error"
 		expectedMessage := "Some error message."
 		tc.pod.Status.ContainerStatuses = []kube_api.ContainerStatus{{
@@ -648,74 +641,59 @@ func createEnricher(t *testing.T, tc *enricherTestContext) *PodBasedEnricher {
 	return NewPodBasedEnricher(podLister, tc.workloadCache, labelCopier, tc.collectionInterval)
 }
 
-type testWorkloadCache struct {
-	workloadName string
-	workloadKind string
-	nodeName     string
-}
-
-func (wc testWorkloadCache) GetWorkloadForPodName(podName, ns string) (name, kind, nodeName string) {
-	return wc.workloadName, wc.workloadKind, wc.nodeName
-}
-func (wc testWorkloadCache) GetWorkloadForPod(pod *kube_api.Pod) (string, string) {
-	return wc.workloadName, wc.workloadKind
-}
-
 func setup() *enricherTestContext {
-	return &enricherTestContext{
-		collectionInterval: time.Minute,
-		batch:              createContainerBatch(),
-		pod: &kube_api.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testPodName,
-				Namespace: testNamespaceName,
-				OwnerReferences: []metav1.OwnerReference{{
-					Kind: "ReplicaSet",
-					Name: "someReplicaset",
-				}},
-			},
-			Status: kube_api.PodStatus{
-				Phase: kube_api.PodRunning,
-			},
-			Spec: kube_api.PodSpec{
-				NodeName: "node1",
-				Containers: []kube_api.Container{
-					{
-						Name:  testContainerName,
-						Image: "k8s.gcr.io/pause:2.0",
-						Resources: kube_api.ResourceRequirements{
-							Requests: kube_api.ResourceList{
-								kube_api.ResourceCPU:              *resource.NewMilliQuantity(100, resource.DecimalSI),
-								kube_api.ResourceMemory:           *resource.NewQuantity(555, resource.DecimalSI),
-								kube_api.ResourceEphemeralStorage: *resource.NewQuantity(1000, resource.DecimalSI),
-							},
+	pod := &kube_api.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testPodName,
+			Namespace: testNamespaceName,
+			OwnerReferences: []metav1.OwnerReference{{
+				Kind: "ReplicaSet",
+				Name: "someReplicaset",
+			}},
+		},
+		Status: kube_api.PodStatus{
+			Phase: kube_api.PodRunning,
+		},
+		Spec: kube_api.PodSpec{
+			NodeName: "node1",
+			Containers: []kube_api.Container{
+				{
+					Name:  testContainerName,
+					Image: "k8s.gcr.io/pause:2.0",
+					Resources: kube_api.ResourceRequirements{
+						Requests: kube_api.ResourceList{
+							kube_api.ResourceCPU:              *resource.NewMilliQuantity(100, resource.DecimalSI),
+							kube_api.ResourceMemory:           *resource.NewQuantity(555, resource.DecimalSI),
+							kube_api.ResourceEphemeralStorage: *resource.NewQuantity(1000, resource.DecimalSI),
 						},
 					},
-					{
-						Name:  "nginx",
-						Image: "k8s.gcr.io/pause:2.0",
-						Resources: kube_api.ResourceRequirements{
-							Requests: kube_api.ResourceList{
-								kube_api.ResourceCPU:              *resource.NewMilliQuantity(333, resource.DecimalSI),
-								kube_api.ResourceMemory:           *resource.NewQuantity(1000, resource.DecimalSI),
-								kube_api.ResourceEphemeralStorage: *resource.NewQuantity(2000, resource.DecimalSI),
-								otherResource:                     *resource.NewQuantity(2, resource.DecimalSI),
-							},
-							Limits: kube_api.ResourceList{
-								kube_api.ResourceCPU:              *resource.NewMilliQuantity(2222, resource.DecimalSI),
-								kube_api.ResourceMemory:           *resource.NewQuantity(3333, resource.DecimalSI),
-								kube_api.ResourceEphemeralStorage: *resource.NewQuantity(5000, resource.DecimalSI),
-								otherResource:                     *resource.NewQuantity(2, resource.DecimalSI),
-							},
+				},
+				{
+					Name:  "nginx",
+					Image: "k8s.gcr.io/pause:2.0",
+					Resources: kube_api.ResourceRequirements{
+						Requests: kube_api.ResourceList{
+							kube_api.ResourceCPU:              *resource.NewMilliQuantity(333, resource.DecimalSI),
+							kube_api.ResourceMemory:           *resource.NewQuantity(1000, resource.DecimalSI),
+							kube_api.ResourceEphemeralStorage: *resource.NewQuantity(2000, resource.DecimalSI),
+							otherResource:                     *resource.NewQuantity(2, resource.DecimalSI),
+						},
+						Limits: kube_api.ResourceList{
+							kube_api.ResourceCPU:              *resource.NewMilliQuantity(2222, resource.DecimalSI),
+							kube_api.ResourceMemory:           *resource.NewQuantity(3333, resource.DecimalSI),
+							kube_api.ResourceEphemeralStorage: *resource.NewQuantity(5000, resource.DecimalSI),
+							otherResource:                     *resource.NewQuantity(2, resource.DecimalSI),
 						},
 					},
 				},
 			},
 		},
-		workloadCache: testWorkloadCache{
-			workloadName: testWorkloadName,
-			workloadKind: testWorkloadKind,
-		},
+	}
+	return &enricherTestContext{
+		collectionInterval: time.Minute,
+		batch:              createContainerBatch(),
+		pod:                pod,
+		workloadCache:      testhelper.NewFakeWorkloadCache(testWorkloadName, testWorkloadKind, pod.Namespace, pod),
 	}
 }
 
