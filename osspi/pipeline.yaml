@@ -194,7 +194,9 @@ jobs:
           PRODUCT: WavefrontKubernetesAdapter
           VERSION: Latest
           PREPARE: |
-            go mod vendor
+            GOMOD_VERSION=$(go list -m -f '{{.GoVersion}}') && \
+              go env -w GOTOOLCHAIN=go$GOMOD_VERSION && \
+              go mod vendor
           OSSPI_SCANNING_PARAMS: |
             enable: true
             include_bomtools: "go_mod"
@@ -230,7 +232,9 @@ jobs:
           PRODUCT: PrometheusStorageAdapter
           VERSION: Latest
           PREPARE: |
-            go mod vendor
+            GOMOD_VERSION=$(go list -m -f '{{.GoVersion}}') && \
+              go env -w GOTOOLCHAIN=go$GOMOD_VERSION && \
+              go mod vendor
           OSSPI_SCANNING_PARAMS: |
             enable: true
             include_bomtools: "go_mod"
