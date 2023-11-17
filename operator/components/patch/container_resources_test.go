@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -15,11 +14,11 @@ const ResourceRequest = "request"
 
 func TestContainerResources(t *testing.T) {
 	t.Run("apply-able to non-resourced objects", func(t *testing.T) {
-		p := patch.ContainerResources(wf.Resources{
-			Requests: wf.Resource{
+		p := patch.ContainerResources{
+			Requests: patch.ContainerResource{
 				EphemeralStorage: "10Gi",
 			},
-		})
+		}
 		actualObj := &unstructured.Unstructured{Object: map[string]any{}}
 		expectedObj := actualObj.DeepCopy()
 
@@ -28,39 +27,73 @@ func TestContainerResources(t *testing.T) {
 		require.Equal(t, expectedObj, actualObj)
 	})
 
+	t.Run("does not apply when empty", func(t *testing.T) {
+		p := patch.ContainerResources{}
+		obj := resourcedObj(nil)
+
+		p.Apply(obj)
+
+		containers, _, _ := unstructured.NestedSlice(obj.Object, "spec", "template", "spec", "containers")
+		_, exists := containers[0].(map[string]any)["resources"]
+		require.False(t, exists, "expected resources to not be set")
+	})
+
+	t.Run("sets the requests when only the limits are specified", func(t *testing.T) {
+		p := patch.ContainerResources{
+			Limits: patch.ContainerResource{
+				CPU:              "100m",
+				Memory:           "1Gi",
+				EphemeralStorage: "10Gi",
+			},
+		}
+		obj := resourcedObj(nil)
+
+		p.Apply(obj)
+
+		requests := getResourceRequirement(obj, "requests")
+		require.Equal(t, p.Limits.CPU, requests["cpu"], "cpu request")
+		require.Equal(t, p.Limits.Memory, requests["memory"], "memory request")
+		require.Equal(t, p.Limits.EphemeralStorage, requests["ephemeral-storage"], "ephemeral-storage request")
+
+		limits := getResourceRequirement(obj, "limits")
+		require.Equal(t, p.Limits.CPU, limits["cpu"], "cpu limit")
+		require.Equal(t, p.Limits.Memory, limits["memory"], "memory limit")
+		require.Equal(t, p.Limits.EphemeralStorage, limits["ephemeral-storage"], "memory limit")
+	})
+
 	scenarios := []struct {
 		name      string
-		resources wf.Resources
+		resources patch.ContainerResources
 	}{
 		{
 			name: "cpu",
-			resources: wf.Resources{
-				Limits: wf.Resource{
+			resources: patch.ContainerResources{
+				Limits: patch.ContainerResource{
 					CPU: ResourceLimit,
 				},
-				Requests: wf.Resource{
+				Requests: patch.ContainerResource{
 					CPU: ResourceRequest,
 				},
 			},
 		},
 		{
 			name: "memory",
-			resources: wf.Resources{
-				Limits: wf.Resource{
+			resources: patch.ContainerResources{
+				Limits: patch.ContainerResource{
 					Memory: ResourceLimit,
 				},
-				Requests: wf.Resource{
+				Requests: patch.ContainerResource{
 					Memory: ResourceRequest,
 				},
 			},
 		},
 		{
 			name: "ephemeral-storage",
-			resources: wf.Resources{
-				Limits: wf.Resource{
+			resources: patch.ContainerResources{
+				Limits: patch.ContainerResource{
 					EphemeralStorage: ResourceLimit,
 				},
-				Requests: wf.Resource{
+				Requests: patch.ContainerResource{
 					EphemeralStorage: ResourceRequest,
 				},
 			},
@@ -70,7 +103,7 @@ func TestContainerResources(t *testing.T) {
 		t.Run(fmt.Sprintf("sets %s limits", scenario.name), func(t *testing.T) {
 			obj := resourcedObj(nil)
 
-			patch.ContainerResources(scenario.resources).Apply(obj)
+			scenario.resources.Apply(obj)
 
 			require.Equal(t, ResourceLimit, getResourceRequirement(obj, "limits")[scenario.name])
 		})
@@ -78,23 +111,23 @@ func TestContainerResources(t *testing.T) {
 		t.Run(fmt.Sprintf("sets %s requests", scenario.name), func(t *testing.T) {
 			obj := resourcedObj(nil)
 
-			patch.ContainerResources(scenario.resources).Apply(obj)
+			scenario.resources.Apply(obj)
 
 			require.Equal(t, ResourceRequest, getResourceRequirement(obj, "requests")[scenario.name])
 		})
 
-		t.Run(fmt.Sprintf("does not override when the %s limit is empty", scenario.name), func(t *testing.T) {
+		t.Run(fmt.Sprintf("does not override when the %s limit when empty", scenario.name), func(t *testing.T) {
 			obj := resourcedObj(map[string]any{"limits": map[string]any{scenario.name: ResourceLimit}})
 
-			patch.ContainerResources(wf.Resources{}).Apply(obj)
+			patch.ContainerResources{}.Apply(obj)
 
 			require.Equal(t, ResourceLimit, getResourceRequirement(obj, "limits")[scenario.name])
 		})
 
-		t.Run(fmt.Sprintf("does not override when the %s request is empty", scenario.name), func(t *testing.T) {
+		t.Run(fmt.Sprintf("does not override when the %s request when empty", scenario.name), func(t *testing.T) {
 			obj := resourcedObj(map[string]any{"requests": map[string]any{scenario.name: ResourceRequest}})
 
-			patch.ContainerResources(wf.Resources{}).Apply(obj)
+			patch.ContainerResources{}.Apply(obj)
 
 			require.Equal(t, ResourceRequest, getResourceRequirement(obj, "requests")[scenario.name])
 		})

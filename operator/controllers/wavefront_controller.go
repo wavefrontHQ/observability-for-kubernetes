@@ -266,8 +266,11 @@ func (r *WavefrontReconciler) readAndCreateResources(specSet *api.SpecSet) error
 func (r *WavefrontReconciler) readAndInterpolateResources(specSet *api.SpecSet) ([]client.Object, []client.Object, error) {
 	var resourcesToApply, resourcesToDelete []client.Object
 	resourcePatches := patch.ByName{}
-	for workloadName, resources := range specSet.WorkloadResources {
-		resourcePatches[workloadName] = patch.ContainerResources(resources)
+	for workloadName, customizations := range specSet.ByName {
+		resourcePatches[workloadName] = patch.Composed{
+			patch.FromRCResources(customizations.Resources),
+			patch.Tolerations(customizations.Tolerations),
+		}
 	}
 	builder := components.NewK8sResourceBuilder(resourcePatches)
 	for _, component := range r.components {

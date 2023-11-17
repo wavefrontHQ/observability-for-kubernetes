@@ -104,7 +104,7 @@ func (component *Component) Validate() validation.Result {
 
 func (logging *Component) defaultWorkloadResources() patch.Patch {
 	return patch.ByName{
-		util.LoggingName: patch.ContainerResources(logging.config.Resources),
+		util.LoggingName: patch.FromWFResources(logging.config.Resources),
 	}
 }
 

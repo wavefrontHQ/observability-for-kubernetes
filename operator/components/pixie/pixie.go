@@ -83,12 +83,12 @@ func (component *Component) Validate() validation.Result {
 
 func (component *Component) patch() patch.Patch {
 	return patch.ByName{
-		util.PixieVizierPEMName:          patch.ContainerResources(component.config.PEMResources),
-		util.PixieVizierQueryBrokerName:  patch.ContainerResources(component.config.QueryBrokerResources),
-		util.PixieNatsName:               patch.ContainerResources(component.config.NATSResources),
-		util.PixieKelvinName:             patch.ContainerResources(component.config.KelvinResources),
-		util.PixieVizierMetadataName:     patch.ContainerResources(component.config.MetadataResources),
-		util.PixieCertProvisionerJobName: patch.ContainerResources(component.config.CertProvisionerJobResources),
+		util.PixieVizierPEMName:          patch.FromWFResources(component.config.PEMResources),
+		util.PixieVizierQueryBrokerName:  patch.FromWFResources(component.config.QueryBrokerResources),
+		util.PixieNatsName:               patch.FromWFResources(component.config.NATSResources),
+		util.PixieKelvinName:             patch.FromWFResources(component.config.KelvinResources),
+		util.PixieVizierMetadataName:     patch.FromWFResources(component.config.MetadataResources),
+		util.PixieCertProvisionerJobName: patch.FromWFResources(component.config.CertProvisionerJobResources),
 	}
 }
 

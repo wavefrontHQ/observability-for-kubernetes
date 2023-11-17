@@ -306,21 +306,26 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("can override workload resources", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
-			wavefront.Spec.Experimental.Autotracing.Enable = true
-			wavefront.Spec.WorkloadResources = map[string]wf.Resources{
-				"wavefront-proxy": {
-					Requests: wf.Resource{
-						CPU:    "50m",
-						Memory: "50Mi",
+		r, mockKM := emptyScenario(
+			wftest.CR(func(wavefront *wf.Wavefront) {
+				wavefront.Spec.Experimental.Autotracing.Enable = true
+			}),
+			wftest.RCCR(func(r *rc.ResourceCustomizations) {
+				r.Spec.ByName[util.ProxyName] = rc.ResourceCustomization{
+					Resources: rc.Resources{
+						Requests: rc.Resource{
+							CPU:    "50m",
+							Memory: "50Mi",
+						},
+						Limits: rc.Resource{
+							CPU:    "100m",
+							Memory: "100Mi",
+						},
 					},
-					Limits: wf.Resource{
-						CPU:    "100m",
-						Memory: "100Mi",
-					},
-				},
-			}
-		}), wftest.Proxy(wftest.WithReplicas(1, 1)))
+				}
+			}),
+			wftest.Proxy(wftest.WithReplicas(1, 1)),
+		)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -341,7 +346,7 @@ func TestReconcileAll(t *testing.T) {
 		require.Equal(t, "8Gi", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.StorageEphemeral().String())
 	})
 
-	t.Run("can add tolerations", func(t *testing.T) {
+	t.Run("can override tolerations", func(t *testing.T) {
 		addedToleration := v1.Toleration{
 			Key:      "foo",
 			Operator: v1.TolerationOpEqual,
@@ -353,7 +358,7 @@ func TestReconcileAll(t *testing.T) {
 			wftest.Proxy(wftest.WithReplicas(1, 1)),
 			wftest.RCCR(func(r *rc.ResourceCustomizations) {
 				r.Spec.ByName[util.ProxyName] = rc.ResourceCustomization{
-					Tolerations: rc.TolerationsCustomization{
+					Tolerations: rc.Tolerations{
 						Add: []v1.Toleration{addedToleration},
 					},
 				}

@@ -52,13 +52,6 @@ func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
 	wfSpec.ControllerManagerUID = string(operator.UID)
 	wfSpec.ImageRegistry = filepath.Dir(operator.Spec.Template.Spec.Containers[0].Image)
 
-	for name, resources := range wavefront.Spec.WorkloadResources {
-		if resources.Requests.IsEmpty() {
-			resources.Requests = resources.Limits
-		}
-		wavefront.Spec.WorkloadResources[name] = resources
-	}
-
 	err = preProcessExperimental(client, wfSpec)
 	if err != nil {
 		return err

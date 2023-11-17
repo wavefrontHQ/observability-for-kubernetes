@@ -38,6 +38,41 @@ spec:
               by_name:
                 additionalProperties:
                   properties:
+                    resources:
+                      properties:
+                        limits:
+                          description: Limits CPU and Memory requirements
+                          properties:
+                            cpu:
+                              description: CPU is for specifying CPU requirements
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              type: string
+                            ephemeral-storage:
+                              description: Memory is for specifying Memory requirements
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              type: string
+                            memory:
+                              description: Memory is for specifying Memory requirements
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              type: string
+                          type: object
+                        requests:
+                          description: Requests CPU and Memory requirements
+                          properties:
+                            cpu:
+                              description: CPU is for specifying CPU requirements
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              type: string
+                            ephemeral-storage:
+                              description: Memory is for specifying Memory requirements
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              type: string
+                            memory:
+                              description: Memory is for specifying Memory requirements
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              type: string
+                          type: object
+                      type: object
                     tolerations:
                       properties:
                         add:

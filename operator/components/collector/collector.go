@@ -107,7 +107,7 @@ func (component *Component) Resources(builder *components.K8sResourceBuilder) ([
 
 func (component *Component) defaultWorkloadResources() patch.Patch {
 	return patch.ByName{
-		util.NodeCollectorName:    patch.ContainerResources(component.config.NodeCollectorResources),
-		util.ClusterCollectorName: patch.ContainerResources(component.config.ClusterCollectorResources),
+		util.NodeCollectorName:    patch.FromWFResources(component.config.NodeCollectorResources),
+		util.ClusterCollectorName: patch.FromWFResources(component.config.ClusterCollectorResources),
 	}
 }

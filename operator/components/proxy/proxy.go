@@ -126,7 +126,7 @@ func (component *Component) Validate() validation.Result {
 
 func (component *Component) defaultWorkloadResources() patch.Patch {
 	return patch.ByName{
-		util.ProxyName: patch.ContainerResources(component.config.Resources),
+		util.ProxyName: patch.FromWFResources(component.config.Resources),
 	}
 }
 

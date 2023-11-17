@@ -40,9 +40,6 @@ type WavefrontSpec struct {
 	// +kubebuilder:default:=medium
 	ClusterSize string `json:"clusterSize,omitempty"`
 
-	// WorkloadResources are a map from workload name (i.e. Deployment, StatefulSet, DaemonSet, or Job) to resource requests and limits
-	WorkloadResources map[string]Resources `json:"workloadResources,omitempty"`
-
 	// ClusterName is a unique name for the Kubernetes cluster to be identified via a metric tag on Wavefront (Required).
 	// +kubebuilder:validation:MinLength:=3
 	ClusterName string `json:"clusterName,required"`

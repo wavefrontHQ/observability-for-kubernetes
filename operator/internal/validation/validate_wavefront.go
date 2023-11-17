@@ -60,7 +60,7 @@ func NewValidationResult(errs []error) Result {
 	return Result{utilerrors.NewAggregate(errs), true}
 }
 
-func Validate(objClient client.Client, wavefront *wf.Wavefront) Result {
+func ValidateWF(objClient client.Client, wavefront *wf.Wavefront) Result {
 	err := validateEnvironment(objClient, wavefront)
 	if err != nil {
 		return Result{err, !areAnyComponentsDeployed(objClient, wavefront.Spec.Namespace)}
@@ -121,13 +121,6 @@ func validateWavefrontSpec(wavefront *wf.Wavefront) error {
 
 	if !validClusterSize(wavefront) {
 		errs = append(errs, fmt.Errorf("clusterSize must be %s", strings.Join(wf.ClusterSizes, ", ")))
-	}
-
-	for name, resources := range wavefront.Spec.WorkloadResources {
-		resourceErrs := validateResources(&resources, fmt.Sprintf("workloadResources.%s", name))
-		if len(resourceErrs) > 0 {
-			errs = append(errs, resourceErrs...)
-		}
 	}
 
 	if wavefront.Spec.DataExport.WavefrontProxy.Enable {

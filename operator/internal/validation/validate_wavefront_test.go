@@ -231,18 +231,6 @@ func TestValidateWavefrontSpec(t *testing.T) {
 		err := validateWavefrontSpec(wfCR)
 		require.ErrorContains(t, err, "clusterSize must be small, medium, large")
 	})
-
-	t.Run("workloadResources is validated", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.WorkloadResources = map[string]wf.Resources{
-			"some-deployment": {
-				Requests: wf.Resource{
-					CPU: "not_a_valid_cpu_quantity",
-				},
-			},
-		}
-		require.ErrorContains(t, validateWavefrontSpec(wfCR), "invalid workloadResources.some-deployment.requests.cpu: 'not_a_valid_cpu_quantity'")
-	})
 }
 
 func TestValidateEnvironment(t *testing.T) {

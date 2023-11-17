@@ -32,10 +32,37 @@ type ResourceCustomizationsSpec struct {
 
 type ByName map[string]ResourceCustomization
 
-type TolerationsCustomization struct {
+type ResourceCustomization struct {
+	Tolerations Tolerations `json:"tolerations,omitempty"`
+	Resources   Resources   `json:"resources,omitempty"`
+}
+
+type Tolerations struct {
 	Add []corev1.Toleration `json:"add,omitempty"`
 }
 
-type ResourceCustomization struct {
-	Tolerations TolerationsCustomization `json:"tolerations,omitempty"`
+func (t Tolerations) Empty() bool {
+	return len(t.Add) > 0
+}
+
+type Resources struct {
+	// Requests CPU and Memory requirements
+	Requests Resource `json:"requests,omitempty" yaml:"requests,omitempty"`
+
+	// Limits CPU and Memory requirements
+	Limits Resource `json:"limits,omitempty" yaml:"limits,omitempty"`
+}
+
+type Resource struct {
+	// CPU is for specifying CPU requirements
+	// +kubebuilder:validation:Pattern:=`^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$`
+	CPU string `json:"cpu,omitempty" yaml:"cpu,omitempty"`
+
+	// Memory is for specifying Memory requirements
+	// +kubebuilder:validation:Pattern:=`^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$`
+	Memory string `json:"memory,omitempty" yaml:"memory,omitempty"`
+
+	// Memory is for specifying Memory requirements
+	// +kubebuilder:validation:Pattern:=`^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$`
+	EphemeralStorage string `json:"ephemeral-storage,omitempty" yaml:"ephemeral-storage,omitempty"`
 }
