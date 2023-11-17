@@ -247,16 +247,19 @@ func (pbe *PodBasedEnricher) addWorkloadStatusMetric(podMs *metrics.Set, pod *ku
 }
 
 func (pbe *PodBasedEnricher) addPodTerminatingMetric(podMs *metrics.Set, pod *kube_api.Pod, newMs map[metrics.ResourceKey]*metrics.Set) {
-	// We expect to see following tags: DeletionTimestamp, reason: Terminating
 	podTerminatingMs := &metrics.Set{
 		Values: make(map[string]metrics.Value),
 		Labels: map[string]string{
-			metrics.LabelNamespaceName.Key: pod.Namespace,
-			metrics.LabelPodName.Key:       pod.Name,
+			metrics.LabelDeletionTimestamp.Key: pod.DeletionTimestamp.Format(time.RFC3339),
+			metrics.LabelReason.Key:            "Terminating",
 		},
 	}
+	for k, v := range podMs.Labels {
+		podTerminatingMs.Labels[k] = v
+	}
+
 	addLabeledIntMetric(podTerminatingMs, &metrics.MetricPodStuckInTerminating, nil, 1)
-	newMs[metrics.PodStuckInTerminatingKey(pod.Namespace, pod.Name)] = podTerminatingMs
+	newMs[metrics.PodKey(pod.Namespace, pod.Name)] = podTerminatingMs
 }
 
 func updateContainerResourcesAndLimits(metricSet *metrics.Set, container kube_api.Container) {

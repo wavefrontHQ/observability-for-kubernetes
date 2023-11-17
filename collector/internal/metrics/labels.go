@@ -145,6 +145,10 @@ var (
 		Key:         "accelerator_id",
 		Description: "ID of the accelerator",
 	}
+	LabelDeletionTimestamp = LabelDescriptor{
+		Key:         "DeletionTimestamp",
+		Description: "Deletion Timestamp of the kubernetes resource",
+	}
 )
 
 type LabelDescriptor struct {
