@@ -146,11 +146,11 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	var validationResult validation.Result
-	err = r.preprocess(crSet.Wavefront, ctx)
+	err = r.preprocess(&crSet.Wavefront, ctx)
 	if err != nil {
 		validationResult = validation.NewErrorResult(err)
 	} else {
-		validationResult = r.validate(crSet.Wavefront)
+		validationResult = r.validate(&crSet.Wavefront)
 	}
 
 	if !validationResult.IsError() {
@@ -161,7 +161,7 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	} else {
 		_ = r.readAndDeleteResources()
 	}
-	wavefrontStatus, err := r.reportHealthStatus(ctx, crSet.Wavefront, validationResult)
+	wavefrontStatus, err := r.reportHealthStatus(ctx, &crSet.Wavefront, validationResult)
 	if err != nil {
 		return errorCRTLResult(err)
 	}
@@ -195,35 +195,35 @@ func (r *WavefrontReconciler) fetchCRSet(ctx context.Context, namespace string) 
 
 var CRNotFoundErr = fmt.Errorf("CR is not found")
 
-func (r *WavefrontReconciler) fetchWavefrontCR(ctx context.Context, namespace string) (*wf.Wavefront, error) {
+func (r *WavefrontReconciler) fetchWavefrontCR(ctx context.Context, namespace string) (wf.Wavefront, error) {
 	wavefrontList := &wf.WavefrontList{}
 	err := r.Client.List(ctx, wavefrontList, client.InNamespace(namespace))
 	if err != nil {
-		return nil, err
+		return wf.Wavefront{}, err
 	}
 	if len(wavefrontList.Items) == 0 {
-		return nil, CRNotFoundErr
+		return wf.Wavefront{}, CRNotFoundErr
 	}
 	if len(wavefrontList.Items) > 1 {
-		return nil, fmt.Errorf("cannot have more than 1 Wavefront CR (have %d)", len(wavefrontList.Items))
+		return wf.Wavefront{}, fmt.Errorf("cannot have more than 1 Wavefront CR (have %d)", len(wavefrontList.Items))
 	}
-	return &wavefrontList.Items[0], nil
+	return wavefrontList.Items[0], nil
 }
 
-func (r *WavefrontReconciler) fetchResourceCustomizationsCR(ctx context.Context, namespace string) (*rc.ResourceCustomizations, error) {
+func (r *WavefrontReconciler) fetchResourceCustomizationsCR(ctx context.Context, namespace string) (rc.ResourceCustomizations, error) {
 	rcList := &rc.ResourceCustomizationsList{}
 	err := r.Client.List(ctx, rcList, client.InNamespace(namespace))
 	if err != nil {
-		return nil, err
+		return rc.ResourceCustomizations{}, err
 	}
 	if len(rcList.Items) == 0 {
-		return nil, CRNotFoundErr
+		return rc.ResourceCustomizations{}, CRNotFoundErr
 	}
 	// TODO Write Test
 	//if len(rcList.Items) > 1 {
 	//	return nil, fmt.Errorf("cannot have more than 1 ResourceCustomization CR (have %d)", len(rcList.Items))
 	//}
-	return &rcList.Items[0], nil
+	return rcList.Items[0], nil
 }
 
 // Validating Wavefront CR
@@ -285,7 +285,7 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 	var err error
 	r.MetricConnection.Close()
 	crSetToDelete := &api.CRSet{
-		Wavefront: &wf.Wavefront{
+		Wavefront: wf.Wavefront{
 			Spec: wf.WavefrontSpec{
 				Namespace: r.namespace,
 				DataCollection: wf.DataCollection{
@@ -303,10 +303,10 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 				},
 			},
 		},
-		ResourceCustomizations: &rc.ResourceCustomizations{},
+		ResourceCustomizations: rc.ResourceCustomizations{},
 	}
 
-	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, crSetToDelete.Wavefront, r.Client)
+	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, &crSetToDelete.Wavefront, r.Client)
 	if err != nil {
 		return err
 	}

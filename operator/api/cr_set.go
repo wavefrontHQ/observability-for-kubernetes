@@ -6,22 +6,18 @@ import (
 )
 
 type CRSet struct {
-	*wf.Wavefront
-	*rc.ResourceCustomizations
+	Wavefront              wf.Wavefront
+	ResourceCustomizations rc.ResourceCustomizations
 }
 
 func (c *CRSet) Spec() *SpecSet {
-	var rcSpec *rc.ResourceCustomizationsSpec
-	if c.ResourceCustomizations != nil {
-		rcSpec = &c.ResourceCustomizations.Spec
-	}
 	return &SpecSet{
-		WavefrontSpec:              &c.Wavefront.Spec,
-		ResourceCustomizationsSpec: rcSpec,
+		WavefrontSpec:              c.Wavefront.Spec,
+		ResourceCustomizationsSpec: c.ResourceCustomizations.Spec,
 	}
 }
 
 type SpecSet struct {
-	*wf.WavefrontSpec
-	*rc.ResourceCustomizationsSpec
+	wf.WavefrontSpec
+	rc.ResourceCustomizationsSpec
 }
