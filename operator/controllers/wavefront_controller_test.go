@@ -126,7 +126,7 @@ func TestReconcileAll(t *testing.T) {
 		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Status.Status = health.Unhealthy
 		})
-		r, _ := componentScenario(wfCR, nil)
+		r, _ := componentScenario(wfCR)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -149,7 +149,7 @@ func TestReconcileAll(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Enable = true
 			w.Spec.DataExport.ExternalWavefrontProxy.Url = "http://some_url.com"
-		}), nil)
+		}))
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -169,7 +169,7 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("delete CRD should delete resources", func(t *testing.T) {
-		r, mockKM := emptyScenario(nil, nil)
+		r, mockKM := emptyScenario(nil)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 		_ = r.MetricConnection.Connect("http://example.com")
@@ -189,7 +189,7 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("Defaults Custom Registry", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(), nil)
+		r, mockKM := componentScenario(wftest.CR())
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -222,7 +222,7 @@ func TestReconcileAll(t *testing.T) {
 		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.ImagePullSecret = "private-reg-cred"
 		})
-		r, mockKM := componentScenario(wfCR, nil)
+		r, mockKM := componentScenario(wfCR)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -241,7 +241,7 @@ func TestReconcileAll(t *testing.T) {
 		wfCR := wftest.CR(func(w *wf.Wavefront) {
 			w.Namespace = "customNamespace"
 		})
-		r, mockKM := componentScenario(wfCR, nil)
+		r, mockKM := componentScenario(wfCR)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -267,7 +267,7 @@ func TestReconcileAll(t *testing.T) {
 					Effect: "NoSchedule",
 				},
 			}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -279,7 +279,7 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("deploys openshift resources if on an openshift environment", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(), nil)
+		r, mockKM := componentScenario(wftest.CR())
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -292,7 +292,8 @@ func TestReconcileAll(t *testing.T) {
 	})
 
 	t.Run("does not deploy openshift resources if not on an openshift environment", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(), nil)
+		r, mockKM := componentScenario(wftest.CR())
+		r.DiscoveryClient = testhelper.NewMockKubernetesDiscoveryClient(nil)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -378,7 +379,7 @@ func TestReconcileCollector(t *testing.T) {
 	t.Run("does not create configmap if user specified one", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.CustomConfig = "myconfig"
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -390,7 +391,7 @@ func TestReconcileCollector(t *testing.T) {
 	t.Run("can change the default collection interval", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.DefaultCollectionInterval = "90s"
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 
@@ -402,7 +403,7 @@ func TestReconcileCollector(t *testing.T) {
 	t.Run("can disable discovery", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.EnableDiscovery = false
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 
@@ -414,7 +415,7 @@ func TestReconcileCollector(t *testing.T) {
 	t.Run("control plane metrics are propagated to default collector configmap", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Enable = true
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -447,7 +448,8 @@ func TestReconcileCollector(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Enable = true
 			w.Spec.DataCollection.Metrics.ControlPlane.Enable = true
-		}), nil)
+		}))
+		r.DiscoveryClient = testhelper.NewMockKubernetesDiscoveryClient(nil)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -477,7 +479,7 @@ func TestReconcileCollector(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Enable = true
 			w.Spec.DataCollection.Metrics.ControlPlane.Enable = false
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -509,7 +511,7 @@ func TestReconcileCollector(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Filters.AllowList = []string{"allowSomeTag", "allowOtherTag"}
 			w.Spec.DataCollection.Metrics.Filters.DenyList = []string{"denyAnotherTag", "denyThisTag"}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 
@@ -525,7 +527,7 @@ func TestReconcileCollector(t *testing.T) {
 			w.Spec.DataCollection.Metrics.Filters.TagDenyList = map[string][]string{"env2": {"test"}}
 			w.Spec.DataCollection.Metrics.Filters.TagInclude = []string{"includeSomeTag"}
 			w.Spec.DataCollection.Metrics.Filters.TagExclude = []string{"excludeSomeTag"}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 
@@ -540,7 +542,7 @@ func TestReconcileCollector(t *testing.T) {
 	t.Run("can add custom metric filter with tag guarantee list", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Filters.TagGuaranteeList = []string{"someTagToAlwaysProtect", "someOtherTagToAlwaysProtect"}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 
@@ -552,7 +554,7 @@ func TestReconcileCollector(t *testing.T) {
 	t.Run("can add custom tags", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Tags = map[string]string{"env": "non-production"}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 
@@ -567,7 +569,7 @@ func TestReconcileCollector(t *testing.T) {
 			w.Spec.DataCollection.Metrics.ClusterCollector.Resources.Requests.Memory = "10Mi"
 			w.Spec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU = "200m"
 			w.Spec.DataCollection.Metrics.ClusterCollector.Resources.Limits.Memory = "256Mi"
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 
@@ -582,7 +584,7 @@ func TestReconcileCollector(t *testing.T) {
 			w.Spec.DataCollection.Metrics.NodeCollector.Resources.Requests.Memory = "10Mi"
 			w.Spec.DataCollection.Metrics.NodeCollector.Resources.Limits.CPU = "200m"
 			w.Spec.DataCollection.Metrics.NodeCollector.Resources.Limits.Memory = "256Mi"
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -596,7 +598,7 @@ func TestReconcileCollector(t *testing.T) {
 				DenyList:  []string{"first_deny", "second_deny"},
 				AllowList: []string{"first_allow", "second_allow"},
 			}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -630,7 +632,7 @@ func TestReconcileCollector(t *testing.T) {
 	t.Run("Tags can be set for default collector configmap", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Tags = map[string]string{"key1": "value1", "key2": "value2"}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -641,7 +643,7 @@ func TestReconcileCollector(t *testing.T) {
 	t.Run("Empty tags map should not populate in default collector configmap", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Tags = map[string]string{}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -711,7 +713,7 @@ func TestReconcileCollector(t *testing.T) {
 	})
 
 	t.Run("does not add the etcd secrets as a volume for the node collector or create the etcd auto-discovery configmap when there is no etcd-certs secret in the same namespace", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(), nil)
+		r, mockKM := componentScenario(wftest.CR())
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -749,7 +751,7 @@ func TestReconcileCollector(t *testing.T) {
 
 func TestReconcileProxy(t *testing.T) {
 	t.Run("creates proxy and proxy service", func(t *testing.T) {
-		r, mockKM := emptyScenario(wftest.CR(), nil)
+		r, mockKM := emptyScenario(wftest.CR())
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -760,7 +762,6 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("with csp api token auth", func(t *testing.T) {
-
 		wfCR := wftest.CR()
 		r, mockKM := emptyScenario(wfCR, &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -779,7 +780,6 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("with csp app oauth", func(t *testing.T) {
-
 		wfCR := wftest.CR()
 		r, mockKM := emptyScenario(wfCR, &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -799,7 +799,6 @@ func TestReconcileProxy(t *testing.T) {
 	})
 
 	t.Run("with csp app oauth with org id", func(t *testing.T) {
-
 		wfCR := wftest.CR()
 		r, mockKM := emptyScenario(wfCR, &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -841,7 +840,7 @@ func TestReconcileProxy(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.WavefrontTokenSecret = "updatedToken"
 			w.Spec.WavefrontUrl = "updatedUrl"
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -928,7 +927,7 @@ func TestReconcileProxy(t *testing.T) {
 	t.Run("can create proxy with a user defined metric port", func(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.MetricPort = 1234
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -942,7 +941,7 @@ func TestReconcileProxy(t *testing.T) {
 	t.Run("can create proxy with a user defined delta counter port", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.DeltaCounterPort = 50000
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -960,7 +959,7 @@ func TestReconcileProxy(t *testing.T) {
 					SamplingDuration: 45,
 				},
 			}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -982,7 +981,7 @@ func TestReconcileProxy(t *testing.T) {
 					ApplicationName: "jaeger",
 				},
 			}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1005,7 +1004,7 @@ func TestReconcileProxy(t *testing.T) {
 			w.Spec.DataExport.WavefrontProxy.Tracing.Zipkin.ApplicationName = "zipkin"
 		})
 
-		r, mockKM := emptyScenario(wfSpec, nil)
+		r, mockKM := emptyScenario(wfSpec)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1023,7 +1022,7 @@ func TestReconcileProxy(t *testing.T) {
 				HttpPort:                       4318,
 				ResourceAttrsOnMetricsIncluded: true,
 			}
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1043,7 +1042,7 @@ func TestReconcileProxy(t *testing.T) {
 			w.Spec.DataExport.WavefrontProxy.Histogram.MinutePort = 40001
 			w.Spec.DataExport.WavefrontProxy.Histogram.HourPort = 40002
 			w.Spec.DataExport.WavefrontProxy.Histogram.DayPort = 40003
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1064,7 +1063,7 @@ func TestReconcileProxy(t *testing.T) {
 	t.Run("can create proxy with a user defined proxy args", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Args = "--prefix dev \r\n --customSourceTags mySource"
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1075,7 +1074,7 @@ func TestReconcileProxy(t *testing.T) {
 
 	t.Run("can create proxy with the default cluster_uuid and cluster preprocessor rules", func(t *testing.T) {
 		clusterName := "my_cluster_name"
-		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) { w.Spec.ClusterName = clusterName }), nil)
+		r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) { w.Spec.ClusterName = clusterName }))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1104,7 +1103,7 @@ func TestReconcileProxy(t *testing.T) {
 			w.Spec.ClusterName = clusterName
 			w.Spec.DataExport.WavefrontProxy.OTLP.GrpcPort = 4317
 			w.Spec.DataExport.WavefrontProxy.OTLP.HttpPort = 4318
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1189,7 +1188,7 @@ func TestReconcileProxy(t *testing.T) {
 			w.Spec.DataExport.WavefrontProxy.Resources.Requests.Memory = "1Gi"
 			w.Spec.DataExport.WavefrontProxy.Resources.Limits.CPU = "1000m"
 			w.Spec.DataExport.WavefrontProxy.Resources.Limits.Memory = "4Gi"
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1205,7 +1204,7 @@ func TestReconcileProxy(t *testing.T) {
 		t.Run("changes the number of desired replicas", func(t *testing.T) {
 			r, mockKM := emptyScenario(wftest.CR(func(w *wf.Wavefront) {
 				w.Spec.DataExport.WavefrontProxy.Replicas = 2
-			}), nil)
+			}))
 
 			_, err := r.Reconcile(context.Background(), defaultRequest())
 			require.NoError(t, err)
@@ -1333,7 +1332,7 @@ func TestReconcileProxy(t *testing.T) {
 
 func TestReconcileLogging(t *testing.T) {
 	t.Run("Create logging if DataCollection.Logging.Enable is set to true", func(t *testing.T) {
-		r, mockKM := componentScenario(wftest.CR(), nil)
+		r, mockKM := componentScenario(wftest.CR())
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1375,7 +1374,7 @@ func TestReconcileLogging(t *testing.T) {
 		r, mockKM := componentScenario(wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.WavefrontProxy.Enable = false
 			w.Spec.DataExport.ExternalWavefrontProxy.Url = "my-proxy:8888"
-		}), nil)
+		}))
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
@@ -1577,7 +1576,7 @@ func TestReconcileHubPixie(t *testing.T) {
 			wfCR.Spec.Experimental.Hub.Enable = true
 			wfCR.Spec.Experimental.Hub.Pixie.Enable = false
 		})
-		r, mockKM := emptyScenario(wfCR, nil)
+		r, mockKM := emptyScenario(wfCR)
 		mockSender := &testhelper.MockSender{}
 		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
 
@@ -1751,7 +1750,7 @@ func StatusMetricsSent(mockSender *testhelper.MockSender) int {
 
 func CanBeDisabled(t *testing.T, wfCR *wf.Wavefront, existingResources ...runtime.Object) {
 	t.Run("on CR creation", func(t *testing.T) {
-		r, mockKM := emptyScenario(wfCR, nil)
+		r, mockKM := emptyScenario(wfCR)
 
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)

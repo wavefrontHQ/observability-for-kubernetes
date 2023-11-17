@@ -11,9 +11,13 @@ type CRSet struct {
 }
 
 func (c *CRSet) Spec() *SpecSet {
+	var rcSpec *rc.ResourceCustomizationsSpec
+	if c.ResourceCustomizations != nil {
+		rcSpec = &c.ResourceCustomizations.Spec
+	}
 	return &SpecSet{
 		WavefrontSpec:              &c.Wavefront.Spec,
-		ResourceCustomizationsSpec: &c.ResourceCustomizations.Spec,
+		ResourceCustomizationsSpec: rcSpec,
 	}
 }
 
