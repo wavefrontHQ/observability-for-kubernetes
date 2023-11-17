@@ -8,6 +8,7 @@ import (
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -51,7 +52,7 @@ type Component struct {
 	config ComponentConfig
 }
 
-func (proxy *Component) Name() string {
+func (component *Component) Name() string {
 	return "proxy"
 }
 
@@ -123,12 +124,12 @@ func (component *Component) Validate() validation.Result {
 	return validation.NewValidationResult(errs)
 }
 
-func (proxy *Component) defaultWorkloadResources() map[string]wf.Resources {
-	return map[string]wf.Resources{
-		util.ProxyName: proxy.config.Resources,
+func (component *Component) defaultWorkloadResources() patch.Patch {
+	return patch.ByName{
+		util.ProxyName: patch.ContainerResources(component.config.Resources),
 	}
 }
 
-func (proxy *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
-	return builder.Build(proxy.dir, proxy.Name(), proxy.config.Enable, proxy.config.ControllerManagerUID, proxy.defaultWorkloadResources(), proxy.config)
+func (component *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
+	return builder.Build(component.dir, component.Name(), component.config.Enable, component.config.ControllerManagerUID, component.defaultWorkloadResources(), component.config)
 }

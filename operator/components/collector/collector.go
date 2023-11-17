@@ -6,6 +6,7 @@ import (
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,7 +55,7 @@ type Component struct {
 	config ComponentConfig
 }
 
-func (collector *Component) Name() string {
+func (component *Component) Name() string {
 	return "collector"
 }
 
@@ -100,13 +101,13 @@ func (component *Component) Validate() validation.Result {
 	return validation.NewValidationResult(errs)
 }
 
-func (collector *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
-	return builder.Build(collector.dir, collector.Name(), collector.config.Enable, collector.config.ControllerManagerUID, collector.defaultWorkloadResources(), collector.config)
+func (component *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {
+	return builder.Build(component.dir, component.Name(), component.config.Enable, component.config.ControllerManagerUID, component.defaultWorkloadResources(), component.config)
 }
 
-func (collector *Component) defaultWorkloadResources() map[string]wf.Resources {
-	return map[string]wf.Resources{
-		util.NodeCollectorName:    collector.config.NodeCollectorResources,
-		util.ClusterCollectorName: collector.config.ClusterCollectorResources,
+func (component *Component) defaultWorkloadResources() patch.Patch {
+	return patch.ByName{
+		util.NodeCollectorName:    patch.ContainerResources(component.config.NodeCollectorResources),
+		util.ClusterCollectorName: patch.ContainerResources(component.config.ClusterCollectorResources),
 	}
 }
