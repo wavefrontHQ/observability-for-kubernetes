@@ -33,7 +33,8 @@ func pointsForNonRunningPods(workloadCache util.WorkloadCache) func(item interfa
 		now := time.Now().Unix()
 
 		points := buildPodPhaseMetrics(pod, transforms, sharedTags, now)
-		if util.IsStuckInTerminating(pod) {
+		// create pod stuck in terminating metric for pending pods that get deleted
+		if pod.DeletionTimestamp != nil {
 			points = append(points, buildPodTerminatingMetrics(pod, sharedTags, transforms, now)...)
 		}
 
