@@ -26,6 +26,7 @@ function delete_namespaces() {
 
   if [[ -n "${ns}" ]]; then
     kubectl patch -n collector-targets pod/pod-stuck-in-terminating -p '{"metadata":{"finalizers":null}}' &>/dev/null || true
+    kubectl patch -n collector-targets pod/pending-pod-stuck-in-terminating -p '{"metadata":{"finalizers":null}}' >/dev/null || true
     kubectl delete --ignore-not-found=true --wait=false namespace ${ns} || true
   fi
 }

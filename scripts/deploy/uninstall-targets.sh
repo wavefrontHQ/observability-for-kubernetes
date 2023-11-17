@@ -11,6 +11,7 @@ cd "$SCRIPT_DIR"
 echo "Uninstalling targets..."
 
 kubectl patch -n collector-targets pod/pod-stuck-in-terminating -p '{"metadata":{"finalizers":null}}' &>/dev/null || true
+kubectl patch -n collector-targets pod/pending-pod-stuck-in-terminating -p '{"metadata":{"finalizers":null}}' >/dev/null || true
 
 kubectl delete namespace collector-targets &>/dev/null || true
 
