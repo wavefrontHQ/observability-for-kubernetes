@@ -802,7 +802,7 @@ k8s.io/kube-openapi/pkg/validation/spec
 # k8s.io/kubectl v0.24.17
 ## explicit; go 1.19
 k8s.io/kubectl/pkg/util/resource
-# k8s.io/kubelet v0.24.13
+# k8s.io/kubelet v0.24.17
 ## explicit; go 1.19
 k8s.io/kubelet/pkg/apis/stats/v1alpha1
 # k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
