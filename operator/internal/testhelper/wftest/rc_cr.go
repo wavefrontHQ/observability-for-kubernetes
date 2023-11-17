@@ -1,20 +1,20 @@
 package wftest
 
 import (
-	ops "github.com/wavefronthq/observability-for-kubernetes/operator/api/operator_settings/v1alpha1"
+	rc "github.com/wavefronthq/observability-for-kubernetes/operator/api/resourcecustomizations/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type RCCROption func(rc *ops.OperatorSettings)
+type RCCROption func(rc *rc.ResourceCustomizations)
 
-func RCCr(options ...RCCROption) *ops.OperatorSettings {
-	cr := &ops.OperatorSettings{
+func RCCR(options ...RCCROption) *rc.ResourceCustomizations {
+	cr := &rc.ResourceCustomizations{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "resource-customizations",
 			Namespace: DefaultNamespace,
 		},
-		Spec: ops.OperatorSettingSpec{
-			ByName: map[string]ops.ResourceCustomization{},
+		Spec: rc.ResourceCustomizationsSpec{
+			ByName: map[string]rc.ResourceCustomization{},
 		},
 	}
 	for _, option := range options {

@@ -1,23 +1,23 @@
 package api
 
 import (
-	ops "github.com/wavefronthq/observability-for-kubernetes/operator/api/operator_settings/v1alpha1"
+	rc "github.com/wavefronthq/observability-for-kubernetes/operator/api/resourcecustomizations/v1alpha1"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 )
 
 type CRSet struct {
-	wf.Wavefront
-	ops.OperatorSettings
+	*wf.Wavefront
+	*rc.ResourceCustomizations
 }
 
 func (c *CRSet) Spec() *SpecSet {
 	return &SpecSet{
-		WavefrontSpec:       c.Wavefront.Spec,
-		OperatorSettingSpec: c.OperatorSettings.Spec,
+		WavefrontSpec:              &c.Wavefront.Spec,
+		ResourceCustomizationsSpec: &c.ResourceCustomizations.Spec,
 	}
 }
 
 type SpecSet struct {
-	wf.WavefrontSpec
-	ops.OperatorSettingSpec
+	*wf.WavefrontSpec
+	*rc.ResourceCustomizationsSpec
 }

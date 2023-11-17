@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	ops "github.com/wavefronthq/observability-for-kubernetes/operator/api/operator_settings/v1alpha1"
+	rc "github.com/wavefronthq/observability-for-kubernetes/operator/api/resourcecustomizations/v1alpha1"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/health"
@@ -348,13 +348,11 @@ func TestReconcileAll(t *testing.T) {
 			Effect:   v1.TaintEffectNoSchedule,
 		}
 		r, mockKM := emptyScenario(
-			wftest.CR(func(wavefront *wf.Wavefront) {
-				wavefront.Spec.Experimental.Autotracing.Enable = true
-			}),
+			wftest.CR(),
 			wftest.Proxy(wftest.WithReplicas(1, 1)),
-			wftest.RCCr(func(rc *ops.OperatorSettings) {
-				rc.Spec.ByName[util.ProxyName] = ops.ResourceCustomization{
-					Tolerations: ops.TolerationsCustomization{
+			wftest.RCCR(func(r *rc.ResourceCustomizations) {
+				r.Spec.ByName[util.ProxyName] = rc.ResourceCustomization{
+					Tolerations: rc.TolerationsCustomization{
 						Add: []v1.Toleration{addedToleration},
 					},
 				}
@@ -1949,7 +1947,7 @@ func containsProxyArg(t *testing.T, proxyArg string, mockKM testhelper.MockKuber
 func emptyScenario(wfCR *wf.Wavefront, initObjs ...runtime.Object) (*controllers.WavefrontReconciler, *testhelper.MockKubernetesManager) {
 	s := scheme.Scheme
 	wf.AddToScheme(s)
-	ops.AddToScheme(s)
+	rc.AddToScheme(s)
 
 	namespace := wftest.DefaultNamespace
 	if wfCR != nil {

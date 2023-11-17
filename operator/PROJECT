@@ -21,7 +21,7 @@ resources:
     namespaced: true
   controller: false
   domain: wavefront.com
-  kind: OperatorCustomizations
-  path: github.com/wavefrontHQ/observability-for-kubernetes/operator/api/operator_customizations/v1alpha1
+  kind: ResourceCustomizations
+  path: github.com/wavefrontHQ/observability-for-kubernetes/operator/api/resourcecustomizations/v1alpha1
   version: v1alpha1
 version: "3"

@@ -142,7 +142,7 @@ rules:
 - apiGroups:
   - wavefront.com
   resources:
-  - operatorsettings
+  - resourcecustomizations
   verbs:
   - create
   - delete

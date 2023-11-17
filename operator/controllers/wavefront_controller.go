@@ -26,7 +26,8 @@ import (
 
 	stderrors "errors"
 
-	ops "github.com/wavefronthq/observability-for-kubernetes/operator/api/operator_settings/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api"
+	rc "github.com/wavefronthq/observability-for-kubernetes/operator/api/resourcecustomizations/v1alpha1"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/factory"
@@ -96,7 +97,7 @@ func NewWavefrontReconciler(versions Versions, client client.Client, discoveryCl
 func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&wf.Wavefront{}).
-		Watches(&source.Kind{Type: &ops.OperatorSettings{}}, &handler.EnqueueRequestForObject{}).
+		Watches(&source.Kind{Type: &rc.ResourceCustomizations{}}, &handler.EnqueueRequestForObject{}).
 		WithOptions(controller.Options{
 			RateLimiter: workqueue.NewItemExponentialFailureRateLimiter(1*time.Second, maxReconcileInterval),
 		}).
@@ -107,7 +108,7 @@ func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts/finalizers,verbs=update
 
-// +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=operatorsettings,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=resourcecustomizations,verbs=get;list;watch;create;update;patch;delete
 
 // Permissions for creating Kubernetes resources from internal files.
 // Possible point of confusion: the collector itself watches resources,
@@ -135,7 +136,7 @@ const maxReconcileInterval = 60 * time.Second
 
 func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.namespace = req.Namespace
-	wavefront, err := r.fetchWavefrontCR(ctx, req.Namespace)
+	crSet, err := r.fetchCRSet(ctx, r.namespace)
 	if stderrors.Is(err, CRNotFoundErr) {
 		_ = r.readAndDeleteResources()
 		return ctrl.Result{}, nil
@@ -145,22 +146,22 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	var validationResult validation.Result
-	err = r.preprocess(wavefront, ctx)
+	err = r.preprocess(crSet.Wavefront, ctx)
 	if err != nil {
 		validationResult = validation.NewErrorResult(err)
 	} else {
-		validationResult = r.validate(wavefront)
+		validationResult = r.validate(crSet.Wavefront)
 	}
 
 	if !validationResult.IsError() {
-		err = r.readAndCreateResources(wavefront.Spec)
+		err = r.readAndCreateResources(crSet.Spec())
 		if err != nil {
 			return errorCRTLResult(err)
 		}
 	} else {
 		_ = r.readAndDeleteResources()
 	}
-	wavefrontStatus, err := r.reportHealthStatus(ctx, wavefront, validationResult)
+	wavefrontStatus, err := r.reportHealthStatus(ctx, crSet.Wavefront, validationResult)
 	if err != nil {
 		return errorCRTLResult(err)
 	}
@@ -177,6 +178,21 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}, nil
 }
 
+func (r *WavefrontReconciler) fetchCRSet(ctx context.Context, namespace string) (*api.CRSet, error) {
+	wfCR, err := r.fetchWavefrontCR(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+	rcCR, err := r.fetchResourceCustomizationsCR(ctx, namespace)
+	if err != nil && !stderrors.Is(err, CRNotFoundErr) {
+		return nil, err
+	}
+	return &api.CRSet{
+		Wavefront:              wfCR,
+		ResourceCustomizations: rcCR,
+	}, nil
+}
+
 var CRNotFoundErr = fmt.Errorf("CR is not found")
 
 func (r *WavefrontReconciler) fetchWavefrontCR(ctx context.Context, namespace string) (*wf.Wavefront, error) {
@@ -189,10 +205,25 @@ func (r *WavefrontReconciler) fetchWavefrontCR(ctx context.Context, namespace st
 		return nil, CRNotFoundErr
 	}
 	if len(wavefrontList.Items) > 1 {
-		kind := wavefrontList.Items[0].Kind
-		return nil, fmt.Errorf("cannot have more than 1 %s CR (have %d)", kind, len(wavefrontList.Items))
+		return nil, fmt.Errorf("cannot have more than 1 Wavefront CR (have %d)", len(wavefrontList.Items))
 	}
 	return &wavefrontList.Items[0], nil
+}
+
+func (r *WavefrontReconciler) fetchResourceCustomizationsCR(ctx context.Context, namespace string) (*rc.ResourceCustomizations, error) {
+	rcList := &rc.ResourceCustomizationsList{}
+	err := r.Client.List(ctx, rcList, client.InNamespace(namespace))
+	if err != nil {
+		return nil, err
+	}
+	if len(rcList.Items) == 0 {
+		return nil, CRNotFoundErr
+	}
+	// TODO Write Test
+	//if len(rcList.Items) > 1 {
+	//	return nil, fmt.Errorf("cannot have more than 1 ResourceCustomization CR (have %d)", len(rcList.Items))
+	//}
+	return &rcList.Items[0], nil
 }
 
 // Validating Wavefront CR
@@ -213,8 +244,8 @@ func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront) validation.Resul
 }
 
 // Read, Create, Update and Delete Resources.
-func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) error {
-	toApply, toDelete, err := r.readAndInterpolateResources(spec)
+func (r *WavefrontReconciler) readAndCreateResources(specSet *api.SpecSet) error {
+	toApply, toDelete, err := r.readAndInterpolateResources(specSet)
 	if err != nil {
 		return err
 	}
@@ -232,10 +263,10 @@ func (r *WavefrontReconciler) readAndCreateResources(spec wf.WavefrontSpec) erro
 	return nil
 }
 
-func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec) ([]client.Object, []client.Object, error) {
+func (r *WavefrontReconciler) readAndInterpolateResources(specSet *api.SpecSet) ([]client.Object, []client.Object, error) {
 	var resourcesToApply, resourcesToDelete []client.Object
 	resourcePatches := patch.ByName{}
-	for workloadName, resources := range spec.WorkloadResources {
+	for workloadName, resources := range specSet.WorkloadResources {
 		resourcePatches[workloadName] = patch.ContainerResources(resources)
 	}
 	builder := components.NewK8sResourceBuilder(resourcePatches)
@@ -253,30 +284,33 @@ func (r *WavefrontReconciler) readAndInterpolateResources(spec wf.WavefrontSpec)
 func (r *WavefrontReconciler) readAndDeleteResources() error {
 	var err error
 	r.MetricConnection.Close()
-	wfToDelete := &wf.Wavefront{
-		Spec: wf.WavefrontSpec{
-			Namespace: r.namespace,
-			DataCollection: wf.DataCollection{
-				Metrics: wf.Metrics{
-					CollectorVersion: "none",
+	crSetToDelete := &api.CRSet{
+		Wavefront: &wf.Wavefront{
+			Spec: wf.WavefrontSpec{
+				Namespace: r.namespace,
+				DataCollection: wf.DataCollection{
+					Metrics: wf.Metrics{
+						CollectorVersion: "none",
+					},
+					Logging: wf.Logging{
+						LoggingVersion: "none",
+					},
 				},
-				Logging: wf.Logging{
-					LoggingVersion: "none",
-				},
-			},
-			DataExport: wf.DataExport{
-				WavefrontProxy: wf.WavefrontProxy{
-					ProxyVersion: "none",
+				DataExport: wf.DataExport{
+					WavefrontProxy: wf.WavefrontProxy{
+						ProxyVersion: "none",
+					},
 				},
 			},
 		},
+		ResourceCustomizations: &rc.ResourceCustomizations{},
 	}
 
-	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wfToDelete, r.Client)
+	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, crSetToDelete.Wavefront, r.Client)
 	if err != nil {
 		return err
 	}
-	resourcesToApply, resourcesToDelete, err := r.readAndInterpolateResources(wfToDelete.Spec)
+	resourcesToApply, resourcesToDelete, err := r.readAndInterpolateResources(crSetToDelete.Spec())
 	if err != nil {
 		return err
 	}
