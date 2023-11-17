@@ -353,13 +353,19 @@ func TestReconcileAll(t *testing.T) {
 			Value:    "bar",
 			Effect:   v1.TaintEffectNoSchedule,
 		}
+		removedToleration := v1.Toleration{
+			Key:    "kubernetes.io/arch",
+			Value:  "arm64",
+			Effect: v1.TaintEffectNoSchedule,
+		}
 		r, mockKM := emptyScenario(
 			wftest.CR(),
 			wftest.Proxy(wftest.WithReplicas(1, 1)),
 			wftest.RCCR(func(r *rc.ResourceCustomizations) {
 				r.Spec.ByName[util.ProxyName] = rc.ResourceCustomization{
 					Tolerations: rc.Tolerations{
-						Add: []v1.Toleration{addedToleration},
+						Add:    []v1.Toleration{addedToleration},
+						Remove: []v1.Toleration{removedToleration},
 					},
 				}
 			}),
@@ -376,7 +382,8 @@ func TestReconcileAll(t *testing.T) {
 		require.NoError(t, err)
 
 		tolerations := proxy.Spec.Template.Spec.Tolerations
-		require.Equal(t, addedToleration, tolerations[len(tolerations)-1])
+		require.Len(t, tolerations, 1)
+		require.Equal(t, addedToleration, tolerations[0])
 	})
 }
 
