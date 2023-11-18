@@ -76,7 +76,6 @@ jobs:
               include_bomtools: "go_mod"
               search_depth: 5
               go_mod.path: "/go/bin/go"
-
               # exclude for signature scans
               exclude_patterns:
                 - vendor
@@ -117,10 +116,10 @@ jobs:
               include_bomtools: "go_mod"
               search_depth: 5
               go_mod.path: "/go/bin/go"
-
               # exclude for signature scans
               exclude_patterns:
                 - vendor
+                - pixie-sizer
             OSSPI_IGNORE_RULES: |
               - name_regex: onsi\/ginkgo
                 version_regex: .*
@@ -150,7 +149,6 @@ jobs:
               include_bomtools: "go_mod"
               search_depth: 5
               go_mod.path: "/go/bin/go"
-
               # exclude for signature scans
               exclude_patterns:
                 - vendor
@@ -160,7 +158,7 @@ jobs:
               - name_regex: gomega
                 version_regex: .*
         - task: osspi-scan-fluentbit
-          timeout: 10m
+          timeout: 30m
           file: observability-for-kubernetes/osspi/tasks/osspi/run-osspi-docker.yaml
           input_mapping:
             ci_repo: observability-for-kubernetes
