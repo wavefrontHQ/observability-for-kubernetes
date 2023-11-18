@@ -17,7 +17,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
 	github.com/wavefronthq/go-metrics-wavefront v1.0.3
-	github.com/wavefronthq/wavefront-sdk-go v0.10.4
+	github.com/wavefronthq/wavefront-sdk-go v0.15.0
 	golang.org/x/crypto v0.15.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.24.17
@@ -32,7 +32,7 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/armon/go-metrics v0.3.0 // indirect
-	github.com/caio/go-tdigest v3.1.0+incompatible // indirect
+	github.com/caio/go-tdigest/v4 v4.0.1 // indirect
 	github.com/cockroachdb/apd v1.1.0 // indirect
 	github.com/couchbase/go-couchbase v0.0.0-20191115001346-d9e5b3bd1ebc // indirect
 	github.com/couchbase/gomemcached v0.0.0-20191004160342-7b5da2ec40b2 // indirect
