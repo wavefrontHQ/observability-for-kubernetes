@@ -1,32 +1,24 @@
-resource_types:
-  - name: gitlab
-    type: registry-image
-    source:
-      repository: devtools-docker.artifactory.eng.vmware.com/vmware/runway/resourcetypes/gitlab-resource
-      tag: 1.0.0
 resources:
   - name: observability-for-kubernetes
     type: git
     source:
-      uri: git@github.com:wavefrontHQ/observability-for-kubernetes.git
-      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+      uri: https://github.com/wavefrontHQ/observability-for-kubernetes.git
   - name: osspi-tool
     type: git
     icon: gitlab
     source:
-      uri: git@gitlab.eng.vmware.com:source-insight-tooling/norsk-to-osspi.git
-      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+      uri: https://gitlab.eng.vmware.com/source-insight-tooling/norsk-to-osspi.git
+      username: 13906 # From goppegard's gitlab profile
+      password: ((osspi.goppegard-gitlab-pat))
       branch: main
   - name: wavefront-kubernetes-adapter
     type: git
     source:
-      uri: git@github.com:wavefrontHQ/wavefront-kubernetes-adapter.git
-      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+      uri: https://github.com/wavefrontHQ/wavefront-kubernetes-adapter.git
   - name: prometheus-storage-adapter
     type: git
     source:
-      uri: git@github.com:wavefrontHQ/prometheus-storage-adapter.git
-      private_key: ((osspi.jcornish-github-private-key)) # TODO use a deploy key
+      uri: https://github.com/wavefrontHQ/prometheus-storage-adapter.git
   - name: wavefront-sdk-java
     source:
       uri: https://github.com/wavefrontHQ/wavefront-sdk-java.git
