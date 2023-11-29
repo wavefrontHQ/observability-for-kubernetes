@@ -2,6 +2,7 @@ package externalevent
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -9,6 +10,12 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/broadcaster"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 	v1 "k8s.io/api/core/v1"
+)
+
+var (
+	expectedEventCategories = []string{
+		"Creation.ImagepullBackoff",
+	}
 )
 
 type Event struct {
@@ -28,6 +35,17 @@ type Store struct {
 	results results
 }
 
+type results struct {
+	EventCount int
+
+	BadEventJSONs            []string
+	ReceivedEventsByCategory map[string]*Event
+	MissingEventCategories   []string
+	MissingFields            map[string][]*Event
+	FirstTimestampsMissing   []*Event
+	LastTimestampsInvalid    []*Event
+}
+
 func NewStore() *Store {
 	return &Store{
 		results: results{
@@ -39,6 +57,11 @@ func NewStore() *Store {
 func (s *Store) MarshalJSON() ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	for _, expectedCategory := range expectedEventCategories {
+		if _, ok := s.results.ReceivedEventsByCategory[expectedCategory]; !ok {
+			s.results.MissingEventCategories = append(s.results.MissingEventCategories, expectedCategory)
+		}
+	}
 	return json.Marshal(s.results)
 }
 
@@ -70,16 +93,6 @@ func (s *Store) Record(event *Event) {
 	s.results.Record(event)
 }
 
-type results struct {
-	EventCount int
-
-	BadEventJSONs []string
-
-	MissingFields          map[string][]*Event
-	FirstTimestampsMissing []*Event
-	LastTimestampsInvalid  []*Event
-}
-
 func (r *results) Record(event *Event) {
 	r.EventCount++
 
@@ -90,6 +103,16 @@ func (r *results) Record(event *Event) {
 	if event.Event.ObjectMeta.Annotations["aria/cluster-uuid"] == "" {
 		r.MissingFields["aria/cluster-uuid"] = append(r.MissingFields["aria/cluster-uuid"], event)
 	}
+
+	if event.Event.ObjectMeta.Annotations["aria/category"] == "" {
+		r.MissingFields["aria/category"] = append(r.MissingFields["aria/category"], event)
+	}
+
+	if event.Event.ObjectMeta.Annotations["aria/subcategory"] == "" {
+		r.MissingFields["aria/subcategory"] = append(r.MissingFields["aria/subcategory"], event)
+	}
+
+	r.recordEventCategory(event)
 
 	if event.Event.ObjectMeta.Name == "" {
 		r.MissingFields["metadata.name"] = append(r.MissingFields["metadata.name"], event)
@@ -144,6 +167,11 @@ func (r *results) Record(event *Event) {
 	if !lastTimestampIsValid(event) {
 		r.LastTimestampsInvalid = append(r.LastTimestampsInvalid, event)
 	}
+}
+
+func (r *results) recordEventCategory(event *Event) {
+	eventCategory := fmt.Sprintf("%s.%s", event.Event.ObjectMeta.Annotations["aria/category"], event.Event.ObjectMeta.Annotations["aria/subcategory"])
+	r.ReceivedEventsByCategory[eventCategory] = event
 }
 
 func lastTimestampIsValid(event *Event) bool {
