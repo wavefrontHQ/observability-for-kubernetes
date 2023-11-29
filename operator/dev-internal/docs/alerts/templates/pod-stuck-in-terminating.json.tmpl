@@ -13,7 +13,7 @@
     },
     {
       "name": "B",
-      "query": "count(ts(\"kubernetes.pod.terminating\", cluster=\"K8S_CLUSTER_NAME\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, reason, DeletionTimestamp, type, metrics)",
+      "query": "count(ts(\"kubernetes.pod_container.status\", cluster=\"K8S_CLUSTER_NAME\" AND status=\"terminated\"), sources, cluster, cluster_uuid, namespace_name, workload_name, workload_kind, pod_name, reason, type, metrics)",
       "queryType": "WQL",
       "alertSourceType": ["VARIABLE"],
       "hidden": true

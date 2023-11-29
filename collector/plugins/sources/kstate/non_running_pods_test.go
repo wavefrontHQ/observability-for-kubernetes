@@ -1,7 +1,6 @@
 package kstate
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -238,38 +237,6 @@ func TestPointsForNonRunningPods(t *testing.T) {
 		assert.Equal(t, "none", point.Tags()["nodename"])
 		assert.Equal(t, "0/1 nodes are available: 1 Insufficient memory.", point.Tags()["message"])
 		assert.Equal(t, "some-workload-name", point.Tags()[workloadNameTag])
-	})
-
-	t.Run("test for terminating pod without nodename", func(t *testing.T) {
-		deletionTime := "2023-06-08T18:35:37Z"
-		testPod := setupTerminatingPod(t, deletionTime, "")
-		workloadCache := fakeWorkloadCache()
-		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
-		assert.Equal(t, 2, len(actualWFPoints))
-		point := actualWFPoints[1].(*wf.Point)
-		assert.Equal(t, fmt.Sprintf("%spod.terminating", testTransform.Prefix), point.Metric)
-		assert.Equal(t, float64(util.POD_PHASE_PENDING), point.Value)
-		assert.Equal(t, deletionTime, point.Tags()["DeletionTimestamp"])
-		assert.Equal(t, "pod1", point.Tags()["pod_name"])
-		assert.Equal(t, "testLabelName", point.Tags()["label.name"])
-		assert.Equal(t, "none", point.Tags()["nodename"])
-		assert.Equal(t, "Terminating", point.Tags()["reason"])
-	})
-
-	t.Run("test for terminating pod with nodename", func(t *testing.T) {
-		deletionTime := "2023-06-08T18:35:37Z"
-		testPod := setupTerminatingPod(t, deletionTime, "some-node")
-		workloadCache := fakeWorkloadCache()
-		actualWFPoints := pointsForNonRunningPods(workloadCache)(testPod, testTransform)
-		assert.Equal(t, 2, len(actualWFPoints))
-		point := actualWFPoints[1].(*wf.Point)
-		assert.Equal(t, fmt.Sprintf("%spod.terminating", testTransform.Prefix), point.Metric)
-		assert.Equal(t, float64(util.POD_PHASE_PENDING), point.Value)
-		assert.Equal(t, deletionTime, point.Tags()["DeletionTimestamp"])
-		assert.Equal(t, "pod1", point.Tags()["pod_name"])
-		assert.Equal(t, "testLabelName", point.Tags()["label.name"])
-		assert.Equal(t, "some-node", point.Tags()["nodename"])
-		assert.Equal(t, "Terminating", point.Tags()["reason"])
 	})
 
 	t.Run("test for completed pod", func(t *testing.T) {
