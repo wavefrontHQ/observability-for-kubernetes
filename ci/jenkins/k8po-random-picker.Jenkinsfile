@@ -15,7 +15,7 @@ pipeline {
       steps {
         script {
           team_name = '*Team Helios* :awesome_sun:'
-          team_members = ['Devon', 'Ginwoo', 'Glenn', 'Kyle', 'Mark', 'Matt']
+          team_members = ['Devon', 'Glenn', 'Kyle', 'Mark', 'Matt']
           if (Calendar.THURSDAY == Calendar.getInstance(TimeZone.getTimeZone("America/Denver")).get(Calendar.DAY_OF_WEEK)) {
             team_members -= 'Devon'
           }
@@ -49,7 +49,7 @@ ${team_members.join('\n')}
       steps {
         script {
           team_name = '*Team Raven* :disco_raven:'
-          team_members = ['Anil', 'Jerry', 'John', 'Yuqi', 'Priya'] // 'Jeremy' is on paternity leave
+          team_members = ['Anil', 'Jerry', 'Yuqi', 'Priya']
 
           // Prevent the same person from being selected twice in a row.
           previous_build_description = currentBuild.getPreviousBuild().description
