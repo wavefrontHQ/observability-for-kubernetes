@@ -39,7 +39,7 @@ type results struct {
 	EventCount int
 
 	BadEventJSONs            []string
-	ReceivedEventsByCategory map[string]*Event
+	ReceivedEventsByCategory map[string][]*Event
 	MissingEventCategories   []string
 	MissingFields            map[string][]*Event
 	FirstTimestampsMissing   []*Event
@@ -49,7 +49,8 @@ type results struct {
 func NewStore() *Store {
 	return &Store{
 		results: results{
-			MissingFields: map[string][]*Event{},
+			MissingFields:            map[string][]*Event{},
+			ReceivedEventsByCategory: map[string][]*Event{},
 		},
 	}
 }
@@ -57,11 +58,14 @@ func NewStore() *Store {
 func (s *Store) MarshalJSON() ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	s.results.MissingEventCategories = make([]string, 0)
 	for _, expectedCategory := range expectedEventCategories {
 		if _, ok := s.results.ReceivedEventsByCategory[expectedCategory]; !ok {
 			s.results.MissingEventCategories = append(s.results.MissingEventCategories, expectedCategory)
 		}
 	}
+
 	return json.Marshal(s.results)
 }
 
@@ -170,8 +174,8 @@ func (r *results) Record(event *Event) {
 }
 
 func (r *results) recordEventCategory(event *Event) {
-	eventCategory := fmt.Sprintf("%s.%s", event.Event.ObjectMeta.Annotations["aria/category"], event.Event.ObjectMeta.Annotations["aria/subcategory"])
-	r.ReceivedEventsByCategory[eventCategory] = event
+	eventCategory := fmt.Sprintf("%s.%s", event.ObjectMeta.Annotations["aria/category"], event.ObjectMeta.Annotations["aria/subcategory"])
+	r.ReceivedEventsByCategory[eventCategory] = append(r.ReceivedEventsByCategory[eventCategory], event)
 }
 
 func lastTimestampIsValid(event *Event) bool {
