@@ -14,7 +14,7 @@ import (
 
 var (
 	expectedEventCategories = []string{
-		"Creation.ImagepullBackoff",
+		"Creation.ImagePullBackOff",
 	}
 )
 
@@ -152,7 +152,7 @@ func (r *results) Record(event *Event) {
 		}
 	}
 
-	if event.Type == "Normal" && event.Reason != "Backoff" {
+	if event.Type == "Normal" && event.Reason != "BackOff" {
 		r.MissingFields["unexpected-field"] = append(r.MissingFields["unexpected-field"], event)
 	}
 

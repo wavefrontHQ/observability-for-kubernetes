@@ -13,7 +13,7 @@ clean:
 	@rm -rf $(BUILD_DIR)
 
 .PHONY: build
-build: fmt vet test-proxy
+build: fmt vet peg test-proxy
 
 .PHONY: fmt
 fmt:
