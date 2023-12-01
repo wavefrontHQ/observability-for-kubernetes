@@ -294,7 +294,7 @@ pipeline {
             lock("integration-test-eks") {
               /* Operator Integration Tests */
               sh 'make clean-cluster'
-              sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r advanced -r common-metrics"'
+              sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r advanced -r common-metrics -r k8s-events-integration"'
               sh 'CLEAN_CLUSTER_ARGS="-n" make clean-cluster'
             }
           }
@@ -330,7 +330,7 @@ pipeline {
               lock("integration-test-aks") {
                 /* Operator Integration Tests */
                 sh 'make clean-cluster'
-                sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics"'
+                sh 'make -C operator integration-test INTEGRATION_TEST_ARGS="-r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r allow-legacy-install -r common-metrics -r k8s-events-integration"'
                 sh 'CLEAN_CLUSTER_ARGS="-n" make clean-cluster'
               }
             }
