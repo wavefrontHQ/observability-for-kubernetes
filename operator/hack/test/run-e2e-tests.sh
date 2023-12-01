@@ -212,7 +212,7 @@ function run_k8s_events_integration_checks() {
   start_forward_test_proxy "observability-system" "test-proxy" /dev/null
   trap 'stop_forward_test_proxy /dev/null' EXIT
 
-  "$REPO_ROOT/scripts/deploy/trigger-warning-events.sh"
+  "$REPO_ROOT/scripts/deploy/deploy-event-targets.sh"
   wait_for_cluster_ready
 
   results_file=$(mktemp)
