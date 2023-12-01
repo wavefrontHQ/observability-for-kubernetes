@@ -14,7 +14,7 @@ func RCCR(options ...RCCROption) *rc.ResourceCustomizations {
 			Namespace: DefaultNamespace,
 		},
 		Spec: rc.ResourceCustomizationsSpec{
-			ByName: map[string]rc.ResourceCustomization{},
+			ByName: map[string]rc.WorkloadCustomization{},
 		},
 	}
 	for _, option := range options {

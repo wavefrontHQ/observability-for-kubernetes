@@ -311,7 +311,7 @@ func TestReconcileAll(t *testing.T) {
 				wavefront.Spec.Experimental.Autotracing.Enable = true
 			}),
 			wftest.RCCR(func(r *rc.ResourceCustomizations) {
-				r.Spec.ByName[util.ProxyName] = rc.ResourceCustomization{
+				r.Spec.ByName[util.ProxyName] = rc.WorkloadCustomization{
 					Resources: rc.Resources{
 						Requests: rc.Resource{
 							CPU:    "50m",
@@ -346,7 +346,7 @@ func TestReconcileAll(t *testing.T) {
 		require.Equal(t, "8Gi", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.StorageEphemeral().String())
 	})
 
-	t.Run("can override tolerations", func(t *testing.T) {
+	t.Run("can override tolerations by workload name", func(t *testing.T) {
 		addedToleration := v1.Toleration{
 			Key:      "foo",
 			Operator: v1.TolerationOpEqual,
@@ -362,12 +362,54 @@ func TestReconcileAll(t *testing.T) {
 			wftest.CR(),
 			wftest.Proxy(wftest.WithReplicas(1, 1)),
 			wftest.RCCR(func(r *rc.ResourceCustomizations) {
-				r.Spec.ByName[util.ProxyName] = rc.ResourceCustomization{
+				r.Spec.ByName[util.ProxyName] = rc.WorkloadCustomization{
+					ResourceCustomization: rc.ResourceCustomization{
+						Tolerations: rc.Tolerations{
+							Add:    []v1.Toleration{addedToleration},
+							Remove: []v1.Toleration{removedToleration},
+						},
+					},
+				}
+			}),
+		)
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.NoError(t, err)
+
+		proxy, err := mockKM.GetProxyDeployment()
+
+		require.NoError(t, err)
+
+		tolerations := proxy.Spec.Template.Spec.Tolerations
+		require.Len(t, tolerations, 1)
+		require.Equal(t, addedToleration, tolerations[0])
+	})
+
+	t.Run("can override tolerations for all resources", func(t *testing.T) {
+		addedToleration := v1.Toleration{
+			Key:      "foo",
+			Operator: v1.TolerationOpEqual,
+			Value:    "bar",
+			Effect:   v1.TaintEffectNoSchedule,
+		}
+		removedToleration := v1.Toleration{
+			Key:    "kubernetes.io/arch",
+			Value:  "arm64",
+			Effect: v1.TaintEffectNoSchedule,
+		}
+		r, mockKM := emptyScenario(
+			wftest.CR(),
+			wftest.Proxy(wftest.WithReplicas(1, 1)),
+			wftest.RCCR(func(r *rc.ResourceCustomizations) {
+				r.Spec.All = []rc.ResourceCustomization{{
 					Tolerations: rc.Tolerations{
 						Add:    []v1.Toleration{addedToleration},
 						Remove: []v1.Toleration{removedToleration},
 					},
-				}
+				}}
 			}),
 		)
 		mockSender := &testhelper.MockSender{}

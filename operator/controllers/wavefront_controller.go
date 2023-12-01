@@ -221,7 +221,7 @@ func (r *WavefrontReconciler) fetchResourceCustomizationsCR(ctx context.Context,
 	}
 	// TODO Write Test
 	//if len(rcList.Items) > 1 {
-	//	return nil, fmt.Errorf("cannot have more than 1 ResourceCustomization CR (have %d)", len(rcList.Items))
+	//	return nil, fmt.Errorf("cannot have more than 1 WorkloadCustomization CR (have %d)", len(rcList.Items))
 	//}
 	return rcList.Items[0], nil
 }
@@ -265,13 +265,18 @@ func (r *WavefrontReconciler) readAndCreateResources(specSet *api.SpecSet) error
 
 func (r *WavefrontReconciler) readAndInterpolateResources(specSet *api.SpecSet) ([]client.Object, []client.Object, error) {
 	var resourcesToApply, resourcesToDelete []client.Object
-	resourcePatches := patch.ByName{}
+	resourcePatches := patch.Composed{}
+	for _, resourceCustomization := range specSet.All {
+		resourcePatches = append(resourcePatches, patch.Tolerations(resourceCustomization.Tolerations))
+	}
+	workloadPatches := patch.ByName{}
 	for workloadName, customizations := range specSet.ByName {
-		resourcePatches[workloadName] = patch.Composed{
+		workloadPatches[workloadName] = patch.Composed{
 			patch.FromRCResources(customizations.Resources),
 			patch.Tolerations(customizations.Tolerations),
 		}
 	}
+	resourcePatches = append(resourcePatches, workloadPatches)
 	builder := components.NewK8sResourceBuilder(resourcePatches)
 	for _, component := range r.components {
 		toApply, toDelete, err := component.Resources(builder)

@@ -27,14 +27,19 @@ type ResourceCustomizations struct {
 }
 
 type ResourceCustomizationsSpec struct {
-	ByName ByName `json:"by_name,omitempty"`
+	All    []ResourceCustomization          `json:"all,omitempty"`
+	ByName map[string]WorkloadCustomization `json:"by_name,omitempty"`
 }
 
-type ByName map[string]ResourceCustomization
-
+// ResourceCustomization is a customization that can be applied to any and all kubernetes resources
 type ResourceCustomization struct {
 	Tolerations Tolerations `json:"tolerations,omitempty"`
-	Resources   Resources   `json:"resources,omitempty"`
+}
+
+// WorkloadCustomization is a customization that can only be applied to resources that have pods
+type WorkloadCustomization struct {
+	ResourceCustomization `json:",inline"`
+	Resources             Resources `json:"resources,omitempty"`
 }
 
 type Tolerations struct {
