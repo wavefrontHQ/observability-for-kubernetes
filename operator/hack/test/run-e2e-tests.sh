@@ -204,56 +204,66 @@ function run_k8s_events_checks() {
 }
 
 function run_k8s_events_integration_checks() {
-  wait_for_cluster_ready
-  sleep 3
+  local event_count=0
+  local missing_event_categories_count
+  local received_event_categories_count
+  local results_file
+
   start_forward_test_proxy "observability-system" "test-proxy" /dev/null
   trap 'stop_forward_test_proxy /dev/null' EXIT
 
   "$REPO_ROOT/scripts/deploy/trigger-warning-events.sh"
+  wait_for_cluster_ready
 
-  local external_events_results_file
-  external_events_results_file=$(mktemp)
-  local external_event_count=0
+  results_file=$(mktemp)
   for i in {1..60}; do
     while true; do # wait until we get a good connection
-      RES_CODE=$(curl --silent --output "$external_events_results_file" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
-      [[ $RES_CODE -lt 200 ]] || break
+      RES_CODE=$(curl --silent --output "${results_file}" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
+      if [[ $RES_CODE -ge 200 ]]; then
+        break
+      fi
     done
 
-    external_event_count=$(jq ".EventCount" "$external_events_results_file")
-
-    if [[ $external_event_count -gt 0 ]]; then
+    event_count=$(jq '.EventCount' "${results_file}")
+    if [[ $event_count -gt 0 ]]; then
       break
     fi
 
     sleep 1
   done
 
-  if [[ $external_event_count -eq 0 ]]; then
-    red "missing external events."
-    echo "$external_events_results_file"
+  echo "External events results file: ${results_file}"
+
+  if [[ $RES_CODE -ge 400 ]]; then
+    red "INVALID EXTERNAL EVENTS"
     exit 1
   fi
 
+  event_count=$(jq '.EventCount' "${results_file}")
+  if [[ $event_count -eq 0 ]]; then
+    red "External events were never received by test-proxy"
+    exit 1
+  fi
 
-  local external_events_fail_count
-  external_events_fail_count=$(jq "(.BadEventJSONs | length) + (.MissingFields | length) + (.MissingEventCategories | length) " "$external_events_results_file")
+  missing_event_categories_count=$(jq "(.MissingEventCategories | length)" "${results_file}")
+  if [[ $missing_event_categories_count -gt 0 ]]; then
+    red "FAILED: EXPECTED EXTERNAL EVENTS WERE NOT RECEIVED"
+    red "Missing: ${missing_event_categories_count}"
+    red "External event categories missing:"
+    jq '.MissingEventCategories' "${results_file}"
 
-  echo "external events results: $external_events_results_file"
-  if [[ $external_events_fail_count -gt 0 ]]; then
-    red "BadEventJSONs: $(jq "(.BadEventJSONs | length)" "$external_events_results_file")"
-    red "MissingFields: $(jq "(.MissingFields | length)" "$external_events_results_file")"
-    red "MissingEventCategories: $(jq "(.MissingEventCategories | length)" "$external_events_results_file")"
-    if [[ $(jq "(.MissingEventCategories | length)" "$external_events_results_file") -le 10 ]]; then
-        jq '.MissingEventCategories' "$external_events_results_file"
+    received_event_categories_count=$(jq "(.ReceivedEventsByCategory | length)" "${results_file}")
+    red "Received: ${received_event_categories_count}"
+    if [[ $received_event_categories_count -gt 0 ]]; then
+      red "External event categories received:"
+      jq '.ReceivedEventsByCategory | keys' "${results_file}"
     fi
+
     exit 1
   fi
 
-  "$REPO_ROOT/scripts/deploy/uninstall-targets.sh"
+  yellow "Integration test complete. ${event_count} events were received."
   stop_forward_test_proxy /dev/null
-
-  yellow "Integration test complete. ${external_event_count} events were checked."
 }
 
 function run_common_metrics_checks() {
@@ -278,6 +288,10 @@ function clean_up_test() {
 
   if [[ "$type" == "control-plane" ]]; then
     delete_etcd_cert_printer
+  fi
+
+  if [[ "$type" == "k8s-events-integration" ]]; then
+    "$REPO_ROOT/scripts/deploy/uninstall-targets.sh"
   fi
 
   wait_for_proxy_termination "$NS"
