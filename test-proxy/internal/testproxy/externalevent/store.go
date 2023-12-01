@@ -17,6 +17,7 @@ var (
 		"Creation.ImagePullBackOff",
 		"Runtime.CrashLoopBackOff",
 		"Scheduling.InsufficientResources",
+		"Storage.ProvisioningFailed",
 	}
 )
 
