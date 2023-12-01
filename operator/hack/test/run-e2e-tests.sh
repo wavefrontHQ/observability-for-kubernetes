@@ -148,62 +148,6 @@ function run_proxy_checks() {
 }
 
 function run_k8s_events_checks() {
-  wait_for_cluster_ready
-  sleep 3
-  start_forward_test_proxy "observability-system" "test-proxy" /dev/null
-  trap 'stop_forward_test_proxy /dev/null' EXIT
-
-  "$REPO_ROOT/scripts/deploy/trigger-events.sh"
-
-  local external_events_results_file
-  external_events_results_file=$(mktemp)
-  local external_event_count=0
-  for i in {1..60}; do
-    while true; do # wait until we get a good connection
-      RES_CODE=$(curl --silent --output "$external_events_results_file" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
-      [[ $RES_CODE -lt 200 ]] || break
-    done
-
-    external_event_count=$(jq ".EventCount" "$external_events_results_file")
-
-    if [[ $external_event_count -gt 0 ]]; then
-      break
-    fi
-
-    sleep 1
-  done
-
-  if [[ $external_event_count -eq 0 ]]; then
-    red "missing external events."
-    echo "$external_events_results_file"
-    exit 1
-  fi
-
-  local external_events_fail_count
-  external_events_fail_count=$(jq "(.BadEventJSONs | length) + (.MissingFields | length) + (.FirstTimestampsMissing | length) + (.LastTimestampsInvalid | length)" "$external_events_results_file")
-
-  echo "external events results file: $external_events_results_file"
-  if [[ $external_events_fail_count -gt 0 ]]; then
-    red "BadEventJSONs: $(jq "(.BadEventJSONs | length)" "$external_events_results_file")"
-    red "MissingFields: $(jq "(.MissingFields | length)" "$external_events_results_file")"
-    red "FirstTimestampsMissing: $(jq "(.FirstTimestampsMissing | length)" "$external_events_results_file")"
-    red "LastTimestampsInvalid: $(jq "(.LastTimestampsInvalid | length)" "$external_events_results_file")"
-    if which pbcopy >/dev/null; then
-        echo "$external_events_results_file" | pbcopy
-    fi
-    exit 1
-  fi
-
-  "$REPO_ROOT/scripts/deploy/uninstall-targets.sh"
-  stop_forward_test_proxy /dev/null
-
-  PROXY_NAME="test-proxy"
-  METRICS_FILE_DIR="$SCRIPT_DIR/metrics"
-  METRICS_FILE_NAME="k8s-events-only"
-  source "$REPO_ROOT/scripts/compare-test-proxy-metrics.sh"
-}
-
-function run_k8s_events_integration_checks() {
   local event_count=0
   local missing_event_categories_count
   local received_event_categories_count
@@ -213,11 +157,12 @@ function run_k8s_events_integration_checks() {
   start_forward_test_proxy "observability-system" "test-proxy" /dev/null
   trap 'stop_forward_test_proxy /dev/null' EXIT
 
+  sleep 10
   "$REPO_ROOT/scripts/deploy/deploy-event-targets.sh"
   wait_for_cluster_ready
 
   printf "Asserting external events .."
-  for i in {1..60}; do
+  for i in {1..10}; do
     printf "."
     sleep 3 # flush interval
 
@@ -249,6 +194,17 @@ function run_k8s_events_integration_checks() {
     exit 1
   fi
 
+  local external_events_fail_count
+  external_events_fail_count=$(jq "(.BadEventJSONs | length) + (.MissingFields | length) + (.FirstTimestampsMissing | length) + (.LastTimestampsInvalid | length)" "${results_file}")
+
+  if [[ $external_events_fail_count -gt 0 ]]; then
+    red "BadEventJSONs: $(jq "(.BadEventJSONs | length)" "${results_file}")"
+    red "MissingFields: $(jq "(.MissingFields | length)" "${results_file}")"
+    red "FirstTimestampsMissing: $(jq "(.FirstTimestampsMissing | length)" "${results_file}")"
+    red "LastTimestampsInvalid: $(jq "(.LastTimestampsInvalid | length)" "${results_file}")"
+    exit 1
+  fi
+
   missing_event_categories_count=$(jq "(.MissingEventCategories | length)" "${results_file}")
   if [[ $missing_event_categories_count -gt 0 ]]; then
     red "FAILED: EXPECTED EXTERNAL EVENTS WERE NOT RECEIVED"
@@ -268,7 +224,13 @@ function run_k8s_events_integration_checks() {
   fi
 
   yellow "Integration test complete. ${event_count} events were received."
+  "$REPO_ROOT/scripts/deploy/uninstall-targets.sh"
   stop_forward_test_proxy /dev/null
+
+  PROXY_NAME="test-proxy"
+  METRICS_FILE_DIR="$SCRIPT_DIR/metrics"
+  METRICS_FILE_NAME="k8s-events-only"
+  source "$REPO_ROOT/scripts/compare-test-proxy-metrics.sh"
 }
 
 function run_common_metrics_checks() {
@@ -293,10 +255,6 @@ function clean_up_test() {
 
   if [[ "$type" == "control-plane" ]]; then
     delete_etcd_cert_printer
-  fi
-
-  if [[ "$type" == "k8s-events-integration" ]]; then
-    "$REPO_ROOT/scripts/deploy/uninstall-targets.sh"
   fi
 
   wait_for_proxy_termination "$NS"
@@ -615,10 +573,6 @@ function run_test() {
     run_k8s_events_checks
   fi
 
-  if [[ " ${checks[*]} " =~ " k8s_events_integration " ]]; then
-    run_k8s_events_integration_checks
-  fi
-
   if [[ " ${checks[*]} " =~ " common-metrics-check " ]]; then
     run_common_metrics_checks
   fi
@@ -711,7 +665,6 @@ function main() {
       "logging-integration"
       "with-http-proxy"
       "k8s-events-only"
-      "k8s-events-integration"
       "control-plane"
       "common-metrics"
     )
@@ -729,7 +682,6 @@ function main() {
 
   for test_to_run in ${tests_to_run[*]} ; do
     run_test_if_enabled $test_to_run "k8s-events-only" "k8s_events"
-    run_test_if_enabled $test_to_run "k8s-events-integration" "k8s_events_integration"
     run_test_if_enabled $test_to_run "validation-errors" "unhealthy"
     run_test_if_enabled $test_to_run "validation-legacy" "unhealthy"
     run_test_if_enabled $test_to_run "validation-errors-preprocessor-rules" "unhealthy"
