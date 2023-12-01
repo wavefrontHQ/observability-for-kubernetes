@@ -208,6 +208,7 @@ function run_k8s_events_integration_checks() {
   local missing_event_categories_count
   local received_event_categories_count
   local results_file
+  results_file=$(mktemp)
 
   start_forward_test_proxy "observability-system" "test-proxy" /dev/null
   trap 'stop_forward_test_proxy /dev/null' EXIT
@@ -215,8 +216,11 @@ function run_k8s_events_integration_checks() {
   "$REPO_ROOT/scripts/deploy/deploy-event-targets.sh"
   wait_for_cluster_ready
 
-  results_file=$(mktemp)
+  printf "Asserting external events .."
   for i in {1..60}; do
+    printf "."
+    sleep 3 # flush interval
+
     while true; do # wait until we get a good connection
       RES_CODE=$(curl --silent --output "${results_file}" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
       if [[ $RES_CODE -ge 200 ]]; then
@@ -224,13 +228,13 @@ function run_k8s_events_integration_checks() {
       fi
     done
 
-    event_count=$(jq '.EventCount' "${results_file}")
-    if [[ $event_count -gt 0 ]]; then
+    missing_event_categories_count=$(jq "(.MissingEventCategories | length)" "${results_file}")
+    if [[ $missing_event_categories_count -eq 0 ]]; then
+      printf " in %d tries" "$i"
       break
     fi
-
-    sleep 1
   done
+  echo " done."
 
   echo "External events results file: ${results_file}"
 
@@ -252,13 +256,14 @@ function run_k8s_events_integration_checks() {
     red "External event categories missing:"
     jq '.MissingEventCategories' "${results_file}"
 
-    received_event_categories_count=$(jq "(.ReceivedEventsByCategory | length)" "${results_file}")
+    received_event_categories_count=$(jq "(.ReceivedEventCategories | length)" "${results_file}")
     red "Received: ${received_event_categories_count}"
     if [[ $received_event_categories_count -gt 0 ]]; then
       red "External event categories received:"
-      jq '.ReceivedEventsByCategory | keys' "${results_file}"
+      jq '.ReceivedEventCategories | keys' "${results_file}"
     fi
 
+    red "Total: ${event_count}"
     exit 1
   fi
 
