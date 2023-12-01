@@ -186,7 +186,7 @@ pipeline {
             GCP_PROJECT = "wavefront-gcp-dev"
             GKE_CLUSTER_NAME = "k8po-jenkins-ci-operator-1"
             GCP_ZONE="a"
-            INTEGRATION_TEST_ARGS="-r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r basic"
+            INTEGRATION_TEST_ARGS="-r k8s-events-only -r validation-errors -r validation-legacy -r validation-errors-preprocessor-rules -r basic -r k8s-events-integration"
           }
           steps {
             /* Setup */
