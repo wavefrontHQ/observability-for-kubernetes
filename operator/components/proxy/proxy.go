@@ -106,7 +106,7 @@ func (component *Component) Validate() validation.Result {
 		errs = append(errs, fmt.Errorf("%s: missing wavefront url", component.Name()))
 	}
 
-	if result := validation.ValidateResources(&component.config.Resources, util.ProxyName); result.IsError() {
+	if result := validation.ValidateContainerResources(&component.config.Resources, util.ProxyName); result.IsError() {
 		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 

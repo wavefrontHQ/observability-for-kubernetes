@@ -75,7 +75,7 @@ func (component *Component) Validate() validation.Result {
 		errs = append(errs, fmt.Errorf("%s: missing cluster name", component.Name()))
 	}
 
-	if result := validation.ValidateResources(&component.config.PEMResources, util.PixieVizierPEMName); result.IsError() {
+	if result := validation.ValidateContainerResources(&component.config.PEMResources, util.PixieVizierPEMName); result.IsError() {
 		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 

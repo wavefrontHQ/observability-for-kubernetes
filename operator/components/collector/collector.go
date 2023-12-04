@@ -83,12 +83,12 @@ func (component *Component) Validate() validation.Result {
 		errs = append(errs, fmt.Errorf("%s: missing namespace", component.Name()))
 	}
 
-	if result := validation.ValidateResources(&component.config.ClusterCollectorResources, util.ClusterCollectorName); result.IsError() {
+	if result := validation.ValidateContainerResources(&component.config.ClusterCollectorResources, util.ClusterCollectorName); result.IsError() {
 		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 
 	if component.config.MetricsEnable {
-		if result := validation.ValidateResources(&component.config.NodeCollectorResources, util.NodeCollectorName); result.IsError() {
+		if result := validation.ValidateContainerResources(&component.config.NodeCollectorResources, util.NodeCollectorName); result.IsError() {
 			errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 		}
 	}

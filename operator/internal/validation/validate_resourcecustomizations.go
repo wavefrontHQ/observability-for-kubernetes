@@ -11,7 +11,7 @@ func ValidateRC(rcCR *rc.ResourceCustomizations) Result {
 		if customization.Resources.IsEmpty() {
 			continue
 		}
-		result := ValidateResources(&customization.Resources, fmt.Sprintf("spec.byName.%s", name))
+		result := ValidateContainerResources(&customization.Resources, fmt.Sprintf("spec.byName.%s", name))
 		if !result.IsValid() {
 			return result
 		}
