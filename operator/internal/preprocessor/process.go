@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	baseYaml "gopkg.in/yaml.v2"
@@ -176,13 +177,13 @@ func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		}
 	}
 	if wfSpec.Experimental.Insights.Enable && !wfSpec.DataCollection.Metrics.Enable && len(wfSpec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU) == 0 {
-		wfSpec.DataCollection.Metrics.ClusterCollector.Resources = wf.Resources{
-			Requests: wf.Resource{
+		wfSpec.DataCollection.Metrics.ClusterCollector.Resources = common.Resources{
+			Requests: common.Resource{
 				CPU:              "200m",
 				Memory:           "10Mi",
 				EphemeralStorage: "20Mi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:              "2000m",
 				Memory:           "512Mi",
 				EphemeralStorage: "1Gi",

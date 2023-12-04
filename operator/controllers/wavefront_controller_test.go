@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	rc "github.com/wavefronthq/observability-for-kubernetes/operator/api/resourcecustomizations/v1alpha1"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
@@ -327,12 +328,12 @@ func TestReconcileAll(t *testing.T) {
 			}),
 			wftest.RCCR(func(r *rc.ResourceCustomizations) {
 				r.Spec.ByName[util.ProxyName] = rc.WorkloadCustomization{
-					Resources: rc.Resources{
-						Requests: rc.Resource{
+					Resources: common.Resources{
+						Requests: common.Resource{
 							CPU:    "50m",
 							Memory: "50Mi",
 						},
-						Limits: rc.Resource{
+						Limits: common.Resource{
 							CPU:    "100m",
 							Memory: "100Mi",
 						},
@@ -1754,9 +1755,9 @@ func TestReconcileInsightsByCR(t *testing.T) {
 					Metrics: wf.Metrics{
 						Enable: false,
 						ClusterCollector: wf.Collector{
-							Resources: wf.Resources{
-								Requests: wf.Resource{CPU: "100m", Memory: "10Mi"},
-								Limits:   wf.Resource{CPU: "250Mi", Memory: "200Mi"},
+							Resources: common.Resources{
+								Requests: common.Resource{CPU: "100m", Memory: "10Mi"},
+								Limits:   common.Resource{CPU: "250Mi", Memory: "200Mi"},
 							},
 						},
 					},

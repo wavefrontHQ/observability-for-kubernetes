@@ -1,0 +1,66 @@
+package validation
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
+	rc "github.com/wavefronthq/observability-for-kubernetes/operator/api/resourcecustomizations/v1alpha1"
+)
+
+func TestValidateRC(t *testing.T) {
+	t.Run("resources", func(t *testing.T) {
+		t.Run("resources cannot specify only requests", func(t *testing.T) {
+			crSet := defaultCRSet()
+			crSet.ResourceCustomizations.Spec.ByName = map[string]rc.WorkloadCustomization{
+				"some-resource": {
+					Resources: common.Resources{
+						Requests: common.Resource{
+							CPU:              "100m",
+							Memory:           "1Gi",
+							EphemeralStorage: "10Gi",
+						},
+					},
+				},
+			}
+			result := Validate(setup(), crSet)
+
+			require.False(t, result.IsValid(), "result should not be valid")
+			require.Contains(t, result.Message(), "invalid spec.byName.some-resource.resources.limits.memory must be set")
+		})
+
+		t.Run("ignores empty resources", func(t *testing.T) {
+			crSet := defaultCRSet()
+			crSet.ResourceCustomizations.Spec.ByName = map[string]rc.WorkloadCustomization{
+				"some-resource": {},
+			}
+			result := Validate(setup(), crSet)
+
+			require.True(t, result.IsValid(), "result should be valid")
+		})
+
+		t.Run("resource limits must be bigger than requests", func(t *testing.T) {
+			crSet := defaultCRSet()
+			crSet.ResourceCustomizations.Spec.ByName = map[string]rc.WorkloadCustomization{
+				"some-resource": {
+					Resources: common.Resources{
+						Requests: common.Resource{
+							CPU:              "1",
+							Memory:           "10Gi",
+							EphemeralStorage: "100Gi",
+						},
+						Limits: common.Resource{
+							CPU:              "100m",
+							Memory:           "1Gi",
+							EphemeralStorage: "10Gi",
+						},
+					},
+				},
+			}
+			result := Validate(setup(), crSet)
+
+			require.False(t, result.IsValid(), "result should not be valid")
+			require.Contains(t, result.Message(), "invalid spec.byName.some-resource.resources.requests.cpu: 1 must be less than or equal to cpu limit")
+		})
+	})
+}

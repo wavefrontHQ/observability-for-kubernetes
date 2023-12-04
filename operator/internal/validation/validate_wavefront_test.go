@@ -3,6 +3,9 @@ package validation
 import (
 	"testing"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
+	rc "github.com/wavefronthq/observability-for-kubernetes/operator/api/resourcecustomizations/v1alpha1"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -19,15 +22,15 @@ import (
 func TestValidate(t *testing.T) {
 	t.Run("wf spec and environment are valid", func(t *testing.T) {
 		appsV1 := setup()
-		require.True(t, Validate(appsV1, defaultWFCR()).IsValid())
-		require.False(t, Validate(appsV1, defaultWFCR()).IsError())
+		require.True(t, Validate(appsV1, defaultCRSet()).IsValid())
+		require.False(t, Validate(appsV1, defaultCRSet()).IsError())
 	})
 
 	t.Run("wf spec is invalid", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
 		appsV1 := setup()
-		result := Validate(appsV1, wfCR)
+		result := Validate(appsV1, crSet)
 		require.False(t, result.IsValid())
 		require.True(t, result.IsError())
 		require.NotEmpty(t, result.Message())
@@ -35,14 +38,14 @@ func TestValidate(t *testing.T) {
 
 	t.Run("legacy install is running", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
-		result := Validate(appsV1, defaultWFCR())
+		result := Validate(appsV1, defaultCRSet())
 		require.False(t, result.IsValid())
 		require.True(t, result.IsError())
 		require.NotEmpty(t, result.Message())
 	})
 
 	t.Run("legacy install is running after operator install", func(t *testing.T) {
-		wfCR := defaultWFCR()
+		crSet := defaultCRSet()
 		legacyCollector := &appsv1.DaemonSet{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
@@ -61,19 +64,19 @@ func TestValidate(t *testing.T) {
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      util.NodeCollectorName,
-				Namespace: wfCR.Spec.Namespace,
+				Namespace: crSet.Wavefront.Spec.Namespace,
 			},
 		}
 		proxy := &appsv1.Deployment{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      util.ProxyName,
-				Namespace: wfCR.Spec.Namespace,
+				Namespace: crSet.Wavefront.Spec.Namespace,
 			},
 		}
 		appsV1 := setup(legacyCollector, legacyDeployment, nodeCollector, proxy)
 
-		result := Validate(appsV1, wfCR)
+		result := Validate(appsV1, crSet)
 		require.False(t, result.IsValid())
 		require.False(t, result.IsError())
 		require.True(t, result.IsWarning())
@@ -82,11 +85,12 @@ func TestValidate(t *testing.T) {
 
 	t.Run("legacy install if only proxy is enabled", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
-		wfCR := wftest.CR(func(w *wf.Wavefront) {
+		crSet := defaultCRSet()
+		crSet.Wavefront = *wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataCollection.Metrics.Enable = false
 			w.Spec.DataCollection.Logging.Enable = false
 		})
-		result := Validate(appsV1, wfCR)
+		result := Validate(appsV1, crSet)
 		require.False(t, result.IsValid())
 		require.True(t, result.IsError())
 		require.NotEmpty(t, result.Message())
@@ -94,12 +98,13 @@ func TestValidate(t *testing.T) {
 
 	t.Run("legacy install if only metrics is enabled", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
-		wfCR := wftest.CR(func(w *wf.Wavefront) {
+		crSet := defaultCRSet()
+		crSet.Wavefront = *wftest.CR(func(w *wf.Wavefront) {
 			w.Spec.DataExport.ExternalWavefrontProxy.Url = "myproxy.com"
 			w.Spec.DataExport.WavefrontProxy.Enable = false
 			w.Spec.DataCollection.Logging.Enable = false
 		})
-		result := Validate(appsV1, wfCR)
+		result := Validate(appsV1, crSet)
 		require.False(t, result.IsValid())
 		require.True(t, result.IsError())
 		require.NotEmpty(t, result.Message())
@@ -107,28 +112,30 @@ func TestValidate(t *testing.T) {
 
 	t.Run("allow legacy install", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
-		wfCR := defaultWFCR()
-		wfCR.Spec.AllowLegacyInstall = true
-		result := Validate(appsV1, wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.AllowLegacyInstall = true
+		result := Validate(appsV1, crSet)
 		require.True(t, result.IsValid())
 		require.False(t, result.IsError())
 	})
 
 	t.Run("allow legacy install if metrics and proxy are not enabled", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
-		wfCR := wftest.NothingEnabledCR(func(w *wf.Wavefront) {
+		crSet := defaultCRSet()
+		crSet.Wavefront = *wftest.NothingEnabledCR(func(w *wf.Wavefront) {
 			w.Spec.Experimental.Insights.Enable = true
 			w.Spec.Experimental.Insights.IngestionUrl = "my.endpoint.com"
 		})
-		result := Validate(appsV1, wfCR)
+		result := Validate(appsV1, crSet)
 		require.True(t, result.IsValid())
 		require.False(t, result.IsError())
 	})
 
 	t.Run("allow legacy install if only k8s events are enabled", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
-		wfCR := wftest.NothingEnabledCR()
-		result := Validate(appsV1, wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront = *wftest.NothingEnabledCR()
+		result := Validate(appsV1, crSet)
 		require.True(t, result.IsValid())
 		require.False(t, result.IsError())
 	})
@@ -137,98 +144,98 @@ func TestValidate(t *testing.T) {
 
 func TestValidateWavefrontSpec(t *testing.T) {
 	t.Run("Has no validation errors", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		require.Empty(t, validateWavefrontSpec(wfCR))
+		crSet := defaultCRSet()
+		require.Empty(t, validateWavefrontSpec(&crSet.Wavefront))
 	})
 
 	t.Run("Validation error when both wavefront proxy and external proxy are defined", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
-		require.Equal(t, "'externalWavefrontProxy.url' and 'wavefrontProxy.enable' should not be set at the same time", validateWavefrontSpec(wfCR).Error())
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
+		require.Equal(t, "'externalWavefrontProxy.url' and 'wavefrontProxy.enable' should not be set at the same time", validateWavefrontSpec(&crSet.Wavefront).Error())
 	})
 
 	t.Run("Validation error wavefront url is required", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.WavefrontUrl = ""
-		validationError := validateWavefrontSpec(wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.WavefrontUrl = ""
+		validationError := validateWavefrontSpec(&crSet.Wavefront)
 		require.NotNilf(t, validationError, "expected validation error")
 		require.Equal(t, "'wavefrontUrl' should be set", validationError.Error())
 	})
 
 	t.Run("Validation error wavefront url is not required when proxy is not enabled", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.WavefrontUrl = ""
-		wfCR.Spec.DataCollection.Metrics.Enable = false
-		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
-		validationError := validateWavefrontSpec(wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.WavefrontUrl = ""
+		crSet.Wavefront.Spec.DataCollection.Metrics.Enable = false
+		crSet.Wavefront.Spec.DataExport.WavefrontProxy.Enable = false
+		validationError := validateWavefrontSpec(&crSet.Wavefront)
 		require.Nilf(t, validationError, "expected no validation error")
 	})
 
 	t.Run("Validation error when auto instrumentation in enabled and an external proxy is configured", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
-		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
-		wfCR.Spec.Experimental.Autotracing.Enable = true
-		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled.", validateWavefrontSpec(wfCR).Error())
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.DataExport.WavefrontProxy.Enable = false
+		crSet.Wavefront.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
+		crSet.Wavefront.Spec.Experimental.Autotracing.Enable = true
+		require.Equal(t, "'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled.", validateWavefrontSpec(&crSet.Wavefront).Error())
 	})
 
 	t.Run("Test multiple errors", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.Experimental.Autotracing.Enable = true
-		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
-		wfCR.Spec.DataCollection.Metrics.Enable = true
-		wfCR.Spec.Experimental.Insights.Enable = true
-		wfCR.Spec.DataCollection.Metrics.CustomConfig = "fake custom config"
-		validationError := validateWavefrontSpec(wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.Experimental.Autotracing.Enable = true
+		crSet.Wavefront.Spec.DataExport.WavefrontProxy.Enable = false
+		crSet.Wavefront.Spec.DataCollection.Metrics.Enable = true
+		crSet.Wavefront.Spec.Experimental.Insights.Enable = true
+		crSet.Wavefront.Spec.DataCollection.Metrics.CustomConfig = "fake custom config"
+		validationError := validateWavefrontSpec(&crSet.Wavefront)
 		require.NotNilf(t, validationError, "expected validation error")
 		require.Equal(t, "[invalid proxy configuration: either set dataExport.proxy.enable to true or configure dataExport.externalWavefrontProxy.url, 'wavefrontProxy.enable' must be enabled when the 'experimental.autoTracing.enable' is enabled., 'metrics.customConfig' must not be set when the 'experimental.insights.enable' is enabled.]", validationError.Error())
 	})
 
 	t.Run("Test No Proxy configuration", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
-		validationError := validateWavefrontSpec(wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.DataExport.WavefrontProxy.Enable = false
+		validationError := validateWavefrontSpec(&crSet.Wavefront)
 		require.NotNilf(t, validationError, "expected validation error")
 	})
 
 	t.Run("Test No Proxy configuration with kubernetes events only enabled", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
-		wfCR.Spec.DataCollection.Metrics.Enable = false
-		wfCR.Spec.Experimental.Insights.Enable = true
-		validationError := validateWavefrontSpec(wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.DataExport.WavefrontProxy.Enable = false
+		crSet.Wavefront.Spec.DataCollection.Metrics.Enable = false
+		crSet.Wavefront.Spec.Experimental.Insights.Enable = true
+		validationError := validateWavefrontSpec(&crSet.Wavefront)
 		require.Nilf(t, validationError, "expected no validation error")
 	})
 
 	t.Run("Test custom config with kubernetes events enabled", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataCollection.Metrics.CustomConfig = "my-custom-config"
-		wfCR.Spec.Experimental.Insights.Enable = true
-		validationError := validateWavefrontSpec(wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.DataCollection.Metrics.CustomConfig = "my-custom-config"
+		crSet.Wavefront.Spec.Experimental.Insights.Enable = true
+		validationError := validateWavefrontSpec(&crSet.Wavefront)
 		require.NotNilf(t, validationError, "expected validation error")
 	})
 
 	t.Run("Test No Proxy configuration with kubernetes events and metrics enabled", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
-		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = ""
-		wfCR.Spec.Experimental.Insights.Enable = true
-		wfCR.Spec.DataCollection.Metrics.Enable = true
-		validationError := validateWavefrontSpec(wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.DataExport.WavefrontProxy.Enable = false
+		crSet.Wavefront.Spec.DataExport.ExternalWavefrontProxy.Url = ""
+		crSet.Wavefront.Spec.Experimental.Insights.Enable = true
+		crSet.Wavefront.Spec.DataCollection.Metrics.Enable = true
+		validationError := validateWavefrontSpec(&crSet.Wavefront)
 		require.NotNilf(t, validationError, "expected validation error")
 	})
 
 	t.Run("Test External Proxy configuration", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.DataExport.WavefrontProxy.Enable = false
-		wfCR.Spec.DataExport.ExternalWavefrontProxy.Url = "https://external-wf-proxy"
-		require.Empty(t, validateWavefrontSpec(wfCR))
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.DataExport.WavefrontProxy.Enable = false
+		crSet.Wavefront.Spec.DataExport.ExternalWavefrontProxy.Url = "https://external-wf-proxy"
+		require.Empty(t, validateWavefrontSpec(&crSet.Wavefront))
 	})
 
 	t.Run("must have a valid ClusterSize", func(t *testing.T) {
-		wfCR := defaultWFCR()
-		wfCR.Spec.ClusterSize += "_bad"
-		err := validateWavefrontSpec(wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.ClusterSize += "_bad"
+		err := validateWavefrontSpec(&crSet.Wavefront)
 		require.ErrorContains(t, err, "clusterSize must be small, medium, large")
 	})
 }
@@ -236,7 +243,7 @@ func TestValidateWavefrontSpec(t *testing.T) {
 func TestValidateEnvironment(t *testing.T) {
 	t.Run("No existing collector daemonset", func(t *testing.T) {
 		appsV1 := setup()
-		require.NoError(t, validateEnvironment(appsV1, defaultWFCR()))
+		require.NoError(t, validateEnvironment(appsV1, &defaultCRSet().Wavefront))
 	})
 
 	t.Run("Return error when only proxy deployment found", func(t *testing.T) {
@@ -249,7 +256,7 @@ func TestValidateEnvironment(t *testing.T) {
 			},
 		}
 		appsV1 := setup(proxyDeployment)
-		validationError := validateEnvironment(appsV1, defaultWFCR())
+		validationError := validateEnvironment(appsV1, &defaultCRSet().Wavefront)
 		require.NotNilf(t, validationError, "expected validation error")
 		requireValidationMessage(t, validationError, namespace)
 	})
@@ -271,7 +278,7 @@ func TestValidateEnvironment(t *testing.T) {
 			},
 		}
 		appsV1 := setup(collectorDaemonSet, proxyDeployment)
-		validationError := validateEnvironment(appsV1, defaultWFCR())
+		validationError := validateEnvironment(appsV1, &defaultCRSet().Wavefront)
 		require.NotNilf(t, validationError, "expected validation error")
 		require.Contains(t, validationError.Error(), "Found legacy Wavefront installation in")
 	})
@@ -279,7 +286,7 @@ func TestValidateEnvironment(t *testing.T) {
 	t.Run("Return error when legacy tkgi install found in namespace tanzu-observability-saas", func(t *testing.T) {
 		namespace := "tanzu-observability-saas"
 		appsV1 := legacyEnvironmentSetup(namespace)
-		validationError := validateEnvironment(appsV1, defaultWFCR())
+		validationError := validateEnvironment(appsV1, &defaultCRSet().Wavefront)
 		require.NotNilf(t, validationError, "expected validation error")
 		requireValidationMessage(t, validationError, namespace)
 	})
@@ -287,7 +294,7 @@ func TestValidateEnvironment(t *testing.T) {
 	t.Run("Return error when collector daemonset found in legacy helm install namespace wavefront", func(t *testing.T) {
 		namespace := "wavefront"
 		appsV1 := legacyEnvironmentSetup(namespace)
-		validationError := validateEnvironment(appsV1, defaultWFCR())
+		validationError := validateEnvironment(appsV1, &defaultCRSet().Wavefront)
 		require.NotNilf(t, validationError, "expected validation error")
 		requireValidationMessage(t, validationError, namespace)
 	})
@@ -295,7 +302,7 @@ func TestValidateEnvironment(t *testing.T) {
 	t.Run("Return error when collector deployment found in legacy tkgi install namespace pks-system", func(t *testing.T) {
 		namespace := "pks-system"
 		appsV1 := legacyEnvironmentSetup(namespace)
-		validationError := validateEnvironment(appsV1, defaultWFCR())
+		validationError := validateEnvironment(appsV1, &defaultCRSet().Wavefront)
 		require.NotNilf(t, validationError, "expected validation error")
 		requireValidationMessage(t, validationError, namespace)
 	})
@@ -303,9 +310,9 @@ func TestValidateEnvironment(t *testing.T) {
 	t.Run("Returns nil when allow legacy install is enabled", func(t *testing.T) {
 		namespace := "wavefront"
 		appsV1 := legacyEnvironmentSetup(namespace)
-		wfCR := defaultWFCR()
-		wfCR.Spec.AllowLegacyInstall = true
-		validationError := validateEnvironment(appsV1, wfCR)
+		crSet := defaultCRSet()
+		crSet.Wavefront.Spec.AllowLegacyInstall = true
+		validationError := validateEnvironment(appsV1, &crSet.Wavefront)
 		require.Nilf(t, validationError, "expected validation error")
 	})
 
@@ -313,12 +320,12 @@ func TestValidateEnvironment(t *testing.T) {
 
 func TestValidateResources(t *testing.T) {
 	t.Run("valid resource limits", func(t *testing.T) {
-		resources := &wf.Resources{
-			Requests: wf.Resource{
+		resources := &common.Resources{
+			Requests: common.Resource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:    "100Mi",
 				Memory: "100Gi",
 			},
@@ -328,8 +335,8 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("does not require requests", func(t *testing.T) {
-		resources := &wf.Resources{
-			Limits: wf.Resource{
+		resources := &common.Resources{
+			Limits: common.Resource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
@@ -339,9 +346,9 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("requires limits", func(t *testing.T) {
-		resources := &wf.Resources{
-			Limits:   wf.Resource{},
-			Requests: wf.Resource{},
+		resources := &common.Resources{
+			Limits:   common.Resource{},
+			Requests: common.Resource{},
 		}
 		result := ValidateResources(resources, "my-resource")
 		require.False(t, result.IsValid())
@@ -349,12 +356,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("missing cpu limit", func(t *testing.T) {
-		resources := &wf.Resources{
-			Requests: wf.Resource{
+		resources := &common.Resources{
+			Requests: common.Resource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				Memory: "100Gi",
 			},
 		}
@@ -364,12 +371,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("missing memory limit", func(t *testing.T) {
-		resources := &wf.Resources{
-			Requests: wf.Resource{
+		resources := &common.Resources{
+			Requests: common.Resource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU: "100Mi",
 			},
 		}
@@ -379,12 +386,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid cpu request", func(t *testing.T) {
-		resources := &wf.Resources{
-			Requests: wf.Resource{
+		resources := &common.Resources{
+			Requests: common.Resource{
 				CPU:    "10MM",
 				Memory: "10Gi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:    "100Mi",
 				Memory: "100Gi",
 			},
@@ -395,12 +402,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid cpu limit", func(t *testing.T) {
-		resources := &wf.Resources{
-			Requests: wf.Resource{
+		resources := &common.Resources{
+			Requests: common.Resource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:    "100MM",
 				Memory: "100Gi",
 			},
@@ -411,12 +418,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid memory request", func(t *testing.T) {
-		resources := &wf.Resources{
-			Requests: wf.Resource{
+		resources := &common.Resources{
+			Requests: common.Resource{
 				CPU:    "10Mi",
 				Memory: "10GG",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:    "100Mi",
 				Memory: "100Gi",
 			},
@@ -427,12 +434,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid memory limit", func(t *testing.T) {
-		resources := &wf.Resources{
-			Requests: wf.Resource{
+		resources := &common.Resources{
+			Requests: common.Resource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:    "100Mi",
 				Memory: "100GG",
 			},
@@ -443,12 +450,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid request memory > limit memory", func(t *testing.T) {
-		resources := &wf.Resources{
-			Requests: wf.Resource{
+		resources := &common.Resources{
+			Requests: common.Resource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:    "100Mi",
 				Memory: "1Gi",
 			},
@@ -459,12 +466,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid request cpu > limit cpu", func(t *testing.T) {
-		resources := &wf.Resources{
-			Requests: wf.Resource{
+		resources := &common.Resources{
+			Requests: common.Resource{
 				CPU:    "1000Mi",
 				Memory: "10Gi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:    "100Mi",
 				Memory: "10Gi",
 			},
@@ -504,28 +511,31 @@ func setup(initObjs ...runtime.Object) client.Client {
 		Build()
 }
 
-func defaultWFCR() *wf.Wavefront {
-	return &wf.Wavefront{
-		TypeMeta: metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "testNamespace",
-			Name:      "wavefront",
-		},
-		Spec: wf.WavefrontSpec{
-			ClusterSize:  wf.ClusterSizeSmall,
-			ClusterName:  "testClusterName",
-			WavefrontUrl: "testWavefrontUrl",
-			DataExport: wf.DataExport{
-				WavefrontProxy: wf.WavefrontProxy{
-					Enable: true,
+func defaultCRSet() *api.CRSet {
+	return &api.CRSet{
+		Wavefront: wf.Wavefront{
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "testNamespace",
+				Name:      "wavefront",
+			},
+			Spec: wf.WavefrontSpec{
+				ClusterSize:  wf.ClusterSizeSmall,
+				ClusterName:  "testClusterName",
+				WavefrontUrl: "testWavefrontUrl",
+				DataExport: wf.DataExport{
+					WavefrontProxy: wf.WavefrontProxy{
+						Enable: true,
+					},
+				},
+				DataCollection: wf.DataCollection{
+					Metrics: wf.Metrics{
+						Enable: true,
+					},
 				},
 			},
-			DataCollection: wf.DataCollection{
-				Metrics: wf.Metrics{
-					Enable: true,
-				},
-			},
+			Status: wf.WavefrontStatus{},
 		},
-		Status: wf.WavefrontStatus{},
+		ResourceCustomizations: rc.ResourceCustomizations{},
 	}
 }

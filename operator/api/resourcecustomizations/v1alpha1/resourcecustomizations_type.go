@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -28,7 +29,7 @@ type ResourceCustomizations struct {
 
 type ResourceCustomizationsSpec struct {
 	All    *ResourceCustomization           `json:"all,omitempty"`
-	ByName map[string]WorkloadCustomization `json:"by_name,omitempty"`
+	ByName map[string]WorkloadCustomization `json:"byName,omitempty"`
 }
 
 // ResourceCustomization is a customization that can be applied to any and all kubernetes resources
@@ -39,32 +40,10 @@ type ResourceCustomization struct {
 // WorkloadCustomization is a customization that can only be applied to resources that have pods
 type WorkloadCustomization struct {
 	ResourceCustomization `json:",inline"`
-	Resources             Resources `json:"resources,omitempty"`
+	Resources             common.Resources `json:"resources,omitempty"`
 }
 
 type Tolerations struct {
 	Add    []corev1.Toleration `json:"add,omitempty"`
 	Remove []corev1.Toleration `json:"remove,omitempty"`
-}
-
-type Resources struct {
-	// Requests CPU and Memory requirements
-	Requests Resource `json:"requests,omitempty" yaml:"requests,omitempty"`
-
-	// Limits CPU and Memory requirements
-	Limits Resource `json:"limits,omitempty" yaml:"limits,omitempty"`
-}
-
-type Resource struct {
-	// CPU is for specifying CPU requirements
-	// +kubebuilder:validation:Pattern:=`^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$`
-	CPU string `json:"cpu,omitempty" yaml:"cpu,omitempty"`
-
-	// Memory is for specifying Memory requirements
-	// +kubebuilder:validation:Pattern:=`^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$`
-	Memory string `json:"memory,omitempty" yaml:"memory,omitempty"`
-
-	// Memory is for specifying Memory requirements
-	// +kubebuilder:validation:Pattern:=`^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$`
-	EphemeralStorage string `json:"ephemeral-storage,omitempty" yaml:"ephemeral-storage,omitempty"`
 }

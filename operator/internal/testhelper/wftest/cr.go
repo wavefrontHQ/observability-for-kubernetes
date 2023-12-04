@@ -1,6 +1,7 @@
 package wftest
 
 import (
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -19,22 +20,22 @@ func CR(options ...CROption) *wf.Wavefront {
 				ControlPlane: wf.ControlPlane{
 					Enable: true,
 				},
-				ClusterCollector: wf.Collector{Resources: wf.Resources{
-					Requests: wf.Resource{
+				ClusterCollector: wf.Collector{Resources: common.Resources{
+					Requests: common.Resource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
-					Limits: wf.Resource{
+					Limits: common.Resource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
 				}},
-				NodeCollector: wf.Collector{Resources: wf.Resources{
-					Requests: wf.Resource{
+				NodeCollector: wf.Collector{Resources: common.Resources{
+					Requests: common.Resource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
-					Limits: wf.Resource{
+					Limits: common.Resource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
@@ -44,12 +45,12 @@ func CR(options ...CROption) *wf.Wavefront {
 			Logging: wf.Logging{
 				Enable:         true,
 				LoggingVersion: "2.1.6",
-				Resources: wf.Resources{
-					Requests: wf.Resource{
+				Resources: common.Resources{
+					Requests: common.Resource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
-					Limits: wf.Resource{
+					Limits: common.Resource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
@@ -60,13 +61,13 @@ func CR(options ...CROption) *wf.Wavefront {
 			WavefrontProxy: wf.WavefrontProxy{
 				Enable:     true,
 				MetricPort: 2878,
-				Resources: wf.Resources{
-					Requests: wf.Resource{
+				Resources: common.Resources{
+					Requests: common.Resource{
 						CPU:              "100m",
 						Memory:           "1Gi",
 						EphemeralStorage: "2Gi",
 					},
-					Limits: wf.Resource{
+					Limits: common.Resource{
 						CPU:              "1",
 						Memory:           "4Gi",
 						EphemeralStorage: "8Gi",

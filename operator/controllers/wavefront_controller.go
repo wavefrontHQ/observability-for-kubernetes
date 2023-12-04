@@ -150,7 +150,7 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		validationResult = validation.NewErrorResult(err)
 	} else {
-		validationResult = r.validate(&crSet.Wavefront)
+		validationResult = r.validate(crSet)
 	}
 
 	if !validationResult.IsError() {
@@ -226,7 +226,7 @@ func (r *WavefrontReconciler) fetchResourceCustomizationsCR(ctx context.Context,
 }
 
 // Validating Wavefront CR
-func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront) validation.Result {
+func (r *WavefrontReconciler) validate(crSet *api.CRSet) validation.Result {
 	var result validation.Result
 	for _, component := range r.components {
 		result = component.Validate()
@@ -239,7 +239,7 @@ func (r *WavefrontReconciler) validate(wavefront *wf.Wavefront) validation.Resul
 		return result
 	}
 	//TODO - Component Refactor - move all non cross component validation to components
-	return validation.Validate(r.Client, wavefront)
+	return validation.Validate(r.Client, crSet)
 }
 
 // Read, Create, Update and Delete Resources.
@@ -284,7 +284,7 @@ func makeResourcePatch(specSet *api.SpecSet) patch.Composed {
 	workloadPatches := patch.ByName{}
 	for workloadName, customizations := range specSet.ResourceCustomizationsSpec.ByName {
 		workloadPatches[workloadName] = patch.Composed{
-			patch.FromRCResources(customizations.Resources),
+			patch.ContainerResources(customizations.Resources),
 			patch.Tolerations(customizations.Tolerations),
 		}
 	}

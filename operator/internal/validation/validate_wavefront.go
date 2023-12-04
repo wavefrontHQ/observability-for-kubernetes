@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -72,7 +73,7 @@ func ValidateWF(objClient client.Client, wavefront *wf.Wavefront) Result {
 	return Result{}
 }
 
-func ValidateResources(resources *wf.Resources, resourceName string) Result {
+func ValidateResources(resources *common.Resources, resourceName string) Result {
 	var errs []error
 	if len(resources.Limits.Memory) == 0 {
 		errs = append(errs, fmt.Errorf("invalid %s.resources.limits.memory must be set", resourceName))
@@ -159,7 +160,7 @@ func validateWavefrontProxyConfig(wavefront *wf.Wavefront) []error {
 	return errs
 }
 
-func validateResources(resources *wf.Resources, resourcePath string) []error {
+func validateResources(resources *common.Resources, resourcePath string) []error {
 	var errs []error
 
 	if err := validateResourceQuantity(resources.Requests.CPU, resourcePath+".requests.cpu"); err != nil {

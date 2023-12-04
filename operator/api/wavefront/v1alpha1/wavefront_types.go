@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -228,7 +229,7 @@ type WavefrontProxy struct {
 
 	// Resources Compute resources required by the Proxy containers.
 	// +kubebuilder:default:={requests: {cpu: "100m", memory: "1Gi", ephemeral-storage: "2Gi"}, limits: {cpu: "1000m", memory: "4Gi", ephemeral-storage: "8Gi"}}
-	Resources Resources `json:"resources,omitempty"`
+	Resources common.Resources `json:"resources,omitempty"`
 
 	// Replicas number of replicas
 	// +kubebuilder:default:=1
@@ -358,24 +359,6 @@ type OTLP struct {
 	ResourceAttrsOnMetricsIncluded bool `json:"resourceAttrsOnMetricsIncluded,omitempty"`
 }
 
-type Resource struct {
-	// CPU is for specifying CPU requirements
-	// +kubebuilder:validation:Pattern:=`^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$`
-	CPU string `json:"cpu,omitempty" yaml:"cpu,omitempty"`
-
-	// Memory is for specifying Memory requirements
-	// +kubebuilder:validation:Pattern:=`^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$`
-	Memory string `json:"memory,omitempty" yaml:"memory,omitempty"`
-
-	// Memory is for specifying Memory requirements
-	// +kubebuilder:validation:Pattern:=`^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$`
-	EphemeralStorage string `json:"ephemeral-storage,omitempty" yaml:"ephemeral-storage,omitempty"`
-}
-
-func (r *Resource) IsEmpty() bool {
-	return r.CPU == "" && r.Memory == "" && r.EphemeralStorage == ""
-}
-
 type Toleration struct {
 	// Key is the taint key that the toleration applies to. Empty means match all taint keys.
 	// If the key is empty, operator must be Exists; this combination means to match all values and all keys.
@@ -396,14 +379,6 @@ type Toleration struct {
 	// When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.
 	// +kubebuilder:validation:Enum:=NoSchedule;PreferNoSchedule;NoExecute
 	Effect string `json:"effect,omitempty" yaml:"effect,omitempty"`
-}
-
-type Resources struct {
-	// Requests CPU and Memory requirements
-	Requests Resource `json:"requests,omitempty" yaml:"requests,omitempty"`
-
-	// Limits CPU and Memory requirements
-	Limits Resource `json:"limits,omitempty" yaml:"limits,omitempty"`
 }
 
 type ControlPlane struct {
@@ -450,7 +425,7 @@ type LogFilters struct {
 
 type Collector struct {
 	// Resources Compute resources required by the Collector containers.
-	Resources Resources `json:"resources,omitempty"`
+	Resources common.Resources `json:"resources,omitempty"`
 }
 
 type TableStoreLimits struct {
@@ -475,7 +450,7 @@ type Logging struct {
 
 	// Resources Compute resources required by the logging containers.
 	// +kubebuilder:default:={requests: {cpu: "100m", memory: "50Mi", ephemeral-storage: "1Gi"}, limits: {cpu: "200m", memory: "256Mi", ephemeral-storage: "2Gi"}}
-	Resources Resources `json:"resources,omitempty"`
+	Resources common.Resources `json:"resources,omitempty"`
 
 	// Tags are a map of key value pairs that are added to all logging emitted.
 	Tags map[string]string `json:"tags,omitempty"`
