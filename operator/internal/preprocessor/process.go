@@ -185,13 +185,13 @@ func preProcessExperimental(client crClient.Client, wfSpec *wf.WavefrontSpec) er
 		}
 	}
 	if wfSpec.Experimental.Insights.Enable && !wfSpec.DataCollection.Metrics.Enable && len(wfSpec.DataCollection.Metrics.ClusterCollector.Resources.Limits.CPU) == 0 {
-		wfSpec.DataCollection.Metrics.ClusterCollector.Resources = common.Resources{
-			Requests: common.Resource{
+		wfSpec.DataCollection.Metrics.ClusterCollector.Resources = common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:              "200m",
 				Memory:           "10Mi",
 				EphemeralStorage: "20Mi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:              "2000m",
 				Memory:           "512Mi",
 				EphemeralStorage: "1Gi",

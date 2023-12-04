@@ -448,8 +448,8 @@ func TestProcess(t *testing.T) {
 			crSet := defaultCRSet()
 			crSet.ResourceCustomizations.Spec.ByName = map[string]rc.WorkloadCustomization{
 				"some-deployment": {
-					Resources: common.Resources{
-						Limits: common.Resource{
+					Resources: common.ContainerResources{
+						Limits: common.ContainerResource{
 							CPU:              "100m",
 							Memory:           "100Mi",
 							EphemeralStorage: "200Mi",
@@ -468,13 +468,13 @@ func TestProcess(t *testing.T) {
 			crSet := defaultCRSet()
 			crSet.ResourceCustomizations.Spec.ByName = map[string]rc.WorkloadCustomization{
 				"some-deployment": {
-					Resources: common.Resources{
-						Requests: common.Resource{
+					Resources: common.ContainerResources{
+						Requests: common.ContainerResource{
 							CPU:              "50m",
 							Memory:           "50Mi",
 							EphemeralStorage: "100Mi",
 						},
-						Limits: common.Resource{
+						Limits: common.ContainerResource{
 							CPU:              "100m",
 							Memory:           "100Mi",
 							EphemeralStorage: "200Mi",

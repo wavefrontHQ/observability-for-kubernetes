@@ -228,12 +228,12 @@ func validLoggingComponentConfig() ComponentConfig {
 		ImageRegistry:          wftest.DefaultImageRegistry,
 		ProxyAddress:           fmt.Sprintf("http://%s", wftest.DefaultProxyAddress),
 		ProxyAvailableReplicas: 1,
-		Resources: common.Resources{
-			Requests: common.Resource{
+		Resources: common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "50Mi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "50Mi",
 			},

@@ -40,7 +40,7 @@ type ResourceCustomization struct {
 // WorkloadCustomization is a customization that can only be applied to resources that have pods
 type WorkloadCustomization struct {
 	ResourceCustomization `json:",inline"`
-	Resources             common.Resources `json:"resources,omitempty"`
+	Resources             common.ContainerResources `json:"resources,omitempty"`
 }
 
 type Tolerations struct {

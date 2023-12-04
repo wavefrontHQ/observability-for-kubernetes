@@ -14,8 +14,8 @@ func TestValidateRC(t *testing.T) {
 			crSet := defaultCRSet()
 			crSet.ResourceCustomizations.Spec.ByName = map[string]rc.WorkloadCustomization{
 				"some-resource": {
-					Resources: common.Resources{
-						Requests: common.Resource{
+					Resources: common.ContainerResources{
+						Requests: common.ContainerResource{
 							CPU:              "100m",
 							Memory:           "1Gi",
 							EphemeralStorage: "10Gi",
@@ -43,13 +43,13 @@ func TestValidateRC(t *testing.T) {
 			crSet := defaultCRSet()
 			crSet.ResourceCustomizations.Spec.ByName = map[string]rc.WorkloadCustomization{
 				"some-resource": {
-					Resources: common.Resources{
-						Requests: common.Resource{
+					Resources: common.ContainerResources{
+						Requests: common.ContainerResource{
 							CPU:              "1",
 							Memory:           "10Gi",
 							EphemeralStorage: "100Gi",
 						},
-						Limits: common.Resource{
+						Limits: common.ContainerResource{
 							CPU:              "100m",
 							Memory:           "1Gi",
 							EphemeralStorage: "10Gi",

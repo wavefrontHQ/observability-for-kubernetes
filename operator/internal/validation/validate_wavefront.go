@@ -73,7 +73,7 @@ func ValidateWF(objClient client.Client, wavefront *wf.Wavefront) Result {
 	return Result{}
 }
 
-func ValidateResources(resources *common.Resources, resourceName string) Result {
+func ValidateResources(resources *common.ContainerResources, resourceName string) Result {
 	var errs []error
 	if len(resources.Limits.Memory) == 0 {
 		errs = append(errs, fmt.Errorf("invalid %s.resources.limits.memory must be set", resourceName))
@@ -160,7 +160,7 @@ func validateWavefrontProxyConfig(wavefront *wf.Wavefront) []error {
 	return errs
 }
 
-func validateResources(resources *common.Resources, resourcePath string) []error {
+func validateResources(resources *common.ContainerResources, resourcePath string) []error {
 	var errs []error
 
 	if err := validateResourceQuantity(resources.Requests.CPU, resourcePath+".requests.cpu"); err != nil {

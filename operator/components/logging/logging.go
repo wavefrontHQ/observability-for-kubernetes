@@ -35,7 +35,7 @@ type ComponentConfig struct {
 	TagAllowList           map[string][]string
 	TagDenyList            map[string][]string
 	Tolerations            []wf.Toleration
-	Resources              common.Resources
+	Resources              common.ContainerResources
 
 	// internal use only
 	ConfigHash string

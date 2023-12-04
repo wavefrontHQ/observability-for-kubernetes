@@ -27,7 +27,7 @@ type ComponentConfig struct {
 	ImageRegistry        string
 	WavefrontTokenSecret string
 	WavefrontUrl         string
-	Resources            common.Resources
+	Resources            common.ContainerResources
 	MetricPort           int
 	ProxyVersion         string
 	ConfigHash           string

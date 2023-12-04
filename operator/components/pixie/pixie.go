@@ -26,13 +26,13 @@ type Config struct {
 	// Specify a source group (kAll, kProd, kMetrics, kTracers, kProfiler, kTCPStats) or individual sources.
 	// You can find the names of sources at https://github.com/pixie-io/pixie/blob/release/vizier/v0.14.2/src/stirling/stirling.cc
 	StirlingSources             []string
-	PEMResources                common.Resources
+	PEMResources                common.ContainerResources
 	TableStoreLimits            wf.TableStoreLimits
-	KelvinResources             common.Resources
-	QueryBrokerResources        common.Resources
-	NATSResources               common.Resources
-	MetadataResources           common.Resources
-	CertProvisionerJobResources common.Resources
+	KelvinResources             common.ContainerResources
+	QueryBrokerResources        common.ContainerResources
+	NATSResources               common.ContainerResources
+	MetadataResources           common.ContainerResources
+	CertProvisionerJobResources common.ContainerResources
 	MaxHTTPBodyBytes            int
 }
 

@@ -229,7 +229,7 @@ type WavefrontProxy struct {
 
 	// Resources Compute resources required by the Proxy containers.
 	// +kubebuilder:default:={requests: {cpu: "100m", memory: "1Gi", ephemeral-storage: "2Gi"}, limits: {cpu: "1000m", memory: "4Gi", ephemeral-storage: "8Gi"}}
-	Resources common.Resources `json:"resources,omitempty"`
+	Resources common.ContainerResources `json:"resources,omitempty"`
 
 	// Replicas number of replicas
 	// +kubebuilder:default:=1
@@ -425,7 +425,7 @@ type LogFilters struct {
 
 type Collector struct {
 	// Resources Compute resources required by the Collector containers.
-	Resources common.Resources `json:"resources,omitempty"`
+	Resources common.ContainerResources `json:"resources,omitempty"`
 }
 
 type TableStoreLimits struct {
@@ -450,7 +450,7 @@ type Logging struct {
 
 	// Resources Compute resources required by the logging containers.
 	// +kubebuilder:default:={requests: {cpu: "100m", memory: "50Mi", ephemeral-storage: "1Gi"}, limits: {cpu: "200m", memory: "256Mi", ephemeral-storage: "2Gi"}}
-	Resources common.Resources `json:"resources,omitempty"`
+	Resources common.ContainerResources `json:"resources,omitempty"`
 
 	// Tags are a map of key value pairs that are added to all logging emitted.
 	Tags map[string]string `json:"tags,omitempty"`

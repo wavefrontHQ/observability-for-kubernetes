@@ -20,22 +20,22 @@ func CR(options ...CROption) *wf.Wavefront {
 				ControlPlane: wf.ControlPlane{
 					Enable: true,
 				},
-				ClusterCollector: wf.Collector{Resources: common.Resources{
-					Requests: common.Resource{
+				ClusterCollector: wf.Collector{Resources: common.ContainerResources{
+					Requests: common.ContainerResource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
-					Limits: common.Resource{
+					Limits: common.ContainerResource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
 				}},
-				NodeCollector: wf.Collector{Resources: common.Resources{
-					Requests: common.Resource{
+				NodeCollector: wf.Collector{Resources: common.ContainerResources{
+					Requests: common.ContainerResource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
-					Limits: common.Resource{
+					Limits: common.ContainerResource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
@@ -45,12 +45,12 @@ func CR(options ...CROption) *wf.Wavefront {
 			Logging: wf.Logging{
 				Enable:         true,
 				LoggingVersion: "2.1.6",
-				Resources: common.Resources{
-					Requests: common.Resource{
+				Resources: common.ContainerResources{
+					Requests: common.ContainerResource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
-					Limits: common.Resource{
+					Limits: common.ContainerResource{
 						CPU:    "100m",
 						Memory: "50Mi",
 					},
@@ -61,13 +61,13 @@ func CR(options ...CROption) *wf.Wavefront {
 			WavefrontProxy: wf.WavefrontProxy{
 				Enable:     true,
 				MetricPort: 2878,
-				Resources: common.Resources{
-					Requests: common.Resource{
+				Resources: common.ContainerResources{
+					Requests: common.ContainerResource{
 						CPU:              "100m",
 						Memory:           "1Gi",
 						EphemeralStorage: "2Gi",
 					},
-					Limits: common.Resource{
+					Limits: common.ContainerResource{
 						CPU:              "1",
 						Memory:           "4Gi",
 						EphemeralStorage: "8Gi",

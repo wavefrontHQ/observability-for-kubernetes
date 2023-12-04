@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type ContainerResources common.Resources
+type ContainerResources common.ContainerResources
 
 func (r ContainerResources) Apply(resource *unstructured.Unstructured) {
 	containers, _, _ := unstructured.NestedSlice(resource.Object, "spec", "template", "spec", "containers")
@@ -23,7 +23,7 @@ func (r ContainerResources) Apply(resource *unstructured.Unstructured) {
 	_ = unstructured.SetNestedSlice(resource.Object, containers, "spec", "template", "spec", "containers")
 }
 
-func applyContainerResource(override common.Resource, requirement string, container map[string]any) {
+func applyContainerResource(override common.ContainerResource, requirement string, container map[string]any) {
 	if len(override.CPU) > 0 {
 		_ = unstructured.SetNestedField(container, override.CPU, "resources", requirement, v1.ResourceCPU.String())
 	}

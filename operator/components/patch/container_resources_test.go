@@ -16,7 +16,7 @@ const ResourceRequest = "request"
 func TestContainerResources(t *testing.T) {
 	t.Run("apply-able to non-resourced objects", func(t *testing.T) {
 		p := patch.ContainerResources{
-			Requests: common.Resource{
+			Requests: common.ContainerResource{
 				EphemeralStorage: "10Gi",
 			},
 		}
@@ -41,7 +41,7 @@ func TestContainerResources(t *testing.T) {
 
 	t.Run("sets the requests when only the limits are specified", func(t *testing.T) {
 		p := patch.ContainerResources{
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:              "100m",
 				Memory:           "1Gi",
 				EphemeralStorage: "10Gi",
@@ -69,10 +69,10 @@ func TestContainerResources(t *testing.T) {
 		{
 			name: "cpu",
 			resources: patch.ContainerResources{
-				Limits: common.Resource{
+				Limits: common.ContainerResource{
 					CPU: ResourceLimit,
 				},
-				Requests: common.Resource{
+				Requests: common.ContainerResource{
 					CPU: ResourceRequest,
 				},
 			},
@@ -80,10 +80,10 @@ func TestContainerResources(t *testing.T) {
 		{
 			name: "memory",
 			resources: patch.ContainerResources{
-				Limits: common.Resource{
+				Limits: common.ContainerResource{
 					Memory: ResourceLimit,
 				},
-				Requests: common.Resource{
+				Requests: common.ContainerResource{
 					Memory: ResourceRequest,
 				},
 			},
@@ -91,10 +91,10 @@ func TestContainerResources(t *testing.T) {
 		{
 			name: "ephemeral-storage",
 			resources: patch.ContainerResources{
-				Limits: common.Resource{
+				Limits: common.ContainerResource{
 					EphemeralStorage: ResourceLimit,
 				},
-				Requests: common.Resource{
+				Requests: common.ContainerResource{
 					EphemeralStorage: ResourceRequest,
 				},
 			},

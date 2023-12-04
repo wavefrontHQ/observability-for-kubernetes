@@ -28,8 +28,8 @@ type ComponentConfig struct {
 	ProxyAvailableReplicas    int
 	ImageRegistry             string
 	CollectorVersion          string
-	ClusterCollectorResources common.Resources
-	NodeCollectorResources    common.Resources
+	ClusterCollectorResources common.ContainerResources
+	NodeCollectorResources    common.ContainerResources
 	CollectorConfigName       string
 
 	// optional

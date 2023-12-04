@@ -50,7 +50,7 @@ func TestValidate(t *testing.T) {
 	t.Run("Does not validates node collector resources when metrics is not enabled", func(t *testing.T) {
 		config := minimalComponentConfig()
 		config.MetricsEnable = false
-		config.NodeCollectorResources = common.Resources{}
+		config.NodeCollectorResources = common.ContainerResources{}
 
 		component, _ := NewComponent(ComponentDir, config)
 		result := component.Validate()
@@ -150,22 +150,22 @@ func minimalComponentConfig() ComponentConfig {
 		ProxyAvailableReplicas:    1,
 		ImageRegistry:             wftest.DefaultImageRegistry,
 		CollectorVersion:          "1.23",
-		ClusterCollectorResources: common.Resources{
-			Requests: common.Resource{
+		ClusterCollectorResources: common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "50Mi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "50Mi",
 			},
 		},
-		NodeCollectorResources: common.Resources{
-			Requests: common.Resource{
+		NodeCollectorResources: common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "50Mi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100Mi",
 				Memory: "50Mi",
 			},

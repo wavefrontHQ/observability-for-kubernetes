@@ -133,7 +133,7 @@ func TestValidate(t *testing.T) {
 
 	t.Run("empty resources is not valid", func(t *testing.T) {
 		config := validComponentConfig()
-		config.Resources = common.Resources{}
+		config.Resources = common.ContainerResources{}
 		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
@@ -204,12 +204,12 @@ func validComponentConfig() ComponentConfig {
 		ImageRegistry:        wftest.DefaultImageRegistry,
 		WavefrontTokenSecret: "secret",
 		WavefrontUrl:         "https://example.wavefront.com",
-		Resources: common.Resources{
-			Requests: common.Resource{
+		Resources: common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},

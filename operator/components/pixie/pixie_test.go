@@ -316,52 +316,52 @@ func validComponentConfig() Config {
 		ControllerManagerUID: "controller-manager-uid",
 		ClusterUUID:          "cluster-uuid",
 		ClusterName:          wftest.DefaultClusterName,
-		PEMResources: common.Resources{
-			Limits: common.Resource{
+		PEMResources: common.ContainerResources{
+			Limits: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},
-			Requests: common.Resource{
+			Requests: common.ContainerResource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},
 		},
-		QueryBrokerResources: common.Resources{
-			Limits: common.Resource{
+		QueryBrokerResources: common.ContainerResources{
+			Limits: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},
-			Requests: common.Resource{
+			Requests: common.ContainerResource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},
 		},
-		MetadataResources: common.Resources{
-			Limits: common.Resource{
+		MetadataResources: common.ContainerResources{
+			Limits: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},
-			Requests: common.Resource{
+			Requests: common.ContainerResource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},
 		},
-		KelvinResources: common.Resources{
-			Limits: common.Resource{
+		KelvinResources: common.ContainerResources{
+			Limits: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},
-			Requests: common.Resource{
+			Requests: common.ContainerResource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},
 		},
-		NATSResources: common.Resources{
-			Limits: common.Resource{
+		NATSResources: common.ContainerResources{
+			Limits: common.ContainerResource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},
-			Requests: common.Resource{
+			Requests: common.ContainerResource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},

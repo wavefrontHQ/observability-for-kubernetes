@@ -320,12 +320,12 @@ func TestValidateEnvironment(t *testing.T) {
 
 func TestValidateResources(t *testing.T) {
 	t.Run("valid resource limits", func(t *testing.T) {
-		resources := &common.Resources{
-			Requests: common.Resource{
+		resources := &common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100Mi",
 				Memory: "100Gi",
 			},
@@ -335,8 +335,8 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("does not require requests", func(t *testing.T) {
-		resources := &common.Resources{
-			Limits: common.Resource{
+		resources := &common.ContainerResources{
+			Limits: common.ContainerResource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
@@ -346,9 +346,9 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("requires limits", func(t *testing.T) {
-		resources := &common.Resources{
-			Limits:   common.Resource{},
-			Requests: common.Resource{},
+		resources := &common.ContainerResources{
+			Limits:   common.ContainerResource{},
+			Requests: common.ContainerResource{},
 		}
 		result := ValidateResources(resources, "my-resource")
 		require.False(t, result.IsValid())
@@ -356,12 +356,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("missing cpu limit", func(t *testing.T) {
-		resources := &common.Resources{
-			Requests: common.Resource{
+		resources := &common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				Memory: "100Gi",
 			},
 		}
@@ -371,12 +371,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("missing memory limit", func(t *testing.T) {
-		resources := &common.Resources{
-			Requests: common.Resource{
+		resources := &common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU: "100Mi",
 			},
 		}
@@ -386,12 +386,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid cpu request", func(t *testing.T) {
-		resources := &common.Resources{
-			Requests: common.Resource{
+		resources := &common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "10MM",
 				Memory: "10Gi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100Mi",
 				Memory: "100Gi",
 			},
@@ -402,12 +402,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid cpu limit", func(t *testing.T) {
-		resources := &common.Resources{
-			Requests: common.Resource{
+		resources := &common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100MM",
 				Memory: "100Gi",
 			},
@@ -418,12 +418,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid memory request", func(t *testing.T) {
-		resources := &common.Resources{
-			Requests: common.Resource{
+		resources := &common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "10Mi",
 				Memory: "10GG",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100Mi",
 				Memory: "100Gi",
 			},
@@ -434,12 +434,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid memory limit", func(t *testing.T) {
-		resources := &common.Resources{
-			Requests: common.Resource{
+		resources := &common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100Mi",
 				Memory: "100GG",
 			},
@@ -450,12 +450,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid request memory > limit memory", func(t *testing.T) {
-		resources := &common.Resources{
-			Requests: common.Resource{
+		resources := &common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "10Mi",
 				Memory: "10Gi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100Mi",
 				Memory: "1Gi",
 			},
@@ -466,12 +466,12 @@ func TestValidateResources(t *testing.T) {
 	})
 
 	t.Run("invalid request cpu > limit cpu", func(t *testing.T) {
-		resources := &common.Resources{
-			Requests: common.Resource{
+		resources := &common.ContainerResources{
+			Requests: common.ContainerResource{
 				CPU:    "1000Mi",
 				Memory: "10Gi",
 			},
-			Limits: common.Resource{
+			Limits: common.ContainerResource{
 				CPU:    "100Mi",
 				Memory: "10Gi",
 			},

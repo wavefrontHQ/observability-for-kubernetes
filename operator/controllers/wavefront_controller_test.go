@@ -328,12 +328,12 @@ func TestReconcileAll(t *testing.T) {
 			}),
 			wftest.RCCR(func(r *rc.ResourceCustomizations) {
 				r.Spec.ByName[util.ProxyName] = rc.WorkloadCustomization{
-					Resources: common.Resources{
-						Requests: common.Resource{
+					Resources: common.ContainerResources{
+						Requests: common.ContainerResource{
 							CPU:    "50m",
 							Memory: "50Mi",
 						},
-						Limits: common.Resource{
+						Limits: common.ContainerResource{
 							CPU:    "100m",
 							Memory: "100Mi",
 						},
@@ -1755,9 +1755,9 @@ func TestReconcileInsightsByCR(t *testing.T) {
 					Metrics: wf.Metrics{
 						Enable: false,
 						ClusterCollector: wf.Collector{
-							Resources: common.Resources{
-								Requests: common.Resource{CPU: "100m", Memory: "10Mi"},
-								Limits:   common.Resource{CPU: "250Mi", Memory: "200Mi"},
+							Resources: common.ContainerResources{
+								Requests: common.ContainerResource{CPU: "100m", Memory: "10Mi"},
+								Limits:   common.ContainerResource{CPU: "250Mi", Memory: "200Mi"},
 							},
 						},
 					},
