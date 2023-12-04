@@ -163,11 +163,11 @@ func (r *results) Record(event *Event) {
 		r.MissingFields["message"] = append(r.MissingFields["message"], event)
 	}
 
-	if event.Event.Source.Component == "" {
+	if event.Event.Source.Component == "" && event.Event.ReportingController == "" {
 		r.MissingFields["source.component"] = append(r.MissingFields["source.component"], event)
 	}
 
-	if event.Event.FirstTimestamp.IsZero() {
+	if event.Event.FirstTimestamp.IsZero() && event.Event.EventTime.IsZero() {
 		r.FirstTimestampsMissing = append(r.FirstTimestampsMissing, event)
 	}
 
@@ -182,7 +182,11 @@ func (r *results) recordEventCategory(event *Event) {
 }
 
 func lastTimestampIsValid(event *Event) bool {
-	return event.Event.LastTimestamp.Compare(event.Event.FirstTimestamp.Time) >= 0 || event.Event.LastTimestamp.IsZero()
+	if event.Event.LastTimestamp.IsZero() {
+		return !event.Event.EventTime.IsZero()
+	} else {
+		return event.Event.LastTimestamp.Compare(event.Event.FirstTimestamp.Time) >= 0
+	}
 }
 
 func (r *results) RecordBadLine(eventJSON []byte) {
