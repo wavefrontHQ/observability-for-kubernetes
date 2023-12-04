@@ -48,6 +48,21 @@ func TestReconcileAll(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	t.Run("returns an error if there is more than 1 ResourceCustomization resource", func(t *testing.T) {
+		r, _ := emptyScenario(
+			wftest.CR(func(wavefront *wf.Wavefront) {
+				wavefront.Spec.Experimental.Autotracing.Enable = true
+			}),
+			wftest.RCCR(),
+			wftest.RCCR(func(r *rc.ResourceCustomizations) {
+				r.Name = r.Name + "-other"
+			}),
+		)
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.Error(t, err)
+	})
+
 	t.Run("produces well formed YAML", func(t *testing.T) {
 		r, mockKM := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true

@@ -219,10 +219,9 @@ func (r *WavefrontReconciler) fetchResourceCustomizationsCR(ctx context.Context,
 	if len(rcList.Items) == 0 {
 		return rc.ResourceCustomizations{}, CRNotFoundErr
 	}
-	// TODO Write Test
-	//if len(rcList.Items) > 1 {
-	//	return nil, fmt.Errorf("cannot have more than 1 WorkloadCustomization CR (have %d)", len(rcList.Items))
-	//}
+	if len(rcList.Items) > 1 {
+		return rc.ResourceCustomizations{}, fmt.Errorf("cannot have more than 1 WorkloadCustomization CR (have %d)", len(rcList.Items))
+	}
 	return rcList.Items[0], nil
 }
 
