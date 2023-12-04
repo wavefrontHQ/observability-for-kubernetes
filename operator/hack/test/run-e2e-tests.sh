@@ -148,82 +148,86 @@ function run_proxy_checks() {
 }
 
 function run_k8s_events_checks() {
-  local event_count=0
+  local external_event_count=0
   local missing_event_categories_count
   local received_event_categories_count
-  local results_file
-  results_file=$(mktemp)
+  local external_events_fail_count
+  local external_events_results_file
+  external_events_results_file=$(mktemp)
 
+  wait_for_cluster_ready
+  sleep 3
   start_forward_test_proxy "observability-system" "test-proxy" /dev/null
   trap 'stop_forward_test_proxy /dev/null' EXIT
 
-  sleep 10
   "$REPO_ROOT/scripts/deploy/deploy-event-targets.sh"
-  wait_for_cluster_ready
 
   printf "Asserting external events .."
   for i in {1..10}; do
-    printf "."
-    sleep 3 # flush interval
-
     while true; do # wait until we get a good connection
-      RES_CODE=$(curl --silent --output "${results_file}" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
+      RES_CODE=$(curl --silent --output "$external_events_results_file" --write-out "%{http_code}" "http://localhost:8888/events/external/assert" || echo "000")
       if [[ $RES_CODE -ge 200 ]]; then
         break
       fi
     done
 
-    missing_event_categories_count=$(jq "(.MissingEventCategories | length)" "${results_file}")
-    if [[ $missing_event_categories_count -eq 0 ]]; then
-      printf " in %d tries" "$i"
-      break
+    external_event_count=$(jq ".EventCount" "$external_events_results_file")
+    if [[ $external_event_count -gt 0 ]]; then
+      missing_event_categories_count=$(jq "(.MissingEventCategories | length)" "$external_events_results_file")
+      if [[ $missing_event_categories_count -eq 0 ]]; then
+        printf " in %d tries" "$i"
+        break
+      fi
     fi
+
+    printf "."
+    sleep 3 # flush interval
   done
   echo " done."
 
-  echo "External events results file: ${results_file}"
+  echo "External events results file: $external_events_results_file"
+  # Helpful for debugging:
+  # cat "$external_events_results_file" | jq
 
   if [[ $RES_CODE -ge 400 ]]; then
     red "INVALID EXTERNAL EVENTS"
     exit 1
   fi
 
-  event_count=$(jq '.EventCount' "${results_file}")
-  if [[ $event_count -eq 0 ]]; then
+  if [[ $external_event_count -eq 0 ]]; then
     red "External events were never received by test-proxy"
     exit 1
   fi
 
-  local external_events_fail_count
-  external_events_fail_count=$(jq "(.BadEventJSONs | length) + (.MissingFields | length) + (.FirstTimestampsMissing | length) + (.LastTimestampsInvalid | length)" "${results_file}")
-
-  if [[ $external_events_fail_count -gt 0 ]]; then
-    red "BadEventJSONs: $(jq "(.BadEventJSONs | length)" "${results_file}")"
-    red "MissingFields: $(jq "(.MissingFields | length)" "${results_file}")"
-    red "FirstTimestampsMissing: $(jq "(.FirstTimestampsMissing | length)" "${results_file}")"
-    red "LastTimestampsInvalid: $(jq "(.LastTimestampsInvalid | length)" "${results_file}")"
-    exit 1
-  fi
-
-  missing_event_categories_count=$(jq "(.MissingEventCategories | length)" "${results_file}")
+  missing_event_categories_count=$(jq "(.MissingEventCategories | length)" "$external_events_results_file")
   if [[ $missing_event_categories_count -gt 0 ]]; then
     red "FAILED: EXPECTED EXTERNAL EVENTS WERE NOT RECEIVED"
-    red "Missing: ${missing_event_categories_count}"
+    red "Missing: $missing_event_categories_count"
     red "External event categories missing:"
-    jq '.MissingEventCategories' "${results_file}"
+    jq '.MissingEventCategories' "$external_events_results_file"
 
-    received_event_categories_count=$(jq "(.ReceivedEventCategories | length)" "${results_file}")
-    red "Received: ${received_event_categories_count}"
+    received_event_categories_count=$(jq "(.ReceivedEventCategories | length)" "$external_events_results_file")
+    red "Received: $received_event_categories_count"
     if [[ $received_event_categories_count -gt 0 ]]; then
       red "External event categories received:"
-      jq '.ReceivedEventCategories | keys' "${results_file}"
+      jq '.ReceivedEventCategories | keys' "$external_events_results_file"
     fi
 
-    red "Total: ${event_count}"
+    red "Total: $external_event_count"
     exit 1
   fi
 
-  yellow "Integration test complete. ${event_count} events were received."
+  external_events_fail_count=$(jq "(.BadEventJSONs | length) + (.MissingFields | length) + (.FirstTimestampsMissing | length) + (.LastTimestampsInvalid | length)" "$external_events_results_file")
+  if [[ $external_events_fail_count -gt 0 ]]; then
+    red "BadEventJSONs: $(jq "(.BadEventJSONs | length)" "$external_events_results_file")"
+    red "MissingFields: $(jq "(.MissingFields | length)" "$external_events_results_file")"
+    red "FirstTimestampsMissing: $(jq "(.FirstTimestampsMissing | length)" "$external_events_results_file")"
+    red "LastTimestampsInvalid: $(jq "(.LastTimestampsInvalid | length)" "$external_events_results_file")"
+    exit 1
+  fi
+
+  yellow "Integration test complete. $external_event_count events were received."
+
   "$REPO_ROOT/scripts/deploy/uninstall-targets.sh"
   stop_forward_test_proxy /dev/null
 
