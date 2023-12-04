@@ -223,6 +223,7 @@ function run_k8s_events_checks() {
     red "MissingFields: $(jq "(.MissingFields | length)" "$external_events_results_file")"
     red "FirstTimestampsMissing: $(jq "(.FirstTimestampsMissing | length)" "$external_events_results_file")"
     red "LastTimestampsInvalid: $(jq "(.LastTimestampsInvalid | length)" "$external_events_results_file")"
+    jq '{BadEventJSONs, MissingFields, FirstTimestampsMissing, LastTimestampsInvalid}' "$external_events_results_file"
     exit 1
   fi
 
