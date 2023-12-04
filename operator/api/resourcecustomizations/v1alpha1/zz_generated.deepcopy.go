@@ -22,7 +22,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -120,10 +120,8 @@ func (in *ResourceCustomizationsSpec) DeepCopyInto(out *ResourceCustomizationsSp
 	*out = *in
 	if in.All != nil {
 		in, out := &in.All, &out.All
-		*out = make([]ResourceCustomization, len(*in))
-		for i := range *in {
-			(*in)[i].DeepCopyInto(&(*out)[i])
-		}
+		*out = new(ResourceCustomization)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.ByName != nil {
 		in, out := &in.ByName, &out.ByName

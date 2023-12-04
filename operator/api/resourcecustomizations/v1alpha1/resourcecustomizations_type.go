@@ -27,7 +27,7 @@ type ResourceCustomizations struct {
 }
 
 type ResourceCustomizationsSpec struct {
-	All    []ResourceCustomization          `json:"all,omitempty"`
+	All    *ResourceCustomization           `json:"all,omitempty"`
 	ByName map[string]WorkloadCustomization `json:"by_name,omitempty"`
 }
 

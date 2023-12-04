@@ -264,19 +264,7 @@ func (r *WavefrontReconciler) readAndCreateResources(specSet *api.SpecSet) error
 
 func (r *WavefrontReconciler) readAndInterpolateResources(specSet *api.SpecSet) ([]client.Object, []client.Object, error) {
 	var resourcesToApply, resourcesToDelete []client.Object
-	resourcePatches := patch.Composed{}
-	for _, resourceCustomization := range specSet.All {
-		resourcePatches = append(resourcePatches, patch.Tolerations(resourceCustomization.Tolerations))
-	}
-	workloadPatches := patch.ByName{}
-	for workloadName, customizations := range specSet.ByName {
-		workloadPatches[workloadName] = patch.Composed{
-			patch.FromRCResources(customizations.Resources),
-			patch.Tolerations(customizations.Tolerations),
-		}
-	}
-	resourcePatches = append(resourcePatches, workloadPatches)
-	builder := components.NewK8sResourceBuilder(resourcePatches)
+	builder := components.NewK8sResourceBuilder(makeResourcePatch(specSet))
 	for _, component := range r.components {
 		toApply, toDelete, err := component.Resources(builder)
 		if err != nil {
@@ -286,6 +274,22 @@ func (r *WavefrontReconciler) readAndInterpolateResources(specSet *api.SpecSet) 
 		resourcesToDelete = append(resourcesToDelete, toDelete...)
 	}
 	return resourcesToApply, resourcesToDelete, nil
+}
+
+func makeResourcePatch(specSet *api.SpecSet) patch.Composed {
+	resourcePatches := patch.Composed{}
+	if specSet.ResourceCustomizationsSpec.All != nil {
+		resourcePatches = append(resourcePatches, patch.Tolerations(specSet.ResourceCustomizationsSpec.All.Tolerations))
+	}
+	workloadPatches := patch.ByName{}
+	for workloadName, customizations := range specSet.ResourceCustomizationsSpec.ByName {
+		workloadPatches[workloadName] = patch.Composed{
+			patch.FromRCResources(customizations.Resources),
+			patch.Tolerations(customizations.Tolerations),
+		}
+	}
+	resourcePatches = append(resourcePatches, workloadPatches)
+	return resourcePatches
 }
 
 func (r *WavefrontReconciler) readAndDeleteResources() error {

@@ -37,7 +37,7 @@ import (
 )
 
 func TestReconcileAll(t *testing.T) {
-	t.Run("returns an error if there is more than 1 wavefront resource", func(t *testing.T) {
+	t.Run("returns an error if there is more than 1 Wavefront resource", func(t *testing.T) {
 		r, _ := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
 			wavefront.Spec.Experimental.Autotracing.Enable = true
 		}), wftest.CR(func(wavefront *wf.Wavefront) {
@@ -419,12 +419,12 @@ func TestReconcileAll(t *testing.T) {
 			wftest.CR(),
 			wftest.Proxy(wftest.WithReplicas(1, 1)),
 			wftest.RCCR(func(r *rc.ResourceCustomizations) {
-				r.Spec.All = []rc.ResourceCustomization{{
+				r.Spec.All = &rc.ResourceCustomization{
 					Tolerations: rc.Tolerations{
 						Add:    []v1.Toleration{addedToleration},
 						Remove: []v1.Toleration{removedToleration},
 					},
-				}}
+				}
 			}),
 		)
 		mockSender := &testhelper.MockSender{}
