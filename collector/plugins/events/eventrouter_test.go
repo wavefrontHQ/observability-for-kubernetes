@@ -37,6 +37,28 @@ func TestAddEvent(t *testing.T) {
 		require.Equal(t, "test-namespace", event.InvolvedObject.Namespace)
 	})
 
+	t.Run("sets the lastTimestamp based on kubernetes event time if lastTimestamp is zero", func(t *testing.T) {
+		sink := &MockExport{}
+		er := NewEventRouter(fake.NewSimpleClientset(), configuration.EventsConfig{}, sink, true, testhelper.NewEmptyFakeWorkloadCache())
+		event := &v1.Event{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+			},
+			Message:   "Test message for events",
+			EventTime: metav1.NewMicroTime(time.Now()),
+			InvolvedObject: v1.ObjectReference{
+				Namespace: "test-namespace",
+				Kind:      "some-kind",
+				Name:      "test-name",
+			},
+			Type:   "Normal",
+			Reason: "some-reason",
+		}
+
+		er.addEvent(event, false)
+		require.True(t, !sink.Ts.IsZero())
+	})
+
 	t.Run("does not send add events for events that already existed prior to startup", func(t *testing.T) {
 		event := fakeEvent()
 		client := fake.NewSimpleClientset(event)
