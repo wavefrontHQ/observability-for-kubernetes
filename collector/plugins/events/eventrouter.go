@@ -140,11 +140,18 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 		ns = "default"
 	}
 
+	var component string
+	if len(e.Source.Component) > 0 {
+		component = e.Source.Component
+	} else {
+		component = e.ReportingController
+	}
+
 	tags := map[string]string{
 		"namespace_name": ns,
 		"kind":           e.InvolvedObject.Kind,
 		"reason":         e.Reason,
-		"component":      e.Source.Component,
+		"component":      component,
 		"type":           e.Type,
 		"important":      e.Annotations["important"],
 	}
