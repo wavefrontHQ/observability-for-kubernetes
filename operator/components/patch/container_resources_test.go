@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -15,7 +16,7 @@ const ResourceRequest = "request"
 func TestContainerResources(t *testing.T) {
 	t.Run("apply-able to non-resourced objects", func(t *testing.T) {
 		p := patch.ContainerResources{
-			Requests: patch.ContainerResource{
+			Requests: common.Resource{
 				EphemeralStorage: "10Gi",
 			},
 		}
@@ -40,7 +41,7 @@ func TestContainerResources(t *testing.T) {
 
 	t.Run("sets the requests when only the limits are specified", func(t *testing.T) {
 		p := patch.ContainerResources{
-			Limits: patch.ContainerResource{
+			Limits: common.Resource{
 				CPU:              "100m",
 				Memory:           "1Gi",
 				EphemeralStorage: "10Gi",
@@ -68,10 +69,10 @@ func TestContainerResources(t *testing.T) {
 		{
 			name: "cpu",
 			resources: patch.ContainerResources{
-				Limits: patch.ContainerResource{
+				Limits: common.Resource{
 					CPU: ResourceLimit,
 				},
-				Requests: patch.ContainerResource{
+				Requests: common.Resource{
 					CPU: ResourceRequest,
 				},
 			},
@@ -79,10 +80,10 @@ func TestContainerResources(t *testing.T) {
 		{
 			name: "memory",
 			resources: patch.ContainerResources{
-				Limits: patch.ContainerResource{
+				Limits: common.Resource{
 					Memory: ResourceLimit,
 				},
-				Requests: patch.ContainerResource{
+				Requests: common.Resource{
 					Memory: ResourceRequest,
 				},
 			},
@@ -90,10 +91,10 @@ func TestContainerResources(t *testing.T) {
 		{
 			name: "ephemeral-storage",
 			resources: patch.ContainerResources{
-				Limits: patch.ContainerResource{
+				Limits: common.Resource{
 					EphemeralStorage: ResourceLimit,
 				},
-				Requests: patch.ContainerResource{
+				Requests: common.Resource{
 					EphemeralStorage: ResourceRequest,
 				},
 			},

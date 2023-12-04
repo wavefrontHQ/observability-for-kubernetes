@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
@@ -27,8 +28,8 @@ type ComponentConfig struct {
 	ProxyAvailableReplicas    int
 	ImageRegistry             string
 	CollectorVersion          string
-	ClusterCollectorResources wf.Resources
-	NodeCollectorResources    wf.Resources
+	ClusterCollectorResources common.Resources
+	NodeCollectorResources    common.Resources
 	CollectorConfigName       string
 
 	// optional
@@ -107,7 +108,7 @@ func (component *Component) Resources(builder *components.K8sResourceBuilder) ([
 
 func (component *Component) defaultWorkloadResources() patch.Patch {
 	return patch.ByName{
-		util.NodeCollectorName:    patch.FromWFResources(component.config.NodeCollectorResources),
-		util.ClusterCollectorName: patch.FromWFResources(component.config.ClusterCollectorResources),
+		util.NodeCollectorName:    patch.ContainerResources(component.config.NodeCollectorResources),
+		util.ClusterCollectorName: patch.ContainerResources(component.config.ClusterCollectorResources),
 	}
 }

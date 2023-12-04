@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
@@ -34,7 +35,7 @@ type ComponentConfig struct {
 	TagAllowList           map[string][]string
 	TagDenyList            map[string][]string
 	Tolerations            []wf.Toleration
-	Resources              wf.Resources
+	Resources              common.Resources
 
 	// internal use only
 	ConfigHash string
@@ -104,7 +105,7 @@ func (component *Component) Validate() validation.Result {
 
 func (logging *Component) defaultWorkloadResources() patch.Patch {
 	return patch.ByName{
-		util.LoggingName: patch.FromWFResources(logging.config.Resources),
+		util.LoggingName: patch.ContainerResources(logging.config.Resources),
 	}
 }
 

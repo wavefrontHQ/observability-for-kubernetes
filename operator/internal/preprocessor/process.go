@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
@@ -43,15 +44,22 @@ type rule struct {
 	If             interface{}    `yaml:",omitempty"`
 }
 
-func PreProcess(client crClient.Client, wavefront *wf.Wavefront) error {
+func PreProcess(client crClient.Client, crSet *api.CRSet) error {
 	//TODO: Component Refactor - move all of this to components or the wavefront controller if is cross component specific
-	wfSpec := &wavefront.Spec
+	wfSpec := &crSet.Wavefront.Spec
 	operator, err := deployment(client, util.OperatorName, wfSpec.Namespace)
 	if err != nil {
 		return err
 	}
 	wfSpec.ControllerManagerUID = string(operator.UID)
 	wfSpec.ImageRegistry = filepath.Dir(operator.Spec.Template.Spec.Containers[0].Image)
+
+	for name, customization := range crSet.ResourceCustomizations.Spec.ByName {
+		if customization.Resources.Requests.IsEmpty() {
+			customization.Resources.Requests = customization.Resources.Limits
+		}
+		crSet.ResourceCustomizations.Spec.ByName[name] = customization
+	}
 
 	err = preProcessExperimental(client, wfSpec)
 	if err != nil {

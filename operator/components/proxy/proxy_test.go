@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
@@ -133,7 +133,7 @@ func TestValidate(t *testing.T) {
 
 	t.Run("empty resources is not valid", func(t *testing.T) {
 		config := validComponentConfig()
-		config.Resources = wf.Resources{}
+		config.Resources = common.Resources{}
 		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
@@ -204,12 +204,12 @@ func validComponentConfig() ComponentConfig {
 		ImageRegistry:        wftest.DefaultImageRegistry,
 		WavefrontTokenSecret: "secret",
 		WavefrontUrl:         "https://example.wavefront.com",
-		Resources: wf.Resources{
-			Requests: wf.Resource{
+		Resources: common.Resources{
+			Requests: common.Resource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},

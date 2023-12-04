@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
@@ -315,52 +316,52 @@ func validComponentConfig() Config {
 		ControllerManagerUID: "controller-manager-uid",
 		ClusterUUID:          "cluster-uuid",
 		ClusterName:          wftest.DefaultClusterName,
-		PEMResources: wf.Resources{
-			Limits: wf.Resource{
+		PEMResources: common.Resources{
+			Limits: common.Resource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},
-			Requests: wf.Resource{
+			Requests: common.Resource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},
 		},
-		QueryBrokerResources: wf.Resources{
-			Limits: wf.Resource{
+		QueryBrokerResources: common.Resources{
+			Limits: common.Resource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},
-			Requests: wf.Resource{
+			Requests: common.Resource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},
 		},
-		MetadataResources: wf.Resources{
-			Limits: wf.Resource{
+		MetadataResources: common.Resources{
+			Limits: common.Resource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},
-			Requests: wf.Resource{
+			Requests: common.Resource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},
 		},
-		KelvinResources: wf.Resources{
-			Limits: wf.Resource{
+		KelvinResources: common.Resources{
+			Limits: common.Resource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},
-			Requests: wf.Resource{
+			Requests: common.Resource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},
 		},
-		NATSResources: wf.Resources{
-			Limits: wf.Resource{
+		NATSResources: common.Resources{
+			Limits: common.Resource{
 				CPU:    "100m",
 				Memory: "1Gi",
 			},
-			Requests: wf.Resource{
+			Requests: common.Resource{
 				CPU:    "50m",
 				Memory: "500Mi",
 			},

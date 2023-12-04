@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
@@ -25,13 +26,13 @@ type Config struct {
 	// Specify a source group (kAll, kProd, kMetrics, kTracers, kProfiler, kTCPStats) or individual sources.
 	// You can find the names of sources at https://github.com/pixie-io/pixie/blob/release/vizier/v0.14.2/src/stirling/stirling.cc
 	StirlingSources             []string
-	PEMResources                wf.Resources
+	PEMResources                common.Resources
 	TableStoreLimits            wf.TableStoreLimits
-	KelvinResources             wf.Resources
-	QueryBrokerResources        wf.Resources
-	NATSResources               wf.Resources
-	MetadataResources           wf.Resources
-	CertProvisionerJobResources wf.Resources
+	KelvinResources             common.Resources
+	QueryBrokerResources        common.Resources
+	NATSResources               common.Resources
+	MetadataResources           common.Resources
+	CertProvisionerJobResources common.Resources
 	MaxHTTPBodyBytes            int
 }
 
@@ -83,12 +84,12 @@ func (component *Component) Validate() validation.Result {
 
 func (component *Component) patch() patch.Patch {
 	return patch.ByName{
-		util.PixieVizierPEMName:          patch.FromWFResources(component.config.PEMResources),
-		util.PixieVizierQueryBrokerName:  patch.FromWFResources(component.config.QueryBrokerResources),
-		util.PixieNatsName:               patch.FromWFResources(component.config.NATSResources),
-		util.PixieKelvinName:             patch.FromWFResources(component.config.KelvinResources),
-		util.PixieVizierMetadataName:     patch.FromWFResources(component.config.MetadataResources),
-		util.PixieCertProvisionerJobName: patch.FromWFResources(component.config.CertProvisionerJobResources),
+		util.PixieVizierPEMName:          patch.ContainerResources(component.config.PEMResources),
+		util.PixieVizierQueryBrokerName:  patch.ContainerResources(component.config.QueryBrokerResources),
+		util.PixieNatsName:               patch.ContainerResources(component.config.NATSResources),
+		util.PixieKelvinName:             patch.ContainerResources(component.config.KelvinResources),
+		util.PixieVizierMetadataName:     patch.ContainerResources(component.config.MetadataResources),
+		util.PixieCertProvisionerJobName: patch.ContainerResources(component.config.CertProvisionerJobResources),
 	}
 }
 

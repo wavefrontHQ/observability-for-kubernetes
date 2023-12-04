@@ -125,7 +125,7 @@ spec:
                         type: array
                     type: object
                 type: object
-              by_name:
+              byName:
                 additionalProperties:
                   description: WorkloadCustomization is a customization that can only
                     be applied to resources that have pods

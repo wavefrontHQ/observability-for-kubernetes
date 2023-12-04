@@ -1,6 +1,7 @@
 package pixie
 
 import (
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 )
 
@@ -15,33 +16,33 @@ func defaultResources(clusterSize string, config Config) Config {
 	return config
 }
 
-var PEMResources = map[string]v1alpha1.Resources{
+var PEMResources = map[string]common.Resources{
 	v1alpha1.ClusterSizeSmall: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "100m",
 			Memory: "300Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "500m",
 			Memory: "500Mi",
 		},
 	},
 	v1alpha1.ClusterSizeMedium: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "500m",
 			Memory: "500Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "1",
 			Memory: "600Mi",
 		},
 	},
 	v1alpha1.ClusterSizeLarge: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "1",
 			Memory: "600Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "2",
 			Memory: "750Mi",
 		},
@@ -63,165 +64,165 @@ var TableStoreLimits = map[string]v1alpha1.TableStoreLimits{
 	},
 }
 
-var KelvinResources = map[string]v1alpha1.Resources{
+var KelvinResources = map[string]common.Resources{
 	v1alpha1.ClusterSizeSmall: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "50m",
 			Memory: "50Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "100m",
 			Memory: "100Mi",
 		},
 	},
 	v1alpha1.ClusterSizeMedium: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "100m",
 			Memory: "100Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "1",
 			Memory: "1Gi",
 		},
 	},
 	v1alpha1.ClusterSizeLarge: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "1",
 			Memory: "1Gi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "2",
 			Memory: "10Gi",
 		},
 	},
 }
 
-var QueryBrokerResources = map[string]v1alpha1.Resources{
+var QueryBrokerResources = map[string]common.Resources{
 	v1alpha1.ClusterSizeSmall: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "50m",
 			Memory: "50Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "500m",
 			Memory: "128Mi",
 		},
 	},
 	v1alpha1.ClusterSizeMedium: { // TODO update
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "500m",
 			Memory: "128Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "1",
 			Memory: "256Mi",
 		},
 	},
 	v1alpha1.ClusterSizeLarge: { // TODO update
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "1",
 			Memory: "256Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "2",
 			Memory: "512Mi",
 		},
 	},
 }
 
-var NATSResources = map[string]v1alpha1.Resources{
+var NATSResources = map[string]common.Resources{
 	v1alpha1.ClusterSizeSmall: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "100m",
 			Memory: "5Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "500m",
 			Memory: "25Mi",
 		},
 	},
 	v1alpha1.ClusterSizeMedium: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "500m",
 			Memory: "10Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "1",
 			Memory: "250Mi",
 		},
 	},
 	v1alpha1.ClusterSizeLarge: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "1",
 			Memory: "250Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "2",
 			Memory: "500Mi",
 		},
 	},
 }
 
-var MetadataResources = map[string]v1alpha1.Resources{
+var MetadataResources = map[string]common.Resources{
 	v1alpha1.ClusterSizeSmall: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "25m",
 			Memory: "128Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "250m",
 			Memory: "250Mi",
 		},
 	},
 	v1alpha1.ClusterSizeMedium: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "250m",
 			Memory: "250Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "500m",
 			Memory: "1Gi",
 		},
 	},
 	v1alpha1.ClusterSizeLarge: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "500m",
 			Memory: "1Gi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "1",
 			Memory: "2Gi",
 		},
 	},
 }
 
-var CertProvisionerJobResources = map[string]v1alpha1.Resources{
+var CertProvisionerJobResources = map[string]common.Resources{
 	v1alpha1.ClusterSizeSmall: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "50m",
 			Memory: "10Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "100m",
 			Memory: "100Mi",
 		},
 	},
 	v1alpha1.ClusterSizeMedium: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "50m",
 			Memory: "10Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "100m",
 			Memory: "100Mi",
 		},
 	},
 	v1alpha1.ClusterSizeLarge: {
-		Requests: v1alpha1.Resource{
+		Requests: common.Resource{
 			CPU:    "50m",
 			Memory: "10Mi",
 		},
-		Limits: v1alpha1.Resource{
+		Limits: common.Resource{
 			CPU:    "100m",
 			Memory: "100Mi",
 		},

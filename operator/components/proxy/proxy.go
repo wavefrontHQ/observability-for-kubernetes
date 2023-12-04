@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
@@ -26,7 +27,7 @@ type ComponentConfig struct {
 	ImageRegistry        string
 	WavefrontTokenSecret string
 	WavefrontUrl         string
-	Resources            wf.Resources
+	Resources            common.Resources
 	MetricPort           int
 	ProxyVersion         string
 	ConfigHash           string
@@ -126,7 +127,7 @@ func (component *Component) Validate() validation.Result {
 
 func (component *Component) defaultWorkloadResources() patch.Patch {
 	return patch.ByName{
-		util.ProxyName: patch.FromWFResources(component.config.Resources),
+		util.ProxyName: patch.ContainerResources(component.config.Resources),
 	}
 }
 

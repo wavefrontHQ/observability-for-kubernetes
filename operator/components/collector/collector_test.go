@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/test"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/testhelper/wftest"
@@ -50,7 +50,7 @@ func TestValidate(t *testing.T) {
 	t.Run("Does not validates node collector resources when metrics is not enabled", func(t *testing.T) {
 		config := minimalComponentConfig()
 		config.MetricsEnable = false
-		config.NodeCollectorResources = wf.Resources{}
+		config.NodeCollectorResources = common.Resources{}
 
 		component, _ := NewComponent(ComponentDir, config)
 		result := component.Validate()
@@ -150,22 +150,22 @@ func minimalComponentConfig() ComponentConfig {
 		ProxyAvailableReplicas:    1,
 		ImageRegistry:             wftest.DefaultImageRegistry,
 		CollectorVersion:          "1.23",
-		ClusterCollectorResources: wf.Resources{
-			Requests: wf.Resource{
+		ClusterCollectorResources: common.Resources{
+			Requests: common.Resource{
 				CPU:    "100m",
 				Memory: "50Mi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:    "100m",
 				Memory: "50Mi",
 			},
 		},
-		NodeCollectorResources: wf.Resources{
-			Requests: wf.Resource{
+		NodeCollectorResources: common.Resources{
+			Requests: common.Resource{
 				CPU:    "100m",
 				Memory: "50Mi",
 			},
-			Limits: wf.Resource{
+			Limits: common.Resource{
 				CPU:    "100Mi",
 				Memory: "50Mi",
 			},

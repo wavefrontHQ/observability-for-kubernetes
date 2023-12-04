@@ -146,7 +146,7 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	var validationResult validation.Result
-	err = r.preprocess(&crSet.Wavefront, ctx)
+	err = r.preprocess(crSet, ctx)
 	if err != nil {
 		validationResult = validation.NewErrorResult(err)
 	} else {
@@ -335,32 +335,32 @@ func (r *WavefrontReconciler) readAndDeleteResources() error {
 }
 
 // Preprocessing Wavefront Spec
-func (r *WavefrontReconciler) preprocess(wavefront *wf.Wavefront, ctx context.Context) error {
+func (r *WavefrontReconciler) preprocess(crSet *api.CRSet, ctx context.Context) error {
 
-	wavefront.Spec.Namespace = r.namespace
-	wavefront.Spec.ClusterUUID = r.ClusterUUID
+	crSet.Wavefront.Spec.Namespace = r.namespace
+	crSet.Wavefront.Spec.ClusterUUID = r.ClusterUUID
 
-	wavefront.Spec.DataCollection.Metrics.CollectorVersion = r.Versions.CollectorVersion
-	wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
-	wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
+	crSet.Wavefront.Spec.DataCollection.Metrics.CollectorVersion = r.Versions.CollectorVersion
+	crSet.Wavefront.Spec.DataExport.WavefrontProxy.ProxyVersion = r.Versions.ProxyVersion
+	crSet.Wavefront.Spec.DataCollection.Logging.LoggingVersion = r.Versions.LoggingVersion
 
-	err := preprocessor.PreProcess(r.Client, wavefront)
+	err := preprocessor.PreProcess(r.Client, crSet)
 	if err != nil {
 		return err
 	}
 
-	if wavefront.Spec.CanExportData {
-		err := r.MetricConnection.Connect(wavefront.Spec.DataCollection.Metrics.ProxyAddress)
+	if crSet.Wavefront.Spec.CanExportData {
+		err := r.MetricConnection.Connect(crSet.Wavefront.Spec.DataCollection.Metrics.ProxyAddress)
 		if err != nil {
 			return fmt.Errorf("error setting up proxy connection: %s", err.Error())
 		}
 	}
 
 	if r.isAnOpenshiftEnvironment() {
-		wavefront.Spec.Openshift = true
+		crSet.Wavefront.Spec.Openshift = true
 	}
 
-	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, wavefront, r.Client)
+	r.components, err = factory.BuildComponents(r.ComponentsDeployDir, &crSet.Wavefront, r.Client)
 	if err != nil {
 		return err
 	}
