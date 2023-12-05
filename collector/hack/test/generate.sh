@@ -8,13 +8,13 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 NS=wavefront-collector
 
 function copy_collector_deployment_files() {
-  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/0-collector-namespace.yaml" base/deploy/0-collector-namespace.yaml
-  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/1-collector-cluster-role.yaml" base/deploy/1-collector-cluster-role.yaml
-  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/2-collector-rbac.yaml" base/deploy/2-collector-rbac.yaml
-  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/3-collector-service-account.yaml" base/deploy/3-collector-service-account.yaml
-  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml" base/deploy/collector-deployments/5-collector-daemonset.yaml
-  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-single-deployment.yaml" base/deploy/collector-deployments/5-collector-single-deployment.yaml
-  cp "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/alternate-collector-deployments/5-collector-combined.yaml" base/deploy/collector-deployments/5-collector-combined.yaml
+  cp "${COLLECTOR_REPO_ROOT}/hack/deploy/kubernetes/0-collector-namespace.yaml" base/deploy/0-collector-namespace.yaml
+  cp "${COLLECTOR_REPO_ROOT}/hack/deploy/kubernetes/1-collector-cluster-role.yaml" base/deploy/1-collector-cluster-role.yaml
+  cp "${COLLECTOR_REPO_ROOT}/hack/deploy/kubernetes/2-collector-rbac.yaml" base/deploy/2-collector-rbac.yaml
+  cp "${COLLECTOR_REPO_ROOT}/hack/deploy/kubernetes/3-collector-service-account.yaml" base/deploy/3-collector-service-account.yaml
+  cp "${COLLECTOR_REPO_ROOT}/hack/deploy/kubernetes/5-collector-daemonset.yaml" base/deploy/collector-deployments/5-collector-daemonset.yaml
+  cp "${COLLECTOR_REPO_ROOT}/hack/deploy/kubernetes/alternate-collector-deployments/5-collector-single-deployment.yaml" base/deploy/collector-deployments/5-collector-single-deployment.yaml
+  cp "${COLLECTOR_REPO_ROOT}/hack/deploy/kubernetes/alternate-collector-deployments/5-collector-combined.yaml" base/deploy/collector-deployments/5-collector-combined.yaml
 
   csplit base/deploy/collector-deployments/5-collector-combined.yaml '/^---$/' &>/dev/null
   mv xx00 base/deploy/collector-deployments/5-collector-node-metrics-only.yaml
@@ -84,7 +84,7 @@ function main() {
   local K8S_CLUSTER_NAME
   K8S_CLUSTER_NAME=$(whoami)-${K8S_ENV}-$(date +"%y%m%d")
   local COLLECTOR_YAML
-  COLLECTOR_YAML="${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
+  COLLECTOR_YAML="${COLLECTOR_REPO_ROOT}/hack/deploy/kubernetes/5-collector-daemonset.yaml"
   local COLLECTOR_CONFIG_YAML
   COLLECTOR_CONFIG_YAML="${COLLECTOR_REPO_ROOT}/hack/test/base/collector-config.template.yaml"
   local USE_TEST_PROXY="false"

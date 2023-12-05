@@ -152,7 +152,7 @@ function main() {
   fi
   if [[ "${tests_to_run[*]}" =~ "default" ]]; then
     green "\n==================== Running fake_proxy default test ===================="
-    run_fake_proxy_test "all-metrics" "${COLLECTOR_REPO_ROOT}/deploy/kubernetes/5-collector-daemonset.yaml"
+    run_fake_proxy_test "all-metrics" "${COLLECTOR_REPO_ROOT}/hack/deploy/kubernetes/5-collector-daemonset.yaml"
     ${SCRIPT_DIR}/clean-deploy.sh
   fi
   if [[ "${tests_to_run[*]}" =~ "real-proxy-metrics" ]]; then
