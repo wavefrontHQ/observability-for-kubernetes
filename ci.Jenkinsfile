@@ -127,7 +127,7 @@ pipeline {
             timeout(time: 60, unit: 'MINUTES')
           }
           steps {
-            sh 'cd collector && docker build -f deploy/docker/Dockerfile-rhel .'
+            sh 'cd collector && docker build -f hack/deploy/docker/Dockerfile-rhel .'
           }
         }
       }
