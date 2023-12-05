@@ -82,6 +82,10 @@ func CR(options ...CROption) *wf.Wavefront {
 
 func NothingEnabledCR(options ...CROption) *wf.Wavefront {
 	cr := &wf.Wavefront{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Wavefront",
+			APIVersion: wf.GroupVersion.Identifier(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "wavefront",
 			Namespace: DefaultNamespace,

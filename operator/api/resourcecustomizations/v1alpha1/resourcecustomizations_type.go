@@ -19,12 +19,15 @@ type ResourceCustomizationsList struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // ResourceCustomizations is the Schema for the resourcecustomiztaions API
 type ResourceCustomizations struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec ResourceCustomizationsSpec `json:"spec,omitempty"`
+	Spec   ResourceCustomizationsSpec   `json:"spec,omitempty"`
+	Status ResourceCustomizationsStatus `json:"status,omitempty"`
 }
 
 type ResourceCustomizationsSpec struct {
@@ -46,4 +49,10 @@ type WorkloadCustomization struct {
 type Tolerations struct {
 	Add    []corev1.Toleration `json:"add,omitempty"`
 	Remove []corev1.Toleration `json:"remove,omitempty"`
+}
+
+// ResourceCustomizationsStatus reports validation errors for the ResourceCustomizations CR
+type ResourceCustomizationsStatus struct {
+	// Message is a human-readable message indicating details about any validation errors.
+	Message string `json:"message,omitempty"`
 }

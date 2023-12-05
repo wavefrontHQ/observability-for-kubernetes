@@ -33,6 +33,7 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/factory"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -145,15 +146,17 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return errorCRTLResult(err)
 	}
 
-	var validationResult validation.Result
+	var validationResult validation.AggregateResult
 	err = r.preprocess(crSet, ctx)
 	if err != nil {
-		validationResult = validation.NewErrorResult(err)
+		validationResult = validation.AggregateResult{
+			crSet.Wavefront.GroupVersionKind(): validation.NewErrorResult(err),
+		}
 	} else {
 		validationResult = r.validate(crSet)
 	}
 
-	if !validationResult.IsError() {
+	if !validationResult.HasErrors() {
 		err = r.readAndCreateResources(crSet.Spec())
 		if err != nil {
 			return errorCRTLResult(err)
@@ -161,12 +164,12 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	} else {
 		_ = r.readAndDeleteResources()
 	}
-	wavefrontStatus, err := r.reportHealthStatus(ctx, &crSet.Wavefront, validationResult)
+	healthy, err := r.reportHealthStatus(ctx, crSet, validationResult)
 	if err != nil {
 		return errorCRTLResult(err)
 	}
 
-	if wavefrontStatus.Status != health.Healthy {
+	if !healthy {
 		return ctrl.Result{
 			Requeue: true,
 		}, nil
@@ -226,7 +229,7 @@ func (r *WavefrontReconciler) fetchResourceCustomizationsCR(ctx context.Context,
 }
 
 // Validating Wavefront CR
-func (r *WavefrontReconciler) validate(crSet *api.CRSet) validation.Result {
+func (r *WavefrontReconciler) validate(crSet *api.CRSet) validation.AggregateResult {
 	var result validation.Result
 	for _, component := range r.components {
 		result = component.Validate()
@@ -236,7 +239,9 @@ func (r *WavefrontReconciler) validate(crSet *api.CRSet) validation.Result {
 	}
 
 	if result.IsError() {
-		return result
+		return validation.AggregateResult{
+			crSet.Wavefront.GroupVersionKind(): result,
+		}
 	}
 	//TODO - Component Refactor - move all non cross component validation to components
 	return validation.Validate(r.Client, crSet)
@@ -384,8 +389,13 @@ func (r *WavefrontReconciler) isAnOpenshiftEnvironment() bool {
 }
 
 // Reporting Health Status
-func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, wavefront *wf.Wavefront, validationResult validation.Result) (wf.WavefrontStatus, error) {
+func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, crSet *api.CRSet, validationResult validation.AggregateResult) (bool, error) {
+	wfHealthy, wfErr := r.reportWFStatus(ctx, &crSet.Wavefront, validationResult[crSet.Wavefront.GroupVersionKind()])
+	rcHealthy, rcErr := r.reportRCStatus(ctx, &crSet.ResourceCustomizations, validationResult[crSet.ResourceCustomizations.GroupVersionKind()])
+	return wfHealthy && rcHealthy, utilerrors.NewAggregate([]error{wfErr, rcErr})
+}
 
+func (r *WavefrontReconciler) reportWFStatus(ctx context.Context, wavefront *wf.Wavefront, validationResult validation.Result) (bool, error) {
 	// TODO: Component Refactor - use components to get which resources should be queried for status
 	wavefrontStatus := health.GenerateWavefrontStatus(r.Client, wavefront)
 
@@ -405,7 +415,23 @@ func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, wavefront 
 	newWavefront := *wavefront
 	newWavefront.Status = wavefrontStatus
 
-	return wavefrontStatus, r.Status().Patch(ctx, &newWavefront, client.MergeFrom(wavefront))
+	return wavefrontStatus.Status == health.Healthy, r.Status().Patch(ctx, &newWavefront, client.MergeFrom(wavefront))
+}
+
+func (r *WavefrontReconciler) reportRCStatus(ctx context.Context, rcCR *rc.ResourceCustomizations, result validation.Result) (bool, error) {
+	if rcCR.Name == "" {
+		return true, nil
+	}
+	rcStatus := rc.ResourceCustomizationsStatus{}
+
+	if !result.IsValid() {
+		rcStatus.Message = result.Message()
+	}
+
+	newRCCR := *rcCR
+	newRCCR.Status = rcStatus
+
+	return result.IsValid(), r.Status().Patch(ctx, &newRCCR, client.MergeFrom(rcCR))
 }
 
 // Reporting Metrics

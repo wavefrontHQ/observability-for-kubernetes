@@ -9,6 +9,10 @@ type RCCROption func(rc *rc.ResourceCustomizations)
 
 func RCCR(options ...RCCROption) *rc.ResourceCustomizations {
 	cr := &rc.ResourceCustomizations{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ResourceCustomizations",
+			APIVersion: rc.GroupVersion.Identifier(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "resource-customizations",
 			Namespace: DefaultNamespace,

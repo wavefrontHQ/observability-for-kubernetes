@@ -21,15 +21,15 @@ import (
 func TestValidate(t *testing.T) {
 	t.Run("wf spec and environment are valid", func(t *testing.T) {
 		appsV1 := setup()
-		require.True(t, Validate(appsV1, defaultCRSet()).IsValid())
-		require.False(t, Validate(appsV1, defaultCRSet()).IsError())
+		require.True(t, ValidateWF(appsV1, &defaultCRSet().Wavefront).IsValid())
+		require.False(t, ValidateWF(appsV1, &defaultCRSet().Wavefront).IsError())
 	})
 
 	t.Run("wf spec is invalid", func(t *testing.T) {
 		crSet := defaultCRSet()
 		crSet.Wavefront.Spec.DataExport.ExternalWavefrontProxy.Url = "https://testproxy.com"
 		appsV1 := setup()
-		result := Validate(appsV1, crSet)
+		result := ValidateWF(appsV1, &crSet.Wavefront)
 		require.False(t, result.IsValid())
 		require.True(t, result.IsError())
 		require.NotEmpty(t, result.Message())
@@ -37,7 +37,7 @@ func TestValidate(t *testing.T) {
 
 	t.Run("legacy install is running", func(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
-		result := Validate(appsV1, defaultCRSet())
+		result := ValidateWF(appsV1, &defaultCRSet().Wavefront)
 		require.False(t, result.IsValid())
 		require.True(t, result.IsError())
 		require.NotEmpty(t, result.Message())
@@ -75,7 +75,7 @@ func TestValidate(t *testing.T) {
 		}
 		appsV1 := setup(legacyCollector, legacyDeployment, nodeCollector, proxy)
 
-		result := Validate(appsV1, crSet)
+		result := ValidateWF(appsV1, &crSet.Wavefront)
 		require.False(t, result.IsValid())
 		require.False(t, result.IsError())
 		require.True(t, result.IsWarning())
@@ -89,7 +89,7 @@ func TestValidate(t *testing.T) {
 			w.Spec.DataCollection.Metrics.Enable = false
 			w.Spec.DataCollection.Logging.Enable = false
 		})
-		result := Validate(appsV1, crSet)
+		result := ValidateWF(appsV1, &crSet.Wavefront)
 		require.False(t, result.IsValid())
 		require.True(t, result.IsError())
 		require.NotEmpty(t, result.Message())
@@ -103,7 +103,7 @@ func TestValidate(t *testing.T) {
 			w.Spec.DataExport.WavefrontProxy.Enable = false
 			w.Spec.DataCollection.Logging.Enable = false
 		})
-		result := Validate(appsV1, crSet)
+		result := ValidateWF(appsV1, &crSet.Wavefront)
 		require.False(t, result.IsValid())
 		require.True(t, result.IsError())
 		require.NotEmpty(t, result.Message())
@@ -113,7 +113,7 @@ func TestValidate(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
 		crSet := defaultCRSet()
 		crSet.Wavefront.Spec.AllowLegacyInstall = true
-		result := Validate(appsV1, crSet)
+		result := ValidateWF(appsV1, &crSet.Wavefront)
 		require.True(t, result.IsValid())
 		require.False(t, result.IsError())
 	})
@@ -125,7 +125,7 @@ func TestValidate(t *testing.T) {
 			w.Spec.Experimental.Insights.Enable = true
 			w.Spec.Experimental.Insights.IngestionUrl = "my.endpoint.com"
 		})
-		result := Validate(appsV1, crSet)
+		result := ValidateWF(appsV1, &crSet.Wavefront)
 		require.True(t, result.IsValid())
 		require.False(t, result.IsError())
 	})
@@ -134,7 +134,7 @@ func TestValidate(t *testing.T) {
 		appsV1 := legacyEnvironmentSetup("wavefront")
 		crSet := defaultCRSet()
 		crSet.Wavefront = *wftest.NothingEnabledCR()
-		result := Validate(appsV1, crSet)
+		result := ValidateWF(appsV1, &crSet.Wavefront)
 		require.True(t, result.IsValid())
 		require.False(t, result.IsError())
 	})

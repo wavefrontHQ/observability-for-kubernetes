@@ -443,6 +443,40 @@ func TestReconcileAll(t *testing.T) {
 		require.Len(t, tolerations, 1)
 		require.Equal(t, addedToleration, tolerations[0])
 	})
+
+	t.Run("reports validation errors for the ResourceCustomizations CR", func(t *testing.T) {
+		rcCR := wftest.RCCR(func(r *rc.ResourceCustomizations) {
+			r.Spec.ByName[util.ProxyName] = rc.WorkloadCustomization{
+				Resources: common.ContainerResources{
+					Requests: common.ContainerResource{
+						CPU:              "100m",
+						Memory:           "1Gi",
+						EphemeralStorage: "10Gi",
+					},
+				},
+			}
+		})
+		r, _ := emptyScenario(
+			wftest.CR(),
+			wftest.Proxy(wftest.WithReplicas(1, 1)),
+			rcCR,
+		)
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+		require.NoError(t, err)
+
+		var reconciledCR rc.ResourceCustomizations
+
+		require.NoError(t, r.Client.Get(
+			context.Background(),
+			util.ObjKey(rcCR.Namespace, rcCR.Name),
+			&reconciledCR,
+		))
+
+		require.NotEmpty(t, reconciledCR.Status.Message, health.Unhealthy)
+	})
 }
 
 func TestReconcileCollector(t *testing.T) {

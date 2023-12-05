@@ -23,7 +23,7 @@ func TestValidateRC(t *testing.T) {
 					},
 				},
 			}
-			result := Validate(setup(), crSet)
+			result := ValidateRC(&crSet.ResourceCustomizations)
 
 			require.False(t, result.IsValid(), "result should not be valid")
 			require.Contains(t, result.Message(), "invalid spec.byName.some-resource.resources.limits.memory must be set")
@@ -34,7 +34,7 @@ func TestValidateRC(t *testing.T) {
 			crSet.ResourceCustomizations.Spec.ByName = map[string]rc.WorkloadCustomization{
 				"some-resource": {},
 			}
-			result := Validate(setup(), crSet)
+			result := ValidateRC(&crSet.ResourceCustomizations)
 
 			require.True(t, result.IsValid(), "result should be valid")
 		})
@@ -57,7 +57,7 @@ func TestValidateRC(t *testing.T) {
 					},
 				},
 			}
-			result := Validate(setup(), crSet)
+			result := ValidateRC(&crSet.ResourceCustomizations)
 
 			require.False(t, result.IsValid(), "result should not be valid")
 			require.Contains(t, result.Message(), "invalid spec.byName.some-resource.resources.requests.cpu: 1 must be less than or equal to cpu limit")
