@@ -5,7 +5,7 @@ import (
 	"io/fs"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
-	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/result"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -35,11 +35,11 @@ func NewComponent(dir fs.FS, componentConfig ComponentConfig) (Component, error)
 	}, nil
 }
 
-func (component *Component) Validate() validation.Result {
+func (component *Component) Validate() result.Result {
 	var errs []error
 
 	if !component.config.Enable {
-		return validation.Result{}
+		return result.Valid
 	}
 
 	if len(component.config.ControllerManagerUID) == 0 {
@@ -50,7 +50,7 @@ func (component *Component) Validate() validation.Result {
 		errs = append(errs, fmt.Errorf("%s: missing namespace", component.Name()))
 	}
 
-	return validation.NewValidationResult(errs)
+	return result.NewError(errs...)
 }
 
 func (autotracing *Component) Resources(builder *components.K8sResourceBuilder) ([]client.Object, []client.Object, error) {

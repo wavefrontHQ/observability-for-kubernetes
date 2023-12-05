@@ -11,6 +11,7 @@ import (
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/result"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -64,11 +65,11 @@ func NewComponent(fs fs.FS, componentConfig ComponentConfig) (Component, error) 
 	}, nil
 }
 
-func (component *Component) Validate() validation.Result {
+func (component *Component) Validate() result.Result {
 	var errs []error
 
 	if !component.config.Enable {
-		return validation.Result{}
+		return result.Valid
 	}
 	if len(component.config.ControllerManagerUID) == 0 {
 		errs = append(errs, fmt.Errorf("%s: missing controller manager uid", component.Name()))
@@ -100,7 +101,7 @@ func (component *Component) Validate() validation.Result {
 		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 
-	return validation.NewValidationResult(errs)
+	return result.NewError(errs...)
 }
 
 func (logging *Component) defaultWorkloadResources() patch.Patch {

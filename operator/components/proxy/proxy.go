@@ -10,6 +10,7 @@ import (
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/result"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -71,11 +72,11 @@ func NewComponent(dir fs.FS, componentConfig ComponentConfig) (Component, error)
 	}, nil
 }
 
-func (component *Component) Validate() validation.Result {
+func (component *Component) Validate() result.Result {
 	var errs []error
 
 	if !component.config.Enable {
-		return validation.Result{}
+		return result.Valid
 	}
 
 	if len(component.config.ControllerManagerUID) == 0 {
@@ -122,7 +123,7 @@ func (component *Component) Validate() validation.Result {
 		errs = append(errs, fmt.Errorf("%s: missing config hash", component.Name()))
 	}
 
-	return validation.NewValidationResult(errs)
+	return result.NewError(errs...)
 }
 
 func (component *Component) defaultWorkloadResources() patch.Patch {

@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/api/common"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/result"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/errors"
 )
 
-func ValidateContainerResources(resources *common.ContainerResources, resourceName string) Result {
+func ValidateContainerResources(resources *common.ContainerResources, resourceName string) result.Result {
 	var errs []error
 	if len(resources.Limits.Memory) == 0 {
 		errs = append(errs, fmt.Errorf("invalid %s.resources.limits.memory must be set", resourceName))
@@ -17,16 +18,16 @@ func ValidateContainerResources(resources *common.ContainerResources, resourceNa
 		errs = append(errs, fmt.Errorf("invalid %s.resources.limits.cpu must be set", resourceName))
 	}
 	if len(errs) > 0 {
-		return NewErrorResult(errors.NewAggregate(errs))
+		return result.NewError(errors.NewAggregate(errs))
 	}
 
 	errs = append(errs, validateResources(resources, resourceName+".resources")...)
 
 	err := errors.NewAggregate(errs)
 	if err != nil {
-		return NewErrorResult(errors.NewAggregate(errs))
+		return result.NewError(errors.NewAggregate(errs))
 	}
-	return Result{}
+	return result.Valid
 }
 
 func validateResources(resources *common.ContainerResources, resourcePath string) []error {

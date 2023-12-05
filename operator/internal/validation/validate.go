@@ -2,24 +2,13 @@ package validation
 
 import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/api"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/result"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func Validate(objClient client.Client, crSet *api.CRSet) AggregateResult {
-	return AggregateResult{
+func Validate(objClient client.Client, crSet *api.CRSet) result.Aggregate {
+	return result.Aggregate{
 		crSet.Wavefront.GroupVersionKind():              ValidateWF(objClient, &crSet.Wavefront),
 		crSet.ResourceCustomizations.GroupVersionKind(): ValidateRC(&crSet.ResourceCustomizations),
 	}
-}
-
-type AggregateResult map[schema.GroupVersionKind]Result
-
-func (ar AggregateResult) HasErrors() bool {
-	for _, result := range ar {
-		if result.IsError() {
-			return true
-		}
-	}
-	return false
 }

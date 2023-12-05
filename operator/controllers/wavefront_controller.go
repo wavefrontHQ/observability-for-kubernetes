@@ -33,6 +33,7 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/factory"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/preprocessor"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/result"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/util/workqueue"
@@ -146,11 +147,11 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return errorCRTLResult(err)
 	}
 
-	var validationResult validation.AggregateResult
+	var validationResult result.Aggregate
 	err = r.preprocess(crSet, ctx)
 	if err != nil {
-		validationResult = validation.AggregateResult{
-			crSet.Wavefront.GroupVersionKind(): validation.NewErrorResult(err),
+		validationResult = result.Aggregate{
+			crSet.Wavefront.GroupVersionKind(): result.NewError(err),
 		}
 	} else {
 		validationResult = r.validate(crSet)
@@ -229,18 +230,18 @@ func (r *WavefrontReconciler) fetchResourceCustomizationsCR(ctx context.Context,
 }
 
 // Validating Wavefront CR
-func (r *WavefrontReconciler) validate(crSet *api.CRSet) validation.AggregateResult {
-	var result validation.Result
+func (r *WavefrontReconciler) validate(crSet *api.CRSet) result.Aggregate {
+	var res result.Result
 	for _, component := range r.components {
-		result = component.Validate()
-		if result.IsError() {
+		res = component.Validate()
+		if res.IsError() {
 			break
 		}
 	}
 
-	if result.IsError() {
-		return validation.AggregateResult{
-			crSet.Wavefront.GroupVersionKind(): result,
+	if res.IsError() {
+		return result.Aggregate{
+			crSet.Wavefront.GroupVersionKind(): res,
 		}
 	}
 	//TODO - Component Refactor - move all non cross component validation to components
@@ -389,13 +390,13 @@ func (r *WavefrontReconciler) isAnOpenshiftEnvironment() bool {
 }
 
 // Reporting Health Status
-func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, crSet *api.CRSet, validationResult validation.AggregateResult) (bool, error) {
+func (r *WavefrontReconciler) reportHealthStatus(ctx context.Context, crSet *api.CRSet, validationResult result.Aggregate) (bool, error) {
 	wfHealthy, wfErr := r.reportWFStatus(ctx, &crSet.Wavefront, validationResult[crSet.Wavefront.GroupVersionKind()])
 	rcHealthy, rcErr := r.reportRCStatus(ctx, &crSet.ResourceCustomizations, validationResult[crSet.ResourceCustomizations.GroupVersionKind()])
 	return wfHealthy && rcHealthy, utilerrors.NewAggregate([]error{wfErr, rcErr})
 }
 
-func (r *WavefrontReconciler) reportWFStatus(ctx context.Context, wavefront *wf.Wavefront, validationResult validation.Result) (bool, error) {
+func (r *WavefrontReconciler) reportWFStatus(ctx context.Context, wavefront *wf.Wavefront, validationResult result.Result) (bool, error) {
 	// TODO: Component Refactor - use components to get which resources should be queried for status
 	wavefrontStatus := health.GenerateWavefrontStatus(r.Client, wavefront)
 
@@ -418,7 +419,7 @@ func (r *WavefrontReconciler) reportWFStatus(ctx context.Context, wavefront *wf.
 	return wavefrontStatus.Status == health.Healthy, r.Status().Patch(ctx, &newWavefront, client.MergeFrom(wavefront))
 }
 
-func (r *WavefrontReconciler) reportRCStatus(ctx context.Context, rcCR *rc.ResourceCustomizations, result validation.Result) (bool, error) {
+func (r *WavefrontReconciler) reportRCStatus(ctx context.Context, rcCR *rc.ResourceCustomizations, result result.Result) (bool, error) {
 	if rcCR.Name == "" {
 		return true, nil
 	}

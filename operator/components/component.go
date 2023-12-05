@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
-	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/result"
 	yaml2 "gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -19,7 +19,7 @@ import (
 )
 
 type Component interface {
-	Validate() validation.Result
+	Validate() result.Result
 	Resources(builder *K8sResourceBuilder) (resourcesToApply []client.Object, resourcesToDelete []client.Object, error error)
 	Name() string
 }

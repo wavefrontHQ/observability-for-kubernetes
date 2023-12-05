@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	rc "github.com/wavefronthq/observability-for-kubernetes/operator/api/resourcecustomizations/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/result"
 )
 
-func ValidateRC(rcCR *rc.ResourceCustomizations) Result {
+func ValidateRC(rcCR *rc.ResourceCustomizations) result.Result {
 	for name, customization := range rcCR.Spec.ByName {
 		if customization.Resources.IsEmpty() {
 			continue
@@ -16,5 +17,5 @@ func ValidateRC(rcCR *rc.ResourceCustomizations) Result {
 			return result
 		}
 	}
-	return Result{}
+	return result.Valid
 }

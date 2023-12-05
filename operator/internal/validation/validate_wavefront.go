@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/wavefront/v1alpha1"
+	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/result"
 	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -22,53 +23,16 @@ var legacyComponentsToCheck = map[string]map[string]string{
 	"tanzu-observability-saas": {"wavefront-collector": util.DaemonSet, "wavefront-proxy": util.Deployment},
 }
 
-type Result struct {
-	error   error
-	isError bool
-}
-
-func (result Result) Message() string {
-	if result.IsValid() {
-		return ""
-	} else {
-		return result.error.Error()
-	}
-}
-
-func (result Result) IsValid() bool {
-	return result.error == nil
-}
-
-func (result Result) IsError() bool {
-	return result.error != nil && result.isError
-}
-
-func (result Result) IsWarning() bool {
-	return result.error != nil && !result.isError
-}
-
-func NewErrorResult(err error) Result {
-	return Result{err, true}
-}
-
-func NewValidationResult(errs []error) Result {
-	if len(errs) == 0 {
-		return Result{}
-	}
-
-	return Result{utilerrors.NewAggregate(errs), true}
-}
-
-func ValidateWF(objClient client.Client, wavefront *wf.Wavefront) Result {
+func ValidateWF(objClient client.Client, wavefront *wf.Wavefront) result.Result {
 	err := validateEnvironment(objClient, wavefront)
 	if err != nil {
-		return Result{err, !areAnyComponentsDeployed(objClient, wavefront.Spec.Namespace)}
+		return result.New(areAnyComponentsDeployed(objClient, wavefront.Spec.Namespace), err)
 	}
 	err = validateWavefrontSpec(wavefront)
 	if err != nil {
-		return Result{err, true}
+		return result.NewError(err)
 	}
-	return Result{}
+	return result.Valid
 }
 
 func validateEnvironment(objClient client.Client, wavefront *wf.Wavefront) error {
