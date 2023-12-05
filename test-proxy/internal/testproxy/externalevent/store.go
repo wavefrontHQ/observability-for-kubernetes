@@ -2,6 +2,7 @@ package externalevent
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -9,6 +10,15 @@ import (
 	"github.com/wavefronthq/observability-for-kubernetes/test-proxy/internal/broadcaster"
 	"github.com/wavefronthq/wavefront-sdk-go/event"
 	v1 "k8s.io/api/core/v1"
+)
+
+var (
+	expectedEventCategories = []string{
+		"Creation.ImagePullBackOff",
+		"Runtime.CrashLoopBackOff",
+		"Scheduling.InsufficientResources",
+		"Storage.ProvisioningFailed",
+	}
 )
 
 type Event struct {
@@ -28,10 +38,22 @@ type Store struct {
 	results results
 }
 
+type results struct {
+	EventCount int
+
+	BadEventJSONs           []string
+	ReceivedEventCategories map[string][]*Event
+	MissingEventCategories  []string
+	MissingFields           map[string][]*Event
+	FirstTimestampsMissing  []*Event
+	LastTimestampsInvalid   []*Event
+}
+
 func NewStore() *Store {
 	return &Store{
 		results: results{
-			MissingFields: map[string][]*Event{},
+			MissingFields:           map[string][]*Event{},
+			ReceivedEventCategories: map[string][]*Event{},
 		},
 	}
 }
@@ -39,6 +61,14 @@ func NewStore() *Store {
 func (s *Store) MarshalJSON() ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	s.results.MissingEventCategories = make([]string, 0)
+	for _, expectedCategory := range expectedEventCategories {
+		if _, ok := s.results.ReceivedEventCategories[expectedCategory]; !ok {
+			s.results.MissingEventCategories = append(s.results.MissingEventCategories, expectedCategory)
+		}
+	}
+
 	return json.Marshal(s.results)
 }
 
@@ -70,16 +100,6 @@ func (s *Store) Record(event *Event) {
 	s.results.Record(event)
 }
 
-type results struct {
-	EventCount int
-
-	BadEventJSONs []string
-
-	MissingFields          map[string][]*Event
-	FirstTimestampsMissing []*Event
-	LastTimestampsInvalid  []*Event
-}
-
 func (r *results) Record(event *Event) {
 	r.EventCount++
 
@@ -90,6 +110,16 @@ func (r *results) Record(event *Event) {
 	if event.Event.ObjectMeta.Annotations["aria/cluster-uuid"] == "" {
 		r.MissingFields["aria/cluster-uuid"] = append(r.MissingFields["aria/cluster-uuid"], event)
 	}
+
+	if event.Event.ObjectMeta.Annotations["aria/category"] == "" {
+		r.MissingFields["aria/category"] = append(r.MissingFields["aria/category"], event)
+	}
+
+	if event.Event.ObjectMeta.Annotations["aria/subcategory"] == "" {
+		r.MissingFields["aria/subcategory"] = append(r.MissingFields["aria/subcategory"], event)
+	}
+
+	r.recordEventCategory(event)
 
 	if event.Event.ObjectMeta.Name == "" {
 		r.MissingFields["metadata.name"] = append(r.MissingFields["metadata.name"], event)
@@ -125,7 +155,7 @@ func (r *results) Record(event *Event) {
 		}
 	}
 
-	if event.Type == "Normal" && event.Reason != "Backoff" {
+	if event.Type == "Normal" && event.Reason != "BackOff" {
 		r.MissingFields["unexpected-field"] = append(r.MissingFields["unexpected-field"], event)
 	}
 
@@ -133,11 +163,11 @@ func (r *results) Record(event *Event) {
 		r.MissingFields["message"] = append(r.MissingFields["message"], event)
 	}
 
-	if event.Event.Source.Component == "" {
+	if event.Event.Source.Component == "" && event.Event.ReportingController == "" {
 		r.MissingFields["source.component"] = append(r.MissingFields["source.component"], event)
 	}
 
-	if event.Event.FirstTimestamp.IsZero() {
+	if event.Event.FirstTimestamp.IsZero() && event.Event.EventTime.IsZero() {
 		r.FirstTimestampsMissing = append(r.FirstTimestampsMissing, event)
 	}
 
@@ -146,8 +176,17 @@ func (r *results) Record(event *Event) {
 	}
 }
 
+func (r *results) recordEventCategory(event *Event) {
+	eventCategory := fmt.Sprintf("%s.%s", event.ObjectMeta.Annotations["aria/category"], event.ObjectMeta.Annotations["aria/subcategory"])
+	r.ReceivedEventCategories[eventCategory] = append(r.ReceivedEventCategories[eventCategory], event)
+}
+
 func lastTimestampIsValid(event *Event) bool {
-	return event.Event.LastTimestamp.Compare(event.Event.FirstTimestamp.Time) >= 0 || event.Event.LastTimestamp.IsZero()
+	if event.Event.LastTimestamp.IsZero() {
+		return !event.Event.EventTime.IsZero()
+	} else {
+		return event.Event.LastTimestamp.Compare(event.Event.FirstTimestamp.Time) >= 0
+	}
 }
 
 func (r *results) RecordBadLine(eventJSON []byte) {

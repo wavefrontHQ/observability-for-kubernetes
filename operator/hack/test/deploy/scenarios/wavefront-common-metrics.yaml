@@ -45,8 +45,8 @@ spec:
                 - amd64
       containers:
       - name: test-proxy
-        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:2.9.10
-        imagePullPolicy: Always
+        image: projects.registry.vmware.com/tanzu_observability_keights_saas/test-proxy:2.9.14
+        imagePullPolicy: IfNotPresent
         command: [ "/test-proxy", "-proxy", ":2878", "-logLevel", "info" ]
         ports:
         - name: proxy

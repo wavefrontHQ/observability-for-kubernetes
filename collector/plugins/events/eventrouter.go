@@ -140,11 +140,18 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 		ns = "default"
 	}
 
+	var component string
+	if len(e.Source.Component) > 0 {
+		component = e.Source.Component
+	} else {
+		component = e.ReportingController
+	}
+
 	tags := map[string]string{
 		"namespace_name": ns,
 		"kind":           e.InvolvedObject.Kind,
 		"reason":         e.Reason,
-		"component":      e.Source.Component,
+		"component":      component,
 		"type":           e.Type,
 		"important":      e.Annotations["important"],
 	}
@@ -170,9 +177,16 @@ func (er *EventRouter) addEvent(obj interface{}, isInInitialList bool) {
 	delete(tags, "important")
 	sentEvents.Inc(1)
 
+	var lastTimestamp time.Time
+	if e.LastTimestamp.IsZero() {
+		lastTimestamp = e.EventTime.Time
+	} else {
+		lastTimestamp = e.LastTimestamp.Time
+	}
+
 	er.sink.ExportEvent(newEvent(
 		e.Message,
-		e.LastTimestamp.Time,
+		lastTimestamp,
 		e.Source.Host,
 		tags,
 		*e,
