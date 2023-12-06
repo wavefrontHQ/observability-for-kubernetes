@@ -23,8 +23,6 @@ Source: [config.go](../../collector/internal/configuration/config.go)
 
 The configuration file is written in YAML and provided using the `--config-file` flag. The Collector can reload configuration changes at runtime.
 
-A reference example is provided [here](../../collector/deploy/examples/conf.example.yaml).
-
 ```yaml
 # An unique identifier for your Kubernetes cluster. Defaults to 'k8s-cluster'.
 # Included as a point tag on all metrics reported to Operations for Applications.
@@ -192,8 +190,6 @@ conf: |
   [ <Telegraf Plugin Config> ]
 ```
 
-See a reference [example](../../collector/deploy/examples/conf.example.yaml#L90) for details.
-
 ### systemd_source
 
 ```yaml
@@ -285,7 +281,5 @@ collection:
 To enable the HTTP proxy with CA cert, you will need to create a Kubernetes secret with your CA cert file:
 
 ```kubectl create secret generic http-proxy-secret -n wavefront --from-file=tls-root-ca-bundle=<YOUR_CA_CERT_FILE>```
-
-Then use this [example](../../collector/deploy/examples/6-wavefront-proxy-with-http-proxy.yaml) to deploy the Wavefront proxy.
 
 **Note:** You will need to change YOUR_CLUSTER, YOUR_API_TOKEN, YOUR_HTTP_PROXY_HOST, and YOUR_HTTP_PROXY_PORT in the above example.
