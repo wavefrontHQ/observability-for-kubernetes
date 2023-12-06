@@ -18,13 +18,12 @@ package controllers
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"strings"
 	"time"
-
-	stderrors "errors"
 
 	"github.com/wavefronthq/observability-for-kubernetes/operator/api"
 	rc "github.com/wavefronthq/observability-for-kubernetes/operator/api/resourcecustomizations/v1alpha1"

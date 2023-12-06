@@ -9,10 +9,19 @@ import (
 
 func ValidateRC(rcCR *rc.ResourceCustomizations) result.Result {
 	for name, customization := range rcCR.Spec.ByName {
-		if customization.Resources.IsEmpty() {
-			continue
+		if !customization.Resources.IsEmpty() {
+			result := ValidateContainerResources(&customization.Resources, fmt.Sprintf("spec.byName.%s", name))
+			if !result.IsValid() {
+				return result
+			}
 		}
-		result := ValidateContainerResources(&customization.Resources, fmt.Sprintf("spec.byName.%s", name))
+
+		result := ValidateTolerations(customization.Tolerations.Add, fmt.Sprintf("spec.byName.%s", name))
+		if !result.IsValid() {
+			return result
+		}
+
+		result = ValidateTolerations(customization.Tolerations.Remove, fmt.Sprintf("spec.byName.%s", name))
 		if !result.IsValid() {
 			return result
 		}

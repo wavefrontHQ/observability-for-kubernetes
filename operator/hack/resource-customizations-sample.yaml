@@ -18,11 +18,11 @@ spec:
       tolerations:
         add:
         - key: some-constriant
-          operation: Equals
+          operator: Equal
           value: foo
           effect: NoSchedule
         remove:
         - key: other-constriant
-          operation: Equals
+          operator: Equal
           value: bar
           effect: NoExecute
