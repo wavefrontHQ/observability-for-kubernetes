@@ -154,6 +154,20 @@ rules:
 - apiGroups:
   - wavefront.com
   resources:
+  - resourcecustomizations/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - wavefront.com
+  resources:
+  - resourcecustomizations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - wavefront.com
+  resources:
   - wavefronts
   verbs:
   - create
@@ -173,7 +187,6 @@ rules:
   - wavefront.com
   resources:
   - wavefronts/status
-  - resourcecustomizations/status
   verbs:
   - get
   - patch

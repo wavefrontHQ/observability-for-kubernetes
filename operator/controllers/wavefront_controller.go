@@ -110,6 +110,8 @@ func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=wavefronts/finalizers,verbs=update
 
 // +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=resourcecustomizations,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=resourcecustomizations/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=wavefront.com,namespace=observability-system,resources=resourcecustomizations/finalizers,verbs=update
 
 // Permissions for creating Kubernetes resources from internal files.
 // Possible point of confusion: the collector itself watches resources,
