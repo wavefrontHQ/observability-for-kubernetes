@@ -2,11 +2,15 @@
 This is a migration doc for the Observability for Kubernetes Operator from the manual and Helm Collector and proxy installation.
 If you want to test the new Operator in parallel with your existing manual or Helm installation, use the [wavefront-allow-legacy-install.yaml](../../deploy/scenarios/wavefront-allow-legacy-install.yaml) template.
 
+## Table of Contents
+* [Migrate from Helm Installation](#migrate-from-helm-installation)
+* [Migrate from Manual Installation](#migrate-from-manual-installation)
+
 ## Migrate from Helm Installation
 
 ### 1. Install the Operator
 
-Follow [the Operator installation instructions](../../README.md#Deploy-the-Kubernetes-Metrics-Collector-and-Wavefront-Proxy-with-the-Observability-for-Kubernetes-Operator).
+Follow [the Operator installation instructions](../../README.md#deploy-the-monitoring-agents-with-the-observability-for-kubernetes-operator).
 
 In your `wavefront.yaml`,
  * set `spec.allowLegacyInstall` to `true`
@@ -102,7 +106,7 @@ In your `wavefront.yaml`,
 kubectl apply -f <path_to_your_wavefront.yaml>
 ```
 
-## Migrate from Manual Installation 
+## Migrate from Manual Installation
 
 ### Wavefront Proxy Configuration
 
@@ -149,13 +153,15 @@ Below are the proxy arguments that are specified in `WAVEFRONT_PROXY_ARGS`, whic
 
 Other supported Custom Resource configuration:
 * `dataExport.wavefrontProxy.args`: Used to set any `WAVEFRONT_PROXY_ARGS` configuration not mentioned in the above table. See [wavefront-proxy-args.yaml](../../deploy/scenarios/wavefront-proxy-args.yaml) for an example.
+* `dataExport.wavefrontProxy.preprocessor`: Used to set pre-processor rules for Wavefront proxy. See [wavefront-proxy-preprocessor-rules.yaml](../../deploy/scenarios/wavefront-proxy-preprocessor-rules.yaml) for an example.
+* `dataExport.wavefrontProxy.httpProxy.secret`: Used to set an HTTP proxy secret for Wavefront proxy. See [wavefront-proxy-with-http-proxy.yaml](../../deploy/scenarios/wavefront-proxy-with-http-proxy.yaml) for an example.
 * `dataExport.wavefrontProxy.resources`: Used to set container resource request or limits for Wavefront proxy. See [wavefront-pod-resources.yaml](../../deploy/scenarios/wavefront-pod-resources.yaml) for an example.
 * `dataExport.externalWavefrontProxy.Url`: Used to set an external Wavefront proxy. See [wavefront-collector-external-proxy.yaml](../../deploy/scenarios/wavefront-collector-external-proxy.yaml) for an example.
 
 ### Wavefront Collector to Kubernetes Metrics Collector Configuration
 
 Wavefront Collector `ConfigMap` changes:
-* Wavefront Collector ConfigMap changed from `wavefront-collector` to `wavefront` namespace.
+* Wavefront Collector ConfigMap changed from `wavefront-collector` to `observability-system` namespace.
 * `sinks.proxyAddress` changed from `wavefront-proxy.default.svc.cluster.local:2878` to `wavefront-proxy:2878`.
 * Change `collector.yaml` to `config.yaml`
 
@@ -164,9 +170,10 @@ Custom Resource `spec` changes:
 See [wavefront-collector-existing-configmap.yaml](../../deploy/scenarios/wavefront-collector-existing-configmap.yaml) for an example.
 
 Other supported Custom Resource configurations:
-* `dataCollection.metrics.nodeCollector.resources`: Used to set container resource request or limits for Wavefront node collector.
-* `dataCollection.metrics.clusterCollector.resources`: Used to set container resource request or limits for Wavefront cluster collector.
-See [wavefront-pod-resources.yaml](../../deploy/scenarios/wavefront-pod-resources.yaml) for an example.
+* `dataCollection.metrics.filters`: Used to set filtering to be applied to all the metrics collected by the Kubernetes Metrics Collector. See [wavefront-collector-filtering.yaml](../../deploy/scenarios/wavefront-collector-filtering.yaml) for an example.
+* `dataCollection.metrics.tolerations`: Used to set pod tolerations to be applied to all data collection for Kubernetes Metrics Collector. See [wavefront-daemonset-pod-tolerations.yaml](../../deploy/scenarios/wavefront-daemonset-pod-tolerations.yaml) for an example.
+* `dataCollection.metrics.nodeCollector.resources`: Used to set container resource request or limits for Kubernetes Metrics Collector (Node). See [wavefront-pod-resources.yaml](../../deploy/scenarios/wavefront-pod-resources.yaml) for an example.
+* `dataCollection.metrics.clusterCollector.resources`: Used to set container resource request or limits for Kubernetes Metrics Collector (Cluster). See [wavefront-pod-resources.yaml](../../deploy/scenarios/wavefront-pod-resources.yaml) for an example.
 
 ### Future Support
 

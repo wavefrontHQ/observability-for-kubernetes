@@ -10,29 +10,38 @@ spec:
   dataCollection:
     metrics:
       enable: true
+      # container resource requests and limits for cluster collector
       clusterCollector:
         resources:
           requests:
             cpu: 200m
             memory: 10Mi
+            ephemeral-storage: 20Mi
           limits:
             cpu: 2000m
             memory: 512Mi
+            ephemeral-storage: 1Gi
+      # container resource requests and limits for node collectors
       nodeCollector:
         resources:
           requests:
             cpu: 200m
             memory: 10Mi
+            ephemeral-storage: 20Mi
           limits:
             cpu: 1000m
             memory: 256Mi
+            ephemeral-storage: 512Mi
   dataExport:
     wavefrontProxy:
       enable: true
+      # container resource requests and limits for Wavefront proxy
       resources:
         requests:
-          cpu: 200m
+          cpu: 100m
           memory: 1Gi
+          ephemeral-storage: 2Gi
         limits:
           cpu: 1000m
-          memory: 3Gi
+          memory: 4Gi
+          ephemeral-storage: 8Gi
