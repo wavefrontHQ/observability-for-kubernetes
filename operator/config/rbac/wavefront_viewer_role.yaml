@@ -18,5 +18,6 @@ rules:
   - wavefront.com
   resources:
   - wavefronts/status
+  - resourcecustomizations/status
   verbs:
   - get
