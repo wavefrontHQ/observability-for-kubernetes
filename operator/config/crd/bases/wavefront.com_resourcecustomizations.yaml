@@ -15,7 +15,14 @@ spec:
     singular: resourcecustomizations
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: status
+      type: string
+    - jsonPath: .status.message
+      name: message
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ResourceCustomizations is the Schema for the resourcecustomiztaions
@@ -260,6 +267,8 @@ spec:
               the ResourceCustomizations CR
             properties:
               message:
+                type: string
+              status:
                 description: Message is a human-readable message indicating details
                   about any validation errors.
                 type: string

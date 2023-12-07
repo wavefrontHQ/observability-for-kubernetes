@@ -422,10 +422,13 @@ func (r *WavefrontReconciler) reportRCStatus(ctx context.Context, rcCR *rc.Resou
 	if rcCR.Name == "" {
 		return true, nil
 	}
-	rcStatus := rc.ResourceCustomizationsStatus{}
+	rcStatus := rc.ResourceCustomizationsStatus{
+		Status: health.Healthy,
+	}
 
 	if !result.IsValid() {
 		rcStatus.Message = result.Message()
+		rcStatus.Status = health.Unhealthy
 	}
 
 	newRCCR := *rcCR

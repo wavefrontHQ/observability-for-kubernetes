@@ -196,3 +196,27 @@ data:
           - 'kube.coredns.coredns.dns.response.rcode.count.total.counter'
           - 'kube.coredns.coredns.dns.response.size.bytes'
           - 'kube.coredns.process.*'
+---
+apiVersion: wavefront.com/v1alpha1
+kind: ResourceCustomizations
+metadata:
+  name: resource-customizations
+  namespace: observability-system
+spec:
+  byName:
+    wavefront-proxy:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 100Mi
+          ephemeral-storage: 1Gi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+          ephemeral-storage: 10Gi
+      tolerations:
+        add:
+        - key: NoSchedule
+          operator: Equal
+          value: foo
+          effect: NoSchedule

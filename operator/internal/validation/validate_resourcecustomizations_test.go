@@ -56,6 +56,50 @@ func TestValidateRC(t *testing.T) {
 			require.False(t, result.IsValid(), "result should not be valid")
 			require.Contains(t, result.Message(), fmt.Sprintf("invalid spec.byName.some-resource.toleration: toleration with key someKey must have operator value of %s or %s", v1.TolerationOpEqual, v1.TolerationOpExists))
 		})
+		t.Run("validates add effect", func(t *testing.T) {
+			crSet := defaultCRSet()
+			crSet.ResourceCustomizations.Spec.ByName = map[string]rc.WorkloadCustomization{
+				"some-resource": {
+					ResourceCustomization: rc.ResourceCustomization{Tolerations: rc.Tolerations{
+						Add: []v1.Toleration{
+							{
+								Key:      "someKey",
+								Operator: "Equal",
+								Value:    "foo",
+								Effect:   "nonEffect",
+							},
+						},
+						Remove: nil,
+					}},
+				},
+			}
+			result := ValidateRC(&crSet.ResourceCustomizations)
+
+			require.False(t, result.IsValid(), "result should not be valid")
+			require.Contains(t, result.Message(), fmt.Sprintf("invalid spec.byName.some-resource.toleration: toleration with key someKey must have effect value of %s, %s, or %s", v1.TaintEffectNoExecute, v1.TaintEffectNoSchedule, v1.TaintEffectPreferNoSchedule))
+		})
+		t.Run("validates remove effect", func(t *testing.T) {
+			crSet := defaultCRSet()
+			crSet.ResourceCustomizations.Spec.ByName = map[string]rc.WorkloadCustomization{
+				"some-resource": {
+					ResourceCustomization: rc.ResourceCustomization{Tolerations: rc.Tolerations{
+						Remove: []v1.Toleration{
+							{
+								Key:      "someKey",
+								Operator: "Equal",
+								Value:    "foo",
+								Effect:   "nonEffect",
+							},
+						},
+						Add: nil,
+					}},
+				},
+			}
+			result := ValidateRC(&crSet.ResourceCustomizations)
+
+			require.False(t, result.IsValid(), "result should not be valid")
+			require.Contains(t, result.Message(), fmt.Sprintf("invalid spec.byName.some-resource.toleration: toleration with key someKey must have effect value of %s, %s, or %s", v1.TaintEffectNoExecute, v1.TaintEffectNoSchedule, v1.TaintEffectPreferNoSchedule))
+		})
 	})
 	t.Run("resources", func(t *testing.T) {
 		t.Run("resources cannot specify only requests", func(t *testing.T) {
