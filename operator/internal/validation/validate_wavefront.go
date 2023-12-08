@@ -3,6 +3,7 @@ package validation
 import (
 	"context"
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -73,6 +74,7 @@ func Validate(objClient client.Client, wavefront *wf.Wavefront) Result {
 }
 
 func ValidateResources(resources *wf.Resources, resourceName string) Result {
+	log.Log.Info(fmt.Sprintf("Validating the resources"))
 	var errs []error
 	if len(resources.Limits.Memory) == 0 {
 		errs = append(errs, fmt.Errorf("invalid %s.resources.limits.memory must be set", resourceName))

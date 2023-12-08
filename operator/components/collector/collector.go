@@ -2,14 +2,14 @@ package collector
 
 import (
 	"fmt"
-	"io/fs"
-
 	wf "github.com/wavefronthq/observability-for-kubernetes/operator/api/v1alpha1"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/components/patch"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/validation"
+	"io/fs"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const DeployDir = "collector"
@@ -70,10 +70,11 @@ func NewComponent(dir fs.FS, componentConfig ComponentConfig) (Component, error)
 func (component *Component) Validate() validation.Result {
 	var errs []error
 
-	if !component.config.Enable {
-		return validation.Result{}
-	}
+	//if !component.config.Enable {
+	//	return validation.Result{}
+	//}
 
+	log.Log.Info(fmt.Sprintf("Attempting Validate of component"))
 	if len(component.config.ControllerManagerUID) == 0 {
 		errs = append(errs, fmt.Errorf("%s: missing controller manager uid", component.Name()))
 	}

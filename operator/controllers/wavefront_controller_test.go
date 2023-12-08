@@ -327,6 +327,40 @@ func TestReconcileAll(t *testing.T) {
 		require.Equal(t, "100Mi", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
 		require.Equal(t, "8Gi", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.StorageEphemeral().String())
 	})
+
+	t.Run("flapping test", func(t *testing.T) {
+		r, _ := emptyScenario(wftest.CR(func(wavefront *wf.Wavefront) {
+			wavefront.Spec.Experimental.Autotracing.Enable = true
+			wavefront.Spec.DataCollection.Metrics.ClusterCollector.Resources = wf.Resources{
+				Requests: wf.Resource{
+					CPU:    "500m",
+					Memory: "50Mi",
+				},
+				Limits: wf.Resource{
+					CPU:    "100m",
+					Memory: "100Mi",
+				},
+			}
+		}), nil, wftest.Proxy(wftest.WithReplicas(1, 1)))
+		mockSender := &testhelper.MockSender{}
+		r.MetricConnection = metric.NewConnection(testhelper.StubSenderFactory(mockSender, nil))
+
+		_, err := r.Reconcile(context.Background(), defaultRequest())
+
+		require.NoError(t, err)
+
+		//proxy, err := mockKM.GetProxyDeployment()
+		//
+		//require.NoError(t, err)
+
+		//require.Equal(t, "50m", proxy.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu().String())
+		//require.Equal(t, "50Mi", proxy.Spec.Template.Spec.Containers[0].Resources.Requests.Memory().String())
+		//require.Equal(t, "2Gi", proxy.Spec.Template.Spec.Containers[0].Resources.Requests.StorageEphemeral().String())
+		//
+		//require.Equal(t, "100m", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().String())
+		//require.Equal(t, "100Mi", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().String())
+		//require.Equal(t, "8Gi", proxy.Spec.Template.Spec.Containers[0].Resources.Limits.StorageEphemeral().String())
+	})
 }
 
 func TestReconcileCollector(t *testing.T) {

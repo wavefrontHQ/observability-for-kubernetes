@@ -127,15 +127,22 @@ func (r *WavefrontReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 const maxReconcileInterval = 60 * time.Second
 
+var reconcileCounter = 0
+
 func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log.Log.Info(fmt.Sprintf("Iteration %d: Beginning Reconcile loop.", reconcileCounter))
 	r.namespace = req.Namespace
 	wavefront := &wf.Wavefront{}
 	err := r.Client.Get(ctx, req.NamespacedName, wavefront)
 	if err != nil && !errors.IsNotFound(err) {
+		log.Log.Info(fmt.Sprintf("Iteration %d: Returning from lookup failure.", reconcileCounter))
+		reconcileCounter += 1
 		return errorCRTLResult(err)
 	}
 
 	if errors.IsNotFound(err) {
+		log.Log.Info(fmt.Sprintf("Iteration %d: Deleting Resources because Namespace not found", reconcileCounter))
+		reconcileCounter += 1
 		_ = r.readAndDeleteResources()
 		return ctrl.Result{}, nil
 	}
@@ -143,24 +150,33 @@ func (r *WavefrontReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	var validationResult validation.Result
 	err = r.preprocess(wavefront, ctx)
 	if err != nil {
+		log.Log.Info(fmt.Sprintf("Iteration %d: Encountered an error during preproccessing", reconcileCounter))
 		validationResult = validation.NewErrorResult(err)
 	} else {
 		validationResult = r.validate(wavefront)
 	}
 
 	if !validationResult.IsError() {
+		log.Log.Info(fmt.Sprintf("Iteration %d: Vaidation successful. Creating resources.", reconcileCounter))
 		err = r.readAndCreateResources(wavefront.Spec)
 		if err != nil {
+			log.Log.Info(fmt.Sprintf("Iteration %d: Encountered error creating resources.", reconcileCounter))
+			reconcileCounter += 1
 			return errorCRTLResult(err)
 		}
+		//}
 	} else {
+		log.Log.Info(fmt.Sprintf("Iteration %d: Found a Validation error; deleting resources: %s.", reconcileCounter, validationResult.Message()))
 		_ = r.readAndDeleteResources()
 	}
 	wavefrontStatus, err := r.reportHealthStatus(ctx, wavefront, validationResult)
 	if err != nil {
+		log.Log.Info(fmt.Sprintf("Iteration %d: Encountered an error reporting health status.", reconcileCounter))
+		reconcileCounter += 1
 		return errorCRTLResult(err)
 	}
 
+	reconcileCounter += 1
 	if wavefrontStatus.Status != health.Healthy {
 		return ctrl.Result{
 			Requeue: true,
