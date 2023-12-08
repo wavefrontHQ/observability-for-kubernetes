@@ -9,6 +9,7 @@ func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 		// required
 		Enable:                    (cr.Spec.CanExportData && cr.Spec.DataCollection.Metrics.Enable || cr.Spec.Experimental.Insights.Enable),
 		MetricsEnable:             cr.Spec.CanExportData && cr.Spec.DataCollection.Metrics.Enable,
+		ShouldValidate:            cr.Spec.DataCollection.Metrics.Enable || cr.Spec.Experimental.Insights.Enable,
 		CustomConfig:              cr.Spec.DataCollection.Metrics.CustomConfig,
 		ControllerManagerUID:      cr.Spec.ControllerManagerUID,
 		ClusterName:               cr.Spec.ClusterName,
@@ -39,5 +40,38 @@ func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 		ImagePullSecret: cr.Spec.ImagePullSecret,
 	}
 
+	return defaultResources(config)
+}
+
+func defaultResources(config ComponentConfig) ComponentConfig {
+	if config.NodeCollectorResources.IsEmpty() {
+		config.NodeCollectorResources = wf.Resources{
+			Requests: wf.Resource{
+				CPU:              "200m",
+				Memory:           "10Mi",
+				EphemeralStorage: "20Mi",
+			},
+			Limits: wf.Resource{
+				CPU:              "1000m",
+				Memory:           "256Mi",
+				EphemeralStorage: "512Mi",
+			},
+		}
+	}
+
+	if config.ClusterCollectorResources.IsEmpty() {
+		config.ClusterCollectorResources = wf.Resources{
+			Requests: wf.Resource{
+				CPU:              "200m",
+				Memory:           "10Mi",
+				EphemeralStorage: "20Mi",
+			},
+			Limits: wf.Resource{
+				CPU:              "2000m",
+				Memory:           "512Mi",
+				EphemeralStorage: "1Gi",
+			},
+		}
+	}
 	return config
 }

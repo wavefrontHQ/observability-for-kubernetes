@@ -409,6 +409,10 @@ type Resources struct {
 	Limits Resource `json:"limits,omitempty" yaml:"limits,omitempty"`
 }
 
+func (rs *Resources) IsEmpty() bool {
+	return rs.Requests.IsEmpty() && rs.Limits.IsEmpty()
+}
+
 type ControlPlane struct {
 	// Enable is whether to include kubernetes.controlplane.* metrics
 	// +kubebuilder:default:=true
