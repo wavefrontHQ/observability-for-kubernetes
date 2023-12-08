@@ -172,7 +172,7 @@ peg:
 .PHONY: container_rhel
 container_rhel:
 	docker build \
-		-f $(COLLECTOR_REPO_ROOT)/deploy/docker/Dockerfile-rhel \
+		-f $(COLLECTOR_REPO_ROOT)/hack/deploy/docker/Dockerfile-rhel \
 		--build-arg COLLECTOR_VERSION=$(NEXT_RELEASE_VERSION) --build-arg LDFLAGS="$(LDFLAGS)" \
 		-t $(PREFIX)/$(DOCKER_IMAGE):$(VERSION) .
 ifneq ($(OVERRIDE_IMAGE_NAME),)

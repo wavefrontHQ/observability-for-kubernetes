@@ -1,6 +1,6 @@
 # files that aren't necessary to build a binary
 adr
-deploy
+hack/deploy
 docs
 hack
 *.md
