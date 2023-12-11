@@ -10,11 +10,14 @@ import (
 
 func TestFromWavefront(t *testing.T) {
 	t.Run("valid wavefront spec config", func(t *testing.T) {
-		cr := wftest.CR()
+		cr := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.CanExportData = true
+			w.Spec.DataCollection.Logging.Enable = true
+		})
 		config := FromWavefront(cr)
-		component, _ := NewComponent(ComponentDir, config)
 
-		require.True(t, component.Validate().IsValid())
+		require.True(t, config.Enable)
+		require.True(t, config.ShouldValidate)
 	})
 
 	t.Run("component config enable should be set to false", func(t *testing.T) {
@@ -24,5 +27,6 @@ func TestFromWavefront(t *testing.T) {
 		config := FromWavefront(cr)
 
 		require.False(t, config.Enable)
+		require.True(t, config.ShouldValidate)
 	})
 }

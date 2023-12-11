@@ -60,11 +60,9 @@ func TestFromWavefront(t *testing.T) {
 		})
 
 		config := FromWavefront(cr, clientFake.Setup())
-		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
-		require.Equal(t, "", component.Validate().Message())
-		require.True(t, component.Validate().IsValid())
+		require.True(t, config.ShouldValidate)
 		require.Equal(t, HubSources, config.StirlingSources)
 	})
 
@@ -73,6 +71,7 @@ func TestFromWavefront(t *testing.T) {
 		config := FromWavefront(cr, clientFake.Setup())
 
 		require.False(t, config.Enable)
+		require.False(t, config.ShouldValidate)
 	})
 
 	t.Run("wavefront spec with autotracing enabled", func(t *testing.T) {
@@ -81,11 +80,8 @@ func TestFromWavefront(t *testing.T) {
 			w.Spec.ClusterName = "test-clusterName"
 		})
 		config := FromWavefront(cr, clientFake.Setup())
-		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
-		require.Equal(t, "", component.Validate().Message())
-		require.True(t, component.Validate().IsValid())
 		require.Equal(t, AutoTracingSources, config.StirlingSources)
 	})
 
@@ -97,11 +93,8 @@ func TestFromWavefront(t *testing.T) {
 			w.Spec.Experimental.Hub.Pixie.Enable = true
 		})
 		config := FromWavefront(cr, clientFake.Setup())
-		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
-		require.Equal(t, "", component.Validate().Message())
-		require.True(t, component.Validate().IsValid())
 		require.Equal(t, HubSources, config.StirlingSources)
 		require.Equal(t, 0, config.MaxHTTPBodyBytes)
 	})

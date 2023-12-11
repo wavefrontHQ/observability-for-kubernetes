@@ -46,7 +46,7 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("empty enabled component config is not valid", func(t *testing.T) {
-		config := ComponentConfig{Enable: true}
+		config := ComponentConfig{ShouldValidate: true}
 		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
@@ -144,6 +144,7 @@ func checkConfigMapNamespaceChanges(t *testing.T, metadataName string, toApply [
 func validComponentConfig() ComponentConfig {
 	return ComponentConfig{
 		Enable:               true,
+		ShouldValidate:       true,
 		ControllerManagerUID: "controller-manager-uid",
 		Namespace:            util.Namespace,
 	}

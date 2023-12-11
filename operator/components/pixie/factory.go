@@ -13,6 +13,7 @@ var AutoTracingSources = []string{"socket_tracer"}
 func FromWavefront(cr *wf.Wavefront, client client.Client) Config {
 	config := defaultResources(cr.Spec.ClusterSize, Config{
 		Enable:               cr.Spec.Experimental.Hub.Pixie.Enable || cr.Spec.Experimental.Autotracing.Enable,
+		ShouldValidate:       cr.Spec.Experimental.Hub.Pixie.Enable || cr.Spec.Experimental.Autotracing.Enable,
 		ControllerManagerUID: cr.Spec.ControllerManagerUID,
 		ClusterUUID:          cr.Spec.ClusterUUID,
 		ClusterName:          cr.Spec.ClusterName,

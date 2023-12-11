@@ -19,6 +19,7 @@ const DeployDir = "proxy"
 type ComponentConfig struct {
 	// required
 	Enable               bool
+	ShouldValidate       bool
 	ControllerManagerUID string
 	Namespace            string
 	ClusterName          string
@@ -73,7 +74,7 @@ func NewComponent(dir fs.FS, componentConfig ComponentConfig) (Component, error)
 func (component *Component) Validate() validation.Result {
 	var errs []error
 
-	if !component.config.Enable {
+	if !component.config.ShouldValidate {
 		return validation.Result{}
 	}
 

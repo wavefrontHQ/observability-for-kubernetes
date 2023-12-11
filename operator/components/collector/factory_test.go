@@ -16,11 +16,8 @@ func TestFromWavefront(t *testing.T) {
 			w.Spec.CanExportData = true
 		})
 		config := FromWavefront(cr)
-		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
-		require.Equal(t, "", component.Validate().Message())
-		require.True(t, component.Validate().IsValid())
 	})
 
 	t.Run("valid wavefront spec config for metrics enabled and CanExportData not enabled", func(t *testing.T) {
@@ -29,11 +26,9 @@ func TestFromWavefront(t *testing.T) {
 			w.Spec.CanExportData = false
 		})
 		config := FromWavefront(cr)
-		component, _ := NewComponent(ComponentDir, config)
 
+		require.False(t, config.Enable)
 		require.True(t, config.ShouldValidate)
-		require.Equal(t, "", component.Validate().Message())
-		require.True(t, component.Validate().IsValid())
 	})
 
 	t.Run("valid wavefront spec config for insights enabled", func(t *testing.T) {
@@ -44,11 +39,8 @@ func TestFromWavefront(t *testing.T) {
 			w.Spec.Experimental.Insights.IngestionUrl = "https://example.com"
 		})
 		config := FromWavefront(cr)
-		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
-		require.Equal(t, "", component.Validate().Message())
-		require.True(t, component.Validate().IsValid())
 	})
 
 	t.Run("component config enable should be set to false when metrics disabled", func(t *testing.T) {

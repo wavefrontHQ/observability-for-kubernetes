@@ -7,6 +7,7 @@ import (
 func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 	config := ComponentConfig{
 		Enable:               cr.Spec.CanExportData && cr.Spec.Experimental.Autotracing.Enable && cr.Spec.Experimental.Autotracing.CanExportAutotracingScripts,
+		ShouldValidate:       cr.Spec.Experimental.Autotracing.Enable && cr.Spec.Experimental.Autotracing.CanExportAutotracingScripts,
 		ControllerManagerUID: cr.Spec.ControllerManagerUID,
 		Namespace:            cr.Spec.Namespace,
 	}

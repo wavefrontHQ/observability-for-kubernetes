@@ -7,6 +7,7 @@ import (
 func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 	config := ComponentConfig{
 		Enable:          cr.Spec.CanExportData && cr.Spec.DataCollection.Logging.Enable,
+		ShouldValidate:  cr.Spec.DataCollection.Logging.Enable,
 		ClusterName:     cr.Spec.ClusterName,
 		Namespace:       cr.Spec.Namespace,
 		LoggingVersion:  cr.Spec.DataCollection.Logging.LoggingVersion,

@@ -17,6 +17,7 @@ const DeployDir = "pixie"
 
 type Config struct {
 	Enable               bool
+	ShouldValidate       bool
 	TLSCertsSecretExists bool
 	ControllerManagerUID string
 	ClusterUUID          string
@@ -58,7 +59,7 @@ func (component *Component) Name() string {
 func (component *Component) Validate() validation.Result {
 	var errs []error
 
-	if !component.config.Enable {
+	if !component.config.ShouldValidate {
 		return validation.Result{}
 	}
 
