@@ -16,11 +16,19 @@ func TestFromWavefront(t *testing.T) {
 			w.Spec.CanExportData = true
 		})
 		config := FromWavefront(cr)
-		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
-		require.Equal(t, "", component.Validate().Message())
-		require.True(t, component.Validate().IsValid())
+	})
+
+	t.Run("valid wavefront spec config for metrics enabled and CanExportData not enabled", func(t *testing.T) {
+		cr := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.Enable = true
+			w.Spec.CanExportData = false
+		})
+		config := FromWavefront(cr)
+
+		require.False(t, config.Enable)
+		require.True(t, config.ShouldValidate)
 	})
 
 	t.Run("valid wavefront spec config for insights enabled", func(t *testing.T) {
@@ -31,11 +39,8 @@ func TestFromWavefront(t *testing.T) {
 			w.Spec.Experimental.Insights.IngestionUrl = "https://example.com"
 		})
 		config := FromWavefront(cr)
-		component, _ := NewComponent(ComponentDir, config)
 
 		require.True(t, config.Enable)
-		require.Equal(t, "", component.Validate().Message())
-		require.True(t, component.Validate().IsValid())
 	})
 
 	t.Run("component config enable should be set to false when metrics disabled", func(t *testing.T) {
@@ -54,5 +59,67 @@ func TestFromWavefront(t *testing.T) {
 		config := FromWavefront(cr)
 
 		require.False(t, config.Enable)
+	})
+
+	t.Run("defaults node collector resources if empty", func(t *testing.T) {
+		cr := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.NodeCollector.Resources = wf.Resources{}
+		})
+		config := FromWavefront(cr)
+
+		require.False(t, config.NodeCollectorResources.IsEmpty())
+	})
+
+	t.Run("if does not default node collector resources if they are not empty", func(t *testing.T) {
+		resources := wf.Resources{
+			Requests: wf.Resource{
+				CPU:              "100m",
+				Memory:           "10Mi",
+				EphemeralStorage: "20Mi",
+			},
+			Limits: wf.Resource{
+				CPU:              "900m",
+				Memory:           "512Mi",
+				EphemeralStorage: "512Mi",
+			},
+		}
+		cr := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.NodeCollector.Resources = resources
+
+		})
+		config := FromWavefront(cr)
+
+		require.Equal(t, resources, config.NodeCollectorResources)
+	})
+
+	t.Run("defaults cluster collector resources if empty", func(t *testing.T) {
+		cr := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.ClusterCollector.Resources = wf.Resources{}
+		})
+		config := FromWavefront(cr)
+
+		require.False(t, config.ClusterCollectorResources.IsEmpty())
+	})
+
+	t.Run("if does not default cluster collector resources if they are not empty", func(t *testing.T) {
+		resources := wf.Resources{
+			Requests: wf.Resource{
+				CPU:              "100m",
+				Memory:           "10Mi",
+				EphemeralStorage: "20Mi",
+			},
+			Limits: wf.Resource{
+				CPU:              "900m",
+				Memory:           "512Mi",
+				EphemeralStorage: "512Mi",
+			},
+		}
+		cr := wftest.CR(func(w *wf.Wavefront) {
+			w.Spec.DataCollection.Metrics.ClusterCollector.Resources = resources
+
+		})
+		config := FromWavefront(cr)
+
+		require.Equal(t, resources, config.ClusterCollectorResources)
 	})
 }

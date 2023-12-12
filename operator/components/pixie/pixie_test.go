@@ -65,7 +65,7 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("empty enabled component config is not valid", func(t *testing.T) {
-		config := Config{Enable: true}
+		config := Config{ShouldValidate: true}
 		component, err := NewComponent(ComponentDir, config)
 		result := component.Validate()
 		require.NoError(t, err)
@@ -311,6 +311,7 @@ func TestResources(t *testing.T) {
 func validComponentConfig() Config {
 	return Config{
 		Enable:               true,
+		ShouldValidate:       true,
 		TLSCertsSecretExists: true,
 		ControllerManagerUID: "controller-manager-uid",
 		ClusterUUID:          "cluster-uuid",

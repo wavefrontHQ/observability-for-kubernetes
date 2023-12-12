@@ -20,6 +20,7 @@ const DeployDir = "logging"
 type ComponentConfig struct {
 	// required
 	Enable               bool
+	ShouldValidate       bool
 	ClusterName          string
 	LoggingVersion       string
 	ImageRegistry        string
@@ -66,7 +67,7 @@ func NewComponent(fs fs.FS, componentConfig ComponentConfig) (Component, error) 
 func (component *Component) Validate() validation.Result {
 	var errs []error
 
-	if !component.config.Enable {
+	if !component.config.ShouldValidate {
 		return validation.Result{}
 	}
 	if len(component.config.ControllerManagerUID) == 0 {

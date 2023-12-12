@@ -14,6 +14,7 @@ func TestFromWavefront(t *testing.T) {
 		config := FromWavefront(cr)
 
 		require.True(t, config.Enable)
+		require.True(t, config.ShouldValidate)
 		require.Equal(t, cr.Spec.ControllerManagerUID, config.ControllerManagerUID)
 		require.Equal(t, cr.Spec.Namespace, config.Namespace)
 	})
@@ -28,6 +29,16 @@ func TestFromWavefront(t *testing.T) {
 		require.False(t, config.Enable)
 		require.Equal(t, cr.Spec.ControllerManagerUID, config.ControllerManagerUID)
 		require.Equal(t, cr.Spec.Namespace, config.Namespace)
+	})
+
+	t.Run("should validate even when not yet ready to export", func(t *testing.T) {
+		cr := validAutoTracingEnabledCR(func(w *wf.Wavefront) {
+			w.Spec.CanExportData = false
+		})
+		config := FromWavefront(cr)
+
+		require.False(t, config.Enable)
+		require.True(t, config.ShouldValidate)
 	})
 
 	t.Run("valid config for autotracing enabled with proxy running and PEMs not running", func(t *testing.T) {

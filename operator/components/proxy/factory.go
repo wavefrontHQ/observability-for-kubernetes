@@ -6,6 +6,7 @@ func FromWavefront(cr *wf.Wavefront) ComponentConfig {
 	config := ComponentConfig{
 		// required
 		Enable:               cr.Spec.DataExport.WavefrontProxy.Enable,
+		ShouldValidate:       cr.Spec.DataExport.WavefrontProxy.Enable,
 		ControllerManagerUID: cr.Spec.ControllerManagerUID,
 		Namespace:            cr.Spec.Namespace,
 		ClusterName:          cr.Spec.ClusterName,

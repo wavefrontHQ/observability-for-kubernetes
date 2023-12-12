@@ -44,7 +44,7 @@ func TestValidate(t *testing.T) {
 	})
 
 	t.Run("empty enabled component config is not valid", func(t *testing.T) {
-		config := ComponentConfig{Enable: true}
+		config := ComponentConfig{ShouldValidate: true}
 		loggingComponent, err := NewComponent(ComponentDir, config)
 		result := loggingComponent.Validate()
 		require.NoError(t, err)
@@ -221,6 +221,7 @@ func fluentBitConfiguration(toApply []client.Object) string {
 func validLoggingComponentConfig() ComponentConfig {
 	return ComponentConfig{
 		Enable:                 true,
+		ShouldValidate:         true,
 		ClusterName:            wftest.DefaultClusterName,
 		ControllerManagerUID:   "asdfgh",
 		Namespace:              wftest.DefaultNamespace,

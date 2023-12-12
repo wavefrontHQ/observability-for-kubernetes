@@ -18,6 +18,7 @@ type ComponentConfig struct {
 	// required
 	Enable                    bool
 	MetricsEnable             bool
+	ShouldValidate            bool
 	ControllerManagerUID      string
 	ClusterName               string
 	ClusterUUID               string
@@ -70,7 +71,7 @@ func NewComponent(dir fs.FS, componentConfig ComponentConfig) (Component, error)
 func (component *Component) Validate() validation.Result {
 	var errs []error
 
-	if !component.config.Enable {
+	if !component.config.ShouldValidate {
 		return validation.Result{}
 	}
 
@@ -86,10 +87,8 @@ func (component *Component) Validate() validation.Result {
 		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 
-	if component.config.MetricsEnable {
-		if result := validation.ValidateResources(&component.config.NodeCollectorResources, util.NodeCollectorName); result.IsError() {
-			errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
-		}
+	if result := validation.ValidateResources(&component.config.NodeCollectorResources, util.NodeCollectorName); result.IsError() {
+		errs = append(errs, fmt.Errorf("%s: %s", component.Name(), result.Message()))
 	}
 
 	if component.config.KubernetesEvents.Enable {
