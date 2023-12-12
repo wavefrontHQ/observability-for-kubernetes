@@ -1,0 +1,37 @@
+# Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
+# See docs/collector/metrics.md#telegraf-source for more details
+apiVersion: wavefront.com/v1alpha1
+kind: Wavefront
+metadata:
+  name: wavefront
+  namespace: observability-system
+spec:
+  clusterName: YOUR_CLUSTER_NAME
+  wavefrontUrl: YOUR_WAVEFRONT_URL
+  dataCollection:
+    metrics:
+      enable: true
+  dataExport:
+    wavefrontProxy:
+      enable: true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: memcached-config
+  namespace: observability-system
+  annotations:
+    wavefront.com/discovery-config: 'true'
+stringData:
+  collector.yaml: |
+    # specify a list of discovery rules (plugins)
+    plugins:
+    # memcached
+    - name: memcached
+      type: telegraf/memcached
+      selectors:
+        images:
+        - 'docker.io/bitnami/memcached:*'
+      port: 11211
+      conf: |
+        servers = ["memcached-release.collector-targets.svc.cluster.local:11211"]
