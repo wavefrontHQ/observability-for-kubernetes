@@ -34,7 +34,7 @@ pipeline {
           sh 'make gke-connect-to-cluster'
           sh 'NUMBER_OF_NODES=2 GKE_NODE_POOL=default-pool make resize-node-pool-gke-cluster'
           sh 'NUMBER_OF_NODES=1 GKE_NODE_POOL=arm-pool make resize-node-pool-gke-cluster'
-          sh 'make clean-cluster'
+          sh 'CLEAN_CLUSTER_ARGS="-n" make clean-cluster'
           sh './operator/hack/test/deploy/deploy-local.sh -t $WAVEFRONT_TOKEN -n $K8S_CLUSTER_NAME -x'
           sh './operator/hack/test/run-e2e-tests.sh -t $WAVEFRONT_TOKEN -r basic -v $(cat operator/release/OPERATOR_VERSION) -n $K8S_CLUSTER_NAME'
           sh 'make clean-cluster'
