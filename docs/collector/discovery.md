@@ -30,8 +30,6 @@ Additional annotations that apply:
 - `prometheus.io/insecureSkipVerify`: Whether to skip https cert validation. Defaults to true.
 - `prometheus.io/serverName`: The cert hostname to verify for the discovered targets.
 
-See an [example](../../collector/deploy/examples/prometheus-annotations-example.yaml) for how to annotate a pod with the above annotations.
-
 ### Disabling Annotation Discovery
 Discovery based on annotations is enabled by default, but can be disabled by setting the `disable_annotation_discovery` configuration option to `true`:
 
@@ -150,7 +148,6 @@ collection:
   # Duration type specified as [0-9]+(ms|[smhdwy])
   timeout: 20s
 ```
-See the reference [example](../../collector/deploy/examples/conf.example.yaml) for details on how to specify the discovery rules.
 
 ### Plugin Types
 The supported plugin types are:
@@ -176,8 +173,6 @@ The runtime configmaps should be annotated with `wavefront.com/discovery-config:
 Discovery rules specified in the main config and via runtime configs are combined together to form a single set of rules to drive auto-discovery decisions.
 
 The `discovery_interval` controls how often runtime config changes are evaluated. This is pertinent as runtime changes requires the collector to re-evaluate all pods/services for discovery/data collection.
-
-See the reference [configmap example](../../collector/deploy/examples/runtime/memcached-runtime-config.yaml) or [secret example](../../collector/deploy/examples/runtime/memcached-runtime-secret-config.yaml) for details.
 
 ## Use Cases
 Together, annotation and rule based discovery can be used to easily collect metrics from the Kubernetes control plane (apiserver, etcd, dns etc), NGINX ingresses, and any application that exposes a Prometheus scrape endpoint.
