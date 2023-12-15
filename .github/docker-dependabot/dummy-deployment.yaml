@@ -20,7 +20,7 @@ spec:
         # 2. Manually update the version in operator/config/manager/component_versions.yaml
         # 3. Copy the proxy image to Harbor, see "Copying the proxy image to Harbor" in our Technical References confluence page for details
         - name: wf-proxy
-          image: projects.registry.vmware.com/tanzu_observability/proxy:13.3
+          image: projects.registry.vmware.com/tanzu_observability/proxy:13.4
         # Fluent Bit Updates:
         # 1. Copy fluent-bit image to Harbor, see "Copying Latest fluentbit image to Harbor" in our Technical References confluence page for details
         # 2. Manually search/replace for references of `kubernetes-operator-fluentbit:<old.version.num>` and substitute <new.version.num>.
