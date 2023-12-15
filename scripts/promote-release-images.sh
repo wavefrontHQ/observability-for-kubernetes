@@ -15,9 +15,9 @@ git show origin/rc:operator/wavefront-operator-main.yaml > ${REPO_ROOT}/operator
 OPERATOR_ALPHA_IMAGE=$(cat "${REPO_ROOT}"/operator/dev-internal/deploy/wavefront-operator.yaml | yq 'select(.metadata.name == "wavefront-controller-manager" and .kind == "Deployment" ) | .spec.template.spec.containers[0].image')
 OPERATOR_ALPHA_TAG=$(echo ${OPERATOR_ALPHA_IMAGE} | cut -d ':' -f2)
 COLLECTOR_ALPHA_TAG=$(cat "${REPO_ROOT}"/operator/dev-internal/deploy/wavefront-operator.yaml | yq 'select(.metadata.name == "wavefront-component-versions" ) | .data.collector')
-crane copy "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:${OPERATOR_ALPHA_TAG}" "projects.registry.vmware.com/tanzu_observability/kubernetes-operator:${OPERATOR_VERSION}"
+crane copy "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-operator:${OPERATOR_ALPHA_TAG}" "projects.registry.vmware.com/tanzu_observability/kubernetes-operator:${OPERATOR_VERSION}" || true
 crane validate --remote "projects.registry.vmware.com/tanzu_observability/kubernetes-operator:${OPERATOR_VERSION}"
-crane copy "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector:${COLLECTOR_ALPHA_TAG}" "projects.registry.vmware.com/tanzu_observability/kubernetes-collector:${COLLECTOR_VERSION}"
+crane copy "projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector:${COLLECTOR_ALPHA_TAG}" "projects.registry.vmware.com/tanzu_observability/kubernetes-collector:${COLLECTOR_VERSION}" || true
 crane validate --remote "projects.registry.vmware.com/tanzu_observability/kubernetes-collector:${COLLECTOR_VERSION}"
 
 # Update wavefront-operator yaml in dev-internal with release versions
