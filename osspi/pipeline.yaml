@@ -156,7 +156,7 @@ jobs:
             ci_repo: observability-for-kubernetes
           params:
             IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit
-            TAG: 2.1.10
+            TAG: 2.2.0
             API_KEY: ((osspi.osm-prod-api-key))
             USERNAME: ((osspi.osm-prod-username))
             PRODUCT: Wavefront_K8_Operator
