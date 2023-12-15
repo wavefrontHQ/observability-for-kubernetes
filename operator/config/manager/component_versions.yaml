@@ -8,5 +8,5 @@ metadata:
   namespace: system
 data:
   collector: "1.29.0"
-  logging: "2.1.10"
+  logging: "2.2.0"
   proxy: "13.4"
