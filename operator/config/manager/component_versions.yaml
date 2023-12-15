@@ -7,6 +7,6 @@ metadata:
   name: component-versions
   namespace: system
 data:
-  collector: "1.28.0"
+  collector: "1.29.0"
   logging: "2.1.10"
   proxy: "13.3"
