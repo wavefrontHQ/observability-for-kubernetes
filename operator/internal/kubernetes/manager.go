@@ -37,7 +37,7 @@ func (km *KubernetesManager) ApplyResources(resources []client.Object) error {
 		err := km.objClient.Get(context.Background(), util.ObjKey(resource.GetNamespace(), resource.GetName()), &getObj)
 		if errors.IsNotFound(err) {
 			err = km.objClient.Create(context.Background(), resource)
-		} else if err == nil {
+		} else if err == nil && gvk.Kind != "Job" {
 			var diffObj unstructured.Unstructured
 			diffObj.SetGroupVersionKind(gvk)
 			err = km.objClient.Patch(context.Background(), resource, client.MergeFrom(&diffObj))

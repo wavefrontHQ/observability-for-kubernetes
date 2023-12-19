@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/wavefronthq/observability-for-kubernetes/operator/internal/util"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -97,6 +98,27 @@ func otherFakeService() client.Object {
 	}
 }
 
+func fakeJob() *batchv1.Job {
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "fake-job",
+			Namespace: "fake-namespace",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Job",
+			APIVersion: "batch/v1",
+		},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Image: "projects.registry.vmware.com/tanzu_observability/kubernetes-job:old",
+					}}},
+			}},
+		Status: batchv1.JobStatus{},
+	}
+}
+
 func missingCRD() client.Object {
 	return &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": "security.openshift.io/v1",
@@ -145,10 +167,10 @@ func TestKubernetesManager(t *testing.T) {
 		})
 
 		t.Run("patches kubernetes objects", func(t *testing.T) {
-			objClient := fake.NewClientBuilder().Build()
+			objClient := fake.NewClientBuilder().WithRuntimeObjects(fakeService()).Build()
 			km := kubernetes_manager.NewKubernetesManager(objClient)
 
-			err := km.ApplyResources([]client.Object{fakeService(), fakeServiceUpdated()})
+			err := km.ApplyResources([]client.Object{fakeServiceUpdated()})
 			require.NoError(t, err)
 
 			var service corev1.Service
@@ -159,6 +181,26 @@ func TestKubernetesManager(t *testing.T) {
 			))
 
 			require.Equal(t, int32(1112), service.Spec.Ports[0].Port)
+		})
+
+		t.Run("does not patch jobs", func(t *testing.T) {
+			job := fakeJob()
+			updatedJob := fakeJob()
+			updatedJob.Spec.Template.Spec.Containers[0].Image = "projects.registry.vmware.com/tanzu_observability/kubernetes-job:latest"
+			objClient := fake.NewClientBuilder().WithRuntimeObjects(job).Build()
+			km := kubernetes_manager.NewKubernetesManager(objClient)
+
+			err := km.ApplyResources([]client.Object{updatedJob})
+			require.NoError(t, err)
+
+			var existingJob batchv1.Job
+			require.NoError(t, objClient.Get(
+				context.Background(),
+				util.ObjKey("fake-namespace", "fake-job"),
+				&existingJob,
+			))
+
+			require.Equal(t, "projects.registry.vmware.com/tanzu_observability/kubernetes-job:old", existingJob.Spec.Template.Spec.Containers[0].Image)
 		})
 
 		t.Run("reports client errors", func(t *testing.T) {
