@@ -114,7 +114,7 @@ function print_usage_and_exit() {
   echo "Usage: $0 [flags] [options]"
   echo -e "\t-t wavefront token (required)"
   echo -e "\t-n config cluster name for metric grouping (required)"
-  echo -e "\t-w wavefront instance name (default: 'nimba')"
+  echo -e "\t-w wavefront instance name (default: 'qa4')"
   echo -e "\t-c collector version (default: load from 'config/manager/component_versions.yaml')"
   echo -e "\t-o operator version (default: load from 'release/OPERATOR_VERSION')"
   echo -e "\t-e name of a file containing any extra asserts that should be made as part of this test (optional)"
@@ -147,7 +147,7 @@ function main() {
   EXPECTED_COLLECTOR_VERSION=$(kubectl get configmaps --namespace observability-system wavefront-component-versions -o yaml | yq '.data.collector' | cut -d '-' -f1)
   local EXPECTED_OPERATOR_VERSION
   EXPECTED_OPERATOR_VERSION="$(get_next_operator_version)"
-  local WF_CLUSTER=nimba
+  local WF_CLUSTER=qa4
   local EXTRA_TESTS=
   local LOGGING_TEST_PROXY_NAME=
 

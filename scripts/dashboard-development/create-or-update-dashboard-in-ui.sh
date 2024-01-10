@@ -8,7 +8,7 @@ function print_usage_and_exit() {
   echo "Usage: $0 -t <WAVEFRONT_TOKEN> -n <NEW_DASHBOARD> -c [WF_CLUSTER] -d [DASHBOARD_TO_CLONE]"
   echo -e "\t-t wavefront token (required)"
   echo -e "\t-n new dashboard url to create (required)"
-  echo -e "\t-c wavefront instance name (optional, default: 'nimba')"
+  echo -e "\t-c wavefront instance name (optional, default: 'qa4')"
   echo -e "\t-d dashboard url to clone from (optional, default: 'integration-dashboard-template')"
   exit 1
 }
@@ -23,7 +23,7 @@ function main() {
   # OPTIONAL
   local DASHBOARD_TO_CLONE=integration-dashboard-template
 
-  local WF_CLUSTER=nimba
+  local WF_CLUSTER=qa4
 
   while getopts ":c:t:d:n:" opt; do
     case $opt in

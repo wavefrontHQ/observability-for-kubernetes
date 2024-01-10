@@ -1,14 +1,14 @@
 # Dashboard development
 
-1. Run the below script to create a development copy of the dashboard from nimba API.
+1. Run the below script to create a development copy of the dashboard from qa4 API.
     ```
     ~/workspace/observability-for-kubernetes/scripts/dashboard-development/create-or-update-dashboard-in-ui.sh -t $WAVEFRONT_TOKEN -d <DASHBOARD_TO_CLONE> -n <NEW_DASHBOARD>
     ```
-   * `<DASHBOARD_TO_CLONE>` should be the url slug for the dashboard you want to clone. For instance `-d integration-kubernetes-clusters` for https://nimba.wavefront.com/dashboards/integration-kubernetes-clusters.
+   * `<DASHBOARD_TO_CLONE>` should be the url slug for the dashboard you want to clone. For instance `-d integration-kubernetes-clusters` for https://qa4.wavefront.com/dashboards/integration-kubernetes-clusters.
      If it is not set, it will default to `integration-dashboard-template`
    * `<NEW_DASHBOARD>` is the new dashboard in UI to create (For instance: `-n kubernetes-K8SSAAS-123`).
 
-   **Note:** The script would output a link to a dashboard in nimba. Remember to login to nimba and switch to `k8s-saas-team` before accessing the dashboard link.
+   **Note:** The script would output a link to a dashboard in qa4. Remember to login to qa4 and switch to `K8s-integration` tenant before accessing the dashboard link.
 2. PM or engineering team member iterate on dev dashboard created by `create-or-update-dashboard-in-ui.sh` (For instance: `kubernetes-K8SSAAS-123`).
 3. Periodically pull and validate the changes from the dev dashboard to the integration repo branch by running the below script.
     ```

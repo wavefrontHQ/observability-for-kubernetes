@@ -10,7 +10,7 @@ pipeline {
     GIT_BRANCH = "main"
     GIT_CREDENTIAL_ID = 'wf-jenkins-github'
     GITHUB_TOKEN = credentials('GITHUB_TOKEN')
-    WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+    WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_QA4")
     GKE_CLUSTER_NAME = "k8po-jenkins-ci-2"
     GCP_ZONE = "a"
     GCP_CREDS = credentials("GCP_CREDS")

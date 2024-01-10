@@ -10,7 +10,7 @@ function print_usage_and_exit() {
   echo -e "\t-s source dashboard url (required)"
   echo -e "\t-d destination dashboard url (required)"
   echo -e "\t-b branch name for integration repo (required)"
-  echo -e "\t-c wavefront instance name (optional, default: 'nimba')"
+  echo -e "\t-c wavefront instance name (optional, default: 'qa4')"
   exit 1
 }
 
@@ -24,7 +24,7 @@ function main() {
   local BRANCH_NAME=
 
   # OPTIONAL
-  local WF_CLUSTER=nimba
+  local WF_CLUSTER=qa4
 
   while getopts ":c:t:s:d:b:" opt; do
     case $opt in

@@ -7,7 +7,7 @@ source "${REPO_ROOT}/scripts/k8s-utils.sh"
 function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: $0 [flags] [options]"
-  echo -e "\t-u wavefront instance url (default: 'https://nimba.wavefront.com')"
+  echo -e "\t-u wavefront instance url (default: 'https://qa4.wavefront.com')"
   echo -e "\t-t wavefront token (required)"
   echo -e "\t-n k8s cluster name (default: '$(create_cluster_name)')"
   exit 1
@@ -19,7 +19,7 @@ function main() {
 
   # Default
   local NS=observability-system
-  local WAVEFRONT_URL='https://nimba.wavefront.com'
+  local WAVEFRONT_URL='https://qa4.wavefront.com'
   local CONFIG_CLUSTER_NAME
   local INCLUDE_CR_DEPLOYMENT=true
   CONFIG_CLUSTER_NAME=$(create_cluster_name)
