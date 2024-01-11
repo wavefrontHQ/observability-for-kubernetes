@@ -14,7 +14,7 @@ pipeline {
     PREFIX = "projects.registry.vmware.com/tanzu_observability_keights_saas"
     DOCKER_IMAGE = "kubernetes-operator"
     VERSION_POSTFIX = "-alpha-${GIT_COMMIT.substring(0, 8)}"
-    WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_NIMBA")
+    WAVEFRONT_TOKEN = credentials("WAVEFRONT_TOKEN_QA4")
   }
 
   parameters {

@@ -7,7 +7,7 @@ function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: TODO"
 #  echo "Usage: $0 [flags] [options]"
-#  echo -e "\t-c wavefront instance name (default: 'nimba')"
+#  echo -e "\t-c wavefront instance name (default: 'qa4')"
 #  echo -e "\t-t wavefront token (required)"
 #  echo -e "\t-d dashboard url (required)"
   exit 1

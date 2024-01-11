@@ -8,7 +8,7 @@ excludedKeys=$(jq -r '.exclude | join(", ")' ${REPO_ROOT}/scripts/dashboard-deve
 function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: $0 [flags] [options]"
-  echo -e "\t-c wavefront instance name (default: 'nimba')"
+  echo -e "\t-c wavefront instance name (default: 'qa4')"
   echo -e "\t-t wavefront token (required)"
   echo -e "\t-d dashboard url (required)"
   exit 1
@@ -21,7 +21,7 @@ function main() {
   local WAVEFRONT_TOKEN=
   local DASHBOARD_URL=
 
-  local WF_CLUSTER=nimba
+  local WF_CLUSTER=qa4
   local DASHBOARD_OUTPUT_FILE=
 
   while getopts ":c:t:d:o:" opt; do

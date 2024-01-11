@@ -2,7 +2,7 @@ include ../Makefile
 
 PREFIX?=projects.registry.vmware.com/tanzu_observability_keights_saas
 DOCKER_IMAGE?=kubernetes-collector
-WAVEFRONT_CLUSTER?=nimba
+WAVEFRONT_CLUSTER?=qa4
 
 REPO_ROOT=$(shell git rev-parse --show-toplevel)
 COLLECTOR_REPO_ROOT=$(shell git rev-parse --show-toplevel)/collector

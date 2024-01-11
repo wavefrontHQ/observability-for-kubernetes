@@ -85,7 +85,7 @@ function wait_for_query_non_zero() {
 function print_usage_and_exit() {
   red "Failure: $1"
   echo "Usage: $0 -c <WAVEFRONT_CLUSTER> -t <WAVEFRONT_TOKEN> -n [K8S_CLUSTER_NAME] -v [VERSION]"
-  echo "  -c wavefront instance name (default: 'nimba')"
+  echo "  -c wavefront instance name (default: 'qa4')"
   echo "  -t wavefront token (required)"
   echo "  -n config cluster name for metric grouping (default: \$(whoami)-<default version from file>-release-test)"
   echo "  -v collector docker image version (default: load from 'release/VERSION')"
@@ -111,7 +111,7 @@ function main() {
   # REQUIRED
   local WAVEFRONT_TOKEN=
 
-  local WF_CLUSTER=nimba
+  local WF_CLUSTER=qa4
   local VERSION
   VERSION="$(cat "${COLLECTOR_REPO_ROOT}"/release/NEXT_RELEASE_VERSION)"
   local K8S_ENV

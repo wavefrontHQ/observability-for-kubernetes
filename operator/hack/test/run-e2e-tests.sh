@@ -605,7 +605,7 @@ function print_usage_and_exit() {
   echo "Failure: $1"
   echo "Usage: $0 [flags] [options]"
   echo -e "\t-t wavefront token (required)"
-  echo -e "\t-c wavefront instance name (default: 'nimba')"
+  echo -e "\t-c wavefront instance name (default: 'qa4')"
   echo -e "\t-v operator version (default: load from 'release/OPERATOR_VERSION')"
   echo -e "\t-n k8s cluster name (default: '$(create_cluster_name)')"
   echo -e "\t-r tests to run (runs all by default)"
@@ -620,8 +620,8 @@ function main() {
   # REQUIRED
   local WAVEFRONT_TOKEN=
 
-  local WAVEFRONT_URL="https:\/\/nimba.wavefront.com"
-  local WF_CLUSTER=nimba
+  local WAVEFRONT_URL="https:\/\/qa4.wavefront.com"
+  local WF_CLUSTER=qa4
   local VERSION
   VERSION=$(get_next_operator_version)
   local K8S_ENV
