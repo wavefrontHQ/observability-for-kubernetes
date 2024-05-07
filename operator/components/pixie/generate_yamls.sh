@@ -108,7 +108,7 @@ sed -i 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_
 # Iterate over files in the directory here as a workaround for yq interfering with namespace templatization instead of line 43
 for file in "${REPO_ROOT}"/operator/components/pixie/*; do
     if [ -f "$file" ]; then
-        sed -i 's/namespace: {{ .Namespace }}/namespace: {{ .Namespace }}/g' "$file"
+        sed -i 's/namespace: {{ .observability-system }}/namespace: {{ .Namespace }}/g' "$file"
     fi
 done
 
