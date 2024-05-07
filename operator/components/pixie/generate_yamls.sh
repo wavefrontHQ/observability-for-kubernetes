@@ -40,7 +40,7 @@ for index in "${!original_file_names[@]}"; do
     num="$(printf "%02d" "$(find splits -maxdepth 1 -name '*.yaml' | wc -l | xargs)")"
     new_file="splits/$num-$kind-$name.yaml"
   fi
-  sed 's/namespace: pl/namespace: observability-system}/g' "$original_file_name" | sed '1d' > "$new_file"
+  sed 's/namespace: pl/namespace: observability-system/g' "$original_file_name" | sed '1d' > "$new_file"
   rm "$original_file_name"
 done
 
@@ -106,9 +106,9 @@ echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/components/p
 sed -i 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/components/pixie/18-configmap-pl-cloud-config.yaml"
 
 # Iterate over files in the directory here as a workaround for yq interfering with namespace templatization instead of line 43
-for file in "${REPO_ROOT}"/operator/components/pixie/*; do
+for file in "${REPO_ROOT}"/operator/components/pixie/*.yaml; do
     if [ -f "$file" ]; then
-        sed -i 's/namespace: {{ .observability-system }}/namespace: {{ .Namespace }}/g' "$file"
+        sed -i 's/namespace: observability-system/namespace: {{ .Namespace }}/g' "$file"
     fi
 done
 
