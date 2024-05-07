@@ -16,4 +16,4 @@ metadata:
   labels:
     app: pl-monitoring
   name: nats-config
-  namespace: observability-system
+  namespace: {{ .Namespace }}

@@ -5,7 +5,7 @@ metadata:
     app: pl-monitoring
     component: vizier
   name: vizier-query-broker-svc
-  namespace: observability-system
+  namespace: {{ .Namespace }}
 spec:
   ports:
   - name: tcp-http2

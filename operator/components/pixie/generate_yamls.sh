@@ -40,7 +40,7 @@ for index in "${!original_file_names[@]}"; do
     num="$(printf "%02d" "$(find splits -maxdepth 1 -name '*.yaml' | wc -l | xargs)")"
     new_file="splits/$num-$kind-$name.yaml"
   fi
-  sed 's/namespace: pl/namespace: observability-system/g' "$original_file_name" | sed '1d' > "$new_file"
+  sed 's/namespace: pl/namespace: {{ .Namespace }}/g' "$original_file_name" | sed '1d' > "$new_file"
   rm "$original_file_name"
 done
 
@@ -104,6 +104,13 @@ echo "  cluster-id: {{ .ClusterUUID }}" >> "${REPO_ROOT}/operator/components/pix
 echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/components/pixie/00-secret-pl-cluster-secrets.yaml"
 #sed -i "s/value: default/value: default\n{{- if (not .Experimental.Hub.Pixie.Enable) }}\n        - name: PL_TABLE_STORE_DATA_LIMIT_MB\n          value: \"150\"\n        - name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT\n          value: \"90\"\n        - name: PL_STIRLING_SOURCES\n          value: \"kTracers\"\n{{- end }}/" "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 sed -i 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/components/pixie/18-configmap-pl-cloud-config.yaml"
+
+# Iterate over files in the directory here as a workaround for yq interfering with namespace templatization
+for file in "${REPO_ROOT}"/operator/components/pixie/*; do
+    if [ -f "$file" ]; then
+        sed -i 's/namespace: {{ .Namespace }}/namespace: {{ .Namespace }}/g' "$file"
+    fi
+done
 
 git add "${REPO_ROOT}/operator/config/rbac/components/pixie"
 git add "${REPO_ROOT}/operator/components/pixie"
