@@ -34,7 +34,7 @@ func TestNewPixieComponent(t *testing.T) {
 		require.Empty(t, toDelete)
 
 		// check all resources for component labels
-		test.RequireCommonLabels(t, toApply, "wavefront", "pixie", util.Namespace)
+		test.RequireCommonLabels(t, toApply, "wavefront", "pixie", wftest.DefaultNamespace)
 
 		// cluster name configmap
 		configmap, err := test.GetConfigMap("pl-cloud-config", toApply)
@@ -316,6 +316,7 @@ func validComponentConfig() Config {
 		ControllerManagerUID: "controller-manager-uid",
 		ClusterUUID:          "cluster-uuid",
 		ClusterName:          wftest.DefaultClusterName,
+		Namespace:            wftest.DefaultNamespace,
 		PEMResources: wf.Resources{
 			Limits: wf.Resource{
 				CPU:    "100m",
