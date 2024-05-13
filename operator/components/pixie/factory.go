@@ -15,6 +15,7 @@ func FromWavefront(cr *wf.Wavefront, client client.Client) Config {
 		Enable:               cr.Spec.Experimental.Hub.Pixie.Enable || cr.Spec.Experimental.Autotracing.Enable,
 		ShouldValidate:       cr.Spec.Experimental.Hub.Pixie.Enable || cr.Spec.Experimental.Autotracing.Enable,
 		ControllerManagerUID: cr.Spec.ControllerManagerUID,
+		Namespace:            cr.Spec.Namespace,
 		ClusterUUID:          cr.Spec.ClusterUUID,
 		ClusterName:          cr.Spec.ClusterName,
 	})
