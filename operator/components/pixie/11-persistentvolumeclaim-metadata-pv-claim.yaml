@@ -5,7 +5,7 @@ metadata:
     app: pl-monitoring
     component: vizier
   name: metadata-pv-claim
-  namespace: observability-system
+  namespace: {{ .Namespace }}
 spec:
   accessModes:
   - ReadWriteOnce

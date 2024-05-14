@@ -105,6 +105,13 @@ echo "  cluster-name: {{ .ClusterName }}" >> "${REPO_ROOT}/operator/components/p
 #sed -i "s/value: default/value: default\n{{- if (not .Experimental.Hub.Pixie.Enable) }}\n        - name: PL_TABLE_STORE_DATA_LIMIT_MB\n          value: \"150\"\n        - name: PL_TABLE_STORE_HTTP_EVENTS_PERCENT\n          value: \"90\"\n        - name: PL_STIRLING_SOURCES\n          value: \"kTracers\"\n{{- end }}/" "${REPO_ROOT}/operator/components/pixie/16-daemonset-vizier-pem.yaml"
 sed -i 's/  PL_CLUSTER_NAME: ""/  PL_CLUSTER_NAME: {{ .ClusterName }}/' "${REPO_ROOT}/operator/components/pixie/18-configmap-pl-cloud-config.yaml"
 
+# Iterate over files in the directory here as a workaround for yq interfering with namespace templatization instead of line 43
+for file in "${REPO_ROOT}"/operator/components/pixie/*.yaml; do
+    if [ -f "$file" ]; then
+        sed -i 's/namespace: observability-system/namespace: {{ .Namespace }}/g' "$file"
+    fi
+done
+
 git add "${REPO_ROOT}/operator/config/rbac/components/pixie"
 git add "${REPO_ROOT}/operator/components/pixie"
 

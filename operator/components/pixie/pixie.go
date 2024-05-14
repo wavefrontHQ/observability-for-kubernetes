@@ -22,6 +22,7 @@ type Config struct {
 	ControllerManagerUID string
 	ClusterUUID          string
 	ClusterName          string
+	Namespace            string
 	// StirlingSources list of sources to enable on the PEM containers.
 	// Specify a source group (kAll, kProd, kMetrics, kTracers, kProfiler, kTCPStats) or individual sources.
 	// You can find the names of sources at https://github.com/pixie-io/pixie/blob/release/vizier/v0.14.2/src/stirling/stirling.cc
