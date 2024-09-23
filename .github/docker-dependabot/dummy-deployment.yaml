@@ -26,4 +26,4 @@ spec:
         # 2. Manually search/replace for references of `kubernetes-operator-fluentbit:<old.version.num>` and substitute <new.version.num>.
         # 3. Manually update the version in operator/config/manager/component_versions.yaml
         - name: fluent-bit
-          image: cr.fluentbit.io/fluent/fluent-bit:2.2.0
+          image: cr.fluentbit.io/fluent/fluent-bit:3.1.8
