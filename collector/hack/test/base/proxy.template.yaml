@@ -22,7 +22,7 @@ spec:
         value: arm64
       containers:
       - name: wavefront-proxy
-        image: wavefronthq/proxy:13.7
+        image: projects.registry.vmware.com/tanzu_observability/proxy:13.4
         imagePullPolicy: Always
         env:
           - name: WAVEFRONT_URL
