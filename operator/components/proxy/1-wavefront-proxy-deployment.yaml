@@ -40,7 +40,8 @@ spec:
       {{- if .HttpProxy.UseHttpProxyCAcert }}
       initContainers:
       - name: pem-to-keystore
-        image: wavefronthq/proxy:{{ .ProxyVersion }}
+        image: wavefronthq/proxy:13.7
+#        image: {{ .ImageRegistry }}/proxy:{{ .ProxyVersion }}
         command: ['/bin/bash']
         args: ['-c', "keytool -import -noprompt -keystore $truststore_jks -file /tmp/ca/ca.pem -storepass changeit -alias http-proxy-ca"]
         env:
@@ -57,7 +58,8 @@ spec:
       {{- end }}
       containers:
         - name: wavefront-proxy
-          image: wavefronthq/proxy:{{ .ProxyVersion }}
+          image: wavefronthq/proxy:13.7
+          #        image: {{ .ImageRegistry }}/proxy:{{ .ProxyVersion }}
           imagePullPolicy: Always
           env:
             - name: WAVEFRONT_URL
