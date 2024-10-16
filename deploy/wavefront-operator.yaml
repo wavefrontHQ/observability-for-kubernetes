@@ -1452,7 +1452,7 @@ apiVersion: v1
 data:
   collector: 1.29.2
   logging: 2.2.0
-#  proxy: "13.7"
+  proxy: "13.7"
 kind: ConfigMap
 metadata:
   labels:
@@ -1499,8 +1499,6 @@ spec:
     spec:
       automountServiceAccountToken: true
       containers:
-      - name: proxy
-        value: wavefronthq/proxy:13.7
       - command:
         - /manager
         env:
@@ -1514,11 +1512,11 @@ spec:
             configMapKeyRef:
               key: collector
               name: wavefront-component-versions
-#        - name: PROXY_VERSION
-#          valueFrom:
-#            configMapKeyRef:
-#              key: proxy
-#              name: wavefront-component-versions
+        - name: PROXY_VERSION
+          valueFrom:
+            configMapKeyRef:
+              key: proxy
+              name: wavefront-component-versions
         - name: LOGGING_VERSION
           valueFrom:
             configMapKeyRef:
