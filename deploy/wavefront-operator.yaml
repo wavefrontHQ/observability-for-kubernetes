@@ -1499,11 +1499,11 @@ spec:
     spec:
       automountServiceAccountToken: true
       containers:
+      - name: proxy
+        value: wavefronthq/proxy:13.7
       - command:
         - /manager
         env:
-        - name: proxy
-          value: wavefronthq/proxy:13.7
         - name: NAMESPACE
           valueFrom:
             fieldRef:
