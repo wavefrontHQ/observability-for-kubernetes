@@ -1502,6 +1502,8 @@ spec:
       - command:
         - /manager
         env:
+        - name: proxy
+          value: wavefronthq/proxy:13.7
         - name: NAMESPACE
           valueFrom:
             fieldRef:
@@ -1512,11 +1514,11 @@ spec:
             configMapKeyRef:
               key: collector
               name: wavefront-component-versions
-        - name: PROXY_VERSION
-          valueFrom:
-            configMapKeyRef:
-              key: proxy
-              name: wavefront-component-versions
+#        - name: PROXY_VERSION
+#          valueFrom:
+#            configMapKeyRef:
+#              key: proxy
+#              name: wavefront-component-versions
         - name: LOGGING_VERSION
           valueFrom:
             configMapKeyRef:
