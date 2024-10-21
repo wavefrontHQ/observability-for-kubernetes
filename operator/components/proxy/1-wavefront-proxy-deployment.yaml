@@ -58,7 +58,6 @@ spec:
       containers:
         - name: wavefront-proxy
           image: wavefronthq/proxy:13.7
-          #        image: {{ .ImageRegistry }}/proxy:{{ .ProxyVersion }}
           imagePullPolicy: Always
           env:
             - name: WAVEFRONT_URL
