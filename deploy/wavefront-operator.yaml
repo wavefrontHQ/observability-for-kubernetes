@@ -1588,16 +1588,6 @@ spec:
             #  protocol: TCP
             securityContext:
               privileged: false
-            volumeMounts:
-            - name: http-proxy-ca
-              mountPath: /tmp/ca
-      volumes:
-      - name: http-proxy-ca
-        secret:
-          secretName: http-proxy-secret
-          items:
-          - key: tls-root-ca-bundle
-            path: ca.pem
       serviceAccountName: wavefront-controller-manager
       terminationGracePeriodSeconds: 10
       tolerations:
