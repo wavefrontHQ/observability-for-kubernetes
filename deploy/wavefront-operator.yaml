@@ -1452,7 +1452,7 @@ apiVersion: v1
 data:
   collector: 1.29.2
   logging: 2.2.0
-  proxy: "13.7"
+#  proxy: "13.7"
 kind: ConfigMap
 metadata:
   labels:
@@ -1472,6 +1472,21 @@ kind: ConfigMap
 metadata:
   name: wavefront-manager-config
   namespace: observability-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wavefront-proxy
+  labels:
+    app: wavefront-proxy
+  namespace: default
+spec:
+  ports:
+  - name: wavefront
+    port: 2878
+    protocol: TCP
+  selector:
+    app: wavefront-proxy
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -1512,11 +1527,11 @@ spec:
             configMapKeyRef:
               key: collector
               name: wavefront-component-versions
-        - name: PROXY_VERSION
-          valueFrom:
-            configMapKeyRef:
-              key: proxy
-              name: wavefront-component-versions
+#        - name: PROXY_VERSION
+#          valueFrom:
+#            configMapKeyRef:
+#              key: proxy
+#              name: wavefront-component-versions
         - name: LOGGING_VERSION
           valueFrom:
             configMapKeyRef:
@@ -1549,6 +1564,32 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
+        - name: wavefront-proxy
+            image: wavefronthq/proxy:13.7
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: WAVEFRONT_URL
+              value: https://YOUR_CLUSTER.wavefront.com/api/
+            - name: WAVEFRONT_TOKEN
+              value: YOUR_API_TOKEN
+            - name: WAVEFRONT_PROXY_ARGS
+              value: --proxyHost YOUR_HTTP_PROXY_HOST --proxyPort YOUR_HTTP_PROXY_PORT
+              # example: --proxyHost 10.96.218.42 --proxyPort 8080
+            ports:
+            - containerPort: 2878
+              protocol: TCP
+            securityContext:
+              privileged: false
+            volumeMounts:
+            - name: http-proxy-ca
+              mountPath: /tmp/ca
+      volumes:
+      - name: http-proxy-ca
+        secret:
+          secretName: http-proxy-secret
+          items:
+          - key: tls-root-ca-bundle
+            path: ca.pem
       serviceAccountName: wavefront-controller-manager
       terminationGracePeriodSeconds: 10
       tolerations:
