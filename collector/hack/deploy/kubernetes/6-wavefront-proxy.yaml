@@ -2,11 +2,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: ""
   labels:
-    app: wavefront-proxy
-    name: wavefront-proxy
+    app.kubernetes.io/component: controller-manager
+    app.kubernetes.io/name: wavefront
   name: wavefront-proxy
-  namespace: default
+  namespace: observability-system
 spec:
   replicas: 1
   selector:
@@ -22,25 +24,25 @@ spec:
         key: kubernetes.io/arch
         value: arm64
       containers:
-        - name: wavefront-proxy
-          image: wavefronthq/proxy:13.7
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: WAVEFRONT_URL
-              value: https://YOUR_CLUSTER.wavefront.com/api/
-            - name: WAVEFRONT_TOKEN
-              value: YOUR_API_TOKEN
-          # Uncomment the below lines to consume Zipkin/Istio traces
-          #- name: WAVEFRONT_PROXY_ARGS
-          #  value: --traceZipkinListenerPorts 9411
-          ports:
-            - containerPort: 2878
-              protocol: TCP
-          # Uncomment the below lines to consume Zipkin/Istio traces
-          #- containerPort: 9411
-          #  protocol: TCP
-          securityContext:
-            privileged: false
+      - name: wavefront-proxy
+        image: wavefronthq/proxy:13.7
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: WAVEFRONT_URL
+          value: https://YOUR_CLUSTER.wavefront.com/api/
+        - name: WAVEFRONT_TOKEN
+          value: YOUR_API_TOKEN
+        # Uncomment the below lines to consume Zipkin/Istio traces
+        #- name: WAVEFRONT_PROXY_ARGS
+        #  value: --traceZipkinListenerPorts 9411
+        ports:
+        - containerPort: 2878
+          protocol: TCP
+        # Uncomment the below lines to consume Zipkin/Istio traces
+        #- containerPort: 9411
+        #  protocol: TCP
+        securityContext:
+          privileged: false
 ---
 apiVersion: v1
 kind: Service
@@ -51,9 +53,9 @@ metadata:
   namespace: default
 spec:
   ports:
-    - name: wavefront
-      port: 2878
-      protocol: TCP
+  - name: wavefront
+    port: 2878
+    protocol: TCP
   # Uncomment the below lines to consume Zipkin/Istio traces
   #- name: http
   #  port: 9411
