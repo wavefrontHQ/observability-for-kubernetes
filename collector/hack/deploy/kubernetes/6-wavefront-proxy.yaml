@@ -3,8 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    rbac.authorization.kubernetes.io/autoupdate: "true"
-  creationTimestamp: null
+    kubectl.kubernetes.io/last-applied-configuration: ""
   labels:
     app.kubernetes.io/component: controller-manager
     app.kubernetes.io/name: wavefront
