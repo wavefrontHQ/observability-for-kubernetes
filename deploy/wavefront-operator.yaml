@@ -1519,6 +1519,25 @@ spec:
     spec:
       automountServiceAccountToken: true
       containers:
+      - name: wavefront-proxy
+        image: wavefronthq/proxy:13.7
+        imagePullPolicy: Always
+        env:
+        - name: WAVEFRONT_URL
+          value: https://YOUR_CLUSTER.wavefront.com/api/
+        - name: WAVEFRONT_TOKEN
+          value: YOUR_API_TOKEN
+        # Uncomment the below lines to consume Zipkin/Istio traces
+        #- name: WAVEFRONT_PROXY_ARGS
+        #  value: --traceZipkinListenerPorts 9411
+        ports:
+        - containerPort: 2878
+          protocol: TCP
+        # Uncomment the below lines to consume Zipkin/Istio traces
+        #- containerPort: 9411
+        #  protocol: TCP
+        securityContext:
+          privileged: false
       - command:
         - /manager
         env:
@@ -1569,25 +1588,6 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
-        - name: wavefront-proxy
-            image: wavefronthq/proxy:13.7
-            imagePullPolicy: IfNotPresent
-            env:
-            - name: WAVEFRONT_URL
-              value: https://YOUR_CLUSTER.wavefront.com/api/
-            - name: WAVEFRONT_TOKEN
-              value: YOUR_API_TOKEN
-            # Uncomment the below lines to consume Zipkin/Istio traces
-            #- name: WAVEFRONT_PROXY_ARGS
-            #  value: --traceZipkinListenerPorts 9411
-            ports:
-            - containerPort: 2878
-              protocol: TCP
-            # Uncomment the below lines to consume Zipkin/Istio traces
-            #- containerPort: 9411
-            #  protocol: TCP
-            securityContext:
-              privileged: false
       serviceAccountName: wavefront-controller-manager
       terminationGracePeriodSeconds: 10
       tolerations:
