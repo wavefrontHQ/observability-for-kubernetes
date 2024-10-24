@@ -9,4 +9,4 @@ metadata:
 data:
   collector: "1.29.2"
   logging: "2.2.0"
-  proxy: "13.7"
+  proxy: "13.4"
