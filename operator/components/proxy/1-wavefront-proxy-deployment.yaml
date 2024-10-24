@@ -30,12 +30,12 @@ spec:
         runAsUser: 65534
         runAsGroup: 65534
       tolerations:
-        - effect: NoSchedule
-          key: kubernetes.io/arch
-          value: arm64
+      - effect: NoSchedule
+        key: kubernetes.io/arch
+        value: arm64
       {{- if .ImagePullSecret }}
       imagePullSecrets:
-        - name: {{ .ImagePullSecret }}
+      - name: {{ .ImagePullSecret }}
       {{- end }}
       {{- if .HttpProxy.UseHttpProxyCAcert }}
       initContainers:
@@ -56,139 +56,139 @@ spec:
           mountPath: /tmp/ca
       {{- end }}
       containers:
-        - name: wavefront-proxy
-          image: wavefronthq/proxy:13.7
-          imagePullPolicy: Always
-          env:
-            - name: WAVEFRONT_URL
-              value: {{ .WavefrontUrl }}/api/
-          {{- if eq .Auth.Type "wavefront-token"}}
-            - name: WAVEFRONT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .WavefrontTokenSecret }}
-                  key: token
+      - name: wavefront-proxy
+        image: wavefronthq/proxy:13.7
+        imagePullPolicy: Always
+        env:
+        - name: WAVEFRONT_URL
+          value: {{ .WavefrontUrl }}/api/
+        {{- if eq .Auth.Type "wavefront-token"}}
+        - name: WAVEFRONT_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: {{ .WavefrontTokenSecret }}
+            key: token
+        {{- end }}
+        {{- if eq .Auth.Type "csp-api-token"}}
+        - name: CSP_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .WavefrontTokenSecret }}
+              key: csp-api-token
+        {{- end }}
+        {{- if eq .Auth.Type "csp-app-oauth"}}
+        - name: CSP_APP_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .WavefrontTokenSecret }}
+              key: csp-app-secret
+        - name: CSP_APP_ID
+          value: {{ .Auth.CSPAppID }}
+        {{- if .Auth.CSPOrgID }}
+        - name: CSP_ORG_ID
+          value: {{ .Auth.CSPOrgID }}
+        {{- end }}
+        {{- end }}
+        - name: WAVEFRONT_PROXY_ARGS
+          value: >
+            --pushListenerPorts {{ .MetricPort }}
+            --buffer /wavefront-proxy/buffer
+            --preprocessorConfigFile /etc/wavefront/preprocessor/rules.yaml
+          {{- if .Args }} {{ .Args }} {{- end -}}
+          {{- if .DeltaCounterPort }} --deltaCounterPorts {{ .DeltaCounterPort }} {{- end -}}
+          {{- if .Tracing.Wavefront.Port }} --traceListenerPorts {{ .Tracing.Wavefront.Port }} {{- end -}}
+          {{- if .Tracing.Wavefront.SamplingRate }} --traceSamplingRate {{ .Tracing.Wavefront.SamplingRate }} {{- end -}}
+          {{- if .Tracing.Wavefront.SamplingDuration }} --traceSamplingDuration {{ .Tracing.Wavefront.SamplingDuration }} {{- end -}}
+          {{- if .Tracing.Jaeger.Port }} --traceJaegerListenerPorts {{ .Tracing.Jaeger.Port }} {{- end -}}
+          {{- if .Tracing.Jaeger.GrpcPort }} --traceJaegerGrpcListenerPorts {{ .Tracing.Jaeger.GrpcPort }} {{- end -}}
+          {{- if .Tracing.Jaeger.HttpPort }} --traceJaegerHttpListenerPorts {{ .Tracing.Jaeger.HttpPort }} {{- end -}}
+          {{- if .Tracing.Jaeger.ApplicationName }} --traceJaegerApplicationName {{ .Tracing.Jaeger.ApplicationName }} {{- end -}}
+          {{- if .Tracing.Zipkin.Port }} --traceZipkinListenerPorts {{ .Tracing.Zipkin.Port }} {{- end -}}
+          {{- if .Tracing.Zipkin.ApplicationName }} --traceZipkinApplicationName {{ .Tracing.Zipkin.ApplicationName }} {{- end -}}
+          {{- if .Histogram.Port }} --histogramDistListenerPorts {{ .Histogram.Port }} {{- end -}}
+          {{- if .Histogram.MinutePort }} --histogramMinuteListenerPorts {{ .Histogram.MinutePort }} {{- end -}}
+          {{- if .Histogram.HourPort }} --histogramHourListenerPorts {{ .Histogram.HourPort }} {{- end -}}
+          {{- if .Histogram.DayPort }} --histogramDayListenerPorts {{ .Histogram.DayPort }} {{- end -}}
+          {{- if .OTLP.GrpcPort}} --otlpGrpcListenerPorts {{ .OTLP.GrpcPort }} {{- end -}}
+          {{- if .OTLP.HttpPort}} --otlpHttpListenerPorts {{ .OTLP.HttpPort }} {{- end -}}
+          {{- if .OTLP.ResourceAttrsOnMetricsIncluded}} --otlpResourceAttrsOnMetricsIncluded true {{- end -}}
+          {{- if .HttpProxy.HttpProxyHost }} --proxyHost {{ .HttpProxy.HttpProxyHost }} {{- end -}}
+          {{- if .HttpProxy.HttpProxyPort }} --proxyPort {{ .HttpProxy.HttpProxyPort }} {{- end -}}
+          {{- if .HttpProxy.HttpProxyUser }} --proxyUser {{ .HttpProxy.HttpProxyUser }} {{- end -}}
+          {{- if .HttpProxy.HttpProxyPassword }} --proxyPassword {{ .HttpProxy.HttpProxyPassword }} {{- end -}}
+          {{- if .LoggingEnable }} --customMessageTags log {{- end }}
+        {{- if .HttpProxy.UseHttpProxyCAcert }}
+        - name: JAVA_ARGS
+          value: -Djavax.net.ssl.trustStore=/tmp/secrets/keystores/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit
+        {{- end }}
+        ports:
+        - containerPort: {{ .MetricPort }}
+          protocol: TCP
+          {{- if .DeltaCounterPort }}
+        - containerPort: {{ .DeltaCounterPort }}
+          protocol: TCP
           {{- end }}
-          {{- if eq .Auth.Type "csp-api-token"}}
-            - name: CSP_API_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .WavefrontTokenSecret }}
-                  key: csp-api-token
+          {{- if .Tracing.Wavefront.Port }}
+        - containerPort: {{ .Tracing.Wavefront.Port }}
+          protocol: TCP
           {{- end }}
-          {{- if eq .Auth.Type "csp-app-oauth"}}
-            - name: CSP_APP_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .WavefrontTokenSecret }}
-                  key: csp-app-secret
-            - name: CSP_APP_ID
-              value: {{ .Auth.CSPAppID }}
-          {{- if .Auth.CSPOrgID }}
-            - name: CSP_ORG_ID
-              value: {{ .Auth.CSPOrgID }}
+          {{- if .Tracing.Jaeger.Port }}
+        - containerPort: {{ .Tracing.Jaeger.Port }}
+          protocol: TCP
           {{- end }}
+          {{- if .Tracing.Jaeger.GrpcPort }}
+        - containerPort: {{ .Tracing.Jaeger.GrpcPort }}
+          protocol: TCP
           {{- end }}
-            - name: WAVEFRONT_PROXY_ARGS
-              value: >
-                --pushListenerPorts {{ .MetricPort }}
-                --buffer /wavefront-proxy/buffer
-                --preprocessorConfigFile /etc/wavefront/preprocessor/rules.yaml
-              {{- if .Args }} {{ .Args }} {{- end -}}
-              {{- if .DeltaCounterPort }} --deltaCounterPorts {{ .DeltaCounterPort }} {{- end -}}
-              {{- if .Tracing.Wavefront.Port }} --traceListenerPorts {{ .Tracing.Wavefront.Port }} {{- end -}}
-              {{- if .Tracing.Wavefront.SamplingRate }} --traceSamplingRate {{ .Tracing.Wavefront.SamplingRate }} {{- end -}}
-              {{- if .Tracing.Wavefront.SamplingDuration }} --traceSamplingDuration {{ .Tracing.Wavefront.SamplingDuration }} {{- end -}}
-              {{- if .Tracing.Jaeger.Port }} --traceJaegerListenerPorts {{ .Tracing.Jaeger.Port }} {{- end -}}
-              {{- if .Tracing.Jaeger.GrpcPort }} --traceJaegerGrpcListenerPorts {{ .Tracing.Jaeger.GrpcPort }} {{- end -}}
-              {{- if .Tracing.Jaeger.HttpPort }} --traceJaegerHttpListenerPorts {{ .Tracing.Jaeger.HttpPort }} {{- end -}}
-              {{- if .Tracing.Jaeger.ApplicationName }} --traceJaegerApplicationName {{ .Tracing.Jaeger.ApplicationName }} {{- end -}}
-              {{- if .Tracing.Zipkin.Port }} --traceZipkinListenerPorts {{ .Tracing.Zipkin.Port }} {{- end -}}
-              {{- if .Tracing.Zipkin.ApplicationName }} --traceZipkinApplicationName {{ .Tracing.Zipkin.ApplicationName }} {{- end -}}
-              {{- if .Histogram.Port }} --histogramDistListenerPorts {{ .Histogram.Port }} {{- end -}}
-              {{- if .Histogram.MinutePort }} --histogramMinuteListenerPorts {{ .Histogram.MinutePort }} {{- end -}}
-              {{- if .Histogram.HourPort }} --histogramHourListenerPorts {{ .Histogram.HourPort }} {{- end -}}
-              {{- if .Histogram.DayPort }} --histogramDayListenerPorts {{ .Histogram.DayPort }} {{- end -}}
-              {{- if .OTLP.GrpcPort}} --otlpGrpcListenerPorts {{ .OTLP.GrpcPort }} {{- end -}}
-              {{- if .OTLP.HttpPort}} --otlpHttpListenerPorts {{ .OTLP.HttpPort }} {{- end -}}
-              {{- if .OTLP.ResourceAttrsOnMetricsIncluded}} --otlpResourceAttrsOnMetricsIncluded true {{- end -}}
-              {{- if .HttpProxy.HttpProxyHost }} --proxyHost {{ .HttpProxy.HttpProxyHost }} {{- end -}}
-              {{- if .HttpProxy.HttpProxyPort }} --proxyPort {{ .HttpProxy.HttpProxyPort }} {{- end -}}
-              {{- if .HttpProxy.HttpProxyUser }} --proxyUser {{ .HttpProxy.HttpProxyUser }} {{- end -}}
-              {{- if .HttpProxy.HttpProxyPassword }} --proxyPassword {{ .HttpProxy.HttpProxyPassword }} {{- end -}}
-              {{- if .LoggingEnable }} --customMessageTags log {{- end }}
-            {{- if .HttpProxy.UseHttpProxyCAcert }}
-            - name: JAVA_ARGS
-              value: -Djavax.net.ssl.trustStore=/tmp/secrets/keystores/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit
-            {{- end }}
-          ports:
-            - containerPort: {{ .MetricPort }}
-              protocol: TCP
-            {{- if .DeltaCounterPort }}
-            - containerPort: {{ .DeltaCounterPort }}
-              protocol: TCP
-            {{- end }}
-            {{- if .Tracing.Wavefront.Port }}
-            - containerPort: {{ .Tracing.Wavefront.Port }}
-              protocol: TCP
-            {{- end }}
-            {{- if .Tracing.Jaeger.Port }}
-            - containerPort: {{ .Tracing.Jaeger.Port }}
-              protocol: TCP
-            {{- end }}
-            {{- if .Tracing.Jaeger.GrpcPort }}
-            - containerPort: {{ .Tracing.Jaeger.GrpcPort }}
-              protocol: TCP
-            {{- end }}
-            {{- if .Tracing.Jaeger.HttpPort }}
-            - containerPort: {{ .Tracing.Jaeger.HttpPort }}
-              protocol: TCP
-            {{- end }}
-            {{- if .Tracing.Zipkin.Port }}
-            - containerPort: {{ .Tracing.Zipkin.Port }}
-              protocol: TCP
-            {{- end }}
-            {{- if .Histogram.Port }}
-            - containerPort: {{ .Histogram.Port }}
-              protocol: TCP
-            {{- end }}
-            {{- if .Histogram.MinutePort }}
-            - containerPort: {{ .Histogram.MinutePort }}
-              protocol: TCP
-            {{- end }}
-            {{- if .Histogram.HourPort }}
-            - containerPort: {{ .Histogram.HourPort }}
-              protocol: TCP
-            {{- end }}
-            {{- if .Histogram.DayPort }}
-            - containerPort: {{ .Histogram.DayPort }}
-              protocol: TCP
-            {{- end }}
-            {{- if .OTLP.GrpcPort }}
-            - containerPort: {{ .OTLP.GrpcPort }}
-              protocol: TCP
-            {{- end }}
-            {{- if .OTLP.HttpPort }}
-            - containerPort: {{ .OTLP.HttpPort }}
-              protocol: TCP
-            {{- end }}
-          readinessProbe:
-            timeoutSeconds: 10
-            failureThreshold: 10
-            tcpSocket:
-              port: {{ .MetricPort }}
-          securityContext:
-            privileged: false
-            readOnlyRootFilesystem: true
-          volumeMounts:
-          - name: buffer-volume
-            mountPath: /wavefront-proxy
-          - name: preprocessor
-            mountPath: /etc/wavefront/preprocessor
-          {{- if .HttpProxy.UseHttpProxyCAcert }}
-          - name: http-proxy-keystores
-            mountPath: /tmp/secrets/keystores
+          {{- if .Tracing.Jaeger.HttpPort }}
+        - containerPort: {{ .Tracing.Jaeger.HttpPort }}
+          protocol: TCP
           {{- end }}
+          {{- if .Tracing.Zipkin.Port }}
+        - containerPort: {{ .Tracing.Zipkin.Port }}
+          protocol: TCP
+          {{- end }}
+          {{- if .Histogram.Port }}
+        - containerPort: {{ .Histogram.Port }}
+          protocol: TCP
+          {{- end }}
+          {{- if .Histogram.MinutePort }}
+        - containerPort: {{ .Histogram.MinutePort }}
+          protocol: TCP
+          {{- end }}
+          {{- if .Histogram.HourPort }}
+        - containerPort: {{ .Histogram.HourPort }}
+          protocol: TCP
+          {{- end }}
+          {{- if .Histogram.DayPort }}
+        - containerPort: {{ .Histogram.DayPort }}
+          protocol: TCP
+          {{- end }}
+          {{- if .OTLP.GrpcPort }}
+        - containerPort: {{ .OTLP.GrpcPort }}
+          protocol: TCP
+          {{- end }}
+          {{- if .OTLP.HttpPort }}
+        - containerPort: {{ .OTLP.HttpPort }}
+          protocol: TCP
+          {{- end }}
+        readinessProbe:
+          timeoutSeconds: 10
+          failureThreshold: 10
+          tcpSocket:
+            port: {{ .MetricPort }}
+        securityContext:
+          privileged: false
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: buffer-volume
+          mountPath: /wavefront-proxy
+        - name: preprocessor
+          mountPath: /etc/wavefront/preprocessor
+        {{- if .HttpProxy.UseHttpProxyCAcert }}
+        - name: http-proxy-keystores
+          mountPath: /tmp/secrets/keystores
+        {{- end }}
       volumes:
       - name: buffer-volume
         emptyDir: {}
@@ -202,7 +202,7 @@ spec:
         secret:
           secretName: {{ .HttpProxy.Secret }}
           items:
-            - key: tls-root-ca-bundle
-              path: ca.pem
+          - key: tls-root-ca-bundle
+            path: ca.pem
       {{- end }}
 

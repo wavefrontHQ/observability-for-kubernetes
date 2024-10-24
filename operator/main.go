@@ -127,8 +127,8 @@ func main() {
 		controllers.Versions{
 			OperatorVersion:  version,
 			CollectorVersion: getComponentVersion("COLLECTOR_VERSION"),
-			ProxyVersion:     getComponentVersion("PROXY_VERSION"),
-			LoggingVersion:   getComponentVersion("LOGGING_VERSION"),
+			//ProxyVersion:     getComponentVersion("PROXY_VERSION"),
+			LoggingVersion: getComponentVersion("LOGGING_VERSION"),
 		},
 		objClient,
 		discoveryClient,
