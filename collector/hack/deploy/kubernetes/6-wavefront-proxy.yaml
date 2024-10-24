@@ -2,9 +2,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  creationTimestamp: null
   labels:
-    app: wavefront-proxy
-    name: wavefront-proxy
+    app.kubernetes.io/component: controller-manager
+    app.kubernetes.io/name: wavefront
   name: wavefront-proxy
   namespace: observability-system
 spec:
