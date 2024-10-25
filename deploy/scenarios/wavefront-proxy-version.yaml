@@ -2,11 +2,13 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: ""
   labels:
-    app: wavefront-proxy
-    name: wavefront-proxy
+    app.kubernetes.io/component: controller-manager
+    app.kubernetes.io/name: wavefront
   name: wavefront-proxy
-  namespace: default
+  namespace: observability-system
 spec:
   replicas: 1
   selector:
@@ -23,7 +25,7 @@ spec:
         value: arm64
       containers:
       - name: wavefront-proxy
-        image: projects.registry.vmware.com/tanzu_observability/proxy:13.4
+        image: wavefronthq/proxy:13.7
         imagePullPolicy: IfNotPresent
         env:
         - name: WAVEFRONT_URL
@@ -41,7 +43,6 @@ spec:
         #  protocol: TCP
         securityContext:
           privileged: false
-
 ---
 apiVersion: v1
 kind: Service
