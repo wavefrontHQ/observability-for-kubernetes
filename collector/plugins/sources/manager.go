@@ -74,7 +74,11 @@ type SourceManager interface {
 	StopProviders()
 	GetPendingMetrics() []*metrics.Batch
 	SetDefaultCollectionInterval(time.Duration)
+
+	// BuildProviders uses the client but never reads its value.
 	BuildProviders(config configuration.SourceConfig) error
+
+	// Sets the client. Must be called before calling BuildProviders.
 	SetClient(kubernetes.Interface)
 }
 

@@ -18,6 +18,7 @@
 package sources
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -51,6 +52,33 @@ func TestNoTimeout(t *testing.T) {
 
 	assert.True(t, present["nto_1"], "nto_1 not found - present:%v", present)
 	assert.True(t, present["nto_2"], "nto_2 not found - present:%v", present)
+}
+
+func TestRace(t *testing.T) {
+	provider1 := util.NewDummyMetricsSourceProvider("dummy_nt1",
+		100*time.Millisecond, 100*time.Millisecond,
+		util.NewDummyMetricsSource("nto_1", 10*time.Millisecond),
+		util.NewDummyMetricsSource("nto_2", 10*time.Millisecond))
+	provider2 := util.NewDummyMetricsSourceProvider("dummy_nt2",
+		100*time.Millisecond, 100*time.Millisecond,
+		util.NewDummyMetricsSource("nto_1", 10*time.Millisecond),
+		util.NewDummyMetricsSource("nto_2", 10*time.Millisecond))
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		Manager().AddProvider(provider1)
+		Manager().DeleteProvider("dummy_nt1")
+		wg.Done()
+	}()
+	wg.Add(1)
+	go func() {
+		Manager().AddProvider(provider2)
+		Manager().DeleteProvider("dummy_nt2")
+		wg.Done()
+	}()
+	wg.Wait()
 }
 
 func TestScrapeMetrics(t *testing.T) {
