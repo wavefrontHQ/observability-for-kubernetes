@@ -54,6 +54,7 @@ func TestNoTimeout(t *testing.T) {
 	assert.True(t, present["nto_2"], "nto_2 not found - present:%v", present)
 }
 
+// This test should pass when run with go test -race
 func TestRace(t *testing.T) {
 	provider1 := util.NewDummyMetricsSourceProvider("dummy_nt1",
 		100*time.Millisecond, 100*time.Millisecond,

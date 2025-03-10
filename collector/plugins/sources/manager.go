@@ -19,6 +19,7 @@ package sources
 
 import (
 	"fmt"
+	"github.com/wavefronthq/observability-for-kubernetes/collector/internal/util"
 	"math/rand"
 	"sort"
 	"sync"
@@ -71,11 +72,17 @@ func init() {
 type SourceManager interface {
 	metrics.ProviderHandler
 
+	// Deletes each provider.
 	StopProviders()
+
+	// Seems to get all the batches read since the last call and ensures they are sorted by
+	// timestamp
 	GetPendingMetrics() []*metrics.Batch
+
 	SetDefaultCollectionInterval(time.Duration)
 
-	// BuildProviders uses the client but never reads its value.
+	// BuildProviders uses the client but never reads its value. BuildProviders seems to add
+	// all the SourceProviders described in config by calling AddProvider on each one.
 	BuildProviders(config configuration.SourceConfig) error
 
 	// Sets the client. Must be called before calling BuildProviders.
@@ -83,22 +90,19 @@ type SourceManager interface {
 }
 
 type sourceManagerImpl struct {
-	responseChannel           chan *metrics.Batch
-	defaultCollectionInterval time.Duration
+	responseChannel chan *metrics.Batch
 
-	metricsSourcesMtx      sync.Mutex
-	metricsSourceProviders map[string]metrics.SourceProvider
-	metricsSourceTimers    map[string]*IntervalTimer
-	metricsSourceQuits     map[string]chan struct{}
+	mtx                       sync.Mutex
+	defaultCollectionInterval time.Duration
+	metricsSourceProviders    map[string]metrics.SourceProvider
+	metricsSourceTimers       map[string]*util.Interval
 
 	responseMtx sync.Mutex
 	response    []*metrics.Batch
-
-	client kubernetes.Interface
 }
 
 func (sm *sourceManagerImpl) SetClient(client kubernetes.Interface) {
-	sm.client = client
+	// Do nothing for now
 }
 
 // Manager return the SourceManager
@@ -107,8 +111,7 @@ func Manager() SourceManager {
 		singleton = &sourceManagerImpl{
 			responseChannel:           make(chan *metrics.Batch),
 			metricsSourceProviders:    make(map[string]metrics.SourceProvider),
-			metricsSourceTimers:       make(map[string]*IntervalTimer),
-			metricsSourceQuits:        make(map[string]chan struct{}),
+			metricsSourceTimers:       make(map[string]*util.Interval),
 			defaultCollectionInterval: time.Minute,
 		}
 		singleton.rotateResponse()
@@ -119,7 +122,7 @@ func Manager() SourceManager {
 
 // BuildProviders creates a new source manager with the configured MetricsSourceProviders
 func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig) error {
-	sources := buildProviders(sm.client, cfg)
+	sources := buildProviders(cfg)
 	for _, runtime := range sources {
 		sm.AddProvider(runtime)
 	}
@@ -130,6 +133,8 @@ func (sm *sourceManagerImpl) BuildProviders(cfg configuration.SourceConfig) erro
 }
 
 func (sm *sourceManagerImpl) SetDefaultCollectionInterval(defaultCollectionInterval time.Duration) {
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
 	sm.defaultCollectionInterval = defaultCollectionInterval
 }
 
@@ -143,13 +148,13 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.SourceProvider) {
 		"timeout":             provider.Timeout(),
 	}).Info("Adding provider")
 
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
+
 	if _, found := sm.metricsSourceProviders[name]; found {
 		log.WithField("name", name).Info("deleting existing provider")
-		sm.DeleteProvider(name)
+		sm.deleteProvider(name)
 	}
-
-	sm.metricsSourcesMtx.Lock()
-	defer sm.metricsSourcesMtx.Unlock()
 
 	var interval time.Duration
 	if provider.CollectionInterval() > 0 {
@@ -162,53 +167,36 @@ func (sm *sourceManagerImpl) AddProvider(provider metrics.SourceProvider) {
 			"collection_interval": sm.defaultCollectionInterval,
 		}).Info("Using default collection interval")
 	}
-	intervalTimer := NewIntervalTimer(interval)
-
-	quit := make(chan struct{})
+	f := func() {
+		scrape(provider, sm.responseChannel)
+	}
 
 	sm.metricsSourceProviders[name] = provider
-	sm.metricsSourceTimers[name] = intervalTimer
-	sm.metricsSourceQuits[name] = quit
+	sm.metricsSourceTimers[name] = util.NewInterval(interval, f, scrapesMissed)
 
 	providerCount.Update(int64(len(sm.metricsSourceProviders)))
-
-	go func() {
-		for {
-			select {
-			case <-intervalTimer.C:
-				scrape(provider, sm.responseChannel)
-				scrapesMissed.Inc(intervalTimer.Reset())
-			case <-quit:
-				return
-			}
-		}
-	}()
 }
 
 func (sm *sourceManagerImpl) DeleteProvider(name string) {
-	provider, found := sm.metricsSourceProviders[name]
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
+
+	_, found := sm.metricsSourceProviders[name]
 	if !found {
 		log.Debugf("Metrics Source Provider '%s' not found", name)
 		return
 	}
+	sm.deleteProvider(name)
+}
 
-	sm.metricsSourcesMtx.Lock()
-	defer sm.metricsSourcesMtx.Unlock()
-
+func (sm *sourceManagerImpl) deleteProvider(name string) {
+	provider := sm.metricsSourceProviders[name]
 	delete(sm.metricsSourceProviders, name)
-	if ticker, ok := sm.metricsSourceTimers[name]; ok {
-		ticker.Stop()
-		delete(sm.metricsSourceTimers, name)
-	}
-	if quit, ok := sm.metricsSourceQuits[name]; ok {
-		close(quit)
-		delete(sm.metricsSourceQuits, name)
-	}
-
+	sm.metricsSourceTimers[name].StopAndWait()
+	delete(sm.metricsSourceTimers, name)
 	for _, source := range provider.GetMetricsSources() {
 		source.Cleanup()
 	}
-
 	log.WithField("name", name).Info("Deleted provider")
 }
 
@@ -289,7 +277,7 @@ func (sm *sourceManagerImpl) GetPendingMetrics() []*metrics.Batch {
 	return response
 }
 
-func buildProviders(client kubernetes.Interface, cfg configuration.SourceConfig) (result []metrics.SourceProvider) {
+func buildProviders(cfg configuration.SourceConfig) (result []metrics.SourceProvider) {
 	if cfg.SummaryConfig != nil {
 		provider, err := summary.NewSummaryProvider(*cfg.SummaryConfig)
 		result = appendProvider(result, provider, err, cfg.SummaryConfig.Collection)
