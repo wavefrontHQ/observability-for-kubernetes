@@ -130,9 +130,16 @@ func (l *LabeledValue) GetValue() interface{} {
 
 // Source produces metric batches
 type Source interface {
+
+	// No idea what this is
 	AutoDiscovered() bool
+
 	Name() string
+
+	// Perhaps this grabs metrics?
 	Scrape() (*Batch, error)
+
+	// Seems to free resources this object uses
 	Cleanup()
 }
 
@@ -161,7 +168,11 @@ type Processor interface {
 
 // ProviderHandler is an interface for dynamically adding and removing MetricSourceProviders
 type ProviderHandler interface {
+
+	// AddProvider adds a new SourceProvider if one already exists with same name it deletes
+	// that one first.
 	AddProvider(provider SourceProvider)
+
 	DeleteProvider(name string)
 }
 
