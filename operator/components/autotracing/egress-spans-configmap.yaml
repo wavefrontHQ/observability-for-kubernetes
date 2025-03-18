@@ -161,6 +161,8 @@ data:
             end_time=df.time_,
             trace_id=df.trace_id,
             span_id=df.span_id,
+            # dummy parent_span_id as ebpfSampler handles both dual spans and one span version of pixie scripts by dropping the synthetic parent span
+            parent_span_id=df.span_id,
             kind=px.otel.trace.SPAN_KIND_CLIENT,
             attributes={
               # NOTE: the integration handles splitting of services.

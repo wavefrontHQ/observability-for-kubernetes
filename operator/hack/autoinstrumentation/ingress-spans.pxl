@@ -141,6 +141,7 @@ px.export(
                 end_time=df.time_,
                 trace_id=df.trace_id,
                 span_id=df.span_id,
+                parent_span_id=df.span_id,
                 kind=px.otel.trace.SPAN_KIND_SERVER,
                 attributes={
                     # NOTE: the integration handles splitting of services.
