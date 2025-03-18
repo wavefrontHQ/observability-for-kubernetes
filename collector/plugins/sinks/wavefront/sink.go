@@ -196,6 +196,12 @@ func (sink *wavefrontSink) Export(batch *metrics.Batch) {
 		if point == nil {
 			continue
 		}
+
+		// US1004011: Source to match nodename if it exists
+		if newSource, ok := point.Tags()[metrics.LabelNodename.Key]; ok {
+			point.SetSource(newSource)
+		}
+
 		err := point.Send(sink)
 		if err != nil {
 			errPoints.Inc(1)

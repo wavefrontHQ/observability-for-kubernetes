@@ -65,6 +65,33 @@ func TestPrefix(t *testing.T) {
 	require.True(t, strings.Contains(getReceivedLines(sink), "test.cpu.idle"))
 }
 
+func TestUseNodeNameForSource(t *testing.T) {
+	sink, err := NewWavefrontSink(defaultSinkConfig())
+	require.NoError(t, err)
+	tags := map[string]string{"nodename": "fakeNode"}
+	db := metrics.Batch{
+		Metrics: []wf.Metric{
+			nil,
+			wf.NewPoint("cpu.idle", 1.0, 0, "fakeSource", tags),
+		},
+	}
+	sink.Export(&db)
+	require.Contains(t, getReceivedLines(sink), `source="fakeNode"`)
+}
+
+func TestLeaveSourceAloneIfNoNodeName(t *testing.T) {
+	sink, err := NewWavefrontSink(defaultSinkConfig())
+	require.NoError(t, err)
+	db := metrics.Batch{
+		Metrics: []wf.Metric{
+			nil,
+			wf.NewPoint("cpu.idle", 1.0, 0, "fakeSource", nil),
+		},
+	}
+	sink.Export(&db)
+	require.Contains(t, getReceivedLines(sink), `source="fakeSource"`)
+}
+
 func TestNilPointDataBatch(t *testing.T) {
 	sink, err := NewWavefrontSink(defaultSinkConfig())
 	require.NoError(t, err)
