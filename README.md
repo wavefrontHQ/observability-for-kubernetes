@@ -44,7 +44,7 @@ To install the integration, you must use the [kubectl](https://kubernetes.io/doc
    **Note**: If you already have the deprecated Kubernetes Integration installed by using Helm or manual deployment, *uninstall* it before you install the Operator.
  
    ```
-   kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
+kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/releases/download/CURRENT_VERSION/wavefront-operator.yaml
    ```
 
 2. Create a Kubernetes secret with your Wavefront API token.
@@ -217,7 +217,7 @@ In addition to these, here are some [general log attributes](https://docs.wavefr
 Upgrade the Observability for Kubernetes Operator and underlying agents to a new version by running the following command :
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
+kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/releases/download/NEW_VERSION/wavefront-operator.yaml
 ```
 
 Note: This command will not upgrade any existing deprecated Helm or manual installations. See [migration.md](docs/operator/migration.md) for migration instructions.
@@ -237,7 +237,7 @@ kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/rel
 To remove the Observability for Kubernetes Operator from your environment, run the following command:
 
 ```
-kubectl delete -f https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml
+kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/releases/download/CURRENT_VERSION/wavefront-operator.yaml
 ```
 
 # Contribution
