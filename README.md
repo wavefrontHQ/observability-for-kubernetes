@@ -44,7 +44,7 @@ To install the integration, you must use the [kubectl](https://kubernetes.io/doc
    **Note**: If you already have the deprecated Kubernetes Integration installed by using Helm or manual deployment, *uninstall* it before you install the Operator.
  
    ```
-kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/releases/download/CURRENT_VERSION/wavefront-operator.yaml
+   kubectl apply -f https://github.com/wavefrontHQ/observability-for-kubernetes/releases/download/CURRENT_VERSION/wavefront-operator.yaml
    ```
 
 2. Create a Kubernetes secret with your Wavefront API token.
