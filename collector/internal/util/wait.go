@@ -10,6 +10,7 @@ var (
 )
 
 // TODO: this needs a test! Tricky...
+// TODO: Rewrite callsites of this to use util.Interval
 // Retry makes the function run infinitely after certain time period
 func Retry(f func(), duration time.Duration, stopCh <-chan struct{}) {
 	t := time.NewTicker(duration)
