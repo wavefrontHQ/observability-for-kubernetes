@@ -11,7 +11,7 @@ Install the Observability for Kubernetes Operator into `observability-system` na
 |---|---|---|
 | Observability for Kubernetes Operator | `caapm/kubernetes-operator:2.32.0` | `YOUR_IMAGE_REGISTRY/kubernetes-operator:2.32.0` |
 | Kubernetes Metrics Collector | `caapm/kubernetes-collector:1.44.0` | `YOUR_IMAGE_REGISTRY/kubernetes-collector:1.44.0` |
-| Wavefront Proxy | `caapm/proxy:13.4` | `YOUR_IMAGE_REGISTRY/proxy:13.4` |
+| Wavefront Proxy | `caapm/proxy:13.9` | `YOUR_IMAGE_REGISTRY/proxy:13.9` |
 | Operations for Applications logging | `projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit:2.2.0` | `YOUR_IMAGE_REGISTRY/kubernetes-operator-fluentbit:2.2.0` |
 
 2. Create a local directory called `observability`.
