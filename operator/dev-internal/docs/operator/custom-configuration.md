@@ -9,10 +9,10 @@ Install the Observability for Kubernetes Operator into `observability-system` na
 
 | Component | From | To |
 |---|---|---|
-| Observability for Kubernetes Operator | `projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.17.2` | `YOUR_IMAGE_REGISTRY/kubernetes-operator:2.17.2` |
-| Kubernetes Metrics Collector | `projects.registry.vmware.com/tanzu_observability/kubernetes-collector:1.29.2` | `YOUR_IMAGE_REGISTRY/kubernetes-collector:1.29.2` |
-| Wavefront Proxy | `projects.registry.vmware.com/tanzu_observability/proxy:13.4` | `YOUR_IMAGE_REGISTRY/proxy:13.4` |
-| Operations for Applications logging | `projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit:2.2.0` | `YOUR_IMAGE_REGISTRY/kubernetes-operator-fluentbit:2.2.0` |
+| Observability for Kubernetes Operator | `caapm/kubernetes-operator:2.32.0` | `YOUR_IMAGE_REGISTRY/kubernetes-operator:2.32.0` |
+| Kubernetes Metrics Collector | `caapm/kubernetes-collector:1.44.0` | `YOUR_IMAGE_REGISTRY/kubernetes-collector:1.44.0` |
+| Wavefront Proxy | `caapm/proxy:13.9` | `YOUR_IMAGE_REGISTRY/proxy:13.9` |
+| Operations for Applications logging | `caapm/fluentbit:25.11.1.1` | `YOUR_IMAGE_REGISTRY/kubernetes-operator-fluentbit:25.11.1.1` |
 
 2. Create a local directory called `observability`.
 3. Download [wavefront-operator.yaml](https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml) into the `observability` directory.

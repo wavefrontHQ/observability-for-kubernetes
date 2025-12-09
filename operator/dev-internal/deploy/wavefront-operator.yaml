@@ -1522,7 +1522,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.17.2
+        image: caapm/kubernetes-operator:2.32.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
