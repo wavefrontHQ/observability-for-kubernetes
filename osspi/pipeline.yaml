@@ -155,7 +155,7 @@ jobs:
           input_mapping:
             ci_repo: observability-for-kubernetes
           params:
-            IMAGE: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit
+            IMAGE: caapm/kubernetes-operator-fluentbit
             TAG: 2.2.0
             API_KEY: ((osspi.osm-prod-api-key))
             USERNAME: ((osspi.osm-prod-username))

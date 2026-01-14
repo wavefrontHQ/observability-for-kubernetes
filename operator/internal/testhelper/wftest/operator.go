@@ -23,7 +23,7 @@ func Operator(options ...func(*appsv1.Deployment)) *appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image: "projects.registry.vmware.com/tanzu_observability/kubernetes-operator:latest",
+						Image: "caapm/kubernetes-operator:latest",
 					}},
 				},
 			},

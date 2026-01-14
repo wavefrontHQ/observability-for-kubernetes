@@ -184,10 +184,10 @@ func TestReconcileAll(t *testing.T) {
 		_, err := r.Reconcile(context.Background(), defaultRequest())
 		require.NoError(t, err)
 
-		require.True(t, mockKM.NodeCollectorDaemonSetContains("image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector"))
-		require.True(t, mockKM.ClusterCollectorDeploymentContains("image: projects.registry.vmware.com/tanzu_observability/kubernetes-collector"))
-		require.True(t, mockKM.LoggingDaemonSetContains("image: projects.registry.vmware.com/tanzu_observability/kubernetes-operator-fluentbit"))
-		require.True(t, mockKM.ProxyDeploymentContains("image: projects.registry.vmware.com/tanzu_observability/proxy"))
+		require.True(t, mockKM.NodeCollectorDaemonSetContains("image: caapm/kubernetes-collector"))
+		require.True(t, mockKM.ClusterCollectorDeploymentContains("image: caapm/kubernetes-collector"))
+		require.True(t, mockKM.LoggingDaemonSetContains("image: caapm/kubernetes-operator-fluentbit"))
+		require.True(t, mockKM.ProxyDeploymentContains("image: caapm/proxy"))
 	})
 
 	t.Run("Can Configure Custom Registry", func(t *testing.T) {

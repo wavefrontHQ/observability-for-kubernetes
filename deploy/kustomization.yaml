@@ -5,7 +5,7 @@ resources:
 - wavefront-operator.yaml
 
 images:
-- name: projects.registry.vmware.com/tanzu_observability/kubernetes-operator
+- name: caapm/kubernetes-operator
   newName: YOUR_IMAGE_REGISTRY/kubernetes-operator
 
 namespace: YOUR_NAMESPACE

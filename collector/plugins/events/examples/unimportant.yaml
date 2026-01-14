@@ -14,7 +14,7 @@ items:
     uid: 83c6fdde-945f-4022-be80-a2facf13e025
   kind: Event
   lastTimestamp: "2023-11-13T18:21:48Z"
-  message: Pulling image "projects.registry.vmware.com/tanzu_observability/kubernetes-operator:2.16.0"
+  message: Pulling image "caapm/kubernetes-operator:latest"
   metadata:
     creationTimestamp: "2023-11-13T18:21:48Z"
     name: wavefront-controller-manager-6559577b47-dndvb.179741c755c77b51

@@ -8,6 +8,6 @@ resources:
 - deploy/6-wavefront-proxy.yaml
 
 images:
-- name: projects.registry.vmware.com/tanzu_observability/kubernetes-collector
+- name: caapm/kubernetes-collector
   newName: projects.registry.vmware.com/tanzu_observability_keights_saas/kubernetes-collector
   newTag: YOUR_IMAGE_TAG

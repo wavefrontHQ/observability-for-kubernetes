@@ -1522,7 +1522,7 @@ spec:
             configMapKeyRef:
               key: logging
               name: wavefront-component-versions
-        image: caapm/kubernetes-operator:2.32.0
+        image: caapm/kubernetes-operator:latest
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

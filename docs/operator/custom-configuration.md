@@ -9,10 +9,10 @@ Install the Observability for Kubernetes Operator into `observability-system` na
 
 | Component | From | To |
 |---|---|---|
-| Observability for Kubernetes Operator | `caapm/kubernetes-operator:2.32.0` | `YOUR_IMAGE_REGISTRY/kubernetes-operator:2.32.0` |
-| Kubernetes Metrics Collector | `caapm/kubernetes-collector:1.44.0` | `YOUR_IMAGE_REGISTRY/kubernetes-collector:1.44.0` |
-| Wavefront Proxy | `caapm/proxy:13.9` | `YOUR_IMAGE_REGISTRY/proxy:13.9` |
-| Operations for Applications logging | `caapm/fluentbit:25.11.1.1` | `YOUR_IMAGE_REGISTRY/kubernetes-operator-fluentbit:25.11.1.1` |
+| Observability for Kubernetes Operator | `caapm/kubernetes-operator:latest` | `YOUR_IMAGE_REGISTRY/kubernetes-operator:latest` |
+| Kubernetes Metrics Collector | `caapm/kubernetes-collector:latest` | `YOUR_IMAGE_REGISTRY/kubernetes-collector:latest` |
+| Wavefront Proxy | `caapm/proxy:latest` | `YOUR_IMAGE_REGISTRY/proxy:latest` |
+| Operations for Applications logging | `caapm/fluentbit:latest` | `YOUR_IMAGE_REGISTRY/kubernetes-operator-fluentbit:latest` |
 
 2. Create a local directory called `observability`.
 3. Download [wavefront-operator.yaml](https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/wavefront-operator.yaml) into the `observability` directory.
@@ -26,7 +26,7 @@ Install the Observability for Kubernetes Operator into `observability-system` na
   - wavefront-operator.yaml
    
   images:
-  - name: projects.registry.vmware.com/tanzu_observability/kubernetes-operator
+  - name: caapm/kubernetes-operator
     newName: YOUR_IMAGE_REGISTRY/kubernetes-operator
   ```
 5. If your image registry needs authentication, create an image registry secret in the same namespace as the operator (The default namespace is `observability-system`) by following steps [here](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/), then modify the `kustomization.yaml` to include your image registry secret. 
@@ -39,7 +39,7 @@ Install the Observability for Kubernetes Operator into `observability-system` na
   - wavefront-operator.yaml
  
   images:
-  - name: projects.registry.vmware.com/tanzu_observability/kubernetes-operator
+  - name: caapm/kubernetes-operator
     newName: YOUR_IMAGE_REGISTRY/kubernetes-operator
 
   patches:
