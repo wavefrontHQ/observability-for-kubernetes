@@ -1,6 +1,6 @@
 module github.com/wavefronthq/observability-for-kubernetes/collector
 
-go 1.20
+go 1.23.0
 
 require (
 	github.com/coreos/go-systemd/v22 v22.5.0
@@ -92,7 +92,7 @@ require (
 	github.com/tklauser/numcpus v0.3.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/oauth2 v0.12.0 // indirect
+	golang.org/x/oauth2 v0.27.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
