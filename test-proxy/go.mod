@@ -1,9 +1,9 @@
 module github.com/wavefronthq/observability-for-kubernetes/test-proxy
 
-go 1.20
+go 1.22.0
 
 require (
-	github.com/gobwas/glob v0.2.3
+	github.com/gobwas/glob v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	github.com/wavefronthq/wavefront-sdk-go v0.15.0
